@@ -21,10 +21,84 @@ import {
 } from '../models';
 import {
   activityReportToCsvRecord,
+  collabReportToCsvRecord,
   communicationLogToCsvRecord,
   extractListOfGoalsAndObjectives,
   makeGoalsAndObjectivesObject,
 } from './transform';
+
+describe('collabReportToCsvRecord', () => {
+  it('exports view labels, supporting information, and aligned next steps', () => {
+    const report = {
+      reportReasons: ['agg_regional_data', 'support_coordination'],
+      isStateActivity: true,
+      activityStates: [{ activityStateCode: 'VA' }, { activityStateCode: 'DC' }],
+      conductMethod: 'in_person',
+      description: '<p>Activity <strong>description</strong></p>',
+      participants: ['Regional office', 'Other'],
+      otherParticipants: 'Community partners',
+      dataUsed: [{ collabReportDatum: 'census_data' }, { collabReportDatum: 'other' }],
+      otherDataUsed: 'Local data',
+      reportGoals: [{ goalTemplate: { standard: 'Supporting goal' } }],
+      steps: [
+        { collabStepDetail: 'Follow up', collabStepCompleteDate: null },
+        { collabStepDetail: 'Share findings', collabStepCompleteDate: '02/15/2026' },
+      ],
+    };
+
+    expect(collabReportToCsvRecord({ toJSON: () => report })).toMatchObject({
+      purpose:
+        'Aggregate, analyze, and/or present regional data\nSupport partnerships, coordination, and collaboration with state/regional partners',
+      activityType: 'State',
+      statesInvolved: 'Virginia\nDistrict of Columbia',
+      method: 'In person',
+      description: 'Activity description',
+      participants: 'Regional office\nOther: Community partners',
+      dataUsed: 'Census data\nOther: Local data',
+      reportGoals: 'Supporting goal',
+      steps: 'Follow up\nShare findings',
+      stepsCompleteDate: '\n02/15/2026',
+    });
+  });
+
+  it('handles incomplete reports and hides states for regional activities', () => {
+    expect(
+      collabReportToCsvRecord({ activityStates: [{ activityStateCode: 'VA' }] })
+    ).toMatchObject({
+      createdAt: '',
+      submittedAt: '',
+      approvedAt: '',
+      activityType: 'Regional',
+      statesInvolved: '',
+      purpose: '',
+      method: '',
+      description: '',
+      participants: '',
+      dataUsed: 'None',
+      reportGoals: 'None',
+    });
+  });
+
+  it('exports report staff and dates using the activity report structure', () => {
+    const record = collabReportToCsvRecord({
+      creatorName: 'Creator',
+      collaboratingSpecialists: [{ fullName: 'Zoe' }, { fullName: 'Alex' }],
+      approvers: [{ user: { fullName: 'Manager' } }],
+      createdAt: '2026-01-02T12:00:00Z',
+      submittedAt: '2026-01-03T12:00:00Z',
+      approvedAt: '2026-01-04T12:00:00Z',
+    });
+
+    expect(record).toMatchObject({
+      creatorName: 'Creator',
+      collaborators: 'Alex\nZoe',
+      approvers: 'Manager',
+      createdAt: '01/02/2026',
+      submittedAt: '01/03/2026',
+      approvedAt: '01/04/2026',
+    });
+  });
+});
 
 describe('activityReportToCsvRecord', () => {
   const mockAuthor = {

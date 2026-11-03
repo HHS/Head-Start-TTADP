@@ -1,3 +1,5 @@
+import { Alert, ModalToggleButton } from '@trussworks/react-uswds';
+import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment-timezone';
 import PropTypes from 'prop-types';
 import React, { useCallback, useRef, useState } from 'react';
@@ -7,17 +9,21 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import Modal from '../../components/Modal';
 import SubmittedCollabReport from '../../components/ReportView/SubmittedCollabReport';
-import { getReport, unlockReport } from '../../fetchers/collaborationReports';
+import { getReport, resetReportToDraft, unlockReport } from '../../fetchers/collaborationReports';
 import useFetch from '../../hooks/useFetch';
+import isAdmin from '../../permissions';
 
 export default function ViewCollabReport({ match, user }) {
   const { collabReportId } = match.params;
   const displayId = collabReportId;
   const [justUnlocked, updatedJustUnlocked] = useState(false);
+  const [resetMessage, setResetMessage] = useState(null);
   const modalRef = useRef();
+  const resetModalRef = useRef();
 
   const {
     data: report,
+    setData: setReport,
     error,
     statusCode,
   } = useFetch(
@@ -52,6 +58,16 @@ export default function ViewCollabReport({ match, user }) {
     </Modal>
   );
 
+  const onReset = async () => {
+    resetModalRef.current.toggleModal(false);
+    try {
+      setReport(await resetReportToDraft(collabReportId));
+      setResetMessage({ type: 'success', text: 'This report has been reset to draft.' });
+    } catch (e) {
+      setResetMessage({ type: 'error', text: 'Unable to reset this report to draft.' });
+    }
+  };
+
   if (error) {
     return <Redirect to={`/something-went-wrong/${statusCode}`} />;
   }
@@ -80,11 +96,43 @@ export default function ViewCollabReport({ match, user }) {
         <title>TTA Collaboration Report {displayId}</title>
       </Helmet>
       <ApprovedReportSpecialButtons
-        showUnlockReports
+        showUnlockReports={report.calculatedStatus === REPORT_STATUSES.APPROVED}
         modalRef={modalRef}
         UnlockModal={UnlockModal}
         user={user}
       />
+      {user &&
+        isAdmin(user) &&
+        [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION].includes(
+          report.calculatedStatus
+        ) && (
+          <>
+            <ModalToggleButton
+              type="button"
+              className="usa-button usa-button--outline no-print margin-top-1"
+              modalRef={resetModalRef}
+              opener
+            >
+              Reset to draft
+            </ModalToggleButton>
+            <Modal
+              modalRef={resetModalRef}
+              onOk={onReset}
+              modalId="ResetToDraftModal"
+              title="Reset Collaboration Report to draft"
+              okButtonText="Reset to draft"
+              okButtonAriaLabel="Reset collaboration report to draft"
+            >
+              The creator will be able to edit and resubmit the report. Approvers who are the
+              creator or a collaborator will be removed; other approvers keep their status.
+            </Modal>
+          </>
+        )}
+      {resetMessage && (
+        <Alert type={resetMessage.type} headingLevel="h2" slim className="margin-top-2 no-print">
+          {resetMessage.text}
+        </Alert>
+      )}
       <SubmittedCollabReport report={report} />
     </>
   );

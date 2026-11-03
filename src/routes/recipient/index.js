@@ -6,6 +6,7 @@ import {
   getGoalsByIdandRecipient,
   getGoalsByRecipient,
   getRecipient,
+  getRecipientAndGrantsByTtaRequestUser,
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
   getRecipientTimeline,
@@ -15,6 +16,7 @@ import { checkRecipientTimelineQuery } from './middleware';
 
 const router = express.Router();
 router.get('/search', transactionWrapper(searchRecipients));
+router.get('/user/tta-requests', transactionWrapper(getRecipientAndGrantsByTtaRequestUser));
 router.get('/user', transactionWrapper(getRecipientAndGrantsByUser));
 router.get('/:recipientId', checkRecipientIdParam, transactionWrapper(getRecipient));
 router.get(

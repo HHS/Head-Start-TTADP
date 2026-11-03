@@ -240,6 +240,24 @@ describe('User Page', () => {
         expect(alert).toHaveTextContent('Unable to save user');
       });
 
+      it('shows why a save was refused when the server says so', async () => {
+        fetchMock.put(userPatchUrl, {
+          status: 400,
+          body: { message: 'Region 3 already has a primary COR approver: Monica Geller' },
+        });
+        render(
+          <Router history={history}>
+            <Users match={{ path: '', url: '', params: { userId: '3' } }} />
+          </Router>
+        );
+        const save = await screen.findByRole('button', { name: 'Save' });
+        userEvent.click(save);
+        const alert = await screen.findByRole('alert');
+        expect(alert).toHaveTextContent(
+          'Region 3 already has a primary COR approver: Monica Geller'
+        );
+      });
+
       it('updates the user list with the new version of the user', async () => {
         fetchMock.put(userPatchUrl, {
           id: 3,

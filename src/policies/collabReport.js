@@ -56,6 +56,16 @@ export default class CollabReport {
     );
   }
 
+  // Lets admins unstick a report awaiting approval, e.g. one whose only approver can't review it
+  canAdminReset() {
+    return (
+      this.isAdmin() &&
+      [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION].includes(
+        this.collabReport.calculatedStatus
+      )
+    );
+  }
+
   canDelete() {
     return (
       (this.isAdmin() || this.isAuthor() || this.isCollaborator()) &&
@@ -74,16 +84,12 @@ export default class CollabReport {
   canGet() {
     const canReadUnapproved = this.isAuthor() || this.isCollaborator() || this.isApprovingManager();
 
-    if (canReadUnapproved) {
-      return canReadUnapproved;
+    // Admins can read a report in any status, e.g. to support one stuck in approval
+    if (canReadUnapproved || this.isAdmin()) {
+      return true;
     }
 
     if (this.collabReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      // TTAHUB-1817: Admins should be allowed to read an approved report.
-      if (this.isAdmin()) {
-        return true;
-      }
-
       return this.canReadInRegion();
     }
 

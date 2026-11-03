@@ -1,3 +1,5 @@
+import { Alert, ModalToggleButton } from '@trussworks/react-uswds';
+import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment-timezone';
 import PropTypes from 'prop-types';
 import React, { useRef, useState } from 'react';
@@ -10,14 +12,23 @@ import Modal from '../../components/Modal';
 import ApprovedReportV1 from '../../components/ReportView/ApprovedReportV1';
 import ApprovedReportV2 from '../../components/ReportView/ApprovedReportV2';
 import SubmittedReport from '../../components/ReportView/SubmittedReport';
-import { unlockReport } from '../../fetchers/activityReports';
+import { resetToDraft, unlockReport } from '../../fetchers/activityReports';
 import useReadOnlyReportFetch from '../../hooks/useReadOnlyReportFetch';
+import isAdmin from '../../permissions';
 import './index.scss';
 
 export default function ApprovedActivityReport({ match, user }) {
-  const report = useReadOnlyReportFetch(match, user);
+  const fetchedReport = useReadOnlyReportFetch(match, user);
+  // The reset result and message, keyed by the report they belong to, so neither carries over
+  // if the route changes to another report without remounting
+  const [reset, setReset] = useState(null);
   const [justUnlocked, updatedJustUnlocked] = useState(false);
   const modalRef = useRef();
+  const resetModalRef = useRef();
+  const { activityReportId } = match.params;
+  const currentReset = reset && reset.reportId === activityReportId ? reset : null;
+  const report = (currentReset && currentReset.report) || fetchedReport;
+  const resetMessage = currentReset && currentReset.message;
 
   const { id: reportId, displayId, version } = report;
 
@@ -64,6 +75,22 @@ export default function ApprovedActivityReport({ match, user }) {
     </Modal>
   );
 
+  const onReset = async () => {
+    resetModalRef.current.toggleModal(false);
+    try {
+      setReset({
+        reportId: activityReportId,
+        report: await resetToDraft(reportId),
+        message: { type: 'success', text: 'This report has been reset to draft.' },
+      });
+    } catch (e) {
+      setReset({
+        reportId: activityReportId,
+        message: { type: 'error', text: 'Unable to reset this report to draft.' },
+      });
+    }
+  };
+
   const timezone = moment.tz.guess();
   const time = moment().tz(timezone).format('MM/DD/YYYY [at] h:mm a z');
   const message = {
@@ -87,8 +114,40 @@ export default function ApprovedActivityReport({ match, user }) {
         modalRef={modalRef}
         UnlockModal={UnlockModal}
         user={user}
-        showUnlockReports
+        showUnlockReports={report.calculatedStatus === REPORT_STATUSES.APPROVED}
       />
+      {user &&
+        isAdmin(user) &&
+        [REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION].includes(
+          report.calculatedStatus
+        ) && (
+          <>
+            <ModalToggleButton
+              type="button"
+              className="usa-button usa-button--outline no-print margin-top-1"
+              modalRef={resetModalRef}
+              opener
+            >
+              Reset to draft
+            </ModalToggleButton>
+            <Modal
+              modalRef={resetModalRef}
+              onOk={onReset}
+              modalId="ResetToDraftModal"
+              title="Reset Activity Report to draft"
+              okButtonText="Reset to draft"
+              okButtonAriaLabel="Reset activity report to draft"
+            >
+              The creator will be able to edit and resubmit the report. Approvers who are the
+              creator or a collaborator will be removed; other approvers keep their status.
+            </Modal>
+          </>
+        )}
+      {resetMessage && (
+        <Alert type={resetMessage.type} headingLevel="h2" slim className="margin-top-2 no-print">
+          {resetMessage.text}
+        </Alert>
+      )}
       <ReportComponent />
     </>
   );

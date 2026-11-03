@@ -241,6 +241,17 @@ function ActivityReport({ match, location, region }) {
             history.push('/something-went-wrong/500');
           }
           report = convertReportToFormData(fetchedReport);
+
+          // Users who can read but not work on the report, e.g. admins, get the read-only view
+          const isReadOnlyViewer =
+            fetchedReport &&
+            report.userId !== user.id &&
+            !(report.activityReportCollaborators || []).some((c) => c.userId === user.id) &&
+            !(report.approvers || []).some((a) => a.user && a.user.id === user.id);
+          if (isReadOnlyViewer) {
+            history.push(`/activity-reports/view/${activityReportId}`);
+            return;
+          }
         } else {
           report = {
             ...defaultValues,
