@@ -72,10 +72,10 @@ export async function getCitationsByGrantIds(
   grantIds: number[],
   reportStartDate: string
 ): Promise<CitationsByGrantId[]> {
-  // grantIds come from the query string and are interpolated into SQL below,
-  // so every value must be a positive integer (parseInt('1) UNION ...') is 1).
+  // The route validates these too; checking again here keeps other callers honest
+  // (parseInt('1) UNION ...') is 1, so parseInt alone is not enough).
   const ids = grantIds.map((id) => Number(id));
-  if (!ids.length || !ids.every((id) => Number.isInteger(id) && id > 0)) {
+  if (!ids.length || !ids.every((id) => Number.isSafeInteger(id) && id > 0)) {
     throw new Error('Invalid grantIds');
   }
 
@@ -132,7 +132,7 @@ export async function getCitationsByGrantIds(
       ON g."goalTemplateId" = monitoring_gtid
     JOIN "DeliveredReviewCitations" drc
       ON drc."citationId" = c.id
-      AND '${reportStartDate}'::date BETWEEN drc.latest_review_start AND drc.latest_review_end
+      AND CAST(:reportStartDate AS date) BETWEEN drc.latest_review_start AND drc.latest_review_end
     JOIN "GrantDeliveredReviews" gdr
       ON gdr."deliveredReviewId" = drc."deliveredReviewId"
       AND gdr."grantId" = gc."grantId"
@@ -145,9 +145,10 @@ export async function getCitationsByGrantIds(
     -- Only include citations where the last closed goal was before the latest report delivery date... 
     -- ...except in the case of an admin-reopened goal. Since those are createdVia 'rtr' we can narrowly select those here.
       AND (clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr'))
-      AND gc."grantId" IN (${ids.join(',')})
+      AND gc."grantId" IN (:grantIds)
     GROUP BY 1, 2
-    ORDER BY 2, 1`
+    ORDER BY 2, 1`,
+    { replacements: { grantIds: ids, reportStartDate } }
   );
 
   const results = grantsByCitations[0] as CitationsByGrantId[];

@@ -1,5 +1,5 @@
 import { sequelize } from '../models';
-import orderReportsBy, { normalizeSortDir } from './orderReportsBy';
+import orderReportsBy from './orderReportsBy';
 
 describe('orderReportsBy', () => {
   it('returns the correct values', () => {
@@ -44,10 +44,6 @@ describe('orderReportsBy', () => {
   });
 
   it('normalizes sortDir so it cannot inject SQL', () => {
-    expect(normalizeSortDir('asc')).toBe('ASC');
-    expect(normalizeSortDir('DESC')).toBe('DESC');
-    expect(normalizeSortDir(undefined)).toBe('DESC');
-    expect(normalizeSortDir('ASC LIMIT 1), (SELECT pg_sleep(5))--')).toBe('DESC');
     expect(orderReportsBy('author', 'asc; DROP TABLE "Users"--')).toStrictEqual([
       [sequelize.literal('authorName DESC')],
     ]);

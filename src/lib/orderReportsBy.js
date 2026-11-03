@@ -1,9 +1,5 @@
 import { sequelize } from '../models';
-
-// sortDir comes from the request and is interpolated into SQL literals,
-// so it must be reduced to a fixed keyword before use.
-export const normalizeSortDir = (sortDir) =>
-  String(sortDir).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+import normalizeSortDir from './normalizeSortDir';
 
 const orderReportsBy = (sortBy, rawSortDir) => {
   const sortDir = normalizeSortDir(rawSortDir);
