@@ -1188,7 +1188,7 @@ export const processCitationGrantNumbers = async (where = '') =>
  * database functions, hiding users, recipients, and grants, processing activity reports and files,
  * and truncating audit tables
  */
-const processData = async (mockReport) =>
+const processData = async (mockReport, { verify } = {}) =>
   sequelize.transaction(async () => {
     // If a mockReport is provided, extract the activity report ID and relevant data
     let activityReportId = null;
@@ -1245,7 +1245,13 @@ const processData = async (mockReport) =>
     await convertUserNameDrop();
 
     // Truncate audit tables
-    return truncateAuditTables();
+    await truncateAuditTables();
+
+    // Verify before committing, so a failed check rolls back to the raw data and a retry starts
+    // over from it instead of reprocessing data that was already anonymized
+    if (verify) {
+      await verify();
+    }
   });
 
 // Export the main processData function as the default export of the module

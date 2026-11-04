@@ -19,11 +19,9 @@ export const logProcessDataError = (e) => {
   auditLogger.error(`processData failed: ${name}${code}`);
 };
 
-// Verify after processData commits, so a run that did not anonymize the data exits non-zero and
-// the nightly restore_db_cron job never backs it up for lower environments
-processData()
-  .then(() => verifyProcessedData())
-  .catch((e) => {
-    logProcessDataError(e);
-    process.exit(1);
-  });
+// Verify inside the processData transaction, so a run that did not anonymize the data rolls back
+// and exits non-zero, and the nightly restore_db_cron job never backs it up for lower environments
+processData(undefined, { verify: verifyProcessedData }).catch((e) => {
+  logProcessDataError(e);
+  process.exit(1);
+});

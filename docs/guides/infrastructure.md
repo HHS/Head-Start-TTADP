@@ -527,10 +527,12 @@ group and run through the `tta-automation` cloud.gov app in the prod space:
 1. `backup_prod_db` backs up `ttahub-prod` to S3 under the `production` prefix.
 2. `restore_prod_to_temp` drops and recreates the `ttahub-process` database, then restores the `production` backup into it.
    From here until step 3 succeeds, `ttahub-process` holds **unanonymized production data**.
-3. `process_temp_db` runs `src/tools/processDataCLI.js`. `processData` anonymizes the data in a single transaction, so a
-   failure rolls back to the raw restored data rather than leaving it half processed. `verifyProcessedData` then checks,
-   using counts only, that no user email was left unreplaced, no audit (`ZAL`) table still has rows, and `RequestErrors`
-   is empty; any non-zero count fails the job. Processing is attempted twice before the job fails.
+3. `process_temp_db` runs `src/tools/processDataCLI.js`. `processData` anonymizes the data in a single transaction, and
+   `verifyProcessedData` runs at the end of that transaction, before it commits. It checks, using counts only, that no
+   user email was left unreplaced, no audit (`ZAL`) table still has rows, and `RequestErrors` is empty; any non-zero
+   count fails the job. Any failure, including a failed verification, rolls back to the raw restored data rather than
+   leaving it half processed, so the second attempt starts from the same data. Processing is attempted twice before the
+   job fails.
 4. `backup_temp_db` backs up `ttahub-process` under the `processed` prefix. `processed-latest-backup.txt` is only updated
    after the upload succeeds.
 5. `restore (<env>)` restores the latest `processed` backup into each lower environment and waits for `yarn db:migrate:prod`.
@@ -554,7 +556,9 @@ service) and prints `Verification counts: tables=0 rows=0` to the job output. It
 clears the database, and alerts again if it cannot. The clear job does not run if the whole workflow is cancelled.
 
 Cancelling a CircleCI job does not stop the cloud.gov task it started, so before clearing, the clear job terminates any
-restore or processing task that is still running and waits for it to end. Likewise, when a task outlives its job's
+restore or processing task (matched by name pattern, so every retry attempt is included) that is still pending, running
+or cancelling, and waits for it to end. The drop uses `WITH (FORCE)`, so a client that reconnects in the meantime cannot
+block it. Likewise, when a task outlives its job's
 timeout, `cf_lambda.sh` terminates it by its task ID before failing the job.
 
 #### Database state after each failure

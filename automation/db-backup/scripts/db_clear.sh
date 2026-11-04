@@ -332,9 +332,11 @@ function perform_clear() {
     }
 
     log "INFO" "Drop and recreate the database"
+    # WITH (FORCE) (PostgreSQL 13+) terminates connections as part of the drop, so a client that
+    # reconnects after pg_terminate_backend (such as a task still cancelling) cannot block it
     psql -v ON_ERROR_STOP=1 -d postgres <<EOF
 select pg_terminate_backend(pid) from pg_stat_activity where datname='${PGDATABASE}';
-DROP DATABASE IF EXISTS "${PGDATABASE}";
+DROP DATABASE IF EXISTS "${PGDATABASE}" WITH (FORCE);
 CREATE DATABASE "${PGDATABASE}";
 EOF
 

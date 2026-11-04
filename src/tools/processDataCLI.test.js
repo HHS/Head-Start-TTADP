@@ -36,7 +36,8 @@ describe('processDataCLI', () => {
           processData: require('./processData').default,
           verifyProcessedData: require('./verifyProcessedData').default,
         };
-        mocks.processData.mockResolvedValue();
+        // Stand in for the transaction: processData calls verify before it resolves
+        mocks.processData.mockImplementation((_mockReport, { verify }) => verify());
         mocks.verifyProcessedData.mockImplementation(() => verifyResult);
         require('./processDataCLI');
       });
@@ -52,9 +53,12 @@ describe('processDataCLI', () => {
       exitSpy.mockRestore();
     });
 
-    it('verifies the data after processData succeeds', async () => {
+    it('passes verifyProcessedData to processData to run before commit', async () => {
       const mocks = await runCli({ verifyResult: Promise.resolve() });
 
+      expect(mocks.processData).toHaveBeenCalledWith(undefined, {
+        verify: mocks.verifyProcessedData,
+      });
       expect(mocks.verifyProcessedData).toHaveBeenCalledTimes(1);
       expect(mocks.auditLogger.error).not.toHaveBeenCalled();
       expect(exitSpy).not.toHaveBeenCalled();

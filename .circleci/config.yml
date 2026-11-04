@@ -1649,8 +1649,9 @@ jobs:
           success_message: ':broom: ttahub-process cleared'
           log_filter: "Verification counts"
           # Cancelling a CircleCI job leaves its cloud.gov task running, so stop any restore or
-          # processing task (including the retry; see cf_process) before clearing
-          cancel_tasks: '["restore_s3:production->rds:ttahub-process", "process", "process-attempt2"]'
+          # processing task before clearing. Patterns, not exact names, so they still match if the
+          # backup prefix or the number of cf_process attempts (process-attemptN) changes
+          cancel_task_patterns: '["^restore_s3:[^>]*->rds:ttahub-process$", "^process(-attempt[0-9]+)?$"]'
       - notify_slack:
           step_when: on_success
           best_effort: true
@@ -2424,7 +2425,8 @@ commands:
           success_message: ':database: Restored data processed'
           directory: "./"
           timeout: "3000"
-          # processData runs in one transaction, so a rerun starts from the same raw data
+          # processData and its verification run in one transaction, so any failure (including a
+          # failed verification) rolls back and a rerun starts from the same raw data
           attempts: 2
           log_filter: "verifyProcessedData counts"
 
@@ -2599,8 +2601,8 @@ commands:
         description: "If set, print the task's recent log lines containing this text (only use for lines that carry no data values)"
         type: string
         default: ""
-      cancel_tasks:
-        description: "JSON array of exact task names to terminate (and wait for) before this task starts"
+      cancel_task_patterns:
+        description: "JSON array of anchored regexes; active tasks whose names match are terminated (and waited for) before this task starts"
         type: string
         default: "[]"
     steps:
@@ -2632,7 +2634,7 @@ commands:
               --arg timeout_active_tasks "<< parameters.timeout >>" \
               --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
               --argjson args '<< parameters.task_args >>' \
-              --argjson cancel_tasks '<< parameters.cancel_tasks >>' \
+              --argjson cancel_task_patterns '<< parameters.cancel_task_patterns >>' \
               '{
                 directory: $directory,
                 config: $config,
@@ -2641,7 +2643,7 @@ commands:
                 timeout_active_tasks: $timeout_active_tasks,
                 timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
                 args: $args,
-                cancel_tasks: $cancel_tasks
+                cancel_task_patterns: $cancel_task_patterns
               }')
 
             # Set execute permission
