@@ -14,9 +14,15 @@ import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { trEventComplete } from '../lib/mailer';
+import { parseStoredDate } from '../lib/utils';
+import runInSavepoint from '../lib/runInSavepoint';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForNewPocs,
+} from './notifications/trainingReport';
 import type {
   CreateEventRequest,
   EventShape,
@@ -120,7 +126,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     throw new Error('Missing required field: data.eventId');
   }
 
-  return EventReportPilot.create({
+  const created = await EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
@@ -128,6 +134,14 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     eventId,
     data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
+
+  // a notification failure must never fail the save
+  await runInSavepoint(
+    () => createNotificationForNewPocs(created, [], pocIds),
+    `Error creating POC added notifications for event ${created.id}:`
+  );
+
+  return created;
 }
 
 /**
@@ -137,6 +151,17 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
+  await runInSavepoint(async () => {
+    const sessions = await SessionReportPilot.findAll({
+      where: { eventId: id },
+      attributes: ['id'],
+    });
+    await Promise.all(
+      sessions.map((session) =>
+        archiveSessionNeedsActionNotifications(session.id, { removeLink: true })
+      )
+    );
+  }, `Error archiving session notifications for event ${id}:`);
   try {
     auditLogger.info(`Deleting session reports for event ${id}`);
     await SessionReportPilot.destroy({ where: { eventId: id } });
@@ -454,6 +479,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   } = (evt.data ?? {}) as Record<string, unknown>;
 
   const persistedData = { ...storedData, ...incomingData };
+  const previousPocIds = event.pocIds ?? [];
 
   await evt.update(
     {
@@ -465,6 +491,17 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       data: cast(JSON.stringify(persistedData), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
+  );
+
+  // a notification failure must never fail the save
+  await runInSavepoint(
+    () =>
+      createNotificationForNewPocs(
+        { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
+        previousPocIds,
+        pocIds
+      ),
+    `Error creating POC added notifications for event ${evt.id}:`
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
@@ -657,8 +694,10 @@ export async function getTrainingReportAlerts(
   };
 
   events.forEach((event: EventShape) => {
-    const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
-    const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+    const nineteenDaysAfterStart = parseStoredDate(event.data.startDate)
+      .startOf('day')
+      .add(19, 'days');
+    const nineteenDaysAfterEnd = parseStoredDate(event.data.endDate).startOf('day').add(19, 'days');
 
     // one alert triggers just for the owner
     if (ownerUserIdFilter(event, userId)) {
@@ -688,7 +727,9 @@ export async function getTrainingReportAlerts(
       );
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+        // Submitted sessions belong to the approval workflow alerts below.
+        if (isSessionSubmitted(event, session)) return;
+        const nineteenDaysAfterSessionStart = parseStoredDate(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
@@ -726,22 +767,19 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        // Submitted sessions belong to the approval workflow alerts below.
+        if (isSessionSubmitted(event, session)) return;
         // In the national center facilitation flow (Regional PD w/ NC + facilitation = national_center),
-        // POC is normally not involved — the Regional owner fills the POC-side
-        // pages and tracks completion via ownerComplete. However, POCs can now
-        // create sessions (canCreateSession() includes isPoc()), and when they
-        // do they still set pocComplete on submit (see SessionForm/index.js).
-        // Only skip the alert when we have evidence the session is using
-        // ownerComplete and not pocComplete (i.e. owner-created in the new
-        // flow); otherwise fall through and check pocComplete as usual.
-        if (
-          isNationalCenterFacilitator(event, session) &&
-          session.data.pocComplete === undefined &&
-          session.data.ownerComplete !== undefined
-        ) {
+        // POC is not part of submission — the Regional owner fills the POC-side
+        // pages and tracks completion via ownerComplete. pocComplete is read by
+        // truthiness: a missing key and an explicit false (e.g. from a form
+        // default) both mean the POC has nothing outstanding, so skip the alert.
+        // A POC who created and submitted the session has pocComplete: true,
+        // so there is nothing to alert on either way.
+        if (isNationalCenterFacilitator(event, session) && !session.data.pocComplete) {
           return;
         }
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+        const nineteenDaysAfterSessionStart = parseStoredDate(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
@@ -1160,7 +1198,7 @@ export async function csvImport(buffer: Buffer) {
       // (the single source of truth); it is not persisted back into the JSONB `data`.
       delete data.eventId;
 
-      await db.EventReportPilot.create({
+      const created = await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
@@ -1170,6 +1208,12 @@ export async function csvImport(buffer: Buffer) {
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,
       });
+
+      // a notification failure must never fail the import
+      await runInSavepoint(
+        () => createNotificationForNewPocs(created, [], pocs),
+        `Error creating POC added notifications for event ${created.id}:`
+      );
 
       return true;
     } catch (error) {
