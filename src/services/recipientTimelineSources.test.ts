@@ -56,6 +56,81 @@ describe('goal cycle divider metadata', () => {
   );
 });
 
+describe('goal status change details', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  const populateWithResponses = async (responses: unknown) => {
+    const findAll = jest.fn().mockResolvedValue([
+      {
+        id: 1,
+        oldStatus: null,
+        newStatus: 'Not Started',
+        userRoles: [],
+        goal: { id: 20, name: 'FEI goal', grant: { number: '14CH010001' }, responses },
+        get: () => false,
+      },
+    ]);
+    jest.spyOn(db.GoalStatusChange, 'unscoped').mockReturnValue({ findAll } as never);
+    const populated = await GOAL_STATUS_CHANGE_TIMELINE_SOURCE.populate([1], params);
+    return { findAll, details: populated.get(1)?.details ?? [] };
+  };
+
+  it('lists the root cause responses of FEI goals before the grant number', async () => {
+    const { findAll, details } = await populateWithResponses([
+      { response: ['Facilities', 'Workforce'] },
+    ]);
+    expect(details.map(({ label }) => label)).toEqual([
+      'Goal number',
+      'New status',
+      'Root cause',
+      'Grant number',
+    ]);
+    expect(details.find(({ label }) => label === 'Root cause')?.items).toEqual([
+      { text: 'Facilities, Workforce' },
+    ]);
+    expect(findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.arrayContaining([
+          expect.objectContaining({
+            as: 'goal',
+            include: expect.arrayContaining([
+              expect.objectContaining({ as: 'responses', required: false }),
+            ]),
+          }),
+        ]),
+      })
+    );
+  });
+
+  it.each([[undefined], [[]], [[{ response: null }]], [[{ response: ['  ', ''] }]]])(
+    'omits the root cause when the goal has no responses (%j)',
+    async (responses) => {
+      const { details } = await populateWithResponses(responses);
+      expect(details.map(({ label }) => label)).not.toContain('Root cause');
+    }
+  );
+});
+
+describe('goal status change index query', () => {
+  const buildQuery = () =>
+    GOAL_STATUS_CHANGE_TIMELINE_SOURCE.buildIndexQuery(params, {
+      add: (name) => `:goalStatusChange_${name}`,
+    });
+
+  it('only counts goals created on an activity report once the report is approved', () => {
+    const query = buildQuery();
+    expect(query).toContain(
+      '("goal"."createdVia" IS DISTINCT FROM \'activityReport\' OR "goal"."onApprovedAR" = TRUE)'
+    );
+  });
+
+  it('only treats a prior goal as closed if it was closed when the status change happened', () => {
+    const query = buildQuery();
+    expect(query).toContain('<= COALESCE("change"."performedAt", "change"."createdAt")');
+    expect(query).not.toContain('"previousGoal"."status" = \'Closed\'');
+  });
+});
+
 describe('ACTIVITY_REPORT_TIMELINE_SOURCE', () => {
   afterEach(() => jest.restoreAllMocks());
   afterAll(async () => db.sequelize.close());
@@ -195,7 +270,12 @@ describe('ACTIVITY_REPORT_TIMELINE_SOURCE', () => {
         { label: 'Delivery method', items: [{ text: 'In person' }] },
         {
           label: 'Citations addressed',
-          items: [{ text: 'ANC - 1302.90(b)(1-2) - Health' }],
+          items: [
+            {
+              text: 'ANC - 1302.90(b)(1-2) - Health',
+              link: '/recipient-tta-records/100/region/14/monitoring/citation',
+            },
+          ],
         },
         {
           label: 'Grant numbers',

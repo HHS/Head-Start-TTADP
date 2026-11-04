@@ -190,6 +190,39 @@ describe('TimelineEvent', () => {
     expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('routes internal detail links within the app without collapsing the event', () => {
+    render(
+      <MemoryRouter>
+        <TimelineEvent
+          event={{
+            ...event,
+            details: [
+              {
+                label: 'Citations addressed',
+                items: [
+                  {
+                    text: 'DEF - 1302.90(c)(1)(ii) - Significant Health and Safety Incidents',
+                    link: '/recipient-tta-records/1/region/4/monitoring/citation',
+                  },
+                ],
+              },
+            ],
+          }}
+          defaultExpanded
+        />
+        <Route path="/recipient-tta-records/1/region/4/monitoring/citation">
+          <p>Citation page</p>
+        </Route>
+      </MemoryRouter>
+    );
+    userEvent.click(
+      screen.getByRole('link', {
+        name: 'DEF - 1302.90(c)(1)(ii) - Significant Health and Safety Incidents',
+      })
+    );
+    expect(screen.getByText('Citation page')).toBeVisible();
+  });
+
   it('supports link-only events and announces external source links', () => {
     renderEvent(
       {
