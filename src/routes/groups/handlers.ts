@@ -68,9 +68,13 @@ type GroupGrantType = { id: number; regionId: number; recipientId?: number; stat
  */
 function parseGrantIds(grantIds: unknown): number[] | null {
   if (!Array.isArray(grantIds)) return null;
-  const ids = grantIds.map((grantId) => Number(grantId));
-  if (ids.some((grantId) => !Number.isInteger(grantId) || grantId <= 0)) return null;
-  return [...new Set(ids)];
+  // Only accept numbers and digit-only strings, so values like true or [1] are not coerced to 1
+  const isValidId = (grantId: unknown) =>
+    (typeof grantId === 'number' || (typeof grantId === 'string' && /^\d+$/.test(grantId))) &&
+    Number.isSafeInteger(Number(grantId)) &&
+    Number(grantId) > 0;
+  if (!grantIds.every(isValidId)) return null;
+  return [...new Set(grantIds.map((grantId) => Number(grantId)))];
 }
 
 /**

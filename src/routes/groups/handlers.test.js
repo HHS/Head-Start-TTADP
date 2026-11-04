@@ -456,7 +456,6 @@ describe('Groups Handlers', () => {
           body: {
             name: 'Group 1',
             grants: [],
-            grants: [],
           },
         },
         res
@@ -484,7 +483,6 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
-            grants: [],
             grants: [],
             coOwners: [2],
             individuals: [3],
@@ -524,7 +522,6 @@ describe('Groups Handlers', () => {
           body: {
             name: 'Group 1',
             grants: [],
-            grants: [],
             coOwners: [2],
             individuals: [3],
           },
@@ -559,7 +556,6 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
-            grants: [],
             grants: [],
             coOwners: [],
             individuals: [3],
@@ -596,7 +592,6 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
-            grants: [],
             grants: [],
             coOwners: [],
             individuals: [],
@@ -692,8 +687,17 @@ describe('Groups Handlers', () => {
         expect(createNewGroup).not.toHaveBeenCalled();
       });
 
-      it('rejects malformed grant ids', async () => {
-        await createGroup({ body: { name: 'Group 1', grants: ['1 OR 1=1'] } }, res);
+      it.each([
+        ['a SQL fragment', ['1 OR 1=1']],
+        ['a boolean', [true]],
+        ['a nested array', [[1]]],
+        ['an object that cannot be converted', [{ valueOf: null, toString: null }]],
+        ['a hex string', ['0x1']],
+        ['zero', [0]],
+        ['a decimal', [1.5]],
+        ['a non-array', 'all'],
+      ])('rejects malformed grant ids: %s', async (_label, grants) => {
+        await createGroup({ body: { name: 'Group 1', grants } }, res);
         expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
         expect(createNewGroup).not.toHaveBeenCalled();
       });
@@ -732,9 +736,18 @@ describe('Groups Handlers', () => {
         expect(editGroup).not.toHaveBeenCalled();
       });
 
-      it('rejects malformed grant ids', async () => {
+      it.each([
+        ['a SQL fragment', ['1 OR 1=1']],
+        ['a boolean', [true]],
+        ['a nested array', [[1]]],
+        ['an object that cannot be converted', [{ valueOf: null, toString: null }]],
+        ['a hex string', ['0x1']],
+        ['zero', [0]],
+        ['a decimal', [1.5]],
+        ['a non-array', 'all'],
+      ])('rejects malformed grant ids: %s', async (_label, grants) => {
         group.mockResolvedValue(ownedGroup([allGrants[0]]));
-        await updateGroup({ body: { id: 1, name: 'Group 1', grants: 'all' } }, res);
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants } }, res);
         expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
         expect(editGroup).not.toHaveBeenCalled();
       });
