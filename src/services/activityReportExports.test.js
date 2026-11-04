@@ -214,6 +214,7 @@ describe('activityReportExports', () => {
     const REGION_ID = 20;
     let report;
     let authorlessReport;
+    let recipientlessReport;
 
     beforeAll(async () => {
       report = await createReport({
@@ -225,10 +226,18 @@ describe('activityReportExports', () => {
         activityRecipients: [{ grantId: getUniqueId() }],
       });
       await authorlessReport.update({ userId: null });
+      recipientlessReport = await createReport({
+        regionId: REGION_ID,
+        activityRecipients: [],
+      });
     });
 
     afterAll(async () => {
-      await Promise.all([destroyReport(report), destroyReport(authorlessReport)]);
+      await Promise.all([
+        destroyReport(report),
+        destroyReport(authorlessReport),
+        destroyReport(recipientlessReport),
+      ]);
     });
 
     it('emits one CSV row for the in-scope report, with a BOM and header', async () => {
@@ -252,6 +261,17 @@ describe('activityReportExports', () => {
       });
       expect(rowCount).toBe(1);
       expect(csv).toContain(`R${REGION_ID}-AR-${authorlessReport.id}`);
+    });
+
+    it('preserves approved reports without recipients in selected exports', async () => {
+      const { csv, rowCount } = await collect({
+        dataSet: 'activity-reports',
+        reportIds: [report.id, recipientlessReport.id],
+        regionIds: [REGION_ID],
+      });
+      expect(rowCount).toBe(2);
+      expect(csv).toContain(`R${REGION_ID}-AR-${report.id}`);
+      expect(csv).toContain(`R${REGION_ID}-AR-${recipientlessReport.id}`);
     });
 
     it('excludes the report when its region is not permitted', async () => {
@@ -279,6 +299,7 @@ describe('activityReportExports', () => {
         regionIds: [REGION_ID],
       });
       expect(csv).toContain(`R${REGION_ID}-AR-${report.id}`);
+      expect(csv).toContain(`R${REGION_ID}-AR-${recipientlessReport.id}`);
     });
 
     it('applies filters and accessible regions to full-table exports', async () => {

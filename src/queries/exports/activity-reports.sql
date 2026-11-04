@@ -420,7 +420,7 @@ SELECT
   approved_at_et,
   approved_at_local
 FROM ars
-JOIN recipients ON arid = r_arid
+LEFT JOIN recipients ON arid = r_arid
 LEFT JOIN collaborators ON arid = c_arid
 LEFT JOIN approvers ON arid = a_arid
 LEFT JOIN ar_attachments ON arid = att_arid
