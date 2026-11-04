@@ -10,6 +10,13 @@ const HEADING_CLASSES = {
   default: 'font-sans-lg',
 };
 
+// USWDS spacing units, e.g. 2 -> margin-bottom-2
+const DEFAULT_SPACING = {
+  title: 3,
+  section: 3,
+  row: 2,
+};
+
 const Status = ({ statusKey }) => {
   const statusData = STATUSES[statusKey];
   const defaultData = STATUSES['Not Started'];
@@ -35,11 +42,17 @@ Status.propTypes = {
   statusKey: PropTypes.string.isRequired,
 };
 
-export default function ReadOnlyContent({ title, sections, className, displayStatus }) {
+export default function ReadOnlyContent({ title, sections, className, displayStatus, spacing }) {
+  const {
+    title: titleSpacing,
+    section: sectionSpacing,
+    row: rowSpacing,
+  } = { ...DEFAULT_SPACING, ...spacing };
+
   return (
     <div className={`ttahub-read-only-content-section-container ${className}`}>
       <div className="display-flex">
-        <h2 className="font-serif-xl margin-bottom-3 margin-top-0">{title}</h2>
+        <h2 className={`font-serif-xl margin-bottom-${titleSpacing} margin-top-0`}>{title}</h2>
         {displayStatus && <Status statusKey={displayStatus} />}
       </div>
       {sections.map((section) => {
@@ -48,7 +61,7 @@ export default function ReadOnlyContent({ title, sections, className, displaySta
         const headingFontClass = HEADING_CLASSES[section.headingLevel] || HEADING_CLASSES.default;
         return (
           <div
-            className="ttahub-read-only-content-section padding-bottom-3 margin-0"
+            className={`ttahub-read-only-content-section padding-bottom-${sectionSpacing} margin-0`}
             key={uuidv4()}
           >
             {section.heading
@@ -71,7 +84,9 @@ export default function ReadOnlyContent({ title, sections, className, displaySta
                     <div className="ttahub-read-only-content-section--heading--section-row-title text-bold margin-0">
                       {subheading}
                     </div>
-                    <div className="ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-2">
+                    <div
+                      className={`ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-${rowSpacing}`}
+                    >
                       {renderData(subheading, section.data[subheading])}
                     </div>
                   </>
@@ -81,7 +96,9 @@ export default function ReadOnlyContent({ title, sections, className, displaySta
                     <div className="ttahub-read-only-content-section--heading--section-row-title text-bold margin-0">
                       {subheading}
                     </div>
-                    <div className="ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-2 font-sans-lg">
+                    <div
+                      className={`ttahub-read-only-content-section--heading--section-row-data margin-0 margin-bottom-${rowSpacing} font-sans-lg`}
+                    >
                       {renderData(subheading, section.data[subheading])}
                     </div>
                   </div>
@@ -106,9 +123,16 @@ ReadOnlyContent.propTypes = {
     })
   ).isRequired,
   displayStatus: PropTypes.string,
+  // USWDS spacing units; any omitted key keeps its default
+  spacing: PropTypes.shape({
+    title: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    section: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    row: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  }),
 };
 
 ReadOnlyContent.defaultProps = {
   className: '',
   displayStatus: '',
+  spacing: {},
 };

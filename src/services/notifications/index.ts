@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { NOTIFICATION_CONFIGURATION } from '../../constants';
+import normalizeSortDir, { type SortDirection } from '../../lib/normalizeSortDir';
 import { auditLogger, logger } from '../../logger';
 import db from '../../models';
 import type {
@@ -24,10 +25,8 @@ const EXPIRED_NOTIFICATION_DAYS = 30;
 // All should have a deterministic secondary sort (in this case, ID) to ensure stable pagination
 const ALLOWED_SORT_FIELDS = ['all', 'action_needed', 'informational', 'type'] as const;
 type AllowedSortField = (typeof ALLOWED_SORT_FIELDS)[number];
-const ALLOWED_SORT_DIRECTIONS = ['ASC', 'DESC'] as const;
-type AllowedSortDirection = (typeof ALLOWED_SORT_DIRECTIONS)[number];
 
-function buildOrder(sortBy: AllowedSortField, direction: AllowedSortDirection): [string, string][] {
+function buildOrder(sortBy: AllowedSortField, direction: SortDirection): [string, string][] {
   switch (sortBy) {
     case 'action_needed':
       // actionable=true floats to the top, then by createdAt in the requested direction
@@ -596,10 +595,7 @@ async function getNotifications(
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField)
     ? (sortBy as AllowedSortField)
     : 'action_needed';
-  const normalizedDirection = sortDir.toUpperCase();
-  const direction = ALLOWED_SORT_DIRECTIONS.includes(normalizedDirection as AllowedSortDirection)
-    ? (normalizedDirection as AllowedSortDirection)
-    : 'DESC';
+  const direction = normalizeSortDir(sortDir);
 
   const rawLimit = Number(limit) || NOTIFICATION_PER_PAGE;
   const limitValue = Math.max(1, Math.min(rawLimit, 100));
