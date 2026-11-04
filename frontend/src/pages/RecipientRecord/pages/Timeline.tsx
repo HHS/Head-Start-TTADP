@@ -6,6 +6,7 @@ import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useHistory, useLocation } from 'react-router-dom';
 import Container from '../../../components/Container';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
@@ -205,25 +206,13 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
             Get help using filters
           </DrawerTriggerButton>
           <Drawer title="TTA timeline filters" triggerRef={filterHelpDrawerRef}>
-            <p className="usa-prose">
-              Choose filters and select Apply filters to update the timeline. Remove an applied
-              filter using the remove button on its pill, or choose Clear all filters and apply to
-              view all dates.
-            </p>
-            <p className="usa-prose">
-              Use View to change the date order, show Monitoring related TTA, or group TTA by RTTAPA
-              goal category. Select Hide multi-recipient communications to exclude communications
-              associated with more than one recipient.
-            </p>
+            <ContentFromFeedByTag tagName="ttahub-timeline-filters" />
           </Drawer>
           <DrawerTriggerButton drawerTriggerRef={aboutDrawerRef} customClass="">
             About this data
           </DrawerTriggerButton>
           <Drawer title="About the TTA timeline" triggerRef={aboutDrawerRef}>
-            <p className="usa-prose">
-              The TTA timeline brings together TTA activity, communications, goals, requests,
-              training sessions, and monitoring events for this recipient.
-            </p>
+            <ContentFromFeedByTag tagName="ttahub-timeline" />
           </Drawer>
         </div>
 
