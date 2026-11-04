@@ -406,6 +406,7 @@ describe('Groups Handlers', () => {
         },
         body: {
           name: 'Group 1',
+          grants: [],
           coOwners: [],
           individuals: [],
         },
@@ -454,6 +455,8 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
+            grants: [],
           },
         },
         res
@@ -481,6 +484,8 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
+            grants: [],
             coOwners: [2],
             individuals: [3],
           },
@@ -518,6 +523,8 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
+            grants: [],
             coOwners: [2],
             individuals: [3],
           },
@@ -552,6 +559,8 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
+            grants: [],
             coOwners: [],
             individuals: [3],
           },
@@ -587,6 +596,8 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
+            grants: [],
             coOwners: [],
             individuals: [],
           },
@@ -633,6 +644,110 @@ describe('Groups Handlers', () => {
       editGroup.mockRejectedValue(new Error('Error'));
       await updateGroup(req, res);
       expect(res.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('grant authorization', () => {
+    const ActualGroupPolicy = jest.requireActual('../../policies/group').default;
+    const userId = 1;
+    // userById is mocked to grant every user access to region 1 only
+    const allGrants = [
+      { id: 1, regionId: 1, recipientId: 1, status: 'Active' },
+      { id: 2, regionId: 2, recipientId: 2, status: 'Active' },
+      { id: 3, regionId: 1, recipientId: 3, status: 'Active' },
+    ];
+    let res;
+
+    beforeEach(() => {
+      res = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: jest.fn() })),
+      };
+      currentUserId.mockReturnValue(userId);
+      checkGroupNameAvailable.mockResolvedValue(true);
+      GroupPolicy.mockImplementation((...args) => new ActualGroupPolicy(...args));
+      Grant.findAll.mockImplementation(({ where }) =>
+        allGrants.filter(
+          (grant) => where.id.includes(grant.id) && (!where.status || grant.status === where.status)
+        )
+      );
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      Grant.findAll.mockReset();
+    });
+
+    describe('createGroup', () => {
+      it('rejects grants outside the user regions without creating the group', async () => {
+        await createGroup({ body: { name: 'Group 1', grants: [1, 2] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(createNewGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects grant ids that do not exist', async () => {
+        await createGroup({ body: { name: 'Group 1', grants: [1, 999] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(createNewGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects malformed grant ids', async () => {
+        await createGroup({ body: { name: 'Group 1', grants: ['1 OR 1=1'] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+        expect(createNewGroup).not.toHaveBeenCalled();
+      });
+
+      it('persists the resolved grant ids when the user can access them', async () => {
+        const groupResponse = { id: 1, name: 'Group 1' };
+        createNewGroup.mockResolvedValue(groupResponse);
+        await createGroup({ body: { name: 'Group 1', grants: ['1', 1, 3] } }, res);
+        expect(createNewGroup).toHaveBeenCalledWith(expect.objectContaining({ grants: [1, 3] }));
+        expect(res.json).toHaveBeenCalledWith(groupResponse);
+      });
+    });
+
+    describe('updateGroup', () => {
+      const ownedGroup = (grants) => ({
+        id: 1,
+        name: 'Group 1',
+        isPublic: false,
+        grants,
+        groupCollaborators: [
+          { user: { id: userId }, collaboratorType: { name: GROUP_COLLABORATORS.CREATOR } },
+        ],
+      });
+
+      it('rejects newly added grants outside the user regions without editing', async () => {
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [1, 2] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(editGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects newly added grant ids that do not exist', async () => {
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [1, 999] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(editGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects malformed grant ids', async () => {
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: 'all' } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+        expect(editGroup).not.toHaveBeenCalled();
+      });
+
+      it('only authorizes grants that are newly added to the group', async () => {
+        const groupResponse = { id: 1, name: 'Group 1' };
+        editGroup.mockResolvedValue(groupResponse);
+        // grant 2 is already on the group, grant 3 is being added
+        group.mockResolvedValue(ownedGroup([allGrants[1]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [2, 3] } }, res);
+        expect(editGroup).toHaveBeenCalledWith(1, expect.objectContaining({ grants: [2, 3] }));
+        expect(res.json).toHaveBeenCalledWith(groupResponse);
+      });
     });
   });
 
