@@ -2,6 +2,7 @@
 
 import { DECIMAL_BASE } from '@ttahub/common';
 import type { Request, Response } from 'express';
+import { BAD_REQUEST, FORBIDDEN } from 'http-codes';
 import { goalRegionsById } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import parsePositiveInteger from '../../lib/parsePositiveInteger';
@@ -177,14 +178,14 @@ export async function getPrompts(req: Request, res: Response) {
         isForActivityReport !== 'true' &&
         isForActivityReport !== 'false')
     ) {
-      res.sendStatus(400);
+      res.sendStatus(BAD_REQUEST);
       return;
     }
 
     if (parsedGoalIds.length) {
       const regionIds = await goalRegionsById(parsedGoalIds);
       if (!regionIds.length) {
-        res.sendStatus(403);
+        res.sendStatus(FORBIDDEN);
         return;
       }
       if (!(await checkUserRegionAccess(req, res, regionIds))) return;
