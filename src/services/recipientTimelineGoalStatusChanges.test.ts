@@ -119,7 +119,7 @@ describe('goal status change timeline integration', () => {
     }
   });
 
-  it('retains the category of an RTTAPA goal with a NULL status', async () => {
+  it('keeps the category of an RTTAPA goal with a NULL status in the lookup but lists no empty accordion', async () => {
     const originalStatus = goals[0].status;
     const originalIsRttapa = goals[0].isRttapa;
     try {
@@ -128,9 +128,8 @@ describe('goal status change timeline integration', () => {
       expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual(
         expected
       );
-      expect((await getRecipientTimeline({ ...params, view: 'goals' })).categories).toEqual(
-        expected
-      );
+      // Goals without a status have no timeline events, so the grouped view has nothing to show.
+      expect((await getRecipientTimeline({ ...params, view: 'goals' })).categories).toEqual([]);
     } finally {
       await goals[0].update(
         { status: originalStatus, isRttapa: originalIsRttapa },

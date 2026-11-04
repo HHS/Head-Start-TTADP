@@ -31,6 +31,16 @@ const batch = (start, length) =>
     details: [],
     links: [],
   }));
+// Emulates the API's keyset paging. A cursor encodes how many events came before it.
+const pageAt = (total, cursor, size = 25) => {
+  const start = cursor ? Number(cursor.replace('after-', '')) : 0;
+  const length = Math.min(size, total - start);
+  return {
+    count: total,
+    events: batch(start + 1, length),
+    ...(start + length < total ? { nextCursor: `after-${start + length}` } : {}),
+  };
+};
 const view = {
   mode: 'chronological',
   recipientId: '401',
@@ -184,7 +194,6 @@ describe('timeline navigation restoration', () => {
         '1',
         expect.objectContaining({
           view: 'monitoring',
-          offset: 0,
           excludeMultiRecipientCommunications: true,
           filters: [
             expect.objectContaining({ topic: 'eventType' }),
@@ -202,7 +211,6 @@ describe('timeline navigation restoration', () => {
         '1',
         expect.objectContaining({
           view: 'goals',
-          offset: 0,
           excludeMultiRecipientCommunications: true,
           filters: [expect.objectContaining({ topic: 'eventType' })],
         })
@@ -253,7 +261,6 @@ describe('timeline navigation restoration', () => {
         expect(request.view).toBeUndefined();
         expect(request).toMatchObject({
           direction,
-          offset: 0,
           excludeMultiRecipientCommunications: true,
         });
         expect(request.filters).toHaveLength(otherFilters.length);
@@ -303,8 +310,8 @@ describe('timeline navigation restoration', () => {
       ];
       const categories = [{ label: 'Monitoring', statuses: ['In Progress'] }];
       getRecipientTimeline
-        .mockResolvedValueOnce({ count: 26, events: first, categories })
-        .mockResolvedValueOnce({ count: 26, events: second, categories });
+        .mockResolvedValueOnce({ count: 26, events: first, categories, nextCursor: 'after-25' })
+        .mockResolvedValueOnce({ count: 26, events: second });
       renderTimeline(historyAt({ timelineView: { ...view, mode } }));
       expect(await screen.findByText('Goal G-109560 reopened')).toBeVisible();
       userEvent.click(screen.getByRole('button', { name: 'Load more events' }));
@@ -335,7 +342,9 @@ describe('timeline navigation restoration', () => {
         ];
         const page = (offset) => ({
           count: 75,
-          categories,
+          // Categories come with the first page only.
+          ...(offset === 0 ? { categories } : {}),
+          ...(offset + 25 < 75 ? { nextCursor: `after-${offset + 25}` } : {}),
           events: batch(offset + 1, 25).map((event) => ({
             ...event,
             tags: categories.map(({ label }) => ({ label, flagged: false })),
@@ -373,13 +382,63 @@ describe('timeline navigation restoration', () => {
         await waitFor(() => expect(observers.length).toBeGreaterThan(observerCount));
         act(() => observers.at(-1).callback([{ isIntersecting: true }]));
         await waitFor(() => expect(getRecipientTimeline).toHaveBeenCalledTimes(3));
-        expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 50]);
+        expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+          undefined,
+          'after-25',
+          'after-50',
+        ]);
         await screen.findByRole('heading', { name: 'Event 75' });
       } finally {
         window.IntersectionObserver = originalObserver;
       }
     }
   );
+
+  it('lists every category from the first page, before their events have loaded', async () => {
+    const categories = [
+      { label: 'Family Support', statuses: [] },
+      { label: 'Governance', statuses: [] },
+      { label: 'Monitoring', statuses: ['In Progress'] },
+    ];
+    const withTag = (label, items) =>
+      items.map((event) => ({ ...event, tags: [{ label, flagged: false }] }));
+    getRecipientTimeline
+      .mockResolvedValueOnce({
+        count: 30,
+        categories,
+        events: withTag('Monitoring', batch(1, 25)),
+        nextCursor: 'after-25',
+      })
+      .mockResolvedValueOnce({ count: 30, events: withTag('Governance', batch(26, 5)) });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    await screen.findByRole('list', { name: 'Monitoring timeline events' });
+    const accordionButtons = Array.from(
+      screen
+        .getByRole('list', { name: 'Timeline events' })
+        .querySelectorAll('.usa-accordion__button')
+    );
+    expect(accordionButtons.map((button) => button.textContent.trim())).toEqual([
+      'Family Support',
+      'Governance',
+      'MonitoringIn Progress',
+    ]);
+    // Categories with nothing loaded yet say so instead of showing an empty accordion.
+    expect(screen.getAllByText('Events in this category appear as more events load.')).toHaveLength(
+      2
+    );
+
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+    );
+    const governance = await screen.findByRole('list', { name: 'Governance timeline events' });
+    expect(within(governance).getAllByRole('article')).toHaveLength(5);
+    // Nothing is left to load, and no event matched Family Support, so it no longer shows.
+    expect(screen.queryByRole('button', { name: /Family Support/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Events in this category appear as more events load.')
+    ).not.toBeInTheDocument();
+    expect(getRecipientTimeline).toHaveBeenCalledTimes(2);
+  });
 
   it('groups multi-category events alphabetically in independently expanded accordions', async () => {
     const events = batch(1, 2).map((event) => ({
@@ -447,7 +506,6 @@ describe('timeline navigation restoration', () => {
           '401',
           '1',
           expect.objectContaining({
-            offset: 0,
             filters: [
               expect.objectContaining({
                 topic: 'purpose',
@@ -487,7 +545,6 @@ describe('timeline navigation restoration', () => {
         '401',
         '1',
         expect.objectContaining({
-          offset: 0,
           filters: [expect.objectContaining({ topic: 'date', condition: 'is' })],
         })
       )
@@ -501,15 +558,15 @@ describe('timeline navigation restoration', () => {
       expect(getRecipientTimeline).toHaveBeenLastCalledWith(
         '401',
         '1',
-        expect.objectContaining({ filters: [], offset: 0 })
+        expect.objectContaining({ filters: [] })
       )
     );
     expect(screen.queryByText('Date', { selector: 'strong' })).not.toBeInTheDocument();
   });
 
   it('saves loaded depth and visible event without extra history entries, then restores on refresh', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = historyAt({ unrelated: 'preserved' });
     const { unmount } = renderTimeline(history);
@@ -535,7 +592,11 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 50]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+      'after-50',
+    ]);
     expect(screen.getAllByRole('article')).toHaveLength(75);
     expect(screen.queryByText('Restoring timeline position…')).not.toBeInTheDocument();
   });
@@ -544,8 +605,8 @@ describe('timeline navigation restoration', () => {
     mockRealFilters();
     const filters = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['TTA activity'] }];
     const search = `?${filtersToQueryString(filters)}`;
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 125, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(125, cursor))
     );
     const history = createMemoryHistory({
       initialEntries: ['/detail', `/timeline${search}`],
@@ -576,8 +637,8 @@ describe('timeline navigation restoration', () => {
   it('does not recreate a filtered URL when Back returns to an unfiltered timeline', async () => {
     window.sessionStorage.clear();
     const realFilters = mockRealFilters();
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset, filters }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, filters.length ? 25 : 1) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor, filters }) =>
+      Promise.resolve(pageAt(100, cursor, filters.length ? 25 : 1))
     );
     const history = createMemoryHistory({
       initialEntries: ['/detail', '/timeline'],
@@ -637,8 +698,8 @@ describe('timeline navigation restoration', () => {
   });
 
   it('does not replace location state while at the top, even after several slices', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = historyAt({ unrelated: 'preserved' });
     const { key } = history.location;
@@ -656,8 +717,8 @@ describe('timeline navigation restoration', () => {
   });
 
   it('flushes pending scroll saves before a link and restores on browser Back', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = historyAt();
     renderTimeline(history);
@@ -677,7 +738,10 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+    ]);
     act(() => history.goForward());
     expect(screen.getByText('Detail page')).toBeVisible();
   });
@@ -709,7 +773,6 @@ describe('timeline navigation restoration', () => {
       expect.objectContaining({
         direction: 'asc',
         excludeMultiRecipientCommunications: true,
-        offset: 0,
       })
     );
     expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('asc');
@@ -720,10 +783,10 @@ describe('timeline navigation restoration', () => {
 
   it('pauses restoration after an error and resumes at the failed slice on retry', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 100, events: batch(1, 25) })
+      .mockResolvedValueOnce(pageAt(100))
       .mockRejectedValueOnce(new Error('offline'))
-      .mockResolvedValueOnce({ count: 100, events: batch(26, 25) })
-      .mockResolvedValueOnce({ count: 100, events: batch(51, 25) });
+      .mockResolvedValueOnce(pageAt(100, 'after-25'))
+      .mockResolvedValueOnce(pageAt(100, 'after-50'));
     renderTimeline(historyAt({ timelineView: view, timelinePosition: position }));
     await screen.findByRole('alert');
     expect(window.scrollTo).not.toHaveBeenCalled();
@@ -732,7 +795,12 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 25, 50]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+      'after-25',
+      'after-50',
+    ]);
   });
 
   it('stops at the new end and falls back to the saved scroll if the anchor was deleted', async () => {
@@ -747,8 +815,8 @@ describe('timeline navigation restoration', () => {
   });
 
   it('restores when navigating Forward to the timeline', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = createMemoryHistory({
       initialIndex: 0,
@@ -762,11 +830,19 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 50]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+      'after-50',
+    ]);
   });
 
   it('restores the raw loaded depth even when batches contain duplicate events', async () => {
-    getRecipientTimeline.mockResolvedValue({ count: 75, events: batch(1, 25) });
+    getRecipientTimeline.mockResolvedValue({
+      count: 75,
+      events: batch(1, 25),
+      nextCursor: 'after-25',
+    });
     renderTimeline(
       historyAt({
         timelineView: view,
@@ -788,7 +864,7 @@ describe('timeline navigation restoration', () => {
   it('cancels restoration when sort changes and ignores the old pending slice', async () => {
     let resolveOld;
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 100, events: batch(1, 25) })
+      .mockResolvedValueOnce(pageAt(100))
       .mockReturnValueOnce(
         new Promise((resolve) => {
           resolveOld = resolve;
@@ -809,7 +885,7 @@ describe('timeline navigation restoration', () => {
     expect(getRecipientTimeline).toHaveBeenLastCalledWith(
       '401',
       '1',
-      expect.objectContaining({ direction: 'asc', offset: 0 })
+      expect.objectContaining({ direction: 'asc' })
     );
   });
 
@@ -839,8 +915,8 @@ describe('timeline navigation restoration', () => {
       { id: 'next', topic: 'eventType', condition: 'is', query: ['Email communication'] },
     ];
     const realFilters = mockRealFilters();
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = createMemoryHistory({
       initialEntries: [`/timeline?${filtersToQueryString(firstFilters)}`],
@@ -890,8 +966,8 @@ describe('timeline navigation restoration', () => {
     // Back remounts with filters read from the URL. A date "is" value comes back as an array,
     // and the select case guards the multi-value merge in queryStringToFilters.
     const realFilters = mockRealFilters();
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const urlFilters = [{ id: 'url', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
     const history = createMemoryHistory({
@@ -905,7 +981,7 @@ describe('timeline navigation restoration', () => {
       expect(getRecipientTimeline).toHaveBeenCalledWith(
         '401',
         '1',
-        expect.objectContaining({ filters: [filter], offset: 0 })
+        expect.objectContaining({ filters: [filter] })
       )
     );
     await screen.findByRole('heading', { name: 'Event 25' });
@@ -921,7 +997,10 @@ describe('timeline navigation restoration', () => {
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
     expect(history.location.search).toBe(`?${filtersToQueryString([filter])}`);
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+    ]);
   });
 
   it.each([

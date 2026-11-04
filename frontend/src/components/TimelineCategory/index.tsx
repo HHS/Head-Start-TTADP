@@ -13,6 +13,8 @@ interface Props {
   events: RecipientTimelineEvent[];
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  /** More events are still loading, so an empty category may fill in as the user scrolls. */
+  awaitingEvents?: boolean;
 }
 
 export default function TimelineCategory({
@@ -20,6 +22,7 @@ export default function TimelineCategory({
   events,
   expanded: controlledExpanded,
   onExpandedChange,
+  awaitingEvents = false,
 }: Props): React.ReactElement {
   const [localExpanded, setExpanded] = useState(true);
   const expanded = controlledExpanded ?? localExpanded;
@@ -49,20 +52,28 @@ export default function TimelineCategory({
           </span>
         }
         content={
-          <ol className="usa-list--unstyled" aria-label={`${category.label} timeline events`}>
-            {events.map((event, index) => (
-              <li
-                key={JSON.stringify([event.source, event.sourceId])}
-                data-timeline-event={JSON.stringify([event.source, event.sourceId, category.label])}
-              >
-                <TimelineEvent
-                  event={event}
-                  isLast={index === events.length - 1}
-                  showGoalCycleDivider
-                />
-              </li>
-            ))}
-          </ol>
+          events.length === 0 && awaitingEvents ? (
+            <p className="margin-0">Events in this category appear as more events load.</p>
+          ) : (
+            <ol className="usa-list--unstyled" aria-label={`${category.label} timeline events`}>
+              {events.map((event, index) => (
+                <li
+                  key={JSON.stringify([event.source, event.sourceId])}
+                  data-timeline-event={JSON.stringify([
+                    event.source,
+                    event.sourceId,
+                    category.label,
+                  ])}
+                >
+                  <TimelineEvent
+                    event={event}
+                    isLast={index === events.length - 1}
+                    showGoalCycleDivider
+                  />
+                </li>
+              ))}
+            </ol>
+          )
         }
       />
     </div>

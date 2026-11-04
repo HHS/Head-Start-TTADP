@@ -52,20 +52,24 @@ describe('useRecipientTimeline', () => {
   it('loads 25 automatically, locks concurrent requests, retains events and deduplicates batches', async () => {
     const next = deferred();
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 50, events: events(1, 25) })
+      .mockResolvedValueOnce({ count: 50, events: events(1, 25), nextCursor: 'after-25' })
       .mockReturnValueOnce(next.promise);
     const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));
     await waitFor(() => expect(result.current.events).toHaveLength(25));
     expect(getRecipientTimeline).toHaveBeenCalledWith('401', '1', {
       ...options,
       limit: 25,
-      offset: 0,
     });
     act(() => {
       result.current.loadMore();
       result.current.loadMore();
     });
     expect(getRecipientTimeline).toHaveBeenCalledTimes(2);
+    expect(getRecipientTimeline).toHaveBeenLastCalledWith('401', '1', {
+      ...options,
+      limit: 25,
+      cursor: 'after-25',
+    });
     expect(result.current.loading).toBe(true);
     expect(result.current.events).toHaveLength(25);
     await act(async () => next.resolve({ count: 50, events: events(25, 25) }));
@@ -86,7 +90,7 @@ describe('useRecipientTimeline', () => {
     const firstPage = [...events(1, 24), communication];
     const distinctEvent = events(25, 1)[0];
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 27, events: firstPage })
+      .mockResolvedValueOnce({ count: 27, events: firstPage, nextCursor: 'after-25' })
       .mockResolvedValueOnce({
         count: 27,
         events: [{ ...communication, eventType: 'Phone communication' }, distinctEvent],
@@ -100,9 +104,9 @@ describe('useRecipientTimeline', () => {
     expect(result.current.events).toEqual([...firstPage, distinctEvent]);
   });
 
-  it('retries a failed slice at the same offset without losing loaded events', async () => {
+  it('retries a failed slice at the same cursor without losing loaded events', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 26, events: events(1, 25) })
+      .mockResolvedValueOnce({ count: 26, events: events(1, 25), nextCursor: 'after-25' })
       .mockRejectedValueOnce(new Error('failed'))
       .mockResolvedValueOnce({ count: 26, events: events(26, 1) });
     const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));
@@ -116,8 +120,9 @@ describe('useRecipientTimeline', () => {
       result.current.loadMore();
     });
     await waitFor(() => expect(result.current.events).toHaveLength(26));
-    expect(getRecipientTimeline.mock.calls.slice(1).map((call) => call[2].offset)).toEqual([
-      25, 25,
+    expect(getRecipientTimeline.mock.calls.slice(1).map((call) => call[2].cursor)).toEqual([
+      'after-25',
+      'after-25',
     ]);
     expect(result.current.error).toBe('');
   });
@@ -133,7 +138,7 @@ describe('useRecipientTimeline', () => {
     async (changes) => {
       const old = deferred();
       getRecipientTimeline
-        .mockResolvedValueOnce({ count: 50, events: events(1, 25) })
+        .mockResolvedValueOnce({ count: 50, events: events(1, 25), nextCursor: 'after-25' })
         .mockReturnValueOnce(old.promise)
         .mockResolvedValueOnce({ count: 1, events: events(100, 1) });
       const { result, rerender, waitFor } = renderHook(
@@ -149,7 +154,8 @@ describe('useRecipientTimeline', () => {
       await waitFor(() => expect(result.current.events).toEqual(events(100, 1)));
       await act(async () => old.resolve({ count: 50, events: events(26, 25) }));
       expect(result.current.events).toEqual(events(100, 1));
-      expect(getRecipientTimeline.mock.calls[2][2].offset).toBe(0);
+      // The new query starts from the top rather than the old query's cursor.
+      expect(getRecipientTimeline.mock.calls[2][2].cursor).toBeUndefined();
     }
   );
 
@@ -166,7 +172,18 @@ describe('useRecipientTimeline', () => {
     consoleError.mockRestore();
   });
 
-  it('stops paginating when the response count is missing', async () => {
+  it('stops paginating when the response has no next cursor, even if the count is higher', async () => {
+    getRecipientTimeline.mockResolvedValueOnce({ count: 100, events: events(1, 25) });
+    const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));
+    await waitFor(() => expect(result.current.events).toHaveLength(25));
+    expect(result.current.hasMore).toBe(false);
+    act(() => {
+      result.current.loadMore();
+    });
+    expect(getRecipientTimeline).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to the loaded total when the response count is missing', async () => {
     getRecipientTimeline.mockResolvedValueOnce({ events: events(1, 25) });
     const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));
     await waitFor(() => expect(result.current.events).toHaveLength(25));
@@ -189,7 +206,7 @@ describe('useRecipientTimeline', () => {
 
   it('never reports a count lower than the number of loaded events', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 30, events: events(1, 25) })
+      .mockResolvedValueOnce({ count: 30, events: events(1, 25), nextCursor: 'after-25' })
       .mockResolvedValueOnce({ count: 20, events: events(26, 5) });
     const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));
     await waitFor(() => expect(result.current.events).toHaveLength(25));
@@ -202,7 +219,7 @@ describe('useRecipientTimeline', () => {
 
   it('clears previous events in the same render that the query changes', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 50, events: events(1, 25) })
+      .mockResolvedValueOnce({ count: 50, events: events(1, 25), nextCursor: 'after-25' })
       .mockReturnValueOnce(new Promise(() => {}));
     const renders = [];
     const { result, rerender, waitFor } = renderHook(
@@ -222,6 +239,45 @@ describe('useRecipientTimeline', () => {
     expect(committed.length).toBeGreaterThan(0);
     expect(committed.every(({ events: rendered }) => rendered.length === 0)).toBe(true);
     expect(committed.every(({ loading }) => loading)).toBe(true);
+  });
+
+  it('shows every event that still exists when a loaded event is deleted before the next slice', async () => {
+    // Events 1 to 25 are loaded, then event 3 is deleted elsewhere. The cursor still points
+    // past event 25, so event 26 is the next row; an offset of 25 would have skipped it.
+    getRecipientTimeline
+      .mockResolvedValueOnce({ count: 30, events: events(1, 25), nextCursor: 'after-25' })
+      .mockResolvedValueOnce({ count: 29, events: events(26, 4) });
+    const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));
+    await waitFor(() => expect(result.current.events).toHaveLength(25));
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.events).toHaveLength(29));
+    expect(result.current.events.map(({ sourceId }) => sourceId)).toEqual(
+      Array.from({ length: 29 }, (_, index) => index + 1)
+    );
+    expect(result.current.hasMore).toBe(false);
+  });
+
+  it('keeps the categories from the first slice when later slices omit them', async () => {
+    const categories = [{ label: 'Monitoring', statuses: ['In Progress'] }];
+    getRecipientTimeline
+      .mockResolvedValueOnce({
+        count: 30,
+        events: events(1, 25),
+        categories,
+        nextCursor: 'after-25',
+      })
+      .mockResolvedValueOnce({ count: 30, events: events(26, 5) });
+    const { result, waitFor } = renderHook(() =>
+      useRecipientTimeline('401', '1', { ...options, view: 'goals' })
+    );
+    await waitFor(() => expect(result.current.events).toHaveLength(25));
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.events).toHaveLength(30));
+    expect(result.current.categories).toEqual(categories);
   });
 
   it('stops on an empty slice even if the count has changed', async () => {

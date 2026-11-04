@@ -36,12 +36,20 @@ interface TimelineQueryRow {
   source: string | null;
   sourceId: number | string | null;
   date: string | null;
+  cursorOccurredAt: string | null;
   eventType: string | null;
 }
 
 export interface TimelineIndexResponse {
   count: number;
   events: RecipientTimelineEventIndex[];
+  nextCursor?: string;
+}
+
+interface TimelineCursor {
+  occurredAt: string;
+  source: string;
+  sourceId: number;
 }
 
 interface TimelineEventIndexParams extends RecipientTimelineRequestParams {
@@ -63,6 +71,37 @@ const DATE_INPUT_FORMATS = [
 ];
 
 const badTimelineRequest = (message: string) => serviceError(400, message, { message });
+
+const CURSOR_OCCURRED_AT = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?$/;
+
+// The sort key is (occurredAt, source, sourceId), and (source, sourceId) is unique in the index,
+// so the last row of a page identifies exactly where the next page starts.
+const encodeCursor = ({ occurredAt, source, sourceId }: TimelineCursor): string =>
+  Buffer.from(JSON.stringify([occurredAt, source, sourceId])).toString('base64url');
+
+const decodeCursor = (cursor: string): TimelineCursor => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+  } catch (_err) {
+    throw badTimelineRequest('Timeline cursor is invalid');
+  }
+  if (!Array.isArray(parsed) || parsed.length !== 3) {
+    throw badTimelineRequest('Timeline cursor is invalid');
+  }
+  const [occurredAt, source, sourceId] = parsed;
+  if (
+    typeof occurredAt !== 'string' ||
+    !CURSOR_OCCURRED_AT.test(occurredAt) ||
+    typeof source !== 'string' ||
+    !/^[A-Za-z][A-Za-z0-9]*$/.test(source) ||
+    !Number.isSafeInteger(sourceId) ||
+    sourceId < 1
+  ) {
+    throw badTimelineRequest('Timeline cursor is invalid');
+  }
+  return { occurredAt, source, sourceId };
+};
 
 /** Category membership is scoped to this recipient and region, independent of event pages. */
 export async function getTimelineGoalCategories(
@@ -135,12 +174,49 @@ export async function getTimelineGoalCategories(
     .map(([label, { status }]) => ({ label, statuses: status ? [status] : [] }));
 }
 
+/**
+ * Keep the categories that have at least one event under the request's filters, whether or not
+ * that event is on the first page. Clients render every returned category up front, so a
+ * category must not be missing now and appear above the reader later.
+ */
+async function filterCategoriesWithEvents(
+  totalCount: number,
+  categories: RecipientTimelineCategory[],
+  params: RecipientTimelineRequestParams,
+  sources: readonly TimelineEventSource[]
+): Promise<RecipientTimelineCategory[]> {
+  if (totalCount === 0) return [];
+  // Every indexed event already matches the only category.
+  if (categories.length === 1) return categories;
+
+  const withEvents: RecipientTimelineCategory[] = [];
+  for (const category of categories) {
+    // The view's own constraint is the last filter; narrow it to one category.
+    const filters = [
+      ...params.filters.slice(0, -1),
+      { topic: 'standard' as const, condition: 'is' as const, query: [category.label] },
+    ];
+    // Sequential: every query shares the request's single transaction connection.
+    const { count } = await queryTimelineEventIndex({
+      ...params,
+      filters,
+      limit: 1,
+      offset: 0,
+      cursor: undefined,
+      sources,
+    });
+    if (count > 0) withEvents.push(category);
+  }
+  return withEvents;
+}
+
 const validateQueryOptions = ({
   sources,
   recipientId,
   regionId,
   limit,
   offset,
+  cursor,
   direction,
   sortBy,
 }: TimelineEventIndexParams) => {
@@ -158,6 +234,13 @@ const validateQueryOptions = ({
 
   if (!Number.isInteger(offset) || offset < 0) {
     throw badTimelineRequest('Timeline offset must be a non-negative integer');
+  }
+
+  if (cursor !== undefined) {
+    if (offset !== 0) {
+      throw badTimelineRequest('Timeline cursor cannot be combined with offset');
+    }
+    decodeCursor(cursor);
   }
 
   if (direction !== 'asc' && direction !== 'desc') {
@@ -394,17 +477,42 @@ export async function queryTimelineEventIndex(
   const replacements: Record<string, unknown> = {
     recipientId: params.recipientId,
     regionId: params.regionId,
-    timelineLimit: params.limit,
+    // One extra row tells us whether another page exists without a trailing empty request.
+    timelineLimit: params.limit + 1,
     timelineOffset: params.offset,
   };
   const cte = buildTimelineIndexCte(params, replacements);
   const safeDirection = params.direction.toUpperCase();
+  let cursorPredicate = '';
+  if (params.cursor !== undefined) {
+    const cursor = decodeCursor(params.cursor);
+    replacements.timelineCursorOccurredAt = cursor.occurredAt;
+    replacements.timelineCursorSource = cursor.source;
+    replacements.timelineCursorSourceId = cursor.sourceId;
+    const comparison = params.direction === 'asc' ? '>' : '<';
+    cursorPredicate = `
+      WHERE
+        "occurredAt" ${comparison} CAST(:timelineCursorOccurredAt AS TIMESTAMP WITHOUT TIME ZONE)
+        OR (
+          "occurredAt" = CAST(:timelineCursorOccurredAt AS TIMESTAMP WITHOUT TIME ZONE)
+          AND (
+            "source" > :timelineCursorSource
+            OR ("source" = :timelineCursorSource AND "sourceId" > :timelineCursorSourceId)
+          )
+        )`;
+  }
 
   const rows = (await sequelize.query(
     `${cte}
     , "timelinePage" AS (
-      SELECT "source", "sourceId", "date", "occurredAt", "eventType"
-      FROM "filteredTimelineEvents"
+      SELECT
+        "source",
+        "sourceId",
+        "date",
+        "occurredAt",
+        CAST("occurredAt" AS TEXT) AS "cursorOccurredAt",
+        "eventType"
+      FROM "filteredTimelineEvents"${cursorPredicate}
       ORDER BY "occurredAt" ${safeDirection}, "source" ASC, "sourceId" ASC, "eventType" ASC
       LIMIT :timelineLimit
       OFFSET :timelineOffset
@@ -418,6 +526,7 @@ export async function queryTimelineEventIndex(
       "timelinePage"."source",
       "timelinePage"."sourceId",
       "timelinePage"."date",
+      "timelinePage"."cursorOccurredAt",
       "timelinePage"."eventType"
     FROM "timelineCount"
     LEFT JOIN "timelinePage" ON TRUE
@@ -429,12 +538,16 @@ export async function queryTimelineEventIndex(
     { replacements, type: QueryTypes.SELECT }
   )) as TimelineQueryRow[];
 
-  const events: RecipientTimelineEventIndex[] = rows
+  const pageRows = rows
     .filter(
       (row): row is TimelineQueryRow & Required<Omit<TimelineQueryRow, 'count'>> =>
-        row.source !== null && row.sourceId !== null && row.date !== null && row.eventType !== null
+        row.source !== null &&
+        row.sourceId !== null &&
+        row.date !== null &&
+        row.cursorOccurredAt !== null &&
+        row.eventType !== null
     )
-    .map(({ source, sourceId: rawSourceId, date, eventType }) => {
+    .map(({ source, sourceId: rawSourceId, date, cursorOccurredAt, eventType }) => {
       if (!isValidTimelineEventType(eventType)) {
         throw new Error(`Timeline source returned unsupported eventType: ${eventType}`);
       }
@@ -442,10 +555,25 @@ export async function queryTimelineEventIndex(
       if (!Number.isSafeInteger(sourceId) || sourceId < 1) {
         throw new Error(`Timeline source ${source} returned an invalid sourceId: ${rawSourceId}`);
       }
-      return { source, sourceId, date, eventType };
+      return { index: { source, sourceId, date, eventType }, occurredAt: cursorOccurredAt };
     });
 
-  return { count: Number(rows[0]?.count ?? 0), events };
+  const hasMore = pageRows.length > params.limit;
+  const keptRows = pageRows.slice(0, params.limit);
+  const events: RecipientTimelineEventIndex[] = keptRows.map(({ index }) => index);
+  const count = Number(rows[0]?.count ?? 0);
+  const last = keptRows[keptRows.length - 1];
+  if (!hasMore || !last) return { count, events };
+
+  return {
+    count,
+    events,
+    nextCursor: encodeCursor({
+      occurredAt: last.occurredAt,
+      source: last.index.source,
+      sourceId: last.index.sourceId,
+    }),
+  };
 }
 
 const assertPresentation = (
@@ -529,6 +657,7 @@ export async function populateTimelineEventIndex(
   params: RecipientTimelineRequestParams,
   sources: readonly TimelineEventSource[]
 ): Promise<RecipientTimelineResponse> {
+  const paging = index.nextCursor ? { nextCursor: index.nextCursor } : {};
   if (index.events.length === 0) return { count: index.count, events: [] };
 
   const sourceByName = new Map(sources.map((source) => [source.name, source]));
@@ -594,7 +723,7 @@ export async function populateTimelineEventIndex(
     };
   });
 
-  return { count: index.count, events };
+  return { count: index.count, events, ...paging };
 }
 
 /**
@@ -651,5 +780,10 @@ export async function getRecipientTimeline(
   };
   const index = await queryTimelineEventIndex({ ...viewParams, sources });
   const result = await populateTimelineEventIndex(index, viewParams, sources);
-  return { ...result, categories };
+  // Category metadata is sent once, with the first page. Later pages only add events.
+  if (params.cursor !== undefined || params.offset > 0) return result;
+  return {
+    ...result,
+    categories: await filterCategoriesWithEvents(index.count, categories, viewParams, sources),
+  };
 }
