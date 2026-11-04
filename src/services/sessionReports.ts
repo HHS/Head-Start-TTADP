@@ -337,7 +337,16 @@ export async function createSession(request) {
   return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
 }
 
-export async function updateSession(id: number, request) {
+/**
+ * @param runAfterCommit Defers best-effort side effects (emails) until the request's
+ * transaction commits, so their queries can't abort it. Route handlers pass
+ * onTransactionCommitted; the default runs the work immediately.
+ */
+export async function updateSession(
+  id: number,
+  request,
+  runAfterCommit: (work: () => Promise<void>) => void | Promise<void> = (work) => work()
+) {
   const session = await SessionReportPilot.findOne({
     where: { id },
   });
@@ -442,8 +451,9 @@ export async function updateSession(id: number, request) {
       `Error creating session submitted notifications for session ${id}:`
     );
 
-    // TR-3d: the mailer logs its own errors, so this cannot fail the save
-    await trSessionSubmittedToCollaborators(event, { id, data: newData });
+    // TR-3d: the mailer catches its own errors, but a failed query would still abort the
+    // request transaction (CLS), so send only after the session is committed
+    await runAfterCommit(() => trSessionSubmittedToCollaborators(event, { id, data: newData }));
   }
 
   const wasNeedsAction = existingData.status === REPORT_STATUSES.NEEDS_ACTION;

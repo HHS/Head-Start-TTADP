@@ -521,6 +521,40 @@ describe('session reports service', () => {
       await destroySession(created.id);
     });
 
+    it('defers the collaborator email until after commit so its queries cannot abort the save', async () => {
+      // Like the real mailer: a failed query whose error is swallowed. Inside the request
+      // transaction this would abort it, so the email must wait for the commit.
+      trSessionSubmittedToCollaborators.mockImplementationOnce(async () => {
+        try {
+          await db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"');
+        } catch {
+          // swallowed, as the mailer does
+        }
+      });
+      const created = await createReadySession();
+      const deferred = [];
+
+      const updated = await db.sequelize.transaction(async () => {
+        const result = await updateSession(
+          created.id,
+          { eventId: submitEventId, data: { collabComplete: true, sessionName: 'Committed' } },
+          (work) => {
+            deferred.push(work);
+          }
+        );
+        expect(trSessionSubmittedToCollaborators).not.toHaveBeenCalled();
+        return result;
+      });
+      await Promise.all(deferred.map((work) => work()));
+
+      expect(updated.submitted).toBe(true);
+      expect(trSessionSubmittedToCollaborators).toHaveBeenCalledTimes(1);
+      const saved = await findSessionById(created.id);
+      expect(saved.data.sessionName).toBe('Committed');
+
+      await destroySession(created.id);
+    });
+
     // Changes requested, facilitation changed (which resets completion and the
     // approver), then participants submit separately so status leaves NEEDS_ACTION
     // before the session is complete again

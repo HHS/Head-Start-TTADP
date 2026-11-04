@@ -29,6 +29,7 @@ import type {
 } from '../../services/types/sessionReport';
 import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
@@ -252,7 +253,9 @@ export const updateHandler = async (req: Request, res: Response) => {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
-    const updatedSession = await updateSession(Number(id), req.body);
+    const updatedSession = await updateSession(Number(id), req.body, (work) =>
+      onTransactionCommitted(req, work)
+    );
 
     // Only notify on the transition into "submitted" so later saves don't resend.
     if (!session?.submitted && updatedSession?.submitted) {
