@@ -291,6 +291,8 @@ workflows:
           serial-group: "tta-automation-lock"
           requires:
             - restore_prod_to_temp
+      # One clear job per failure point: CircleCI requires are AND-only, and process_temp_db never
+      # runs when the restore fails, so a single job can't cover "restore OR process failed"
       - clear_temp_db:
           name: clear ttahub-process (restore failed)
           serial-group: "tta-automation-lock"
@@ -356,6 +358,8 @@ workflows:
           serial-group: "tta-automation-lock"
           requires:
             - restore_prod_to_temp
+      # One clear job per failure point: CircleCI requires are AND-only, and process_temp_db never
+      # runs when the restore fails, so a single job can't cover "restore OR process failed"
       - clear_temp_db:
           name: clear ttahub-process (restore failed)
           serial-group: "tta-automation-lock"
