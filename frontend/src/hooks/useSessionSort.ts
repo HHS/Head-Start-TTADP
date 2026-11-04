@@ -1,4 +1,3 @@
-import { DECIMAL_BASE } from '@ttahub/common';
 import { type Dispatch, type SetStateAction, useContext, useMemo } from 'react';
 import FilterContext from '../FilterContext';
 import useSessionStorage from './useSessionStorage';
@@ -13,6 +12,7 @@ export interface SessionSortConfig {
   direction: SortDirection;
   activePage?: number;
   offset?: number;
+  perPage?: number | 'all';
 }
 
 /**
@@ -31,6 +31,9 @@ export default function useSessionSort<T extends SessionSortConfig>(
 ): [T, Dispatch<SetStateAction<T>>] {
   const { filterKey } = useContext(FilterContext);
   const sessionSchema = `${filterKey}-${key}-sorting`;
+  const defaultActivePage = defaultSortConfig.activePage;
+  const defaultOffset = defaultSortConfig.offset;
+  const defaultPerPage = defaultSortConfig.perPage;
 
   const existingSort = useMemo(() => {
     const currentFilterStorage = sessionStorage.getItem(filterKey);
@@ -40,12 +43,21 @@ export default function useSessionSort<T extends SessionSortConfig>(
         if (currentStorage) {
           const parsedStorage = JSON.parse(currentStorage);
           // this is really just to make sure nothing weird gets in there
-          const { sortBy, direction, activePage, offset } = parsedStorage;
+          const { sortBy, direction, activePage, offset, perPage } = parsedStorage;
           return {
             sortBy,
             direction,
-            offset: parseInt(offset, DECIMAL_BASE),
-            activePage: parseInt(activePage, DECIMAL_BASE),
+            offset: Number.isSafeInteger(offset) && offset >= 0 ? offset : defaultOffset,
+            activePage:
+              Number.isSafeInteger(activePage) && activePage > 0 ? activePage : defaultActivePage,
+            ...(defaultPerPage !== undefined
+              ? {
+                  perPage:
+                    perPage === 'all' || (Number.isSafeInteger(perPage) && perPage > 0)
+                      ? perPage
+                      : defaultPerPage,
+                }
+              : {}),
           } as T;
         }
       } catch (_error) {
@@ -54,7 +66,7 @@ export default function useSessionSort<T extends SessionSortConfig>(
     }
 
     return false;
-  }, [filterKey, sessionSchema]);
+  }, [filterKey, sessionSchema, defaultActivePage, defaultOffset, defaultPerPage]);
 
   // put it in state
   const [sortConfig, setSortConfig] = useSessionStorage<T>(
