@@ -204,6 +204,61 @@ describe('Citation handlers', () => {
       expect(res.sendStatus).toHaveBeenCalledWith(500);
     });
 
+    it.each([
+      [
+        'a non-numeric grantId',
+        { grantIds: ['1) UNION SELECT 1--'], reportStartDate: '2024-10-01' },
+      ],
+      ['a fractional grantId', { grantIds: ['1.5'], reportStartDate: '2024-10-01' }],
+      ['a negative grantId', { grantIds: ['-1'], reportStartDate: '2024-10-01' }],
+      ['no grantIds', { reportStartDate: '2024-10-01' }],
+      ['a malformed reportStartDate', { grantIds: ['1'], reportStartDate: "2024-10-01' OR 1=1--" }],
+      ['no reportStartDate', { grantIds: ['1'] }],
+    ])('should return a 400 status code for %s', async (_description, query) => {
+      const req = { query, params: { regionId: 1 } };
+      const res = {
+        sendStatus: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1 });
+
+      await getCitationsByGrants(req, res);
+
+      expect(res.sendStatus).toHaveBeenCalledWith(400);
+      expect(getCitationsByGrantIds).not.toHaveBeenCalled();
+      expect(handleErrors).not.toHaveBeenCalled();
+    });
+
+    it('should pass parsed grantIds from a single query string value', async () => {
+      const req = {
+        query: { grantIds: '12', reportStartDate: '2024-10-01' },
+        params: { regionId: 1 },
+      };
+      const res = {
+        sendStatus: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1 });
+      getCitationsByGrantIds.mockResolvedValue([]);
+
+      await getCitationsByGrants(req, res);
+
+      expect(getCitationsByGrantIds).toHaveBeenCalledWith([12], '2024-10-01');
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
     it('should return a 403 status code if the user cannot write in the region', async () => {
       // Mock request.
       const req = {

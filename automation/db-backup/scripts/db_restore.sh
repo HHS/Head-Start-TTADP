@@ -607,7 +607,8 @@ function perform_restore() {
         exit 1
     }
 
-    #set -x
+    # Do not enable shell tracing (set -x) in this script: PGPASSWORD is exported, so tracing would print it
+    # into the (public) CI log. tools/checkSecretPrinting.js fails the build on tracing.
     set -o pipefail
 
     log "INFO" "Reset database before restore"
