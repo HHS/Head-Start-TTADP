@@ -6,6 +6,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getSessionReportsTable } from '../../../../fetchers/session';
+import Dashboard from '../Dashboard';
 import TrainingReportDashboard from '../TrainingReportDashboard';
 
 jest.mock('../../../../fetchers/session');
@@ -55,6 +56,42 @@ describe('Training report Dashboard page', () => {
       </MemoryRouter>
     );
   };
+
+  it('restores training report pagination through the dashboard filter context', async () => {
+    const filterKey = 'regional-dashboard-training-reports-filters';
+    const sortingKey = `${filterKey}-trainingReportsTable-sorting`;
+    sessionStorage.setItem(filterKey, '[]');
+    sessionStorage.setItem(
+      sortingKey,
+      JSON.stringify({ sortBy: 'eventId', direction: 'desc', activePage: 3, offset: 20 })
+    );
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <Dashboard
+            reportType="training-reports"
+            filters={[]}
+            filterKey={filterKey}
+            resetPagination={false}
+            setResetPagination={jest.fn()}
+            userHasOnlyOneRegion
+          />
+        </AppLoadingContext.Provider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(getSessionReportsTable).toHaveBeenLastCalledWith(
+        expect.objectContaining({ activePage: 3, offset: 20 }),
+        []
+      );
+    });
+
+    unmount();
+    sessionStorage.removeItem(filterKey);
+    sessionStorage.removeItem(sortingKey);
+  });
 
   it('renders and fetches data', async () => {
     renderTest([]);
