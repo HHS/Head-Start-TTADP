@@ -133,7 +133,7 @@ describe('ActivityReportsTable', () => {
       });
 
       it('can trigger an activity report download', async () => {
-        const contextMenus = await screen.findAllByRole('button', {
+        const contextMenus = await within(screen.getByRole('table')).findAllByRole('button', {
           name: /actions for activity report /i,
         });
 
@@ -311,7 +311,9 @@ describe('ActivityReportsTable', () => {
         };
 
         renderTable(user);
-        const reportMenu = await screen.findByLabelText(/reports menu/i);
+        const reportMenu = await screen.findByRole('button', {
+          name: 'Actions for activity report exports',
+        });
         userEvent.click(reportMenu);
         const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
         userEvent.click(downloadButton);
@@ -332,7 +334,9 @@ describe('ActivityReportsTable', () => {
       };
 
       renderTable(user);
-      const reportMenu = await screen.findByLabelText(/reports menu/i);
+      const reportMenu = await screen.findByRole('button', {
+        name: 'Actions for activity report exports',
+      });
       userEvent.click(reportMenu);
       expect(await screen.findByRole('menuitem', { name: /^export table$/i })).not.toBeDisabled();
       const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
@@ -375,9 +379,9 @@ describe('ActivityReportsTable', () => {
         .getByRole('heading', { name: 'Activity Reports' })
         .closest('.ttahub-table-header');
 
-      expect(within(header).getByRole('button', { name: 'Reports menu' })).toHaveTextContent(
-        'Actions'
-      );
+      expect(
+        within(header).getByRole('button', { name: 'Actions for activity report exports' })
+      ).toHaveTextContent('Actions');
       expect(within(header).queryByTestId('pagination-card')).not.toBeInTheDocument();
       expect(screen.queryByRole('navigation', { name: 'Pagination, top' })).not.toBeInTheDocument();
       expect(
@@ -602,7 +606,9 @@ describe('ActivityReportsTable', () => {
     });
 
     it('shows the full filtered-table count in the chooser', async () => {
-      const reportMenu = await screen.findByLabelText(/reports menu/i);
+      const reportMenu = await screen.findByRole('button', {
+        name: 'Actions for activity report exports',
+      });
       userEvent.click(reportMenu);
       const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
       userEvent.click(downloadButton);
@@ -627,7 +633,9 @@ describe('ActivityReportsTable', () => {
 
     renderTable(user);
     await screen.findAllByRole('checkbox', { name: /select /i });
-    const reportMenu = await screen.findByLabelText(/reports menu/i);
+    const reportMenu = await screen.findByRole('button', {
+      name: 'Actions for activity report exports',
+    });
     userEvent.click(reportMenu);
     expect(await screen.findByRole('menuitem', { name: /^export table$/i })).not.toBeDisabled();
     const downloadButton = await screen.findByRole('menuitem', { name: /^export table$/i });
@@ -662,7 +670,9 @@ describe('ActivityReportsTable', () => {
     it.each(['activity-reports', 'goals', 'objectives'])(
       'downloads the full %s dataset with active filters',
       async (dataSet) => {
-        await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+        await userEvent.click(
+          screen.getByRole('button', { name: 'Actions for activity report exports' })
+        );
         await userEvent.click(screen.getByRole('menuitem', { name: 'Export table' }));
         const label = { 'activity-reports': 'AR', goals: 'Goals', objectives: 'Objectives' }[
           dataSet
@@ -681,7 +691,9 @@ describe('ActivityReportsTable', () => {
     it('downloads only checked reports', async () => {
       const checkboxes = screen.getAllByRole('checkbox', { name: /select /i });
       await userEvent.click(checkboxes[1]);
-      await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Actions for activity report exports' })
+      );
       await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
       await userEvent.click(screen.getByRole('button', { name: 'Goals' }));
       await waitFor(() => expect(click).toHaveBeenCalled());
@@ -694,7 +706,9 @@ describe('ActivityReportsTable', () => {
 
     it('shows a recoverable error when the export fails', async () => {
       downloadActivityReportExport.mockRejectedValueOnce(new Error('Network failed'));
-      await userEvent.click(screen.getByRole('button', { name: 'Reports menu' }));
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Actions for activity report exports' })
+      );
       await userEvent.click(screen.getByRole('menuitem', { name: 'Export table' }));
       await userEvent.click(screen.getByRole('button', { name: 'AR' }));
       expect(await screen.findByRole('alert')).toHaveTextContent(
