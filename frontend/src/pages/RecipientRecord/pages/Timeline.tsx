@@ -102,25 +102,10 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
       mode: nextMode,
       direction: value === 'asc' ? ('asc' as const) : ('desc' as const),
     };
-    if (nextMode !== mode) {
-      const otherFilters = supportedFilters.filter(({ topic }) => topic !== 'standard');
-      setView(
-        changes,
-        nextMode === 'monitoring'
-          ? [
-              ...otherFilters,
-              {
-                id: 'timeline-monitoring-category',
-                topic: 'standard',
-                condition: 'is',
-                query: ['Monitoring'],
-              },
-            ]
-          : otherFilters
-      );
-      return;
-    }
-    setView(changes);
+    // The API applies each view's goal category constraint itself, so the Monitoring view adds
+    // no filter pill, and a goal category filter chosen by the user persists across views.
+    // A mode change keeps the current filters but still starts a new history entry.
+    setView(changes, nextMode !== mode ? supportedFilters : undefined);
   };
   const groupedEvents = useMemo(
     () =>
