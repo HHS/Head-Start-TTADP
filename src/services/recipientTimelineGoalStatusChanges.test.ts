@@ -618,7 +618,13 @@ describe('goal status change timeline integration', () => {
         [
           [
             // The backfill migration stamped the current status (Closed) on the creation date.
-            { oldStatus: null, newStatus: 'Closed', performedAt: '2024-05-02T12:00:00Z' },
+            {
+              oldStatus: null,
+              newStatus: 'Closed',
+              reason: 'Goal created',
+              context: 'Creation',
+              performedAt: '2024-05-02T12:00:00Z',
+            },
             { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-07-20T12:00:00Z' },
           ],
           [
@@ -658,6 +664,28 @@ describe('goal status change timeline integration', () => {
       const { events } = await timeline();
       expect(events.find(({ sourceId }) => sourceId === changeIdsByGoal[1][0])?.title).toBe(
         'Goal reopened'
+      );
+    });
+
+    it('keeps a genuine transition from a missing status instead of using the current status', async () => {
+      const { changeIdsByGoal, timeline } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2024-05-02T12:00:00Z' },
+          { status: 'Closed', createdAt: '2025-06-10T12:00:00Z' },
+        ],
+        [
+          // The legacy goal had no status until it was Closed in December.
+          [{ oldStatus: null, newStatus: 'Closed', performedAt: '2025-12-01T12:00:00Z' }],
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2025-06-10T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-12-15T12:00:00Z' },
+          ],
+        ]
+      );
+
+      const { events } = await timeline();
+      expect(events.find(({ sourceId }) => sourceId === changeIdsByGoal[1][0])?.title).toBe(
+        'Goal added'
       );
     });
 
