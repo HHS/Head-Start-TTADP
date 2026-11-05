@@ -531,9 +531,7 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
-  'monitoring-regional-dashboard',
   'actionable_notifications',
-  'compliant_follow_up_reviews_tta_support',
   'tta_timeline',
   'recipient_tta_request',
 ];
