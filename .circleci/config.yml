@@ -190,6 +190,7 @@ workflows:
           slack_channel: acf-head-start-alerts
           ohs_channel: acf-ohs-ttahub--contractor-customer-team
           team_notification_channel: acf-head-start-alerts-lower
+          base_channel_alert_only: true
 
   import_data_manual:
     # for manual testing of the data import workflow
@@ -1653,6 +1654,10 @@ jobs:
       team_notification_channel:
         type: string
         default: ""
+      base_channel_alert_only:
+        description: "When true, slack_channel only receives a post when there's a real alert/critical/failure to report (empty message = notify_slack no-ops on a quiet day). Prod-only: the manual/staging-dev invocation leaves this false so it keeps always posting its one summary message. See docs/monitoring-data-validation.md (Channels)."
+        type: boolean
+        default: false
     steps:
       - checkout
       - install_cf_tools
@@ -1760,10 +1765,25 @@ jobs:
             chmod +x ./.circleci/scripts/build_import_summary.sh
             ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 8 \
               monitoring-goal-updates.txt monitoring-validation-alerts.txt monitoring-ohs-updates.txt \
-              monitoring-validation-team-notifications.txt
+              monitoring-validation-team-notifications.txt monitoring-alert-only.txt \
+              monitoring-team-comprehensive.txt
+      - run:
+          when: always
+          name: Select base channel message
+          command: |
+            # base_channel_alert_only (prod only) swaps in the alert-gated file,
+            # which build_import_summary.sh leaves empty on a quiet day so the
+            # notify_slack step below no-ops (its "missing message" skip). Manual/
+            # staging-dev leaves the param false and keeps always posting the full
+            # summary. See docs/monitoring-data-validation.md (Channels).
+            if [[ "<< parameters.base_channel_alert_only >>" == "true" ]]; then
+              cp monitoring-alert-only.txt monitoring-base-channel.txt
+            else
+              cp monitoring-updates.txt monitoring-base-channel.txt
+            fi
       - notify_slack:
           step_when: always
-          message_text_file: monitoring-updates.txt
+          message_text_file: monitoring-base-channel.txt
           slack_channel: << parameters.slack_channel >>
       - notify_slack:
           step_when: always
@@ -1779,12 +1799,13 @@ jobs:
           best_effort: true
       - notify_slack:
           step_when: always
-          # team_notification-severity content, kept out of monitoring-updates.txt
-          # entirely - its own channel, its own message. Empty
+          # monitoring-team-comprehensive.txt is the full summary (goal updates +
+          # alerts) plus team_notification-severity content layered on top - the
+          # comprehensive, always-sent message for the team channel. Empty
           # team_notification_channel on non-prod invocations makes this a no-op
           # (same idiom as ohs_channel above). best_effort: same reasoning as the
           # OHS post. See docs/monitoring-data-validation.md (Channels).
-          message_text_file: monitoring-validation-team-notifications.txt
+          message_text_file: monitoring-team-comprehensive.txt
           slack_channel: << parameters.team_notification_channel >>
           best_effort: true
       - store_artifacts:
@@ -1805,6 +1826,15 @@ jobs:
       - store_artifacts:
           when: always
           path: monitoring-validation-team-notifications.txt
+      - store_artifacts:
+          when: always
+          path: monitoring-alert-only.txt
+      - store_artifacts:
+          when: always
+          path: monitoring-team-comprehensive.txt
+      - store_artifacts:
+          when: always
+          path: monitoring-base-channel.txt
       - run:
           when: always
           name: Fail if any import phase failed
