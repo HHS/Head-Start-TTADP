@@ -430,6 +430,24 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
+    it('defers updateSession side effects until the transaction commits', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue(mockSession);
+      updateSession.mockResolvedValue(mockSession);
+      const work = jest.fn();
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await updateHandler(req, mockResponse);
+      const [, , runAfterCommit] = updateSession.mock.calls[updateSession.mock.calls.length - 1];
+      runAfterCommit(work);
+
+      expect(work).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toEqual([work]);
+    });
+
     it('notifies the approver when the session becomes submitted', async () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
