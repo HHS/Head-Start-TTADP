@@ -3490,6 +3490,24 @@ describe('Activity Report handlers', () => {
       expect(saveObjectivesForReport).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['a null entity id', [{ title: 'a', ids: [10], recipientIds: [null] }]],
+      ['an object without entity ids', [{ title: 'a', ids: [10] }]],
+      ['a supplied goal id', [{ title: 'a', ids: [10], recipientIds: [1], goalId: 10 }]],
+      ['a non array payload', 'objectives'],
+      ['a missing payload', undefined],
+    ])('rejects %s without writing', async (_label, objectivesWithoutGoals) => {
+      User.mockImplementation(() => ({ canWriteInRegion: () => true }));
+      await saveOtherEntityObjectivesForReport(
+        { body: { activityReportId: 1, region: 1, objectivesWithoutGoals } },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
+      expect(saveObjectivesForReport).not.toHaveBeenCalled();
+      expect(getObjectivesByReportId).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
     it('handles unauthorized', async () => {
       User.mockImplementation(() => ({
         canWriteInRegion: () => false,

@@ -15,6 +15,7 @@ import {
   logsByRecipientAndScopes,
   logsByScopes,
   recipientsInRegion,
+  regionIdFromRecipients,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -154,10 +155,60 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
+      const log = { id: 1, data: { regionId: REGION_ID } };
       userById.mockImplementation(() => Promise.resolve(authorizedToReadOnly));
-      logById.mockImplementation(() => Promise.resolve({ id: 1 }));
+      logById.mockImplementation(() => Promise.resolve(log));
       await communicationLogById(mockRequest, { ...mockResponse });
-      expect(statusJson).toHaveBeenCalledWith({ id: 1 });
+      expect(statusJson).toHaveBeenCalledWith(log);
+    });
+
+    describe('logs without a saved region', () => {
+      const request = {
+        session: { userId: authorizedToReadOnly.id },
+        params: { id: 1, regionId: REGION_ID },
+      };
+      const legacyLog = { id: 1, recipients: [{ id: 5 }, { id: 6 }], data: {} };
+
+      it('uses the region of the recipients when it is unambiguous', async () => {
+        userById.mockResolvedValue(authorizedToReadOnly);
+        logById.mockResolvedValue(legacyLog);
+        regionIdFromRecipients.mockResolvedValue(REGION_ID);
+        await communicationLogById(request, { ...mockResponse });
+        expect(regionIdFromRecipients).toHaveBeenCalledWith([5, 6]);
+        expect(statusJson).toHaveBeenCalledWith(legacyLog);
+      });
+
+      it('does not let the region in the URL grant access to a log from another region', async () => {
+        userById.mockResolvedValue(authorizedToReadOnly);
+        logById.mockResolvedValue(legacyLog);
+        regionIdFromRecipients.mockResolvedValue(REGION_ID + 1);
+        await communicationLogById(request, { ...mockResponse });
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(statusJson).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ['has no recipients', { id: 1, data: {} }, null],
+        ['spans regions', legacyLog, null],
+        ['has an invalid saved region', { ...legacyLog, data: { regionId: 'abc' } }, null],
+      ])('only lets administrators read a log that %s', async (_label, log, derivedRegionId) => {
+        regionIdFromRecipients.mockResolvedValue(derivedRegionId);
+        logById.mockResolvedValue(log);
+
+        userById.mockResolvedValue(authorizedToReadOnly);
+        await communicationLogById(request, { ...mockResponse });
+        expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(statusJson).not.toHaveBeenCalled();
+
+        userById.mockResolvedValue(admin);
+        await communicationLogById(
+          { ...request, session: { userId: admin.id } },
+          {
+            ...mockResponse,
+          }
+        );
+        expect(statusJson).toHaveBeenCalledWith(log);
+      });
     });
 
     it('rejects a log saved under a region the user cannot read', async () => {
@@ -812,9 +863,7 @@ describe('communicationLog handlers', () => {
 
       it('does not recheck recipients the log already has', async () => {
         userById.mockResolvedValue(multiRegionCreator);
-        logById.mockResolvedValue(
-          savedLog({ regionId: SAVED_REGION_ID }, [{ id: 99 }, { id: 5 }])
-        );
+        logById.mockResolvedValue(savedLog({ regionId: SAVED_REGION_ID }, [{ id: 99 }, { id: 5 }]));
         await updateLogById(
           request(multiRegionCreator, { recipients: [{ value: 99 }, { value: 5 }], message: 'x' }),
           { ...mockResponse }

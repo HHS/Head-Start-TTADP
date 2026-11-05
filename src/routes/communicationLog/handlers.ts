@@ -23,6 +23,7 @@ import {
   logsByRecipientAndScopes,
   logsByScopes,
   recipientsInRegion,
+  regionIdFromRecipients,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -177,11 +178,21 @@ async function communicationLogById(req: Request, res: Response) {
 
     const log = await logById(Number(id));
 
-    // The saved region decides who can read a log, so the region in the URL cannot widen access.
-    const storedRegionId = parsePositiveInteger(log?.data?.regionId);
-    if (storedRegionId && !new Policy(policy.user, storedRegionId, log).canReadLog()) {
-      res.status(httpCodes.FORBIDDEN).send();
-      return;
+    if (log) {
+      // The log's own region decides who can read it, so the region in the URL cannot widen
+      // access. Logs saved without a region use their recipients' region when it is unambiguous.
+      // When it is not, only administrators can read the log.
+      const logRegionId =
+        parsePositiveInteger(log.data?.regionId) ??
+        (await regionIdFromRecipients((log.recipients ?? []).map(({ id: rid }) => rid)));
+      const canRead = logRegionId
+        ? new Policy(policy.user, logRegionId, log).canReadLog()
+        : policy.isAdmin();
+
+      if (!canRead) {
+        res.status(httpCodes.FORBIDDEN).send();
+        return;
+      }
     }
 
     res.status(httpCodes.OK).json(log);

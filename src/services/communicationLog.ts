@@ -1,8 +1,8 @@
 import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
 import { Op, type WhereOptions } from 'sequelize';
-import parseSelectionIds from '../lib/parseSelectionIds';
 import normalizeSortDir from '../lib/normalizeSortDir';
+import parseSelectionIds from '../lib/parseSelectionIds';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import db from '../models';
 
@@ -241,6 +241,23 @@ export async function recipientsInRegion(recipientIds: number[], regionId: numbe
   });
   const regionalRecipientIds = new Set(grants.map((grant) => grant.recipientId));
   return recipientIds.every((id) => regionalRecipientIds.has(id));
+}
+
+/**
+ * The region of a log that has no saved region, taken from its recipients' grants. It is only
+ * returned when every grant of every recipient is in one region; otherwise the region cannot be
+ * told reliably and this returns null.
+ */
+export async function regionIdFromRecipients(recipientIds: number[]): Promise<number | null> {
+  const validIds = recipientIds.filter((id) => Number.isSafeInteger(id) && id > 0);
+  if (!validIds.length) return null;
+
+  const grants = await Grant.findAll({
+    attributes: ['regionId'],
+    where: { recipientId: [...new Set(validIds)] },
+  });
+  const regionIds = new Set<number>(grants.map((grant: { regionId: number }) => grant.regionId));
+  return regionIds.size === 1 ? [...regionIds][0] : null;
 }
 
 const createLog = async (recipientIds: number[], userId: number, data: CommLogData) => {

@@ -16,6 +16,7 @@ import {
   reportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
+import validateOtherEntityObjectives from '../../lib/validateOtherEntityObjectives';
 import { auditLogger, logger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -348,6 +349,12 @@ export async function saveOtherEntityObjectivesForReport(req, res) {
       res.sendStatus(403);
       return;
     }
+
+    if (!validateOtherEntityObjectives(objectivesWithoutGoals)) {
+      res.sendStatus(400);
+      return;
+    }
+
     await saveObjectivesForReport(objectivesWithoutGoals, report);
     const updatedObjectives = await getObjectivesByReportId(activityReportId);
     res.json(updatedObjectives);

@@ -7,6 +7,7 @@ import { goalRegionsById } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import parsePositiveInteger from '../../lib/parsePositiveInteger';
 import { respondWithServiceError } from '../../lib/serviceError';
+import UserPolicy from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
 import {
   getCuratedTemplates,
@@ -22,6 +23,7 @@ import {
   standardGoalsForRecipient,
   updateExistingStandardGoal,
 } from '../../services/standardGoals';
+import { userById } from '../../services/users';
 import { checkUserRegionAccess } from '../utils';
 
 export async function getStandardGoal(req: Request, res: Response) {
@@ -183,12 +185,16 @@ export async function getPrompts(req: Request, res: Response) {
     }
 
     if (parsedGoalIds.length) {
-      const regionIds = await goalRegionsById(parsedGoalIds);
-      if (!regionIds.length) {
-        res.sendStatus(FORBIDDEN);
-        return;
+      // Administrators can read goals in every region, like the other goal template routes.
+      const user = await userById(await currentUserId(req, res));
+      if (!new UserPolicy(user).isAdmin()) {
+        const regionIds = await goalRegionsById(parsedGoalIds);
+        if (!regionIds.length) {
+          res.sendStatus(FORBIDDEN);
+          return;
+        }
+        if (!(await checkUserRegionAccess(req, res, regionIds))) return;
       }
-      if (!(await checkUserRegionAccess(req, res, regionIds))) return;
     }
 
     let responsesWithPrompts;

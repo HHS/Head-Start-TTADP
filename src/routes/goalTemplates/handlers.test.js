@@ -1,6 +1,7 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { GOAL_STATUS } from '../../constants';
 import { goalRegionsById } from '../../goalServices/goals';
+import SCOPES from '../../middleware/scopeConstants';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -16,6 +17,7 @@ import {
   standardGoalsForRecipient,
   updateExistingStandardGoal,
 } from '../../services/standardGoals';
+import { userById } from '../../services/users';
 import {
   getGoalTemplates,
   getOptionsByPromptName,
@@ -32,6 +34,7 @@ jest.mock('../../services/accessValidation');
 jest.mock('../../services/goalTemplates');
 jest.mock('../../services/standardGoals');
 jest.mock('../../services/currentUser');
+jest.mock('../../services/users');
 
 let mockResponse;
 let mockStatusJson;
@@ -419,6 +422,31 @@ describe('goalTemplates handlers', () => {
     beforeEach(() => {
       goalRegionsById.mockResolvedValue([1]);
       getUserReadRegions.mockResolvedValue([1]);
+      userById.mockResolvedValue({
+        permissions: [{ regionId: 1, scopeId: SCOPES.READ_REPORTS }],
+      });
+    });
+
+    it('lets an administrator without regional report permissions read any region', async () => {
+      userById.mockResolvedValue({ permissions: [{ regionId: 14, scopeId: SCOPES.ADMIN }] });
+      getUserReadRegions.mockResolvedValue([]);
+      goalRegionsById.mockResolvedValue([2]);
+      getFieldPromptsForCuratedTemplate.mockResolvedValue(['curated']);
+      await getPrompts(
+        { params: { goalTemplateId: '1' }, query: { goalIds: '20', isForActivityReport: 'false' } },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).not.toHaveBeenCalled();
+      expect(getFieldPromptsForCuratedTemplate).toHaveBeenCalledWith(1, [20]);
+      expect(mockResponse.json).toHaveBeenCalledWith([['curated'], null]);
+    });
+
+    it('still rejects a user without the administrator permission', async () => {
+      getUserReadRegions.mockResolvedValue([]);
+      goalRegionsById.mockResolvedValue([2]);
+      await getPrompts({ params: { goalTemplateId: '1' }, query: { goalIds: '20' } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      expect(getFieldPromptsForCuratedTemplate).not.toHaveBeenCalled();
     });
 
     it.each(['false', 'true', undefined])(
