@@ -7,6 +7,7 @@ import {
   populateTimelineEventIndex,
   queryTimelineEventIndex,
   type TimelineIndexResponse,
+  timelineEventIndexHasEvents,
 } from './recipientTimeline';
 import type { TimelineEventSource } from './recipientTimelineSources';
 
@@ -286,6 +287,38 @@ describe('queryTimelineEventIndex', () => {
     });
   });
 
+  describe('event existence', () => {
+    const hasEvents = (overrides: Partial<RecipientTimelineRequestParams> = {}) =>
+      timelineEventIndexHasEvents({ ...timelineParams, ...overrides, sources: timelineSources });
+
+    it('is true when any event matches and false when none do', async () => {
+      expect(await hasEvents()).toBe(true);
+      expect(
+        await hasEvents({
+          filters: [{ topic: 'eventType', condition: 'is', query: ['TTA activity'] }],
+        })
+      ).toBe(true);
+      expect(
+        await hasEvents({
+          filters: [{ topic: 'date', condition: 'is on or after', query: '01/01/2030' }],
+        })
+      ).toBe(false);
+      expect(await hasEvents({ recipientId: 999999 })).toBe(false);
+    });
+
+    it('agrees with the total count of the paged query', async () => {
+      const filters = [
+        { topic: 'date' as const, condition: 'is on or after' as const, query: '08/22/2026' },
+      ];
+      const { count } = await queryTestTimeline({ ...timelineParams, filters });
+      expect(count > 0).toBe(await hasEvents({ filters }));
+    });
+
+    it('has no events without sources', async () => {
+      expect(await timelineEventIndexHasEvents({ ...timelineParams, sources: [] })).toBe(false);
+    });
+  });
+
   describe('cursor pagination', () => {
     const walk = async (
       params: RecipientTimelineRequestParams,
@@ -395,6 +428,17 @@ describe('queryTimelineEventIndex', () => {
           JSON.stringify(["2026-08-22'; DROP TABLE x --", 'communicationLog', 1])
         ).toString('base64url'),
       ],
+      ...[
+        '2026-99-99 10:00:00',
+        '2026-02-30 10:00:00',
+        '2026-08-22 25:00:00',
+        '2026-08-22 10:61:00',
+        '2026-08-22T10:00:61.123456',
+        '0000-01-01 10:00:00',
+      ].map((occurredAt) => [
+        `an out of range timestamp (${occurredAt})`,
+        Buffer.from(JSON.stringify([occurredAt, 'communicationLog', 1])).toString('base64url'),
+      ]),
       [
         'an unsafe source name',
         Buffer.from(JSON.stringify(['2026-08-22 10:00:00', 'a b', 1])).toString('base64url'),

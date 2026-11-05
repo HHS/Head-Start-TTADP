@@ -74,6 +74,14 @@ const badTimelineRequest = (message: string) => serviceError(400, message, { mes
 
 const CURSOR_OCCURRED_AT = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?$/;
 
+// The pattern checks shape only. PostgreSQL rejects impossible values ("2026-99-99") when the
+// cursor is cast, which would surface as a 500 instead of a 400. Fractional seconds are
+// text-only precision, so validate the whole seconds and leave the digits untouched.
+const isValidCursorTimestamp = (occurredAt: string): boolean =>
+  CURSOR_OCCURRED_AT.test(occurredAt) &&
+  Number(occurredAt.slice(0, 4)) >= 1 &&
+  moment(occurredAt.slice(0, 19), ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DDTHH:mm:ss'], true).isValid();
+
 // The sort key is (occurredAt, source, sourceId), and (source, sourceId) is unique in the index,
 // so the last row of a page identifies exactly where the next page starts.
 const encodeCursor = ({ occurredAt, source, sourceId }: TimelineCursor): string =>
@@ -92,7 +100,7 @@ const decodeCursor = (cursor: string): TimelineCursor => {
   const [occurredAt, source, sourceId] = parsed;
   if (
     typeof occurredAt !== 'string' ||
-    !CURSOR_OCCURRED_AT.test(occurredAt) ||
+    !isValidCursorTimestamp(occurredAt) ||
     typeof source !== 'string' ||
     !/^[A-Za-z][A-Za-z0-9]*$/.test(source) ||
     !Number.isSafeInteger(sourceId) ||
@@ -197,15 +205,14 @@ async function filterCategoriesWithEvents(
       { topic: 'standard' as const, condition: 'is' as const, query: [category.label] },
     ];
     // Sequential: every query shares the request's single transaction connection.
-    const { count } = await queryTimelineEventIndex({
+    const hasEvents = await timelineEventIndexHasEvents({
       ...params,
       filters,
-      limit: 1,
       offset: 0,
       cursor: undefined,
       sources,
     });
-    if (count > 0) withEvents.push(category);
+    if (hasEvents) withEvents.push(category);
   }
   return withEvents;
 }
@@ -464,6 +471,31 @@ const buildTimelineIndexCte = (
       ${sharedFilters}
     )`;
 };
+
+/**
+ * Whether any event matches the filters. Unlike the paged index query, it does not count,
+ * order, or page the matches, so it is the cheaper way to ask about a single category.
+ */
+export async function timelineEventIndexHasEvents(
+  params: TimelineEventIndexParams
+): Promise<boolean> {
+  validateQueryOptions(params);
+  validateFilters(params.filters, params.sources);
+
+  if (params.sources.length === 0) return false;
+
+  const replacements: Record<string, unknown> = {
+    recipientId: params.recipientId,
+    regionId: params.regionId,
+  };
+  const cte = buildTimelineIndexCte(params, replacements);
+  const [row] = (await sequelize.query(
+    `${cte}
+    SELECT EXISTS (SELECT 1 FROM "filteredTimelineEvents") AS "hasEvents"`,
+    { replacements, type: QueryTypes.SELECT }
+  )) as Array<{ hasEvents: boolean }>;
+  return row?.hasEvents === true;
+}
 
 /** Build the authoritative, deduplicated, filtered, and paginated event index. */
 export async function queryTimelineEventIndex(

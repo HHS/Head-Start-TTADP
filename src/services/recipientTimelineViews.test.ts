@@ -24,6 +24,7 @@ const params = {
   excludeMultiRecipientCommunications: false,
 };
 const goal = (standard: string, status = 'In Progress') => ({ status, goalTemplate: { standard } });
+const hasEvents = (value: boolean) => [{ hasEvents: value }];
 const indexCount = (count: number) => [
   { count, source: null, sourceId: null, date: null, cursorOccurredAt: null, eventType: null },
 ];
@@ -175,19 +176,22 @@ describe('timeline views', () => {
       ];
       (sequelize.query as jest.Mock)
         .mockResolvedValueOnce(indexCount(7))
-        .mockResolvedValueOnce(indexCount(0))
-        .mockResolvedValueOnce(indexCount(4))
-        .mockResolvedValueOnce(indexCount(3));
+        .mockResolvedValueOnce(hasEvents(false))
+        .mockResolvedValueOnce(hasEvents(true))
+        .mockResolvedValueOnce(hasEvents(true));
       const result = await getRecipientTimeline({ ...params, view: 'goals', filters });
       expect(result.categories.map(({ label }) => label)).toEqual(['Governance', 'Monitoring']);
 
       const calls = (sequelize.query as jest.Mock).mock.calls;
       expect(calls).toHaveLength(4);
       const [, categoryOptions] = calls[1];
-      // Each check is limited to one category, keeps the user's filters, and needs one row.
+      // Each check is limited to one category and keeps the user's filters.
       expect(Object.values(categoryOptions.replacements)).toContainEqual(['Family Support']);
       expect(Object.values(categoryOptions.replacements)).toContain('2026-01-01');
-      expect(categoryOptions.replacements.timelineLimit).toBe(2);
+      // It only asks whether an event exists: no total count, ordering, or paging.
+      const categorySql = calls[1][0];
+      expect(categorySql).toContain('SELECT EXISTS (SELECT 1 FROM "filteredTimelineEvents")');
+      expect(categorySql).not.toMatch(/COUNT\(\*\)|LIMIT|OFFSET|ORDER BY "occurredAt"/);
     });
 
     it('returns no categories without any query for them when no events match', async () => {
