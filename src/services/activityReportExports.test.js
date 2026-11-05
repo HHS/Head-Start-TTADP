@@ -213,12 +213,18 @@ describe('activityReportExports', () => {
   describe('streaming real rows (activity-reports)', () => {
     const REGION_ID = 20;
     let report;
+    let legacyReport;
     let authorlessReport;
     let recipientlessReport;
 
     beforeAll(async () => {
       report = await createReport({
         regionId: REGION_ID,
+        activityRecipients: [{ grantId: getUniqueId() }],
+      });
+      legacyReport = await createReport({
+        regionId: REGION_ID,
+        legacyId: `LEGACY-${getUniqueId()}`,
         activityRecipients: [{ grantId: getUniqueId() }],
       });
       authorlessReport = await createReport({
@@ -235,6 +241,7 @@ describe('activityReportExports', () => {
     afterAll(async () => {
       await Promise.all([
         destroyReport(report),
+        destroyReport(legacyReport),
         destroyReport(authorlessReport),
         destroyReport(recipientlessReport),
       ]);
@@ -251,6 +258,17 @@ describe('activityReportExports', () => {
       expect(csv.charCodeAt(0)).toBe(0xfeff); // UTF-8 BOM
       expect(csv).toContain('report_id'); // header
       expect(csv).toContain(`R${REGION_ID}-AR-${report.id}`);
+    });
+
+    it('uses the legacy display id for legacy reports', async () => {
+      const { csv, rowCount } = await collect({
+        dataSet: 'activity-reports',
+        reportIds: [legacyReport.id],
+        regionIds: [REGION_ID],
+      });
+      expect(rowCount).toBe(1);
+      expect(csv).toContain(legacyReport.legacyId);
+      expect(csv).not.toContain(`R${REGION_ID}-AR-${legacyReport.id}`);
     });
 
     it('emits one CSV row for an approved report without an author', async () => {

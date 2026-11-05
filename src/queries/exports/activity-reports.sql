@@ -114,7 +114,13 @@ SET LOCAL TIME ZONE 'America/New_York';
 WITH ars AS MATERIALIZED (
 SELECT
   ar.id arid,
-  'R' || LPAD("regionId"::text, 2, '0') || '-AR-' || ar.id report_id,
+  COALESCE(
+    NULLIF(ar."legacyId", ''),
+    CASE
+      WHEN ar."regionId" IS NULL OR ar."regionId" = 0 THEN '???'
+      ELSE 'R' || LPAD(ar."regionId"::text, 2, '0')
+    END || '-AR-' || ar.id
+  ) report_id,
   ar."regionId" region,
   ar."calculatedStatus" ar_status,
   u.name creator,
