@@ -40,6 +40,7 @@ import {
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
   activityReportsWhereCollaboratorByDate,
+  adminResetReportToDraft,
   batchQuery,
   cleanupOrphanedObjectivesAndAROs,
   createOrUpdate,
@@ -355,6 +356,24 @@ describe('Activity report service', () => {
 
       expect(counter[mockUserFour.id]).toBe(3);
       expect(counter[mockUserFive.id]).toBe(2);
+    });
+
+    it('normalizes an injected sortDir before it reaches the recipient sort SQL', async () => {
+      const findAndCountAllSpy = jest.spyOn(ActivityReport, 'findAndCountAll');
+
+      try {
+        await activityReportAlerts(mockUserFour.id, {
+          sortBy: 'activityRecipients',
+          sortDir: 'asc limit 1) AS x, (SELECT pg_sleep(5)) --',
+        });
+
+        const literals = JSON.stringify(findAndCountAllSpy.mock.calls[0][0].attributes);
+        expect(literals).not.toContain('pg_sleep');
+        expect(literals).toContain('order by otherEntityName DESC limit 1');
+        expect(literals).toContain('order by recipientName DESC limit 1');
+      } finally {
+        findAndCountAllSpy.mockRestore();
+      }
     });
   });
 
@@ -1323,6 +1342,33 @@ describe('Activity report service', () => {
         expect(rows[0].id).toBe(recipients[0].activityReportId);
       });
 
+      it('normalizes an injected sortDir before it reaches the recipient sort SQL', async () => {
+        const findAndCountAllSpy = jest.spyOn(ActivityReport, 'findAndCountAll');
+
+        try {
+          // Passing ids mirrors getReportsByManyIds, which forwards sortDir from req.body.
+          const { rows } = await activityReports(
+            {
+              sortBy: 'activityRecipients',
+              sortDir: 'asc limit 1) AS x, (SELECT pg_sleep(5)) --',
+              'region.in': ['1'],
+              'reportId.nctn': idsToExclude,
+            },
+            false,
+            0,
+            [latestReport.id]
+          );
+
+          expect(rows.map(({ id }) => id)).toEqual([latestReport.id]);
+          const literals = JSON.stringify(findAndCountAllSpy.mock.calls[0][0].attributes);
+          expect(literals).not.toContain('pg_sleep');
+          expect(literals).toContain('order by otherEntityName DESC limit 1');
+          expect(literals).toContain('order by recipientName DESC limit 1');
+        } finally {
+          findAndCountAllSpy.mockRestore();
+        }
+      });
+
       it('retrieves reports sorted by sorted topics', async () => {
         await ActivityReport.create(reportObject);
         await ActivityReport.create(reportObject);
@@ -1695,6 +1741,33 @@ describe('Activity report service', () => {
         const updatedReport = await ActivityReport.findOne({ where: { id: report.id } });
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+      });
+    });
+    describe('adminResetReportToDraft', () => {
+      it('resets to draft, clears approvals, and removes participant approvers', async () => {
+        const report = await ActivityReport.create(submittedReport);
+        await ActivityReportCollaborator.create({
+          activityReportId: report.id,
+          userId: mockUserTwo.id,
+        });
+        await ActivityReportApprover.create({ activityReportId: report.id, userId: mockUser.id });
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: mockUserTwo.id,
+        });
+        await ActivityReportApprover.create({
+          activityReportId: report.id,
+          userId: mockUserThree.id,
+          status: APPROVER_STATUSES.APPROVED,
+        });
+
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
+        const [resetReport] = await adminResetReportToDraft(foundReport);
+
+        expect(resetReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(resetReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(resetReport.approvers.map((a) => a.user.id)).toEqual([mockUserThree.id]);
+        expect(resetReport.approvers[0].status).toBeNull();
       });
     });
   });

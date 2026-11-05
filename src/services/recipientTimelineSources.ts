@@ -1016,7 +1016,7 @@ async function populateSessionReports(
         ? [
             {
               label: 'View training report',
-              to: `/training-report/${session.event.eventId}/session/${session.id}`,
+              to: `/training-report/view/${session.event.eventId}`,
             },
           ]
         : [],

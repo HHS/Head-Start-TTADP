@@ -1,15 +1,18 @@
-const { GuardError, checkRange } = require('./data-file-guard');
+const { GuardError, checkRange, checkStaged } = require('./data-file-guard');
 
+// `--staged` checks what is staged for commit (used by .githooks/pre-commit). Otherwise the
+// range BASE_REF...HEAD is checked (used by CI).
+const staged = process.argv.includes('--staged');
 const baseRef = process.env.BASE_REF;
 
-if (!baseRef) {
-  console.error('BASE_REF is required (for example origin/main).');
+if (!staged && !baseRef) {
+  console.error('BASE_REF is required (for example origin/main), or pass --staged.');
   process.exit(1);
 }
 
 let result;
 try {
-  result = checkRange({ baseRef });
+  result = staged ? checkStaged() : checkRange({ baseRef });
 } catch (error) {
   // Fail closed. Print only our own sanitized message: the original error can carry git output,
   // which may contain patch text (including staff email addresses).

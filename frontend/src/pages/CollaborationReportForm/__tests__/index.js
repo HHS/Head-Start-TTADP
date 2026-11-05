@@ -1876,4 +1876,37 @@ describe('CollaborationReportForm', () => {
       // When validation passes, onSaveDraft is called and page advances
     });
   });
+
+  describe('read-only viewers', () => {
+    const originalPush = history.push;
+
+    afterEach(() => {
+      history.push = originalPush;
+    });
+
+    it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.NEEDS_ACTION])(
+      'redirects a non-participant, non-approver (e.g. an admin) to the view for a %s report',
+      async (status) => {
+        const mockPush = jest.fn();
+        history.push = mockPush;
+        fetchMock.restore();
+        fetchMock.get('/api/collaboration-reports/123', {
+          ...dummyReport,
+          id: 123,
+          userId: 2,
+          submissionStatus:
+            status === REPORT_STATUSES.DRAFT ? REPORT_STATUSES.DRAFT : REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: status,
+          approvers: [{ user: { id: 3 }, status: null }],
+        });
+
+        render(<ReportComponent id="123" userId={99} />);
+
+        await waitFor(() =>
+          expect(mockPush).toHaveBeenCalledWith('/collaboration-reports/view/123')
+        );
+        expect(mockPush).not.toHaveBeenCalledWith('/collaboration-reports/123/review');
+      }
+    );
+  });
 });

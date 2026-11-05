@@ -82,6 +82,13 @@ export const styles = (singleRowInput = null) => ({
     marginRight: '4px',
   }),
   indicatorSeparator: () => ({ display: 'none' }),
+  // The empty input wraps onto its own line when the tags fill a row, leaving a blank row
+  // below them. Cancelling its width keeps it on the last row until the user types. Without
+  // tags it shares a cell with the placeholder, so it keeps its margins to stay aligned.
+  input: (provided, state) => ({
+    ...provided,
+    ...(state.hasValue ? { marginLeft: 0, marginRight: '-4px' } : {}),
+  }),
   menu: (provided) => ({
     ...provided,
     zIndex: 2,
