@@ -62,8 +62,14 @@ export default function Timeline(props: TimelineProps): React.ReactElement {
       focusView: action !== 'POP' && navigation.mode !== mode,
     });
   }
+  // Filters are saved per recipient, so switching recipients must remount to read the
+  // destination's filters instead of writing the previous recipient's under its key.
   return (
-    <TimelineContent key={navigation.version} focusViewOnMount={navigation.focusView} {...props} />
+    <TimelineContent
+      key={`${props.recipientId}-${props.regionId}-${navigation.version}`}
+      focusViewOnMount={navigation.focusView}
+      {...props}
+    />
   );
 }
 

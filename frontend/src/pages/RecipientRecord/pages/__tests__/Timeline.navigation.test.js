@@ -298,6 +298,41 @@ describe('timeline navigation restoration', () => {
     ).toHaveLength(1);
   });
 
+  it("does not write one recipient's filters under the next recipient's saved key", async () => {
+    const realFilters = mockRealFilters();
+    const saved = [{ id: 'saved', topic: 'eventType', condition: 'is', query: ['Goal closed'] }];
+    window.sessionStorage.setItem('timeline-filters-644', JSON.stringify(saved));
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    const history = createMemoryHistory({ initialEntries: ['/timeline/401/1'] });
+    render(
+      <UserContext.Provider value={{ user: { homeRegionId: 1 } }}>
+        <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+          <Router history={history}>
+            <Route
+              path="/timeline/:recipientId/:regionId"
+              render={({ match }) => (
+                <Timeline recipientId={match.params.recipientId} regionId={match.params.regionId} />
+              )}
+            />
+          </Router>
+        </AriaLiveContext.Provider>
+      </UserContext.Provider>
+    );
+    await screen.findByText('No results found.');
+    const filter = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
+    act(() => realFilters.setFilters(filter));
+    await waitFor(() =>
+      expect(window.sessionStorage.getItem('timeline-filters-401')).toContain('Goal added')
+    );
+    act(() => history.push('/timeline/644/6'));
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith('644', '6', expect.anything())
+    );
+    expect(window.sessionStorage.getItem('timeline-filters-644')).toContain('Goal closed');
+    expect(window.sessionStorage.getItem('timeline-filters-644')).not.toContain('Goal added');
+    window.sessionStorage.removeItem('timeline-filters-644');
+  });
+
   it('keeps focus on the View dropdown after changing to a different view', async () => {
     getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
     renderTimeline(historyAt({ timelineView: view }));
