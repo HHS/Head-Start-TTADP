@@ -86,7 +86,7 @@ export default function TrainingReportForm({ match }) {
   // we use both of these to determine if we're in the loading screen state
   // (see the use effect below)
   const [reportFetched, setReportFetched] = useState(false);
-  const [additionalDataFetched, setAdditionalDataFetched] = useState(false);
+  const [fetchedRegionId, setFetchedRegionId] = useState(null);
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
@@ -106,56 +106,83 @@ export default function TrainingReportForm({ match }) {
   });
 
   // the region is encoded in the event id, so region-dependent requests can start
-  // alongside the event fetch instead of waiting for it; fall back to the fetched value
-  const watchedRegion = hookForm.watch('regionId');
-  const eventRegion = regionIdFromEventId(trainingReportId) ?? watchedRegion;
+  // alongside the event fetch instead of waiting for it. Once the event loads, its
+  // actual region wins (an event can be reassigned to another region).
+  const eventRegion = fetchedRegionId ?? regionIdFromEventId(trainingReportId);
   const formData = hookForm.getValues();
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
 
+  // the loader only waits on the event; users and trainers fill in when they arrive
   useEffect(() => {
-    const loading = !reportFetched || !additionalDataFetched;
-    setIsAppLoading(loading);
-  }, [additionalDataFetched, reportFetched, setIsAppLoading]);
+    setIsAppLoading(!reportFetched);
+  }, [reportFetched, setIsAppLoading]);
+
+  // don't leave the loader up if we navigate away mid-load
+  useEffect(() => () => setIsAppLoading(false), [setIsAppLoading]);
 
   useEffect(() => {
-    // fetch available users
+    // fetch available users (refetches if the event's real region differs from the id prefix)
+    if (!eventRegion) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
     async function fetchUsers() {
-      if (!eventRegion || additionalDataFetched) {
-        return;
-      }
-
       try {
         const users = await getTrainingReportUsers(eventRegion, trainingReportId);
-        updateAdditionalData({ users });
+        if (!cancelled) {
+          updateAdditionalData({ users });
+        }
       } catch (e) {
-        setError('Error fetching collaborators and points of contact');
-      } finally {
-        setAdditionalDataFetched(true);
+        if (!cancelled) {
+          setError('Error fetching collaborators and points of contact');
+        }
       }
     }
 
     fetchUsers();
-  }, [additionalDataFetched, eventRegion, isAppLoading, updateAdditionalData, trainingReportId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [eventRegion, updateAdditionalData, trainingReportId]);
 
   useEffect(() => {
     // fetch event report data
+    if (!trainingReportId) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
     async function fetchReport() {
-      if (!trainingReportId || reportFetched) {
-        return;
-      }
       try {
-        const event = await eventById(trainingReportId);
+        // the edit form doesn't use session reports, so skip loading them
+        const event = await eventById(trainingReportId, false, { includeSessions: false });
+        if (cancelled) {
+          return;
+        }
         resetFormData(hookForm.reset, event);
         reportId.current = trainingReportId;
+        setFetchedRegionId(event.regionId ?? null);
       } catch (e) {
-        history.push(`/something-went-wrong/${e.status}`);
+        if (!cancelled) {
+          history.push(`/something-went-wrong/${e.status}`);
+        }
       } finally {
-        setReportFetched(true);
-        setDatePickerKey(Date.now().toString());
+        if (!cancelled) {
+          setReportFetched(true);
+          setDatePickerKey(Date.now().toString());
+        }
       }
     }
     fetchReport();
-  }, [hookForm.reset, isAppLoading, reportFetched, trainingReportId, history]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hookForm.reset, trainingReportId, history]);
 
   useEffect(() => {
     // set error if no training report id

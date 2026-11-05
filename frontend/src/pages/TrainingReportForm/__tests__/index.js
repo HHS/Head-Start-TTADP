@@ -84,7 +84,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('renders training report form', async () => {
-    fetchMock.get('/api/events/id/1', {
+    fetchMock.get('/api/events/id/1?includeSessions=false', {
       id: 1,
       name: 'test event',
       regionId: '1',
@@ -107,7 +107,7 @@ describe('TrainingReportForm', () => {
 
   it('fetches region-dependent data without waiting for the event when the id encodes the region', async () => {
     // the event request never resolves, so anything fetched must not depend on it
-    fetchMock.get('/api/events/id/R01-PD-1234', new Promise(() => {}));
+    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', new Promise(() => {}));
 
     act(() => {
       renderTrainingReportForm('R01-PD-1234');
@@ -120,8 +120,65 @@ describe('TrainingReportForm', () => {
     });
   });
 
+  it('requests each resource once and uses the real region when it differs from the id prefix', async () => {
+    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', {
+      id: 1,
+      eventId: 'R01-PD-1234',
+      regionId: 2,
+      collaboratorIds: [],
+      ownerId: 1,
+      data: {},
+    });
+    fetchMock.get(/\/api\/users\/training-report-users\?regionId=2/, {
+      pointOfContact: [],
+      collaborators: [],
+      creators: [],
+    });
+    fetchMock.get('/api/users/trainers/regional/region/2', []);
+    fetchMock.get('/api/users/trainers/national-center/region/2', []);
+
+    act(() => {
+      renderTrainingReportForm('R01-PD-1234');
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.called(/\/api\/users\/training-report-users\?regionId=2/)).toBe(true);
+      expect(fetchMock.called('/api/users/trainers/regional/region/2')).toBe(true);
+    });
+
+    expect(fetchMock.calls('/api/events/id/R01-PD-1234?includeSessions=false')).toHaveLength(1);
+    expect(fetchMock.calls(/\/api\/users\/training-report-users\?regionId=1/)).toHaveLength(1);
+    expect(fetchMock.calls(/\/api\/users\/training-report-users\?regionId=2/)).toHaveLength(1);
+  });
+
+  it('only fetches the event and users once when the region matches the id prefix', async () => {
+    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', {
+      id: 1,
+      eventId: 'R01-PD-1234',
+      regionId: 1,
+      collaboratorIds: [],
+      ownerId: 1,
+      data: {},
+    });
+
+    act(() => {
+      renderTrainingReportForm('R01-PD-1234');
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.calls('/api/events/id/R01-PD-1234?includeSessions=false')).toHaveLength(1);
+    });
+    // let any follow-up renders settle
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(fetchMock.calls('/api/events/id/R01-PD-1234?includeSessions=false')).toHaveLength(1);
+    expect(fetchMock.calls(/\/api\/users\/training-report-users/)).toHaveLength(1);
+  });
+
   it('redirects when an error occurs', async () => {
-    fetchMock.get('/api/events/id/1', 500);
+    fetchMock.get('/api/events/id/1?includeSessions=false', 500);
     const spy = jest.spyOn(history, 'push');
     act(() => {
       renderTrainingReportForm('1');
@@ -130,7 +187,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('renders training report form if pocId is null', async () => {
-    fetchMock.get('/api/events/id/1', {
+    fetchMock.get('/api/events/id/1?includeSessions=false', {
       id: 1,
       name: 'test event',
       regionId: '1',
@@ -156,7 +213,7 @@ describe('TrainingReportForm', () => {
     fetchMock.reset();
     fetchMock.get(/\/api\/users\/training-report-users\?regionId=1(&eventId=.*)?$/, 500);
 
-    fetchMock.get('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123?includeSessions=false', {
       regionId: '1',
       reportId: 1,
       collaboratorIds: [],
@@ -179,7 +236,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('fetches event report data', async () => {
-    fetchMock.get('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123?includeSessions=false', {
       regionId: '1',
       reportId: 1,
       collaboratorIds: [],
@@ -193,11 +250,11 @@ describe('TrainingReportForm', () => {
     renderTrainingReportForm('123');
 
     jest.advanceTimersByTime(30000);
-    expect(fetchMock.called('/api/events/id/123')).toBe(true);
+    expect(fetchMock.called('/api/events/id/123?includeSessions=false')).toBe(true);
   });
 
   it('displays "no training report id provided" error', async () => {
-    fetchMock.get('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123?includeSessions=false', {
       regionId: '1',
       reportId: 1,
       data: {},
@@ -217,7 +274,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('tests the on save draft event', async () => {
-    fetchMock.get('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123?includeSessions=false', {
       regionId: '1',
       reportId: 1,
       data: {},
@@ -231,7 +288,9 @@ describe('TrainingReportForm', () => {
     act(() => {
       renderTrainingReportForm('123');
     });
-    expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
+    expect(fetchMock.called('/api/events/id/123?includeSessions=false', { method: 'GET' })).toBe(
+      true
+    );
 
     fetchMock.put('/api/events/id/123', {
       regionId: '1',
@@ -257,7 +316,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('shows an error when failing to save', async () => {
-    fetchMock.get('/api/events/id/123', {
+    fetchMock.get('/api/events/id/123?includeSessions=false', {
       regionId: '1',
       reportId: 1,
       data: {},
@@ -271,7 +330,9 @@ describe('TrainingReportForm', () => {
     act(() => {
       renderTrainingReportForm('123');
     });
-    expect(fetchMock.called('/api/events/id/123', { method: 'GET' })).toBe(true);
+    expect(fetchMock.called('/api/events/id/123?includeSessions=false', { method: 'GET' })).toBe(
+      true
+    );
 
     fetchMock.put('/api/events/id/123', 500);
 
@@ -288,7 +349,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('handles an error submitting the form', async () => {
-    fetchMock.get(`/api/events/id/${trainingReportDisplayId}`, completedForm);
+    fetchMock.get(`/api/events/id/${trainingReportDisplayId}?includeSessions=false`, completedForm);
 
     fetchMock.put(`/api/events/id/${trainingReportDisplayId}`, 500);
     fetchMock.get(sessionsUrl, [
@@ -301,9 +362,11 @@ describe('TrainingReportForm', () => {
     });
 
     await waitFor(() =>
-      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(
-        true
-      )
+      expect(
+        fetchMock.called(`/api/events/id/${trainingReportDisplayId}?includeSessions=false`, {
+          method: 'GET',
+        })
+      ).toBe(true)
     );
     const submitButton = await screen.findByRole('button', { name: /Review and submit/i });
     act(() => {
@@ -334,7 +397,7 @@ describe('TrainingReportForm', () => {
   });
 
   it('displays the correct report view link', async () => {
-    fetchMock.get(`/api/events/id/${trainingReportDisplayId}`, completedForm);
+    fetchMock.get(`/api/events/id/${trainingReportDisplayId}?includeSessions=false`, completedForm);
     act(() => {
       renderTrainingReportForm(trainingReportDisplayId);
     });
@@ -343,7 +406,7 @@ describe('TrainingReportForm', () => {
     await waitFor(() => expect(screen.getByText(/r01-pd-1234/i)).toBeInTheDocument());
   });
   it('passes correct values to backend and redirects with success message', async () => {
-    fetchMock.get(`/api/events/id/${trainingReportDisplayId}`, completedForm);
+    fetchMock.get(`/api/events/id/${trainingReportDisplayId}?includeSessions=false`, completedForm);
 
     // Return successful response with proper data structure
     fetchMock.put(`/api/events/id/${trainingReportDisplayId}`, {
@@ -366,9 +429,11 @@ describe('TrainingReportForm', () => {
     });
 
     await waitFor(() =>
-      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(
-        true
-      )
+      expect(
+        fetchMock.called(`/api/events/id/${trainingReportDisplayId}?includeSessions=false`, {
+          method: 'GET',
+        })
+      ).toBe(true)
     );
     const submitButton = await screen.findByRole('button', { name: /Review and submit/i });
     act(() => {
@@ -410,7 +475,7 @@ describe('TrainingReportForm', () => {
     });
   });
   it('saves and updates local storage', async () => {
-    fetchMock.get('/api/events/id/1', {
+    fetchMock.get('/api/events/id/1?includeSessions=false', {
       id: 1,
       name: 'test event',
       regionId: '1',

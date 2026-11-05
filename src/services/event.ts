@@ -14,8 +14,8 @@ import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { trEventComplete } from '../lib/mailer';
-import { parseStoredDate } from '../lib/utils';
 import runInSavepoint from '../lib/runInSavepoint';
+import { parseStoredDate } from '../lib/utils';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
@@ -178,7 +178,8 @@ export async function destroyEvent(id: number): Promise<void> {
 
 export async function findEventHelper(
   where,
-  plural = false
+  plural = false,
+  { includeSessions = true }: { includeSessions?: boolean } = {}
 ): Promise<EventShape | EventShape[] | null> {
   const query = {
     attributes: [
@@ -198,48 +199,52 @@ export async function findEventHelper(
         model: EventReportPilotNationalCenterUser,
         as: 'eventReportPilotNationalCenterUsers',
       },
-      {
-        model: SessionReportPilot,
-        include: [
-          {
-            required: false,
-            model: File,
-            as: 'supportingAttachments',
-            where: {
-              status: {
-                [Op.ne]: FILE_STATUSES.UPLOAD_FAILED,
-              },
+      ...(includeSessions
+        ? [
+            {
+              model: SessionReportPilot,
+              include: [
+                {
+                  required: false,
+                  model: File,
+                  as: 'supportingAttachments',
+                  where: {
+                    status: {
+                      [Op.ne]: FILE_STATUSES.UPLOAD_FAILED,
+                    },
+                  },
+                },
+                {
+                  model: GoalTemplate,
+                  as: 'goalTemplates',
+                  attributes: ['id', 'standard'],
+                  through: { attributes: [] }, // exclude join table attributes
+                },
+                {
+                  required: false,
+                  model: User,
+                  as: 'trainers',
+                  attributes: ['fullName', 'name', 'id'],
+                  include: [
+                    {
+                      model: db.Role,
+                      as: 'roles',
+                      attributes: ['name'],
+                    },
+                  ],
+                },
+              ],
+              attributes: INCLUDED_SESSION_ATTRIBUTES,
+              as: 'sessionReports',
+              separate: true, // This is required to order the joined table results.
+              order: [
+                ['startDate', 'ASC'],
+                ['data.sessionName', 'ASC'],
+                ['createdAt', 'ASC'],
+              ],
             },
-          },
-          {
-            model: GoalTemplate,
-            as: 'goalTemplates',
-            attributes: ['id', 'standard'],
-            through: { attributes: [] }, // exclude join table attributes
-          },
-          {
-            required: false,
-            model: User,
-            as: 'trainers',
-            attributes: ['fullName', 'name', 'id'],
-            include: [
-              {
-                model: db.Role,
-                as: 'roles',
-                attributes: ['name'],
-              },
-            ],
-          },
-        ],
-        attributes: INCLUDED_SESSION_ATTRIBUTES,
-        as: 'sessionReports',
-        separate: true, // This is required to order the joined table results.
-        order: [
-          ['startDate', 'ASC'],
-          ['data.sessionName', 'ASC'],
-          ['createdAt', 'ASC'],
-        ],
-      },
+          ]
+        : []),
     ],
   };
 
@@ -894,7 +899,8 @@ export async function getTrainingReportAlertsForUser(
 
 export async function findEventBySmartsheetId(
   eventId: string,
-  scopes: WhereOptions[] = [{}]
+  scopes: WhereOptions[] = [{}],
+  options: { includeSessions?: boolean } = {}
 ): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
@@ -906,7 +912,7 @@ export async function findEventBySmartsheetId(
       ...scopes,
     ],
   };
-  return findEventHelper(where) as Promise<EventShape>;
+  return findEventHelper(where, false, options) as Promise<EventShape>;
 }
 
 export async function findEventsByOwnerId(id: number): Promise<EventShape[] | null> {

@@ -70,7 +70,7 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
-    const { readOnly } = req.query;
+    const { readOnly, includeSessions } = req.query;
 
     // Check if user is a collaborator.
     const userId = await currentUserId(req, res);
@@ -80,7 +80,9 @@ export const getHandler = async (req, res) => {
     }
 
     if (eventId) {
-      event = await findEventBySmartsheetId(eventId, scopes);
+      event = await findEventBySmartsheetId(eventId, scopes, {
+        includeSessions: includeSessions !== 'false',
+      });
 
       if (event && event.data && event.data.status === 'Complete' && !readOnly) {
         return res

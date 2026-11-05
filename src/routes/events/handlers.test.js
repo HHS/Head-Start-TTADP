@@ -89,6 +89,27 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
+    it('omits sessions when includeSessions=false', async () => {
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      EventReport.mockImplementation(() => ({
+        canRead: () => true,
+        isPoc: () => false,
+        isAdmin: () => false,
+      }));
+      await getHandler(
+        {
+          params: { eventId: 99_999 },
+          query: { includeSessions: 'false' },
+          session: { userId: 1 },
+        },
+        mockResponse
+      );
+      expect(findEventBySmartsheetId).toHaveBeenCalledWith(99_999, expect.anything(), {
+        includeSessions: false,
+      });
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
     it('returns the event if read only', async () => {
       findEventBySmartsheetId.mockResolvedValue(mockEvent);
       EventReport.mockImplementation(() => ({

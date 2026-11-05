@@ -73,8 +73,9 @@ const EventSummary = ({
   const endDate = watch('endDate');
   const eventOrganizer = watch('eventOrganizer');
 
-  // prefer the region passed from the parent (parsed from the event id) so trainer
-  // options load in parallel with the event fetch rather than after it
+  // prefer the region passed from the parent (parsed from the event id until the event
+  // loads, then the event's actual region) so trainer options load in parallel with the
+  // event fetch rather than after it
   const { trainerOptions, optionsForValue } = useEventAndSessionStaff(
     { ...data, regionId: regionId ?? data.regionId },
     true
