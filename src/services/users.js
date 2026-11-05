@@ -238,6 +238,20 @@ export async function userEmailIsVerifiedByUserId(userId) {
 }
 
 /**
+ * Clears a user's email verification so they must verify their email again.
+ *
+ * @param {number} userId
+ * @returns {Promise<number>} number of validation status rows reset
+ */
+export async function requireEmailVerification(userId) {
+  const [count] = await UserValidationStatus.update(
+    { validatedAt: null },
+    { where: { userId, type: 'email' } }
+  );
+  return count;
+}
+
+/**
  * Sets a give feature flag on or off for a set of active users
  *
  * @param {flag:string} flag to set

@@ -17,6 +17,13 @@ export const updateUser = async (userId, data) => {
   return user.json();
 };
 
+export const requireEmailVerification = async (userId) => {
+  const result = await put(
+    join('/', 'api', 'admin', 'users', String(userId), 'require-email-verification')
+  );
+  return result.json();
+};
+
 export const getRecipients = async () => {
   const recipients = await get(join('/', 'api', 'admin', 'recipients'));
   return recipients.json();
