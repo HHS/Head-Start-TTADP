@@ -3,7 +3,6 @@
 
 import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
-import PropTypes from 'prop-types';
 import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -12,6 +11,7 @@ import { REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY, REPORTS_PER_PAGE } from '../../
 import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import FilterContext from '../../FilterContext';
 import { downloadReports, getReportsViaIdPost } from '../../fetchers/activityReports';
 import { getAllReportsDownloadURL, getReportsDownloadURL } from '../../fetchers/helpers';
 import { fetchFlatResourceData } from '../../fetchers/Resources';
@@ -40,7 +40,7 @@ const additionalDefaultFilters = [
     query: defaultDate,
   },
 ];
-export default function ResourcesDashboard() {
+function ResourcesDashboardContent() {
   const { user } = useContext(UserContext);
   const [isLoading, setIsLoading] = useState(false);
   const [areReportsLoading, setAreReportsLoading] = useState(false);
@@ -256,22 +256,10 @@ export default function ResourcesDashboard() {
   );
 }
 
-ResourcesDashboard.propTypes = {
-  user: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
-    homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(
-      PropTypes.shape({
-        userId: PropTypes.number,
-        scopeId: PropTypes.number,
-        regionId: PropTypes.number,
-      })
-    ),
-  }),
-};
-
-ResourcesDashboard.defaultProps = {
-  user: null,
-};
+export default function ResourcesDashboard() {
+  return (
+    <FilterContext.Provider value={{ filterKey: REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY }}>
+      <ResourcesDashboardContent />
+    </FilterContext.Provider>
+  );
+}
