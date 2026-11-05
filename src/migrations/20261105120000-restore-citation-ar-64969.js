@@ -54,16 +54,12 @@ module.exports = {
             JOIN "Citations" c
               ON c.id = gc."citationId"
               AND c."deletedAt" IS NULL
-            JOIN "DeliveredReviewCitations" drc ON drc."citationId" = c.id
-            JOIN "GrantDeliveredReviews" gdr
-              ON gdr."deliveredReviewId" = drc."deliveredReviewId"
-              AND gdr."grantId" = gc."grantId"
             JOIN "DeliveredReviews" dr
-              ON dr.id = drc."deliveredReviewId"
+              ON dr.review_uuid = c.initial_review_uuid
               AND dr."deletedAt" IS NULL
             WHERE c.citation = '1302.90(c)(1)(vi)'
               AND gc."grantId" IN (SELECT grant_id FROM targets)
-            ORDER BY gc."grantId", c.id, dr.report_delivery_date ASC
+            ORDER BY gc."grantId", c.id, dr.id
           )
           INSERT INTO "ActivityReportObjectiveCitations"
             ("activityReportObjectiveId", "citationId", citation, "findingId", "grantId", "grantNumber",
