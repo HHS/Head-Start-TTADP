@@ -1,5 +1,15 @@
-import { TTA_REQUEST_MONITORING_STANDARD, TTA_REQUEST_STATUSES } from '@ttahub/common';
-import type { TtaRequestCitationData, TtaRequestPayload } from '@ttahub/common/src/ttaRequests';
+import {
+  APPROVER_STATUSES,
+  TTA_REQUEST_MONITORING_STANDARD,
+  TTA_REQUEST_NOTE_ACTIONS,
+  TTA_REQUEST_STATUSES,
+  TTA_REQUEST_STEPS,
+} from '@ttahub/common';
+import type {
+  TtaRequestCitationData,
+  TtaRequestPayload,
+  TtaRequestReviewPayload,
+} from '@ttahub/common/src/ttaRequests';
 import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
@@ -14,6 +24,8 @@ const {
   TtaRequest,
   TtaRequestGrant,
   TtaRequestCitation,
+  TtaRequestApprover,
+  TtaRequestNote,
   Grant,
   Program,
   Recipient,
@@ -51,6 +63,13 @@ export async function lockTtaRequest(id: number) {
     lock: Transaction.LOCK.NO_KEY_UPDATE,
   });
 }
+
+const userWithRoles = (as: string) => ({
+  model: User,
+  as,
+  attributes: ['id', 'name', 'fullName'],
+  include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
+});
 
 export async function ttaRequestById(id: number) {
   return TtaRequest.findOne({
@@ -110,10 +129,25 @@ export async function ttaRequestById(id: number) {
         as: 'citations',
         attributes: ['id', 'citation', 'findingType'],
       },
+      {
+        model: TtaRequestApprover,
+        as: 'approvers',
+        attributes: ['id', 'userId', 'step', 'status'],
+        include: [userWithRoles('user')],
+      },
+      {
+        model: TtaRequestNote,
+        as: 'notes',
+        attributes: ['id', 'step', 'action', 'note', 'createdAt'],
+        include: [userWithRoles('user')],
+      },
     ],
     order: [
       [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
       [{ model: TtaRequestCitation, as: 'citations' }, 'citation', 'ASC'],
+      // the history reads in the order it happened
+      [{ model: TtaRequestNote, as: 'notes' }, 'createdAt', 'ASC'],
+      [{ model: TtaRequestNote, as: 'notes' }, 'id', 'ASC'],
     ],
   });
 }
@@ -121,7 +155,7 @@ export async function ttaRequestById(id: number) {
 /**
  * The requests the scopes allow, optionally for one recipient: the user's own drafts,
  * since drafts are private to their creator until they are submitted, and anyone's
- * submitted requests.
+ * requests that have been submitted, including those sent back for changes.
  */
 export async function getTtaRequests(
   scopes: WhereOptions[],
@@ -135,7 +169,9 @@ export async function getTtaRequests(
         {
           [Op.or]: [
             { userId, status: TTA_REQUEST_STATUSES.DRAFT },
-            { status: TTA_REQUEST_STATUSES.SUBMITTED },
+            {
+              status: [TTA_REQUEST_STATUSES.SUBMITTED, TTA_REQUEST_STATUSES.NEEDS_ACTION],
+            },
           ],
         },
         ...(recipientId ? [{ recipientId }] : []),
@@ -376,10 +412,47 @@ export async function updateTtaRequest(
 }
 
 /**
- * Saves the request as it stands and submits it for review. The body has already been
- * checked for the required fields; what is left to check depends on the saved request:
- * the reviewer must still be one of the region's reviewers, and the monitoring goal
- * needs citations.
+ * The request's reviewer is the one picked on the form. A reviewer who was replaced is
+ * soft deleted, so what they did stays on record, and the current one is pending again.
+ */
+async function syncReviewerApprover(ttaRequestId: number, reviewerId: number) {
+  await TtaRequestApprover.destroy({
+    where: {
+      ttaRequestId,
+      step: TTA_REQUEST_STEPS.REVIEWER,
+      userId: { [Op.ne]: reviewerId },
+    },
+  });
+
+  const existing = await TtaRequestApprover.findOne({
+    where: { ttaRequestId, userId: reviewerId, step: TTA_REQUEST_STEPS.REVIEWER },
+    paranoid: false,
+  });
+
+  if (!existing) {
+    await TtaRequestApprover.create({
+      ttaRequestId,
+      userId: reviewerId,
+      step: TTA_REQUEST_STEPS.REVIEWER,
+      status: null,
+    });
+    return;
+  }
+
+  if (existing.deletedAt) {
+    await existing.restore();
+  }
+  await existing.update({ status: null });
+}
+
+/**
+ * Saves the request as it stands and submits it for review, the first time or after the
+ * reviewer has asked for changes. The body has already been checked for the required
+ * fields; what is left to check depends on the saved request: the reviewer must still be
+ * one of the region's reviewers, and the monitoring goal needs citations.
+ *
+ * The creator's notes are added to the request's history, and the field is cleared so
+ * the next submission starts with a blank note.
  */
 export async function submitTtaRequest(
   existing: ExistingTtaRequest,
@@ -396,14 +469,64 @@ export async function submitTtaRequest(
     throw dataError('A request for the monitoring goal needs at least one citation');
   }
 
+  await syncReviewerApprover(existing.id, saved.reviewerId);
+
+  await TtaRequestNote.create({
+    ttaRequestId: existing.id,
+    userId,
+    step: TTA_REQUEST_STEPS.CREATOR,
+    action: TTA_REQUEST_NOTE_ACTIONS.SUBMITTED,
+    note: saved.creatorNotes || null,
+  });
+
   await TtaRequest.update(
     {
       status: TTA_REQUEST_STATUSES.SUBMITTED,
       submittedAt: new Date(),
+      creatorNotes: null,
     },
     { where: { id: existing.id } }
   );
 
   const submitted = await ttaRequestById(existing.id);
   return submitted.toJSON();
+}
+
+/**
+ * The reviewer sends the request back to its creator for changes. Their decision and note
+ * are added to the request's history; the creator sees both when they edit the request.
+ */
+export async function reviewTtaRequest(
+  existing: { id: number; reviewerId: number | null },
+  { status, note }: TtaRequestReviewPayload,
+  userId: number
+) {
+  if (status !== APPROVER_STATUSES.NEEDS_ACTION) {
+    throw dataError('A TTA request review can only ask for changes');
+  }
+
+  const [updated] = await TtaRequestApprover.update(
+    { status: APPROVER_STATUSES.NEEDS_ACTION },
+    { where: { ttaRequestId: existing.id, userId, step: TTA_REQUEST_STEPS.REVIEWER } }
+  );
+
+  if (!updated) {
+    throw dataError('Only the reviewer on the request can review it');
+  }
+
+  await TtaRequestNote.create({
+    ttaRequestId: existing.id,
+    userId,
+    step: TTA_REQUEST_STEPS.REVIEWER,
+    action: TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
+    note: note || null,
+  });
+
+  await TtaRequest.update(
+    { status: TTA_REQUEST_STATUSES.NEEDS_ACTION },
+    { where: { id: existing.id } }
+  );
+
+  const reviewed = await ttaRequestById(existing.id);
+  return reviewed.toJSON();
 }

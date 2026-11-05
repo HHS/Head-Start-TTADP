@@ -1,4 +1,9 @@
-import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import {
+  APPROVER_STATUSES,
+  TTA_REQUEST_NOTE_ACTIONS,
+  TTA_REQUEST_STATUSES,
+  TTA_REQUEST_STEPS,
+} from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import filtersToScopes from '../scopes';
@@ -7,6 +12,7 @@ import {
   createTtaRequest,
   getTtaRequests,
   lockTtaRequest,
+  reviewTtaRequest,
   submitTtaRequest,
   ttaRequestById,
   ttaRequestReviewers,
@@ -21,6 +27,7 @@ const {
   Recipient,
   Role,
   TtaRequest,
+  TtaRequestApprover,
   TtaRequestCitation,
   User,
   UserRole,
@@ -533,6 +540,227 @@ describe('ttaRequests service', () => {
       );
 
       expect(submitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+    });
+
+    it("records the creator's notes in the history and clears the field", async () => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      const submitted = await submitTtaRequest(
+        draft,
+        { ...complete, creatorNotes: 'Please look at this' },
+        creator.id
+      );
+
+      expect(submitted.creatorNotes).toBeNull();
+      expect(submitted.notes).toHaveLength(1);
+      expect(submitted.notes[0]).toMatchObject({
+        step: TTA_REQUEST_STEPS.CREATOR,
+        action: TTA_REQUEST_NOTE_ACTIONS.SUBMITTED,
+        note: 'Please look at this',
+      });
+      expect(submitted.notes[0].user.id).toBe(creator.id);
+      expect(submitted.approvers).toHaveLength(1);
+      expect(submitted.approvers[0]).toMatchObject({
+        userId: reviewer.id,
+        step: TTA_REQUEST_STEPS.REVIEWER,
+        status: null,
+      });
+    });
+  });
+
+  describe('reviewTtaRequest', () => {
+    let otherReviewer;
+
+    const complete = {
+      recipientAware: true,
+      originator: 'Recipient',
+      citations: [],
+      context: '<p>Context</p>',
+      creatorNotes: '',
+    };
+
+    // a request the creator has submitted to the reviewer
+    const submittedRequest = async (creatorNotes = 'First submission') => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+      return submitTtaRequest(
+        draft,
+        {
+          ...complete,
+          recipientId: recipient.id,
+          grantIds: [grantOne.id],
+          goalTemplateId: goalTemplate.id,
+          reviewerId: reviewer.id,
+          creatorNotes,
+        },
+        creator.id
+      );
+    };
+
+    const resubmit = (request, data = {}) =>
+      submitTtaRequest(
+        request,
+        {
+          ...complete,
+          recipientId: recipient.id,
+          grantIds: [grantOne.id],
+          goalTemplateId: goalTemplate.id,
+          reviewerId: reviewer.id,
+          ...data,
+        },
+        creator.id
+      );
+
+    beforeAll(async () => {
+      otherReviewer = await createUser({});
+      await Promise.all([
+        Permission.create({
+          userId: otherReviewer.id,
+          regionId: 1,
+          scopeId: SCOPES.REVIEW_TTA_REQUESTS,
+        }),
+        Permission.create({ userId: otherReviewer.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
+      ]);
+    });
+
+    afterAll(async () => {
+      // the requests refer to the other reviewer, so they go first
+      await TtaRequest.destroy({ where: { userId: creator.id }, force: true });
+      await Permission.destroy({ where: { userId: otherReviewer.id } });
+      await User.destroy({ where: { id: otherReviewer.id } });
+    });
+
+    it('sends the request back to the creator with the reviewer note', async () => {
+      const submitted = await submittedRequest();
+
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Add the agenda' },
+        reviewer.id
+      );
+
+      expect(reviewed.status).toBe(TTA_REQUEST_STATUSES.NEEDS_ACTION);
+      expect(reviewed.approvers[0]).toMatchObject({
+        userId: reviewer.id,
+        status: APPROVER_STATUSES.NEEDS_ACTION,
+      });
+      expect(reviewed.notes.map(({ step, action, note }) => ({ step, action, note }))).toEqual([
+        {
+          step: TTA_REQUEST_STEPS.CREATOR,
+          action: TTA_REQUEST_NOTE_ACTIONS.SUBMITTED,
+          note: 'First submission',
+        },
+        {
+          step: TTA_REQUEST_STEPS.REVIEWER,
+          action: TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
+          note: 'Add the agenda',
+        },
+      ]);
+    });
+
+    it('records a review without a note', async () => {
+      const submitted = await submittedRequest();
+
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: '' },
+        reviewer.id
+      );
+
+      expect(reviewed.notes[1]).toMatchObject({
+        step: TTA_REQUEST_STEPS.REVIEWER,
+        action: TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
+        note: null,
+      });
+    });
+
+    it('rejects a review from someone who is not the reviewer', async () => {
+      const submitted = await submittedRequest();
+
+      await expect(
+        reviewTtaRequest(submitted, { status: APPROVER_STATUSES.NEEDS_ACTION }, otherReviewer.id)
+      ).rejects.toMatchObject({ statusCode: 400 });
+
+      const stored = await ttaRequestById(submitted.id);
+      expect(stored.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(stored.notes).toHaveLength(1);
+    });
+
+    it('keeps every round of the history in order', async () => {
+      let request = await submittedRequest('Round one');
+      request = await reviewTtaRequest(
+        request,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix one' },
+        reviewer.id
+      );
+      request = await resubmit(request, { creatorNotes: 'Round two' });
+      request = await reviewTtaRequest(
+        request,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix two' },
+        reviewer.id
+      );
+      request = await resubmit(request, { creatorNotes: 'Round three' });
+
+      expect(request.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(request.notes.map(({ step, action, note }) => [step, action, note])).toEqual([
+        ['creator', 'submitted', 'Round one'],
+        ['reviewer', 'needs_action', 'Fix one'],
+        ['creator', 'submitted', 'Round two'],
+        ['reviewer', 'needs_action', 'Fix two'],
+        ['creator', 'submitted', 'Round three'],
+      ]);
+    });
+
+    it('makes the reviewer pending again when the creator resubmits', async () => {
+      const submitted = await submittedRequest();
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix it' },
+        reviewer.id
+      );
+
+      const resubmitted = await resubmit(reviewed, { creatorNotes: 'Fixed' });
+
+      expect(resubmitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(resubmitted.creatorNotes).toBeNull();
+      expect(resubmitted.approvers).toHaveLength(1);
+      expect(resubmitted.approvers[0]).toMatchObject({ userId: reviewer.id, status: null });
+    });
+
+    it('replaces the reviewer when the creator picks another one on resubmission', async () => {
+      const submitted = await submittedRequest();
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Ask someone else' },
+        reviewer.id
+      );
+
+      const resubmitted = await resubmit(reviewed, { reviewerId: otherReviewer.id });
+
+      expect(resubmitted.approvers).toHaveLength(1);
+      expect(resubmitted.approvers[0]).toMatchObject({ userId: otherReviewer.id, status: null });
+
+      // the replaced reviewer's review stays on record
+      const replaced = await TtaRequestApprover.findOne({
+        where: { ttaRequestId: submitted.id, userId: reviewer.id },
+        paranoid: false,
+      });
+      expect(replaced.deletedAt).not.toBeNull();
+      expect(replaced.status).toBe(APPROVER_STATUSES.NEEDS_ACTION);
+    });
+
+    it('lists requests sent back for changes', async () => {
+      const submitted = await submittedRequest();
+      await reviewTtaRequest(submitted, { status: APPROVER_STATUSES.NEEDS_ACTION }, reviewer.id);
+
+      const { ttaRequest: scopes } = await filtersToScopes(
+        { 'region.in': ['1'] },
+        { userId: reviewer.id }
+      );
+      const { rows } = await getTtaRequests(scopes, reviewer.id);
+
+      expect(rows.find((row) => row.id === submitted.id)?.status).toBe(
+        TTA_REQUEST_STATUSES.NEEDS_ACTION
+      );
     });
   });
 

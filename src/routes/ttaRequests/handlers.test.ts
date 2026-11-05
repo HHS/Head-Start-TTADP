@@ -10,6 +10,7 @@ import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
   lockTtaRequest,
+  reviewTtaRequest as reviewTtaRequestService,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
   ttaRequestReviewers,
@@ -22,6 +23,7 @@ import {
   getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
+  reviewTtaRequest,
   saveTtaRequest,
   submitTtaRequest,
 } from './handlers';
@@ -30,6 +32,7 @@ jest.mock('../../services/ttaRequests', () => ({
   createTtaRequest: jest.fn(),
   getTtaRequests: jest.fn(),
   lockTtaRequest: jest.fn(),
+  reviewTtaRequest: jest.fn(),
   submitTtaRequest: jest.fn(),
   ttaRequestById: jest.fn(),
   ttaRequestReviewers: jest.fn(),
@@ -357,6 +360,76 @@ describe('TTA request handlers', () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
       (submitTtaRequestService as jest.Mock).mockRejectedValue(new Error('boom'));
       await submitTtaRequest(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+  });
+
+  describe('reviewTtaRequest', () => {
+    const REVIEWER_ID = 789;
+    const reviewer = {
+      id: REVIEWER_ID,
+      permissions: [{ scopeId: SCOPES.REVIEW_TTA_REQUESTS, regionId: 1 }],
+    };
+    const submitted = {
+      ...draft,
+      reviewerId: REVIEWER_ID,
+      status: TTA_REQUEST_STATUSES.SUBMITTED,
+    };
+
+    beforeEach(() => {
+      req.params = { ttaRequestId: '1' };
+      req.body = { status: 'needs_action', note: 'Add the agenda' };
+      (currentUserId as jest.Mock).mockResolvedValue(REVIEWER_ID);
+      (userById as jest.Mock).mockResolvedValue(reviewer);
+    });
+
+    it('sends the request back for changes', async () => {
+      const existing = mockRequestModel(submitted);
+      const reviewed = { ...submitted, status: TTA_REQUEST_STATUSES.NEEDS_ACTION };
+      (ttaRequestById as jest.Mock).mockResolvedValue(existing);
+      (reviewTtaRequestService as jest.Mock).mockResolvedValue(reviewed);
+      await reviewTtaRequest(req as Request, res as Response);
+      expect(lockTtaRequest).toHaveBeenCalledWith(1);
+      expect(reviewTtaRequestService).toHaveBeenCalledWith(existing, req.body, REVIEWER_ID);
+      expect(json).toHaveBeenCalledWith(reviewed);
+    });
+
+    it('returns 404 when the request does not exist', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(null);
+      await reviewTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(404);
+    });
+
+    it('returns 403 for someone other than the reviewer', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(submitted));
+      (userById as jest.Mock).mockResolvedValue({ ...reviewer, id: 456 });
+      await reviewTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(reviewTtaRequestService).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 once the request has been sent back', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(
+        mockRequestModel({ ...submitted, status: TTA_REQUEST_STATUSES.NEEDS_ACTION })
+      );
+      await reviewTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(reviewTtaRequestService).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the service rejects the review', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(submitted));
+      (reviewTtaRequestService as jest.Mock).mockRejectedValue(
+        serviceError(400, 'not the reviewer', { error: 'not the reviewer' })
+      );
+      await reviewTtaRequest(req as Request, res as Response);
+      expect(status).toHaveBeenCalledWith(400);
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(submitted));
+      (reviewTtaRequestService as jest.Mock).mockRejectedValue(new Error('boom'));
+      await reviewTtaRequest(req as Request, res as Response);
       expect(handleErrors).toHaveBeenCalled();
     });
   });

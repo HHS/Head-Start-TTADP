@@ -126,12 +126,20 @@ describe('TtaRequest policy', () => {
       expect(policy.canUpdate()).toBe(false);
     });
 
-    it('is false once the request is no longer a draft', () => {
+    it('is false once the request is submitted', () => {
       const policy = new TtaRequest(createUser({ write: true }), 1, {
         ...draft,
-        status: 'submitted',
+        status: TTA_REQUEST_STATUSES.SUBMITTED,
       });
       expect(policy.canUpdate()).toBe(false);
+    });
+
+    it('is true for the creator once the request is sent back for changes', () => {
+      const policy = new TtaRequest(createUser({ write: true }), 1, {
+        ...draft,
+        status: TTA_REQUEST_STATUSES.NEEDS_ACTION,
+      });
+      expect(policy.canUpdate()).toBe(true);
     });
 
     it('is false when the creator has lost write permission', () => {
@@ -142,6 +150,54 @@ describe('TtaRequest policy', () => {
     it('is false without a request', () => {
       const policy = new TtaRequest(createUser({ write: true }), 1);
       expect(policy.canUpdate()).toBe(false);
+    });
+  });
+
+  describe('canReview', () => {
+    const REVIEWER_ID = 2;
+    const submitted = {
+      ...draft,
+      reviewerId: REVIEWER_ID,
+      status: TTA_REQUEST_STATUSES.SUBMITTED,
+    };
+    const reviewer = () => createUser({ id: REVIEWER_ID, scopeIds: [SCOPES.REVIEW_TTA_REQUESTS] });
+
+    it('is true for the reviewer of a submitted request', () => {
+      const policy = new TtaRequest(reviewer(), 1, submitted);
+      expect(policy.canReview()).toBe(true);
+    });
+
+    it('is false for someone other than the reviewer, and logs the attempt', () => {
+      const policy = new TtaRequest(
+        createUser({ id: 3, scopeIds: [SCOPES.REVIEW_TTA_REQUESTS] }),
+        1,
+        submitted
+      );
+      expect(policy.canReview()).toBe(false);
+      expect(auditLogger.warn).toHaveBeenCalled();
+    });
+
+    it('is false for the creator', () => {
+      const policy = new TtaRequest(createUser({ write: true }), 1, submitted);
+      expect(policy.canReview()).toBe(false);
+    });
+
+    it.each([TTA_REQUEST_STATUSES.DRAFT, TTA_REQUEST_STATUSES.NEEDS_ACTION])(
+      'is false while the request is %s',
+      (status) => {
+        const policy = new TtaRequest(reviewer(), 1, { ...submitted, status });
+        expect(policy.canReview()).toBe(false);
+      }
+    );
+
+    it('is false when the reviewer has lost the review permission in the region', () => {
+      const policy = new TtaRequest(createUser({ id: REVIEWER_ID, read: true }), 1, submitted);
+      expect(policy.canReview()).toBe(false);
+    });
+
+    it('is false without a request', () => {
+      const policy = new TtaRequest(reviewer(), 1);
+      expect(policy.canReview()).toBe(false);
     });
   });
 });

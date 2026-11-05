@@ -1354,6 +1354,17 @@ class Topics{
  mapsTo : integer
 }
 
+class TtaRequestApprovers{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * step : enum
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ status : enum
+}
+
 class TtaRequestCitations{
  * id : integer : <generated>
  * ttaRequestId : integer : REFERENCES "TtaRequests".id
@@ -1369,6 +1380,17 @@ class TtaRequestGrants{
  * ttaRequestId : integer : REFERENCES "TtaRequests".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+}
+
+class TtaRequestNotes{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * action : enum
+ * createdAt : timestamp with time zone
+ * step : enum
+ * updatedAt : timestamp with time zone
+ note : text
 }
 
 class TtaRequests{
@@ -3037,6 +3059,20 @@ class ZALTopics{
  session_sig : text
 }
 
+class ZALTtaRequestApprovers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALTtaRequestCitations{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3052,6 +3088,20 @@ class ZALTtaRequestCitations{
 }
 
 class ZALTtaRequestGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALTtaRequestNotes{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -3198,6 +3248,10 @@ class ZALZAFilter{
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestApprovers : user
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestNotes : user
 Users "1" --[#black,plain,thickness=2]-- "1" TtaRequests : creator, lastUpdatedBy, reviewer
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
@@ -3348,8 +3402,10 @@ SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilot
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : ttaRequest, approvers
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestCitations : ttaRequest, citations
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequest, requestGrants
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : ttaRequest, notes
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators

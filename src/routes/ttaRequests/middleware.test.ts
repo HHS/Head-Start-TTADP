@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { auditLogger } from '../../logger';
 import {
   checkCreateTtaRequestBody,
+  checkReviewTtaRequestBody,
   checkSubmitTtaRequestBody,
   checkUpdateTtaRequestBody,
 } from './middleware';
@@ -164,5 +165,31 @@ describe('TTA request body middleware', () => {
       const { req } = run(checkSubmitTtaRequestBody, { ...fullBody, context });
       expect(req.body.context).toBe(context);
     });
+  });
+
+  describe('checkReviewTtaRequestBody', () => {
+    it('accepts needs action with a note', () => {
+      const { req, next } = run(checkReviewTtaRequestBody, {
+        status: 'needs_action',
+        note: 'Add the agenda',
+      });
+      expect(next).toHaveBeenCalled();
+      expect(req.body).toEqual({ status: 'needs_action', note: 'Add the agenda' });
+    });
+
+    it('accepts needs action without a note', () => {
+      const { next } = run(checkReviewTtaRequestBody, { status: 'needs_action', note: '' });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it.each([{}, { status: 'approved' }, { status: 'needs_action', note: 5 }])(
+      'rejects %j',
+      (body) => {
+        const { status, next } = run(checkReviewTtaRequestBody, body);
+        expect(status).toHaveBeenCalledWith(400);
+        expect(next).not.toHaveBeenCalled();
+        expect(auditLogger.error).toHaveBeenCalled();
+      }
+    );
   });
 });

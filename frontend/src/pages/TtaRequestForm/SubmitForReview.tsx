@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import FormItem from '../../components/FormItem';
+import TtaRequestNotesSummary, { type TtaRequestNote } from '../../components/TtaRequestNotesSummary';
 import selectOptionsReset from '../../components/selectOptionsReset';
 import { getTtaRequestReviewers } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
@@ -10,6 +11,7 @@ import { SELECT_PLACEHOLDER, TTA_REQUEST_FIELDS } from './constants';
 import type { Reviewer, SelectOption } from './types';
 
 const NO_REVIEWERS: Reviewer[] = [];
+const NO_NOTES: TtaRequestNote[] = [];
 
 export const INELIGIBLE_REVIEWER_ERROR =
   'The previously selected reviewer can no longer review TTA requests in this region. Select another reviewer.';
@@ -24,6 +26,8 @@ const NO_REGION_REVIEWERS: RegionReviewers = { regionId: null, reviewers: NO_REV
 interface SubmitForReviewProps {
   /** the region whose reviewers can review this request, or null until a grant is chosen */
   regionId: number | null;
+  /** the notes left on the request so far, once it has been submitted and sent back */
+  notes?: TtaRequestNote[];
 }
 
 /**
@@ -31,7 +35,10 @@ interface SubmitForReviewProps {
  * are the region's users who can review, approve or backup approve TTA requests, so there
  * is nothing to choose from until the grant - and with it the region - is known.
  */
-export default function SubmitForReview({ regionId }: SubmitForReviewProps): React.ReactElement {
+export default function SubmitForReview({
+  regionId,
+  notes = NO_NOTES,
+}: SubmitForReviewProps): React.ReactElement {
   const { control, register, watch, setValue, setError } = useFormContext();
 
   // there is no region to ask about until a grant has been picked, so ask for nobody. The
@@ -80,6 +87,11 @@ export default function SubmitForReview({ regionId }: SubmitForReviewProps): Rea
   return (
     <>
       <h3 className="margin-top-4 margin-bottom-2">Submit for review</h3>
+      {notes.length > 0 && (
+        <div className="margin-bottom-3">
+          <TtaRequestNotesSummary notes={notes} />
+        </div>
+      )}
       <FormItem
         label="Add creator notes"
         name={TTA_REQUEST_FIELDS.CREATOR_NOTES}

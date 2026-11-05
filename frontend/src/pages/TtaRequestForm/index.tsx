@@ -20,6 +20,7 @@ import {
 } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
+import ApproverStatusList from '../ActivityReport/Pages/components/ApproverStatusList';
 import {
   AUTOSAVE_INTERVAL,
   DATE_DISPLAY_SAVED_FORMAT,
@@ -33,6 +34,7 @@ import {
 } from './constants';
 import { toApiPayload, toFormValues } from './formData';
 import GoalAndContext from './GoalAndContext';
+import { latestNeedsAction, nameWithRole, toNotesSummary } from './notes';
 import SubmitForReview from './SubmitForReview';
 import TtaRequestFormHeading from './TtaRequestFormHeading';
 import type {
@@ -310,11 +312,21 @@ function TtaRequestFormBody({
     ) : null;
   }
 
-  // only a draft can be edited; a submitted request is shown read-only, as collaboration
-  // reports do
-  if (savedRequest && savedRequest.status !== TTA_REQUEST_STATUSES.DRAFT) {
+  // only a draft, or a request sent back for changes, can be edited; a submitted request is
+  // shown read-only, as collaboration reports do
+  if (
+    savedRequest &&
+    savedRequest.status !== TTA_REQUEST_STATUSES.DRAFT &&
+    savedRequest.status !== TTA_REQUEST_STATUSES.NEEDS_ACTION
+  ) {
     return <Redirect to={ttaRequestViewPath(savedRequest.id, backLinkTo)} />;
   }
+
+  // who sent the request back, so the creator knows who is waiting on the changes
+  const needsAction = savedRequest?.status === TTA_REQUEST_STATUSES.NEEDS_ACTION;
+  const changesRequestedBy = needsAction
+    ? nameWithRole(latestNeedsAction(savedRequest.notes)?.user)
+    : '';
 
   return (
     <div className="maxw-widescreen">
@@ -325,12 +337,36 @@ function TtaRequestFormBody({
       {/* eslint-disable-next-line react/jsx-props-no-spreading */}
       <FormProvider {...hookForm}>
         <Container paddingX={4} paddingY={4} className="width-tablet">
+          {needsAction && (
+            <Alert type="error" headingLevel="h4" slim noIcon className="margin-bottom-3">
+              <span className="text-bold">
+                {changesRequestedBy} is asking for changes to this TTA request.
+              </span>{' '}
+              Please review any notes below and resubmit for review.
+            </Alert>
+          )}
           <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
           <IndicatesRequiredField />
           <form onSubmit={hookForm.handleSubmit(onSubmit)}>
             <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />
             <GoalAndContext regionId={effectiveRegionId} />
-            <SubmitForReview regionId={effectiveRegionId} />
+            <SubmitForReview
+              regionId={effectiveRegionId}
+              notes={toNotesSummary(savedRequest?.notes)}
+            />
+            {needsAction && (
+              <div className="margin-top-4">
+                <p className="text-bold margin-top-0 margin-bottom-1">Review status</p>
+                <ApproverStatusList
+                  approverStatus={[
+                    {
+                      status: TTA_REQUEST_STATUSES.NEEDS_ACTION,
+                      user: { fullName: changesRequestedBy },
+                    },
+                  ]}
+                />
+              </div>
+            )}
             {saveError && (
               <Alert
                 type="error"
@@ -359,7 +395,7 @@ function TtaRequestFormBody({
             )}
             <div className="display-flex margin-top-4">
               <Button type="submit" className="margin-right-1" disabled={weAreAutoSaving}>
-                Submit
+                {needsAction ? 'Update request' : 'Submit'}
               </Button>
               <Button
                 type="button"

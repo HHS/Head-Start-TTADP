@@ -46,6 +46,14 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'ttaRequestId',
         as: 'citations',
       });
+      TtaRequest.hasMany(models.TtaRequestApprover, {
+        foreignKey: 'ttaRequestId',
+        as: 'approvers',
+      });
+      TtaRequest.hasMany(models.TtaRequestNote, {
+        foreignKey: 'ttaRequestId',
+        as: 'notes',
+      });
     }
   }
 

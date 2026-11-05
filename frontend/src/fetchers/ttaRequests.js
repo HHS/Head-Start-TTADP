@@ -52,3 +52,11 @@ export const submitTtaRequest = async (ttaRequestId, data) => {
   );
   return ttaRequest.json();
 };
+
+export const reviewTtaRequest = async (ttaRequestId, data) => {
+  const ttaRequest = await put(
+    join(ttaRequestsUrl, ttaRequestId.toString(DECIMAL_BASE), 'review'),
+    data
+  );
+  return ttaRequest.json();
+};

@@ -12,11 +12,13 @@ import {
   getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
+  reviewTtaRequest,
   saveTtaRequest,
   submitTtaRequest,
 } from './handlers';
 import {
   checkCreateTtaRequestBody,
+  checkReviewTtaRequestBody,
   checkSubmitTtaRequestBody,
   checkUpdateTtaRequestBody,
 } from './middleware';
@@ -63,6 +65,14 @@ router.put(
   checkTtaRequestIdParam,
   checkSubmitTtaRequestBody,
   transactionWrapper(submitTtaRequest)
+);
+
+// reviewTtaRequest
+router.put(
+  '/:ttaRequestId/review',
+  checkTtaRequestIdParam,
+  checkReviewTtaRequestBody,
+  transactionWrapper(reviewTtaRequest)
 );
 
 // saveTtaRequest

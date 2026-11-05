@@ -27,6 +27,40 @@ export interface TtaRequestGrant {
   name: string;
 }
 
+/** what the reviewer sends back; needs action is the only review there is so far */
+export interface TtaRequestReviewPayload {
+  status: 'needs_action';
+  note?: string | null;
+}
+
+/** a user as they appear on a request's notes and approvers */
+export interface TtaRequestUser {
+  id: number;
+  name: string;
+  /** the name with the user's roles, e.g. "Tom Geller, TTAC" */
+  fullName?: string;
+  roles?: { name: string }[];
+}
+
+/** one entry in a request's history: what was done at which step, and the note left with it */
+export interface TtaRequestNoteData {
+  id: number;
+  step: 'creator' | 'reviewer' | 'approver';
+  action: 'submitted' | 'needs_action';
+  note: string | null;
+  createdAt: string;
+  user: TtaRequestUser | null;
+}
+
+/** who is on a step of the request, and where they stand; a null status is pending */
+export interface TtaRequestApproverData {
+  id: number;
+  userId: number;
+  step: 'reviewer' | 'approver';
+  status: 'needs_action' | 'approved' | null;
+  user: TtaRequestUser | null;
+}
+
 /** a saved TTA request, as the API returns it */
 export interface TtaRequestResponse {
   id: number;
@@ -46,4 +80,7 @@ export interface TtaRequestResponse {
   creator?: { id: number; name: string; fullName?: string };
   createdAt?: string;
   submittedAt?: string | null;
+  /** the request's history, oldest first */
+  notes?: TtaRequestNoteData[];
+  approvers?: TtaRequestApproverData[];
 }

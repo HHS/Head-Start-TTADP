@@ -22,6 +22,13 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 2.4.26
+
+Adds `TTA_REQUEST_STATUSES.NEEDS_ACTION`, `TTA_REQUEST_STEPS` and `TTA_REQUEST_NOTE_ACTIONS`, and
+declares the TTA request review payload, notes and approvers in `src/ttaRequests.d.ts`. Built on
+the published 2.4.25, so it keeps the timeline keyset cursor (`cursor`, `nextCursor`) declarations
+in `src/recipientTimeline.d.ts`; 2.4.24 was published with no changes from 2.4.23.
+
 ## 2.4.23
 
 Merges 2.4.22 (`NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR`) with the
