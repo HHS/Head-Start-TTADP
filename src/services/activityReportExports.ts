@@ -263,6 +263,13 @@ export async function streamActivityReportExportCsv(
       `SET LOCAL idle_in_transaction_session_timeout = '${IDLE_IN_TRANSACTION_TIMEOUT}'`,
       { transaction, type: QueryTypes.RAW }
     );
+    // Cursors are planned to return the first 10% of rows fast by default. Exports
+    // always drain the cursor, and that fast-start plan picks nested loops over the
+    // aggregate CTEs that blow past statement_timeout on full-table exports.
+    await db.sequelize.query('SET LOCAL cursor_tuple_fraction = 1.0', {
+      transaction,
+      type: QueryTypes.RAW,
+    });
 
     if (filters !== undefined) {
       const { activityReport: scopes } = await filtersToScopes(filters, { userId });

@@ -206,6 +206,22 @@ describe('activityReportExports', () => {
       });
       expect(rowCount).toBe(0);
     });
+
+    it('plans the cursor for a full read before declaring it', async () => {
+      const query = jest.spyOn(db.sequelize, 'query');
+      try {
+        await collect({ dataSet: 'activity-reports', reportIds: [], regionIds: ALL_REGIONS });
+        const sqls = query.mock.calls.map(([sql]) => sql);
+        const fractionIndex = sqls.indexOf('SET LOCAL cursor_tuple_fraction = 1.0');
+        const declareIndex = sqls.findIndex(
+          (sql) => typeof sql === 'string' && sql.startsWith('DECLARE ')
+        );
+        expect(fractionIndex).toBeGreaterThan(-1);
+        expect(fractionIndex).toBeLessThan(declareIndex);
+      } finally {
+        query.mockRestore();
+      }
+    });
   });
 
   // The AR export is one row per approved report, so a bare report exercises

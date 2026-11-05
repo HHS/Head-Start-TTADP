@@ -171,7 +171,7 @@ describe('Activity report export chooser', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
     await userEvent.click(screen.getByRole('button', { name: 'AR' }));
     expect(screen.getByRole('button', { name: 'Goals' })).toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent('Downloading reports...');
+    expect(screen.getByRole('status')).toHaveTextContent('Exporting...');
     await act(async () => rejectDownload(new Error('Please try again.')));
     expect(await screen.findByRole('alert')).toHaveTextContent('Please try again.');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Goals' })).toBeEnabled());
