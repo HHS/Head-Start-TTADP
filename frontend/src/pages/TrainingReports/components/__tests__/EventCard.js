@@ -234,6 +234,8 @@ describe('EventCard', () => {
       onDeleteEvent
     );
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    // the modal isn't mounted until delete is requested (its focus trap is costly to unmount)
+    expect(screen.queryByText(/are you sure you want to delete this event/i)).toBeNull();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
 

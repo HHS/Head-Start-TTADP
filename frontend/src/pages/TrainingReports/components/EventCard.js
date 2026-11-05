@@ -1,9 +1,8 @@
 import { Alert } from '@trussworks/react-uswds';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import ContextMenu from '../../../components/ContextMenu';
 import ExpanderButton from '../../../components/ExpanderButton';
@@ -37,6 +36,19 @@ function EventCard({
     type: 'error',
   });
   const [eventStatus, setEventStatus] = useState(data.status);
+
+  // The Truss modal's focus trap calls focus() when it unmounts, forcing a style
+  // recalculation. With one modal per card, leaving the list page took seconds, so
+  // only mount the delete modal once someone actually asks to delete this event.
+  const [deleteModalMounted, setDeleteModalMounted] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+
+  useEffect(() => {
+    if (openDeleteModal && modalRef.current) {
+      modalRef.current.toggleModal();
+      setOpenDeleteModal(false);
+    }
+  }, [openDeleteModal]);
 
   const { eventSubmitted } = data;
   const isOwner = event.ownerId === user.id;
@@ -129,7 +141,8 @@ function EventCard({
     menuItems.push({
       label: 'Delete event',
       onClick: () => {
-        modalRef.current.toggleModal();
+        setDeleteModalMounted(true);
+        setOpenDeleteModal(true);
       },
     });
   }
@@ -257,16 +270,18 @@ function EventCard({
         </div>
         <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu">
           {menuItems.length > 0 && <ContextMenu label={contextMenuLabel} menuItems={menuItems} />}
-          <Modal
-            modalRef={modalRef}
-            title="Are you sure you want to delete this event?"
-            modalId={`remove-event-modal-${eventId}`}
-            onOk={async () => onDeleteEvent(eventId, id)}
-            okButtonText="Delete"
-            okButtonAriaLabel="delete event"
-          >
-            <p>The event and all session reports will be lost.</p>
-          </Modal>
+          {canDeleteEvent && deleteModalMounted && (
+            <Modal
+              modalRef={modalRef}
+              title="Are you sure you want to delete this event?"
+              modalId={`remove-event-modal-${eventId}`}
+              onOk={async () => onDeleteEvent(eventId, id)}
+              okButtonText="Delete"
+              okButtonAriaLabel="delete event"
+            >
+              <p>The event and all session reports will be lost.</p>
+            </Modal>
+          )}
         </div>
       </div>
 
@@ -282,7 +297,7 @@ function EventCard({
 
       {sessionReports.map((s) => (
         <SessionCard
-          key={`session_${uuidv4()}`}
+          key={`session_${s.id}`}
           eventId={eventId}
           eventOrganizer={data.eventOrganizer}
           session={s}
