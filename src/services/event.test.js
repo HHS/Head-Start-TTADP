@@ -9,6 +9,7 @@ import db from '../models';
 import {
   checkUserExists,
   checkUserExistsByNationalCenter,
+  countEventHelperBlob,
   createEvent,
   csvImport,
   destroyEvent,
@@ -730,6 +731,33 @@ describe('event service', () => {
       await destroyEvent(found[0].id);
       await destroyEvent(found[1].id);
       await destroyEvent(found[2].id);
+    });
+
+    it('findEventHelperBlob paginates and countEventHelperBlob counts all matches', async () => {
+      const created = await Promise.all(
+        ['A', 'B', 'C'].map((eventId) =>
+          createAnEventWithData(11_111, { eventId, status: TRS.NOT_STARTED })
+        )
+      );
+      const options = {
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        allowNull: true,
+        scopes: [{ id: created.map((e) => e.id) }],
+      };
+
+      const [page, count] = await Promise.all([
+        findEventHelperBlob({ ...options, limit: 2, offset: 1 }),
+        countEventHelperBlob(options),
+      ]);
+
+      expect(count).toBe(3);
+      expect(page).toHaveLength(2);
+      expect(page[0]).toHaveProperty('eventId', 'B');
+      expect(page[1]).toHaveProperty('eventId', 'C');
+
+      await Promise.all(created.map((e) => destroyEvent(e.id)));
     });
 
     it('findEventHelperBlob use scopes', async () => {

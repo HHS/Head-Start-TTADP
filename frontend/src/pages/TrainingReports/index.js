@@ -26,6 +26,7 @@ import EventCards from './components/EventCards';
 import { TRAINING_REPORT_FILTER_CONFIG } from './constants';
 
 const FILTER_KEY = 'training-report-filters';
+export const EVENTS_PER_PAGE = 10;
 
 const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) => ({
   key: TRAINING_REPORT_STATUSES_URL_PARAMS[status],
@@ -93,6 +94,7 @@ export default function TrainingReports({ match }) {
   const [error, updateError] = useState();
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [displayEvents, setDisplayEvents] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [cardsInternalMessage, setCardsInternalMessage] = useState();
   const history = useHistory();
   // eslint-disable-next-line max-len
@@ -116,16 +118,37 @@ export default function TrainingReports({ match }) {
     TRAINING_REPORT_FILTER_CONFIG
   );
 
+  // the page is tied to the status tab and filters it was chosen for,
+  // so switching tabs or changing filters starts back on page 1
+  const [pageState, setPageState] = useState({ status, filters, activePage: 1 });
+  const activePage =
+    pageState.status === status && pageState.filters === filters ? pageState.activePage : 1;
+  const offset = (activePage - 1) * EVENTS_PER_PAGE;
+
+  const handlePageChange = (pageNumber) => {
+    setPageState({ status, filters, activePage: pageNumber });
+  };
+
   useEffect(() => {
+    let ignore = false;
     async function fetchEvents() {
       setAppLoadingText('Fetching events...');
       setIsAppLoading(true);
       const filterQuery = filtersToQueryString(expandFilters(filters));
+      const pageQuery = `limit=${EVENTS_PER_PAGE}&offset=${offset}`;
+      const query = filterQuery ? `${filterQuery}&${pageQuery}` : pageQuery;
       try {
-        const events = await getEventsByStatus(status, filterQuery);
-        setDisplayEvents(events);
+        const { count, rows } = await getEventsByStatus(status, query);
+        if (ignore) {
+          return;
+        }
+        setDisplayEvents(rows);
+        setTotalCount(count);
         updateError('');
       } catch (e) {
+        if (ignore) {
+          return;
+        }
         // eslint-disable-next-line no-console
         console.log(e);
         updateError('Unable to fetch events');
@@ -134,7 +157,10 @@ export default function TrainingReports({ match }) {
       }
     }
     fetchEvents();
-  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters]);
+    return () => {
+      ignore = true;
+    };
+  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters, offset]);
 
   const regionLabel = () => {
     if (defaultRegion === 14 || hasMultipleRegions) {
@@ -172,6 +198,12 @@ export default function TrainingReports({ match }) {
 
     // update the events state.
     setDisplayEvents(events);
+    setTotalCount((count) => Math.max(count - 1, 0));
+
+    // if that emptied the page, step back to the previous one
+    if (events.length === 0 && activePage > 1) {
+      handlePageChange(activePage - 1);
+    }
   };
 
   /**
@@ -270,8 +302,13 @@ export default function TrainingReports({ match }) {
                 title="Events"
                 loading={false}
                 loadingLabel="Training events loading"
-                showPaging={false}
                 showHeaderBorder={false}
+                showPagingBottom={totalCount > 0}
+                currentPage={activePage}
+                totalCount={totalCount}
+                offset={offset}
+                perPage={EVENTS_PER_PAGE}
+                handlePageChange={handlePageChange}
               >
                 <Tabs tabs={tabValues} ariaLabel="Training events" />
                 <EventCards

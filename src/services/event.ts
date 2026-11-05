@@ -306,16 +306,22 @@ interface FindEventHelperBlobOptions {
   fallbackValue?: string;
   allowNull?: boolean;
   scopes: SequelizeWhereOptions[];
+  limit?: number;
+  offset?: number;
 }
 
-export async function findEventHelperBlob({
+type EventHelperBlobWhereOptions = Pick<
+  FindEventHelperBlobOptions,
+  'key' | 'value' | 'regions' | 'allowNull' | 'scopes'
+>;
+
+function eventHelperBlobWhere({
   key,
   value,
   regions,
-  fallbackValue,
   allowNull = false,
   scopes,
-}: FindEventHelperBlobOptions): Promise<EventShape[]> {
+}: EventHelperBlobWhereOptions): object {
   const getClause = () => {
     if (allowNull) {
       return {
@@ -336,6 +342,25 @@ export async function findEventHelperBlob({
     // @ts-expect-error
     where.regionId = regions;
   }
+
+  return where;
+}
+
+export async function countEventHelperBlob(options: EventHelperBlobWhereOptions): Promise<number> {
+  return EventReportPilot.count({ where: eventHelperBlobWhere(options) });
+}
+
+export async function findEventHelperBlob({
+  key,
+  value,
+  regions,
+  fallbackValue,
+  allowNull = false,
+  scopes,
+  limit,
+  offset,
+}: FindEventHelperBlobOptions): Promise<EventShape[]> {
+  const where = eventHelperBlobWhere({ key, value, regions, allowNull, scopes });
 
   const events = await EventReportPilot.findAll({
     attributes: ['id', 'eventId', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
@@ -381,7 +406,10 @@ export async function findEventHelperBlob({
     order: [
       ['eventId', 'ASC'],
       ['data.startDate', 'ASC'],
+      ['id', 'ASC'],
     ],
+    ...(limit ? { limit } : {}),
+    ...(offset ? { offset } : {}),
   });
 
   // Re-derive each session's display dates from the dedicated columns.
