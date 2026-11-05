@@ -148,8 +148,8 @@ describe('timeline views', () => {
       (Goal.findAll as jest.Mock).mockResolvedValue([goal('Monitoring'), goal('Family Support')]);
       (sequelize.query as jest.Mock).mockResolvedValue(indexCount(5));
       const result = await getRecipientTimeline({ ...params, view, offset: 25 });
-      // Categories ride along with the first page only.
-      expect(result.categories).toBeUndefined();
+      // Later pages name only the categories of their own events; this page has none.
+      expect(result.categories).toEqual([]);
       const [sql, options] = (sequelize.query as jest.Mock).mock.calls[0];
       expect(sql.indexOf('"standard" IN')).toBeLessThan(sql.indexOf('LIMIT :timelineLimit'));
       expect(Object.values(options.replacements)).toContainEqual(
@@ -207,17 +207,23 @@ describe('timeline views', () => {
       expect(sequelize.query).toHaveBeenCalledTimes(1);
     });
 
-    it('omits categories and their checks on later pages', async () => {
+    it('names only the categories of the page on later pages, without further queries', async () => {
       (sequelize.query as jest.Mock).mockResolvedValue(indexCount(7));
       const first = await getRecipientTimeline({ ...params, view: 'goals', limit: 2 });
       expect(first.categories).toBeDefined();
       (sequelize.query as jest.Mock).mockClear();
+      (Goal.findAll as jest.Mock).mockClear();
       const cursor = Buffer.from(
         JSON.stringify(['2026-08-22 10:00:00', 'communicationLog', 5])
       ).toString('base64url');
       const later = await getRecipientTimeline({ ...params, view: 'goals', limit: 2, cursor });
-      expect(later.categories).toBeUndefined();
+      // This page has no events, so it names no category. Tag matching is covered with real
+      // events in the goal status change tests.
+      expect(later.categories).toEqual([]);
+      // One event query, and no per-category existence checks.
       expect(sequelize.query).toHaveBeenCalledTimes(1);
+      // The eligible categories are looked up once per request, as on the first page.
+      expect(Goal.findAll).toHaveBeenCalledTimes(1);
     });
   });
 

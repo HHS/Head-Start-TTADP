@@ -59,7 +59,11 @@ export interface RecipientTimelineEvent extends RecipientTimelineEventPresentati
 }
 
 export interface RecipientTimelineResponse {
-  /** Grouped views only: categories with events in the filters, sent with the first page. */
+  /**
+   * Grouped views only. The first page lists every category with events in the filters. Later
+   * pages list the categories of that page's events, so a client can add one that had no events
+   * when the first page loaded.
+   */
   categories?: RecipientTimelineCategory[];
   count: number;
   events: RecipientTimelineEvent[];

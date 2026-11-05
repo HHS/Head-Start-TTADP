@@ -394,6 +394,48 @@ describe('timeline navigation restoration', () => {
     }
   );
 
+  it('shows an event added to a category that had none, below the categories already shown', async () => {
+    const withTag = (label, items) =>
+      items.map((event) => ({ ...event, tags: [{ label, flagged: false }] }));
+    getRecipientTimeline
+      .mockResolvedValueOnce({
+        count: 25,
+        categories: [{ label: 'Monitoring', statuses: ['In Progress'] }],
+        events: withTag('Monitoring', batch(1, 25)),
+        nextCursor: 'after-25',
+      })
+      // A backdated Governance event was added after the first page loaded.
+      .mockResolvedValueOnce({
+        count: 26,
+        categories: [{ label: 'Governance', statuses: ['Closed'] }],
+        events: withTag('Governance', batch(26, 1)),
+      });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    await screen.findByRole('list', { name: 'Monitoring timeline events' });
+    expect(screen.queryByRole('button', { name: /Governance/ })).not.toBeInTheDocument();
+
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+    );
+    const governance = await screen.findByRole('list', { name: 'Governance timeline events' });
+    // Every loaded event is on screen, not just those of the categories known at first.
+    expect(within(governance).getAllByRole('article')).toHaveLength(1);
+    expect(
+      within(screen.getByRole('list', { name: 'Monitoring timeline events' })).getAllByRole(
+        'article'
+      )
+    ).toHaveLength(25);
+    const accordionButtons = Array.from(
+      screen
+        .getByRole('list', { name: 'Timeline events' })
+        .querySelectorAll('.usa-accordion__button')
+    );
+    expect(accordionButtons.map((button) => button.textContent.trim())).toEqual([
+      'MonitoringIn Progress',
+      'GovernanceClosed',
+    ]);
+  });
+
   it('lists every category from the first page, before their events have loaded', async () => {
     const categories = [
       { label: 'Family Support', statuses: [] },

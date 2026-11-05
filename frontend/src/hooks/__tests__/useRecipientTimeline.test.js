@@ -280,6 +280,43 @@ describe('useRecipientTimeline', () => {
     expect(result.current.categories).toEqual(categories);
   });
 
+  it('appends categories first seen on a later slice after the known ones, without duplicates', async () => {
+    const monitoring = { label: 'Monitoring', statuses: ['In Progress'] };
+    const family = { label: 'Family Support', statuses: [] };
+    const governance = { label: 'Governance', statuses: ['Closed'] };
+    getRecipientTimeline
+      .mockResolvedValueOnce({
+        count: 80,
+        events: events(1, 25),
+        // Out of alphabetical order on purpose: existing order must survive.
+        categories: [monitoring, governance],
+        nextCursor: 'after-25',
+      })
+      .mockResolvedValueOnce({
+        count: 80,
+        events: events(26, 25),
+        // Known labels are not repeated, and a label repeated within one slice is added once.
+        categories: [governance, family, family, monitoring],
+        nextCursor: 'after-50',
+      })
+      .mockResolvedValueOnce({ count: 80, events: events(51, 5), categories: [family] });
+    const { result, waitFor } = renderHook(() =>
+      useRecipientTimeline('401', '1', { ...options, view: 'goals' })
+    );
+    await waitFor(() => expect(result.current.events).toHaveLength(25));
+    expect(result.current.categories).toEqual([monitoring, governance]);
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.events).toHaveLength(50));
+    expect(result.current.categories).toEqual([monitoring, governance, family]);
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.events).toHaveLength(55));
+    expect(result.current.categories).toEqual([monitoring, governance, family]);
+  });
+
   it('stops on an empty slice even if the count has changed', async () => {
     getRecipientTimeline.mockResolvedValue({ count: 10, events: [] });
     const { result, waitFor } = renderHook(() => useRecipientTimeline('401', '1', options));

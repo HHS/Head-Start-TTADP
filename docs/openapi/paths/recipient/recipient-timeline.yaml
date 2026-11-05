@@ -74,8 +74,10 @@ get:
     current standard-goal creation flow leaves unset.
     View constraints combine with user filters before counts and pagination. Grouped responses
     include categories sorted alphabetically, limited to categories with at least one event under
-    the request's filters. Categories are returned with the first page (no cursor, zero offset)
-    and omitted from later pages. Each category's statuses array contains at most
+    the request's filters. The first page (no cursor, zero offset) lists every such category.
+    Later pages list only the categories of the events on that page, so a client can add a
+    category that had no events when the first page loaded, such as after a backdated event was
+    added. Each category's statuses array contains at most
     one value: the current status of its eligible goal with the latest status change, using
     performedAt or the history row's createdAt. Goals without history use their creation date;
     timestamp ties use the higher goal ID. A missing status produces an empty array. Header
@@ -291,9 +293,10 @@ get:
               categories:
                 type: array
                 description: >-
-                  Category metadata for monitoring and goals views, limited to categories with
-                  events under the request's filters. Sent with the first page only; omitted for
-                  chronological and for pages requested with a cursor or offset.
+                  Category metadata for monitoring and goals views. The first page lists every
+                  category with events under the request's filters. Pages requested with a cursor
+                  or offset list only the categories of that page's events. Omitted for
+                  chronological.
                 items:
                   type: object
                   required: [label, statuses]

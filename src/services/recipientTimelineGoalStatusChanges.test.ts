@@ -189,6 +189,64 @@ describe('goal status change timeline integration', () => {
     }
   });
 
+  it('names a category on a later page when a backdated event is added to a category with none', async () => {
+    const lateStandard = `Late standard ${getUniqueId()}`;
+    const lateTemplate = await GoalTemplate.create({
+      templateName: `(${lateStandard}) Timeline goal`,
+      creationMethod: 'Curated',
+    });
+    const lateGoal = await Goal.create(
+      { grantId: grantIds[0], goalTemplateId: lateTemplate.id, status: 'In Progress' },
+      { hooks: false }
+    );
+    let lateChange;
+    try {
+      const first = await getRecipientTimeline({ ...params, view: 'goals', limit: 2 });
+      // The goal is eligible, but its category has no events under the filters yet.
+      expect(first.categories).toEqual([{ label: standards[0], statuses: ['In Progress'] }]);
+      expect(first.nextCursor).toBeDefined();
+
+      // Older than every existing event, so descending order places it after the cursor.
+      lateChange = await GoalStatusChange.create(
+        {
+          goalId: lateGoal.id,
+          oldStatus: null,
+          newStatus: 'Not Started',
+          performedAt: new Date('2020-01-01T00:00:00Z'),
+        },
+        { hooks: false }
+      );
+
+      const laterPages = [];
+      let cursor = first.nextCursor;
+      while (cursor) {
+        // eslint-disable-next-line no-await-in-loop
+        const page = await getRecipientTimeline({ ...params, view: 'goals', limit: 2, cursor });
+        laterPages.push(page);
+        cursor = page.nextCursor;
+      }
+      const lateEvent = laterPages
+        .flatMap(({ events }) => events)
+        .find(({ sourceId }) => sourceId === lateChange.id);
+      expect(lateEvent.tags).toEqual([{ label: lateStandard, flagged: false }]);
+      // The page that returns the event also names its category, so a client can show it.
+      const lateCategory = { label: lateStandard, statuses: ['In Progress'] };
+      const pageWithEvent = laterPages.find(({ events }) =>
+        events.some(({ sourceId }) => sourceId === lateChange.id)
+      );
+      expect(pageWithEvent.categories).toContainEqual(lateCategory);
+      // Pages name only the categories of their own events, never an unrelated one.
+      laterPages.forEach(({ events, categories }) => {
+        const labels = new Set(events.flatMap(({ tags }) => tags.map(({ label }) => label)));
+        expect(categories.every(({ label }) => labels.has(label))).toBe(true);
+      });
+    } finally {
+      await GoalStatusChange.destroy({ where: { goalId: lateGoal.id }, force: true });
+      await Goal.unscoped().destroy({ where: { id: lateGoal.id }, force: true, hooks: false });
+      await GoalTemplate.destroy({ where: { id: lateTemplate.id }, force: true });
+    }
+  });
+
   beforeAll(async () => {
     await sequelize.transaction(async (transaction) => {
       await Promise.all([

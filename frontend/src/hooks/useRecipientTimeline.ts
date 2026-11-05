@@ -97,8 +97,22 @@ export default function useRecipientTimeline(
         exhausted = slice.length === 0 || !cursor;
         setEvents((previous) => [...previous, ...nextEvents]);
         setCount(total);
-        // Grouped views send their categories with the first slice only.
-        if (Array.isArray(response?.categories)) setCategories(response.categories);
+        // The first slice lists every category. Later slices name the categories of their own
+        // events, so one that had no events at first (a backdated event was added) is appended
+        // after the known ones. Existing categories keep their place, so nothing already on
+        // screen moves.
+        if (Array.isArray(response?.categories)) {
+          const incoming = response.categories;
+          setCategories((previous) => {
+            const known = new Set(previous.map(({ label }) => label));
+            const added = incoming.filter(({ label }) => {
+              if (known.has(label)) return false;
+              known.add(label);
+              return true;
+            });
+            return added.length ? [...previous, ...added] : previous;
+          });
+        }
         setHasMore(!exhausted);
         setLoadedPages((previous) => previous + 1);
       } catch (_err) {

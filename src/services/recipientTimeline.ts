@@ -812,8 +812,16 @@ export async function getRecipientTimeline(
   };
   const index = await queryTimelineEventIndex({ ...viewParams, sources });
   const result = await populateTimelineEventIndex(index, viewParams, sources);
-  // Category metadata is sent once, with the first page. Later pages only add events.
-  if (params.cursor !== undefined || params.offset > 0) return result;
+  if (params.cursor !== undefined || params.offset > 0) {
+    // An event added after the first page can belong to a category that had no events then, so
+    // the client does not know it yet. Name the categories this page's events fall under (from
+    // the lookup above, with no further queries) and let the client add any it has not seen.
+    const pageLabels = new Set(result.events.flatMap(({ tags }) => tags.map(({ label }) => label)));
+    return {
+      ...result,
+      categories: categories.filter(({ label }) => pageLabels.has(label)),
+    };
+  }
   return {
     ...result,
     categories: await filterCategoriesWithEvents(index.count, categories, viewParams, sources),
