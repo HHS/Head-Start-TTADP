@@ -608,6 +608,59 @@ describe('goal status change timeline integration', () => {
       expect(titleFor(changeIdsByGoal[2][0])).toBe('Goal reopened');
     });
 
+    it("ignores a backfilled creation snapshot that carries the goal's current status", async () => {
+      const { changeIdsByGoal, timeline } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2024-05-02T12:00:00Z' },
+          { status: 'Closed', createdAt: '2024-09-28T12:00:00Z' },
+          { status: 'Not Started', createdAt: '2025-09-01T12:00:00Z' },
+        ],
+        [
+          [
+            // The backfill migration stamped the current status (Closed) on the creation date.
+            { oldStatus: null, newStatus: 'Closed', performedAt: '2024-05-02T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-07-20T12:00:00Z' },
+          ],
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2024-09-28T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-08-25T12:00:00Z' },
+          ],
+          [{ oldStatus: null, newStatus: 'Not Started', performedAt: '2025-09-01T12:00:00Z' }],
+        ]
+      );
+
+      const { events } = await timeline();
+      const titleFor = (changeId: number) =>
+        events.find(({ sourceId }) => sourceId === changeId)?.title;
+      expect(titleFor(changeIdsByGoal[1][0])).toBe('Goal added');
+      expect(titleFor(changeIdsByGoal[2][0])).toBe('Goal reopened');
+    });
+
+    it("uses the first later transition's old status when a goal has no earlier history", async () => {
+      const { changeIdsByGoal, timeline } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2024-05-02T12:00:00Z' },
+          { status: 'Closed', createdAt: '2025-01-10T12:00:00Z' },
+        ],
+        [
+          [
+            // Legacy goal: the first recorded change shows it was Closed before 06/2025.
+            { oldStatus: 'Closed', newStatus: 'In Progress', performedAt: '2025-06-01T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-09-01T12:00:00Z' },
+          ],
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2025-01-10T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-10-01T12:00:00Z' },
+          ],
+        ]
+      );
+
+      const { events } = await timeline();
+      expect(events.find(({ sourceId }) => sourceId === changeIdsByGoal[1][0])?.title).toBe(
+        'Goal reopened'
+      );
+    });
+
     it('only counts goals from approved activity reports in the events and category status', async () => {
       const { created, changeIdsByGoal, timeline, categoryStatuses } = await createStandardGoals(
         [

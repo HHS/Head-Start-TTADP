@@ -460,8 +460,11 @@ const goalCountsPredicate = (goalAlias: string) =>
 // Reopening a standard creates a new goal. Share this predicate between the index and
 // population query so event filters and titles agree, without fetching prior goals one at a time.
 // A prior goal only counts when it was Closed as of the status change being labelled, so closing
-// an older goal later never rewrites the title of an earlier event. Goals with no recorded status
-// history fall back to their current status.
+// an older goal later never rewrites the title of an earlier event. Status is rebuilt from real
+// transitions only (old and new status both set): creation snapshots (null oldStatus) are skipped
+// because the backfill migration stamped them with the goal's current status. Before a goal's first
+// transition its status is that transition's oldStatus, and a goal with no transitions uses its
+// current status.
 const priorClosedGoalPredicate = (changeAlias: string) => `EXISTS (
   SELECT 1 FROM "Goals" AS "previousGoal"
   WHERE "previousGoal"."grantId" = "goal"."grantId"
@@ -476,6 +479,7 @@ const priorClosedGoalPredicate = (changeAlias: string) => `EXISTS (
         SELECT "previousChange"."newStatus"
         FROM "GoalStatusChanges" AS "previousChange"
         WHERE "previousChange"."goalId" = "previousGoal"."id"
+          AND "previousChange"."oldStatus" IS NOT NULL
           AND "previousChange"."newStatus" IS NOT NULL
           AND COALESCE("previousChange"."performedAt", "previousChange"."createdAt")
             <= COALESCE("${changeAlias}"."performedAt", "${changeAlias}"."createdAt")
@@ -484,13 +488,20 @@ const priorClosedGoalPredicate = (changeAlias: string) => `EXISTS (
           "previousChange"."id" DESC
         LIMIT 1
       ),
-      CASE
-        WHEN NOT EXISTS (
-          SELECT 1 FROM "GoalStatusChanges" AS "anyPreviousChange"
-          WHERE "anyPreviousChange"."goalId" = "previousGoal"."id"
-            AND "anyPreviousChange"."newStatus" IS NOT NULL
-        ) THEN "previousGoal"."status"
-      END
+      (
+        SELECT "nextChange"."oldStatus"
+        FROM "GoalStatusChanges" AS "nextChange"
+        WHERE "nextChange"."goalId" = "previousGoal"."id"
+          AND "nextChange"."oldStatus" IS NOT NULL
+          AND "nextChange"."newStatus" IS NOT NULL
+          AND COALESCE("nextChange"."performedAt", "nextChange"."createdAt")
+            > COALESCE("${changeAlias}"."performedAt", "${changeAlias}"."createdAt")
+        ORDER BY
+          COALESCE("nextChange"."performedAt", "nextChange"."createdAt") ASC,
+          "nextChange"."id" ASC
+        LIMIT 1
+      ),
+      "previousGoal"."status"
     ) = 'Closed'
 )`;
 
