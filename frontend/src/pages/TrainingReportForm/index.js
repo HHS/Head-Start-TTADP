@@ -12,6 +12,7 @@ import { eventById, updateEvent } from '../../fetchers/event';
 import { getTrainingReportUsers } from '../../fetchers/users';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
+import regionIdFromEventId from '../../utils/regionIdFromEventId';
 import { defaultValues, LOCAL_STORAGE_ADDITIONAL_DATA_KEY } from './constants';
 import EventSummary from './pages/eventSummary';
 
@@ -104,7 +105,10 @@ export default function TrainingReportForm({ match }) {
     shouldUnregister: false,
   });
 
-  const eventRegion = hookForm.watch('regionId');
+  // the region is encoded in the event id, so region-dependent requests can start
+  // alongside the event fetch instead of waiting for it; fall back to the fetched value
+  const watchedRegion = hookForm.watch('regionId');
+  const eventRegion = regionIdFromEventId(trainingReportId) ?? watchedRegion;
   const formData = hookForm.getValues();
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
 
@@ -304,6 +308,7 @@ export default function TrainingReportForm({ match }) {
             <EventSummary
               additionalData={additionalData}
               formData={formData}
+              regionId={eventRegion}
               isAppLoading={isAppLoading}
               onSaveDraft={onSave}
               datePickerKey={datePickerKey}

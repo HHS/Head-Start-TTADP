@@ -64,6 +64,7 @@ const EventSummary = ({
   lastSaveTime,
   showSavedDraft,
   updateShowSavedDraft,
+  regionId,
 }) => {
   const { register, control, getValues, watch, setValue } = useFormContext();
 
@@ -72,7 +73,12 @@ const EventSummary = ({
   const endDate = watch('endDate');
   const eventOrganizer = watch('eventOrganizer');
 
-  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(data, true);
+  // prefer the region passed from the parent (parsed from the event id) so trainer
+  // options load in parallel with the event fetch rather than after it
+  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(
+    { ...data, regionId: regionId ?? data.regionId },
+    true
+  );
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -627,12 +633,14 @@ EventSummary.propTypes = {
   lastSaveTime: PropTypes.instanceOf(moment),
   showSavedDraft: PropTypes.bool,
   updateShowSavedDraft: PropTypes.func,
+  regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
 EventSummary.defaultProps = {
   lastSaveTime: null,
   showSavedDraft: false,
   updateShowSavedDraft: () => {},
+  regionId: null,
 };
 
 export default EventSummary;

@@ -283,7 +283,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
 
   const users = await User.findAll({
-    exclude: ['email', 'phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
+    attributes: {
+      exclude: ['phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
+    },
     where: {
       [Op.or]: {
         '$permissions.scopeId$': {
@@ -334,14 +336,8 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   if (eventId) {
     // get event report pilot that has the matching full event display id.
     const eventReportPilot = await EventReportPilot.findOne({
-      attributes: ['id', 'ownerId', 'data'],
-      where: {
-        data: {
-          eventId: {
-            [Op.eq]: eventId,
-          },
-        },
-      },
+      attributes: ['id', 'ownerId'],
+      where: { eventId },
     });
 
     if (eventReportPilot) {

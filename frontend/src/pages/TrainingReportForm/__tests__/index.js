@@ -105,6 +105,21 @@ describe('TrainingReportForm', () => {
     expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
+  it('fetches region-dependent data without waiting for the event when the id encodes the region', async () => {
+    // the event request never resolves, so anything fetched must not depend on it
+    fetchMock.get('/api/events/id/R01-PD-1234', new Promise(() => {}));
+
+    act(() => {
+      renderTrainingReportForm('R01-PD-1234');
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.called(/\/api\/users\/training-report-users\?regionId=1/)).toBe(true);
+      expect(fetchMock.called('/api/users/trainers/regional/region/1')).toBe(true);
+      expect(fetchMock.called('/api/users/trainers/national-center/region/1')).toBe(true);
+    });
+  });
+
   it('redirects when an error occurs', async () => {
     fetchMock.get('/api/events/id/1', 500);
     const spy = jest.spyOn(history, 'push');
