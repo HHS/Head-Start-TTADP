@@ -7,10 +7,12 @@ describe('communication log region helpers', () => {
   afterEach(() => jest.restoreAllMocks());
 
   describe('regionIdFromRecipients', () => {
-    it('returns the region when every grant is in one region', async () => {
-      const findAll = jest
-        .spyOn(Grant, 'findAll')
-        .mockResolvedValue([{ regionId: 3 }, { regionId: 3 }]);
+    it('returns the region when every recipient has grants and all are in one region', async () => {
+      const findAll = jest.spyOn(Grant, 'findAll').mockResolvedValue([
+        { recipientId: 5, regionId: 3 },
+        { recipientId: 5, regionId: 3 },
+        { recipientId: 6, regionId: 3 },
+      ]);
       expect(await regionIdFromRecipients([5, 5, 6])).toBe(3);
       expect(findAll).toHaveBeenCalledWith(
         expect.objectContaining({ where: { recipientId: [5, 6] } })
@@ -18,19 +20,28 @@ describe('communication log region helpers', () => {
     });
 
     it('returns null when the grants span regions', async () => {
-      jest.spyOn(Grant, 'findAll').mockResolvedValue([{ regionId: 3 }, { regionId: 4 }]);
+      jest.spyOn(Grant, 'findAll').mockResolvedValue([
+        { recipientId: 5, regionId: 3 },
+        { recipientId: 6, regionId: 4 },
+      ]);
       expect(await regionIdFromRecipients([5, 6])).toBeNull();
     });
 
-    it('returns null when there are no grants', async () => {
+    it('returns null when any recipient has no grants', async () => {
+      jest.spyOn(Grant, 'findAll').mockResolvedValue([{ recipientId: 5, regionId: 3 }]);
+      expect(await regionIdFromRecipients([5, 6])).toBeNull();
+    });
+
+    it('returns null when no recipient has grants', async () => {
       jest.spyOn(Grant, 'findAll').mockResolvedValue([]);
       expect(await regionIdFromRecipients([5])).toBeNull();
     });
 
-    it('returns null without querying when there are no valid recipient ids', async () => {
+    it('returns null without querying when any recipient id is invalid', async () => {
       const findAll = jest.spyOn(Grant, 'findAll');
       expect(await regionIdFromRecipients([])).toBeNull();
       expect(await regionIdFromRecipients([0, -1, 1.5])).toBeNull();
+      expect(await regionIdFromRecipients([5, 0])).toBeNull();
       expect(findAll).not.toHaveBeenCalled();
     });
   });

@@ -245,17 +245,24 @@ export async function recipientsInRegion(recipientIds: number[], regionId: numbe
 
 /**
  * The region of a log that has no saved region, taken from its recipients' grants. It is only
- * returned when every grant of every recipient is in one region; otherwise the region cannot be
- * told reliably and this returns null.
+ * returned when every recipient has at least one grant and all of those grants are in one region;
+ * otherwise the region cannot be told reliably and this returns null.
  */
 export async function regionIdFromRecipients(recipientIds: number[]): Promise<number | null> {
-  const validIds = recipientIds.filter((id) => Number.isSafeInteger(id) && id > 0);
-  if (!validIds.length) return null;
+  if (!recipientIds.length) return null;
+  if (!recipientIds.every((id) => Number.isSafeInteger(id) && id > 0)) return null;
 
+  const uniqueIds = [...new Set(recipientIds)];
   const grants = await Grant.findAll({
-    attributes: ['regionId'],
-    where: { recipientId: [...new Set(validIds)] },
+    attributes: ['recipientId', 'regionId'],
+    where: { recipientId: uniqueIds },
   });
+
+  const recipientsWithGrants = new Set<number>(
+    grants.map((grant: { recipientId: number }) => grant.recipientId)
+  );
+  if (!uniqueIds.every((id) => recipientsWithGrants.has(id))) return null;
+
   const regionIds = new Set<number>(grants.map((grant: { regionId: number }) => grant.regionId));
   return regionIds.size === 1 ? [...regionIds][0] : null;
 }
