@@ -19,10 +19,7 @@ export function withCreator(names: string[]) {
   const result = filterAssociation(creatorSubQuery, names, false);
   return {
     where: {
-      [Op.and]: [
-        result.where,
-        sequelize.literal(`"Goal"."id" NOT IN (${notMonitoringSubQuery})`),
-      ],
+      [Op.and]: [result.where, sequelize.literal(`"Goal"."id" NOT IN (${notMonitoringSubQuery})`)],
     },
   };
 }
@@ -31,10 +28,7 @@ export function withoutCreator(names: string[]) {
   const result = filterAssociation(creatorSubQuery, names, true);
   return {
     where: {
-      [Op.and]: [
-        result.where,
-        sequelize.literal(`"Goal"."id" NOT IN (${notMonitoringSubQuery})`),
-      ],
+      [Op.and]: [result.where, sequelize.literal(`"Goal"."id" NOT IN (${notMonitoringSubQuery})`)],
     },
   };
 }

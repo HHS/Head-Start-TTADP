@@ -9,8 +9,6 @@ import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetExport from '../hooks/useWidgetExport';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import withWidgetData from './withWidgetData';
 import {
   buildPlotlyBottomAxisLayout,
   buildPlotlyChartLayout,
@@ -25,6 +23,8 @@ import {
   TABLE_HEADINGS,
   WIDGET_HEADINGS,
 } from './approvedARAndTRByGoalCategoryHelpers';
+import HorizontalTableWidget from './HorizontalTableWidget';
+import withWidgetData from './withWidgetData';
 import './ApprovedARAndTRByGoalCategory.css';
 
 const WIDGET_TITLE = 'Approved Activity Reports and Training Session Reports by goal category';
@@ -49,7 +49,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   // Tabular data is derived from the raw data + the shared sortOption so both views stay in sync.
   const tabularData = useMemo(
     () => sortTabularData(buildTabularData(data), sortOption),
-    [data, sortOption],
+    [data, sortOption]
   );
 
   useLayoutEffect(() => {
@@ -63,17 +63,14 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  const sortedDataForChart = useMemo(
-    () => sortDataForChart(data, sortOption),
-    [data, sortOption],
-  );
+  const sortedDataForChart = useMemo(() => sortDataForChart(data, sortOption), [data, sortOption]);
 
   const { exportRows } = useWidgetExport(
     tabularData,
     TABLE_HEADINGS,
     {},
     FIRST_COLUMN,
-    EXPORT_NAME,
+    EXPORT_NAME
   );
 
   const hasResults = data && data.some((d) => d.total > 0);
@@ -118,15 +115,20 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
       }
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data, sortedDataForChart, showAR, showTR, width, showTabularData]);
 
-  useEffect(() => () => {
-    if (plotlyRef.current) {
-      if (chartRef.current) plotlyRef.current.purge(chartRef.current);
-      if (bottomAxisRef.current) plotlyRef.current.purge(bottomAxisRef.current);
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (plotlyRef.current) {
+        if (chartRef.current) plotlyRef.current.purge(chartRef.current);
+        if (bottomAxisRef.current) plotlyRef.current.purge(bottomAxisRef.current);
+      }
+    },
+    []
+  );
 
   const subtitle = (
     <div>
@@ -142,10 +144,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
         className="display-flex flex-align-center margin-top-2"
         data-testid="goal-category-sort-container"
       >
-        <Label
-          htmlFor="goal-category-sort"
-          className="margin-y-0 margin-right-1 text-no-wrap"
-        >
+        <Label htmlFor="goal-category-sort" className="margin-y-0 margin-right-1 text-no-wrap">
           Sort by
         </Label>
         <Dropdown
@@ -202,7 +201,14 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
                 <NoResultsFound hideFilterHelp />
               ) : (
                 <>
-                  <div className="display-flex flex-row flex-wrap margin-bottom-2 margin-top-0 flex-gap-1" style={{ paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 290px))`, rowGap: '0.5rem' }} data-testid="graph-checkboxes">
+                  <div
+                    className="display-flex flex-row flex-wrap margin-bottom-2 margin-top-0 flex-gap-1"
+                    style={{
+                      paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 290px))`,
+                      rowGap: '0.5rem',
+                    }}
+                    data-testid="graph-checkboxes"
+                  >
                     <Checkbox
                       id="show-ar"
                       name="show-ar"
@@ -225,9 +231,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
                       tabIndex={0}
                       ref={chartRef}
                     >
-                      <span className="usa-sr-only">
-                        Use the arrow keys to scroll graph
-                      </span>
+                      <span className="usa-sr-only">Use the arrow keys to scroll graph</span>
                     </div>
                   </div>
                   <div className="height-card-sm width-full" ref={bottomAxisRef} />
@@ -248,7 +252,7 @@ ApprovedARAndTRByGoalCategory.propTypes = {
       activityReportCount: PropTypes.number,
       sessionReportCount: PropTypes.number,
       total: PropTypes.number,
-    }),
+    })
   ),
   loading: PropTypes.bool.isRequired,
 };
@@ -257,7 +261,4 @@ ApprovedARAndTRByGoalCategory.defaultProps = {
   data: [],
 };
 
-export default withWidgetData(
-  ApprovedARAndTRByGoalCategory,
-  'approvedARAndTRByGoalCategory',
-);
+export default withWidgetData(ApprovedARAndTRByGoalCategory, 'approvedARAndTRByGoalCategory');

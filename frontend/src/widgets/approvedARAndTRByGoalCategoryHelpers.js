@@ -12,7 +12,11 @@ export const SORT_OPTIONS = [
 ];
 
 // All three columns for CSV export.
-export const TABLE_HEADINGS = ['Number of Activity Reports', 'Number of Training Report Sessions', 'Total'];
+export const TABLE_HEADINGS = [
+  'Number of Activity Reports',
+  'Number of Training Report Sessions',
+  'Total',
+];
 // Only the two non-total columns for the table widget — Total is rendered via showTotalColumn.
 export const WIDGET_HEADINGS = ['Number of Activity Reports', 'Number of Training Report Sessions'];
 export const FIRST_COLUMN = 'Goal category';
@@ -25,16 +29,16 @@ export function sortDataForChart(data, sortOption) {
   switch (sortOption) {
     case 'total-desc':
       // lowest total first → highest at top; ties broken Z→A so A appears at chart top
-      return sorted.sort((a, b) => (a.total - b.total) || b.category.localeCompare(a.category));
+      return sorted.sort((a, b) => a.total - b.total || b.category.localeCompare(a.category));
     case 'total-asc':
       // highest total first → lowest at top; ties broken Z→A so A appears at chart top
-      return sorted.sort((a, b) => (b.total - a.total) || b.category.localeCompare(a.category));
+      return sorted.sort((a, b) => b.total - a.total || b.category.localeCompare(a.category));
     case 'category-asc':
       return sorted.sort((a, b) => b.category.localeCompare(a.category)); // Z first → A at top
     case 'category-desc':
       return sorted.sort((a, b) => a.category.localeCompare(b.category)); // A first → Z at top
     default:
-      return sorted.sort((a, b) => (a.total - b.total) || b.category.localeCompare(a.category));
+      return sorted.sort((a, b) => a.total - b.total || b.category.localeCompare(a.category));
   }
 }
 
@@ -45,8 +49,16 @@ export function buildTabularData(data) {
     id: `${row.category.replace(/\s+/g, '-').toLowerCase()}-${index}`,
     data: [
       // sortKey values match what HorizontalTableWidget.Header generates via header.replaceAll(' ', '_')
-      { value: row.activityReportCount, title: 'Number of Activity Reports', sortKey: 'Number_of_Activity_Reports' },
-      { value: row.sessionReportCount, title: 'Number of Training Report Sessions', sortKey: 'Number_of_Training_Report_Sessions' },
+      {
+        value: row.activityReportCount,
+        title: 'Number of Activity Reports',
+        sortKey: 'Number_of_Activity_Reports',
+      },
+      {
+        value: row.sessionReportCount,
+        title: 'Number of Training Report Sessions',
+        sortKey: 'Number_of_Training_Report_Sessions',
+      },
       { value: row.total, title: 'Total', sortKey: 'Total', className: 'text-bold' },
     ],
   }));
@@ -63,15 +75,27 @@ export function sortTabularData(tabularData, sortOption) {
   };
   switch (sortOption) {
     case 'total-desc':
-      return sorted.sort((a, b) => (getTotal(b) - getTotal(a)) || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
+      return sorted.sort(
+        (a, b) =>
+          getTotal(b) - getTotal(a) ||
+          a.heading.toLowerCase().localeCompare(b.heading.toLowerCase())
+      );
     case 'total-asc':
-      return sorted.sort((a, b) => (getTotal(a) - getTotal(b)) || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
+      return sorted.sort(
+        (a, b) =>
+          getTotal(a) - getTotal(b) ||
+          a.heading.toLowerCase().localeCompare(b.heading.toLowerCase())
+      );
     case 'category-asc':
       return sorted.sort((a, b) => a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
     case 'category-desc':
       return sorted.sort((a, b) => b.heading.toLowerCase().localeCompare(a.heading.toLowerCase()));
     default:
-      return sorted.sort((a, b) => (getTotal(b) - getTotal(a)) || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
+      return sorted.sort(
+        (a, b) =>
+          getTotal(b) - getTotal(a) ||
+          a.heading.toLowerCase().localeCompare(b.heading.toLowerCase())
+      );
   }
 }
 
@@ -107,7 +131,7 @@ export function computeChartDimensions(sortedData, showAR, showTR) {
   const maxCount = sortedData.reduce(
     (acc, d) =>
       Math.max(acc, showAR ? d.activityReportCount : 0, showTR ? d.sessionReportCount : 0),
-    1,
+    1
   );
   const xRangeMax = maxCount + Math.ceil(maxCount * 0.1) + 1;
   return { height, xRangeMax };

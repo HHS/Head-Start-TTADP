@@ -23,7 +23,11 @@ describe('goals/stateCode', () => {
     // The grants created by setupSharedTestData have no stateCode set,
     // so 'TX' will only match this grant.
     txGrant = await createGrant({ stateCode: 'TX' });
-    txGoal = await createGoal({ grantId: txGrant.id, name: 'TX State Goal', status: 'In Progress' });
+    txGoal = await createGoal({
+      grantId: txGrant.id,
+      name: 'TX State Goal',
+      status: 'In Progress',
+    });
   });
 
   afterAll(async () => {

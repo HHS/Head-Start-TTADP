@@ -28,13 +28,7 @@ export default function GoalDashboard() {
     filterConfig,
     regions,
     allRegionsFilters,
-  } = useFilters(
-    user,
-    GOAL_DASHBOARD_FILTER_KEY,
-    true,
-    [],
-    GOAL_DASHBOARD_FILTER_CONFIG
-  );
+  } = useFilters(user, GOAL_DASHBOARD_FILTER_KEY, true, [], GOAL_DASHBOARD_FILTER_CONFIG);
 
   const filterQuery = filtersToQueryString(filters);
 
@@ -54,7 +48,9 @@ export default function GoalDashboard() {
       <RegionPermissionModal
         filters={filters}
         user={user}
-        showFilterWithMyRegions={() => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)}
+        showFilterWithMyRegions={() =>
+          showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+        }
       />
       <Helmet>
         <title>Goal Dashboard</title>

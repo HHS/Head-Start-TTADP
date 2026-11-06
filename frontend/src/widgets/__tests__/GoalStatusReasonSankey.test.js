@@ -13,9 +13,9 @@ import GoalStatusReasonSankey, {
   getMinimumVisualValueForLink,
   getNodeColorById,
   getNodeLabel,
-  getReasonNodeYPositions,
   getPatternIdByNodeId,
   getPercentLabel,
+  getReasonNodeYPositions,
   getStatusKeyFromNodeId,
   getStatusSortIndex,
   getVisualLinkValues,
@@ -157,7 +157,12 @@ describe('GoalStatusReasonSankey', () => {
         { id: 'goals', label: 'Goals', count: 100, percentage: 100 },
         { id: 'status:Closed', label: 'Closed', count: 100, percentage: 100 },
         { id: 'reason:Closed:TTA Complete', label: 'TTA Complete', count: 99, percentage: 99 },
-        { id: 'reason:Closed:Recipient request', label: 'Recipient request', count: 1, percentage: 1 },
+        {
+          id: 'reason:Closed:Recipient request',
+          label: 'Recipient request',
+          count: 1,
+          percentage: 1,
+        },
       ],
       links: [
         { source: 'goals', target: 'status:Closed', value: 100 },
@@ -168,10 +173,7 @@ describe('GoalStatusReasonSankey', () => {
     render(<GoalStatusReasonSankey sankey={sankey} />);
     expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
 
-    const nonStatusNodeIds = [
-      'reason:Closed:TTA Complete',
-      'reason:Closed:Recipient request',
-    ];
+    const nonStatusNodeIds = ['reason:Closed:TTA Complete', 'reason:Closed:Recipient request'];
     const visibleLinks = [{ source: 'goals_start', target: 'goals', value: 100 }, ...sankey.links];
     const allVisualValues = getVisualLinkValues(visibleLinks);
 
@@ -197,7 +199,12 @@ describe('GoalStatusReasonSankey', () => {
         { id: 'goals', label: 'Goals', count: 10, percentage: 100 },
         { id: 'status:Closed', label: 'Closed', count: 10, percentage: 100 },
         { id: 'reason:Closed:TTA Complete', label: 'TTA Complete', count: 5, percentage: 50 },
-        { id: 'reason:Closed:Recipient request', label: 'Recipient request', count: 5, percentage: 50 },
+        {
+          id: 'reason:Closed:Recipient request',
+          label: 'Recipient request',
+          count: 5,
+          percentage: 50,
+        },
       ],
       links: [
         { source: 'goals', target: 'status:Closed', value: 10 },
@@ -208,10 +215,7 @@ describe('GoalStatusReasonSankey', () => {
     render(<GoalStatusReasonSankey sankey={sankey} />);
     expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
 
-    const nonStatusNodeIds = [
-      'reason:Closed:TTA Complete',
-      'reason:Closed:Recipient request',
-    ];
+    const nonStatusNodeIds = ['reason:Closed:TTA Complete', 'reason:Closed:Recipient request'];
     const visibleLinks = [{ source: 'goals_start', target: 'goals', value: 10 }, ...sankey.links];
     const allVisualValues = getVisualLinkValues(visibleLinks);
 

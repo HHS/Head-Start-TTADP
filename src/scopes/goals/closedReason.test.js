@@ -1,12 +1,5 @@
-import {
-  createGoal,
-  createGrant,
-  filtersToScopes,
-  Goal,
-  Op,
-  sequelize,
-} from './testHelpers';
 import { GoalStatusChange } from '../../models';
+import { createGoal, createGrant, filtersToScopes, Goal, Op, sequelize } from './testHelpers';
 
 describe('goals/closedReason', () => {
   let grant;
@@ -20,16 +13,32 @@ describe('goals/closedReason', () => {
   beforeAll(async () => {
     grant = await createGrant();
 
-    goalRecipientRequest = await createGoal({ grantId: grant.id, name: 'Recipient request goal', status: 'Not Started' });
+    goalRecipientRequest = await createGoal({
+      grantId: grant.id,
+      name: 'Recipient request goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalRecipientRequest.id);
 
-    goalTTAComplete = await createGoal({ grantId: grant.id, name: 'TTA complete goal', status: 'Not Started' });
+    goalTTAComplete = await createGoal({
+      grantId: grant.id,
+      name: 'TTA complete goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalTTAComplete.id);
 
-    goalRegionalOffice = await createGoal({ grantId: grant.id, name: 'Regional Office goal', status: 'Not Started' });
+    goalRegionalOffice = await createGoal({
+      grantId: grant.id,
+      name: 'Regional Office goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalRegionalOffice.id);
 
-    goalNoCloseReason = await createGoal({ grantId: grant.id, name: 'No close reason goal', status: 'Not Started' });
+    goalNoCloseReason = await createGoal({
+      grantId: grant.id,
+      name: 'No close reason goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalNoCloseReason.id);
 
     const sc1 = await GoalStatusChange.create({
@@ -113,7 +122,11 @@ describe('goals/closedReason', () => {
   });
 
   it('only returns closed goals when using the in filter', async () => {
-    const goalOpen = await createGoal({ grantId: grant.id, name: 'Open goal for in test', status: 'In Progress' });
+    const goalOpen = await createGoal({
+      grantId: grant.id,
+      name: 'Open goal for in test',
+      status: 'In Progress',
+    });
     createdGoalIds.push(goalOpen.id);
 
     const { goal: scope } = await filtersToScopes({ 'closedReason.in': ['Recipient request'] });
@@ -126,7 +139,11 @@ describe('goals/closedReason', () => {
   });
 
   it('excludes goals matching a closed reason and only returns closed goals', async () => {
-    const goalOpen = await createGoal({ grantId: grant.id, name: 'Open goal for nin test', status: 'In Progress' });
+    const goalOpen = await createGoal({
+      grantId: grant.id,
+      name: 'Open goal for nin test',
+      status: 'In Progress',
+    });
     createdGoalIds.push(goalOpen.id);
 
     const { goal: scope } = await filtersToScopes({ 'closedReason.nin': ['Recipient request'] });
@@ -159,7 +176,11 @@ describe('goals/closedReason', () => {
   });
 
   it('does not return a goal that was closed then reopened', async () => {
-    const goalReopened = await createGoal({ grantId: grant.id, name: 'Reopened goal', status: 'Not Started' });
+    const goalReopened = await createGoal({
+      grantId: grant.id,
+      name: 'Reopened goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalReopened.id);
 
     const sc1 = await GoalStatusChange.create({

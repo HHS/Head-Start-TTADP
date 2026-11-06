@@ -650,9 +650,7 @@ describe('monitoringDiagnostics', () => {
     ]);
 
     const exportStream = await monitoringDiagnosticsCsv('grantDeliveredReviews', {
-      columns: JSON.stringify([
-        { label: 'Recipient name', source: 'recipient_name' },
-      ]),
+      columns: JSON.stringify([{ label: 'Recipient name', source: 'recipient_name' }]),
     });
     const csvLines = [];
 
@@ -660,10 +658,7 @@ describe('monitoringDiagnostics', () => {
       csvLines.push(line);
     }
 
-    expect(csvLines).toEqual([
-      'Recipient name\n',
-      `"'\n=HYPERLINK(""https://example.com"")"\n`,
-    ]);
+    expect(csvLines).toEqual(['Recipient name\n', `"'\n=HYPERLINK(""https://example.com"")"\n`]);
   });
 
   it('returns an empty stream when no exportable columns are requested', async () => {
