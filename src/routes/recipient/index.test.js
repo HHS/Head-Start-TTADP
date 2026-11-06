@@ -79,7 +79,7 @@ describe('recipient routes', () => {
           },
         ],
       }),
-      { canReadCommunicationLogs: true }
+      { canReadCommunicationLogs: true, canReadTtaRequests: true }
     );
   });
 
