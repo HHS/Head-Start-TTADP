@@ -3248,10 +3248,6 @@ class ZALZAFilter{
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
-!issue='associations need to be defined both directions'
-Users "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestApprovers : user
-!issue='associations need to be defined both directions'
-Users "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestNotes : user
 Users "1" --[#black,plain,thickness=2]-- "1" TtaRequests : creator, lastUpdatedBy, reviewer
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
@@ -3426,6 +3422,8 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : trainer, sessionTrainers
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, submitter, sessionReportsAsApprover
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : user, ttaRequestApprovers
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : user, ttaRequestNotes
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : user, validationStatus
