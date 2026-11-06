@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
@@ -246,6 +246,16 @@ describe('EventCard', () => {
     expect(
       await screen.findByText(/are you sure you want to delete this event/i)
     ).toBeInTheDocument();
+    const modal = () => document.querySelector('#remove-event-modal-TR-R01-1234');
+    await waitFor(() => expect(modal()).toHaveClass('is-visible'));
+
+    // once mounted, reopening relies on the toggle alone
+    userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    await waitFor(() => expect(modal()).toHaveClass('is-hidden'));
+    userEvent.click(contextBtn);
+    userEvent.click(screen.queryAllByRole('button', { name: /delete event/i })[0]);
+    await waitFor(() => expect(modal()).toHaveClass('is-visible'));
+
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
     userEvent.click(confirmBtn);
     expect(onDeleteEvent).toHaveBeenCalledWith(defaultEvent.data.eventId, 1);

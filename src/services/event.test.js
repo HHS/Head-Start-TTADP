@@ -16,6 +16,7 @@ import {
   filterEventSessions,
   findAllEvents,
   findEventByDbId,
+  findEventBySmartsheetId,
   findEventHelper,
   findEventHelperBlob,
   findEventsByCollaboratorId,
@@ -588,6 +589,31 @@ describe('event service', () => {
       // Display dates are re-derived from the columns (MM/DD/YYYY), not the stale JSONB.
       expect(session.data.startDate).toBe('03/15/2024');
       expect(session.data.endDate).toBe('03/16/2024');
+
+      await db.SessionReportPilot.destroy({ where: { id: sessionReport.id } });
+      await destroyEvent(created.id);
+    });
+
+    it('findEventBySmartsheetId omits sessions only when includeSessions is false', async () => {
+      const created = await createAnEvent(98_989);
+      const sessionReport = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: { sessionName: 'Smartsheet session' },
+      });
+
+      const [withoutSessions, withSessions] = await Promise.all([
+        findEventBySmartsheetId(created.eventId, [{}], { includeSessions: false }),
+        findEventBySmartsheetId(created.eventId),
+      ]);
+
+      expect(withoutSessions.sessionReports).toEqual([]);
+      expect(withoutSessions).toHaveProperty('ownerId', 98_989);
+      expect(withoutSessions).toHaveProperty('regionId', 98_989);
+      expect(withoutSessions).toHaveProperty('eventId', created.eventId);
+      expect(withoutSessions.data).toHaveProperty('status');
+
+      expect(withSessions.sessionReports).toHaveLength(1);
+      expect(withSessions.sessionReports[0]).toHaveProperty('id', sessionReport.id);
 
       await db.SessionReportPilot.destroy({ where: { id: sessionReport.id } });
       await destroyEvent(created.id);
