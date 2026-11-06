@@ -272,6 +272,20 @@ describe('useEventAndSessionStaff', () => {
       expect(result.current.loading).toBe(true);
     });
 
+    it('reports an error when either trainer list fails to load', () => {
+      useFetch
+        .mockReturnValueOnce({ data: [], loading: false, error: 'An unexpected error occurred' })
+        .mockReturnValueOnce({ data: [], loading: false, error: '' });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(
+        () => useEventAndSessionStaff({ regionId: 1, eventOrganizer: '' }, true),
+        { wrapper }
+      );
+
+      expect(result.current.error).toBe(true);
+    });
+
     it('is false once both trainer lists have loaded', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useEventAndSessionStaff({ regionId: 1 }, true), {

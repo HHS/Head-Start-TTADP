@@ -12,7 +12,6 @@ import { eventById, updateEvent } from '../../fetchers/event';
 import { getTrainingReportUsers } from '../../fetchers/users';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import regionIdFromEventId from '../../utils/regionIdFromEventId';
 import { defaultValues, LOCAL_STORAGE_ADDITIONAL_DATA_KEY } from './constants';
 import EventSummary from './pages/eventSummary';
 
@@ -86,7 +85,6 @@ export default function TrainingReportForm({ match }) {
   // we use both of these to determine if we're in the loading screen state
   // (see the use effect below)
   const [reportFetched, setReportFetched] = useState(false);
-  const [fetchedRegionId, setFetchedRegionId] = useState(null);
   // the region the current users list was fetched for (cached users may be stale)
   const [usersRegion, setUsersRegion] = useState(null);
 
@@ -107,10 +105,7 @@ export default function TrainingReportForm({ match }) {
     shouldUnregister: false,
   });
 
-  // the region is encoded in the event id, so region-dependent requests can start
-  // alongside the event fetch instead of waiting for it. Once the event loads, its
-  // actual region wins (an event can be reassigned to another region).
-  const eventRegion = fetchedRegionId ?? regionIdFromEventId(trainingReportId);
+  const eventRegion = hookForm.watch('regionId');
   const formData = hookForm.getValues();
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
 
@@ -123,7 +118,7 @@ export default function TrainingReportForm({ match }) {
   useEffect(() => () => setIsAppLoading(false), [setIsAppLoading]);
 
   useEffect(() => {
-    // fetch available users (refetches if the event's real region differs from the id prefix)
+    // fetch available users once the event's region is known
     if (!eventRegion) {
       return undefined;
     }
@@ -138,6 +133,8 @@ export default function TrainingReportForm({ match }) {
           setUsersRegion(eventRegion);
         }
       } catch (e) {
+        // usersRegion stays unset, so the creator and POC selects stay disabled:
+        // editing against cached or empty options could drop saved selections
         if (!cancelled) {
           setError('Error fetching collaborators and points of contact');
         }
@@ -168,7 +165,6 @@ export default function TrainingReportForm({ match }) {
         }
         resetFormData(hookForm.reset, event);
         reportId.current = trainingReportId;
-        setFetchedRegionId(event.regionId ?? null);
       } catch (e) {
         if (!cancelled) {
           history.push(`/something-went-wrong/${e.status}`);
@@ -338,7 +334,6 @@ export default function TrainingReportForm({ match }) {
             <EventSummary
               additionalData={additionalData}
               formData={formData}
-              regionId={eventRegion}
               usersLoaded={usersRegion === eventRegion}
               isAppLoading={isAppLoading}
               onSaveDraft={onSave}

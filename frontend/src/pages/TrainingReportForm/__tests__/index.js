@@ -107,91 +107,6 @@ describe('TrainingReportForm', () => {
     expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
-  it('fetches region-dependent data without waiting for the event when the id encodes the region', async () => {
-    // the event request never resolves, so anything fetched must not depend on it
-    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', new Promise(() => {}));
-
-    act(() => {
-      renderTrainingReportForm('R01-PD-1234');
-    });
-
-    await waitFor(() => {
-      expect(fetchMock.called(/\/api\/users\/training-report-users\?regionId=1/)).toBe(true);
-      expect(fetchMock.called('/api/users/trainers/regional/region/1')).toBe(true);
-      expect(fetchMock.called('/api/users/trainers/national-center/region/1')).toBe(true);
-    });
-  });
-
-  it('requests each resource once and uses the real region when it differs from the id prefix', async () => {
-    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', {
-      id: 1,
-      eventId: 'R01-PD-1234',
-      regionId: 2,
-      collaboratorIds: [],
-      ownerId: 1,
-      data: {},
-    });
-    fetchMock.get(/\/api\/users\/training-report-users\?regionId=2/, {
-      pointOfContact: [],
-      collaborators: [],
-      creators: [],
-    });
-    fetchMock.get('/api/users/trainers/regional/region/2', []);
-    fetchMock.get('/api/users/trainers/national-center/region/2', []);
-
-    act(() => {
-      renderTrainingReportForm('R01-PD-1234');
-    });
-
-    await waitFor(() => {
-      expect(fetchMock.called(/\/api\/users\/training-report-users\?regionId=2/)).toBe(true);
-      expect(fetchMock.called('/api/users/trainers/regional/region/2')).toBe(true);
-    });
-
-    expect(fetchMock.calls('/api/events/id/R01-PD-1234?includeSessions=false')).toHaveLength(1);
-    expect(fetchMock.calls(/\/api\/users\/training-report-users\?regionId=1/)).toHaveLength(1);
-    expect(fetchMock.calls(/\/api\/users\/training-report-users\?regionId=2/)).toHaveLength(1);
-  });
-
-  it('keeps the real region users when the id-prefix users arrive late', async () => {
-    window.localStorage.clear();
-    const admin = { id: 1, permissions: [{ regionId: 2, scopeId: SCOPE_IDS.ADMIN }], name: 'Ted' };
-    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', {
-      ...completedForm,
-      regionId: 2,
-      ownerId: 5,
-    });
-    fetchMock.get(
-      /\/api\/users\/training-report-users\?regionId=1(&eventId=.*)?$/,
-      {
-        pointOfContact: [],
-        collaborators: [],
-        creators: [{ id: 99, fullName: 'Wrong Region' }],
-      },
-      { overwriteRoutes: true, delay: 100 }
-    );
-    fetchMock.get(/\/api\/users\/training-report-users\?regionId=2/, {
-      pointOfContact: [],
-      collaborators: [],
-      creators: [{ id: 5, fullName: 'Right Region' }],
-    });
-    fetchMock.get('/api/users/trainers/regional/region/2', []);
-    fetchMock.get('/api/users/trainers/national-center/region/2', []);
-
-    act(() => {
-      renderTrainingReportForm('R01-PD-1234', admin);
-    });
-
-    expect(await screen.findByText('Right Region')).toBeInTheDocument();
-    // let the slow region-1 response land
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 150));
-    });
-    expect(fetchMock.calls(/\/api\/users\/training-report-users\?regionId=1/)).toHaveLength(1);
-    expect(screen.getByText('Right Region')).toBeInTheDocument();
-    expect(screen.queryByText('Wrong Region')).toBeNull();
-  });
-
   it('disables user selects until fresh users replace the cached ones', async () => {
     window.localStorage.clear();
     // cached users are missing the event's current POC
@@ -262,7 +177,50 @@ describe('TrainingReportForm', () => {
     expect(document.querySelector('#collaboratorIds')).not.toBeDisabled();
   });
 
-  it('only fetches the event and users once when the region matches the id prefix', async () => {
+  it('keeps the collaborator select disabled when trainer options fail to load', async () => {
+    window.localStorage.clear();
+    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', {
+      ...completedForm,
+      regionId: 1,
+      collaboratorIds: [3],
+      data: {
+        ...completedForm.data,
+        eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+      },
+    });
+    fetchMock.get('/api/users/trainers/regional/region/1', 500, { overwriteRoutes: true });
+
+    act(() => {
+      renderTrainingReportForm('R01-PD-1234');
+    });
+
+    expect(await screen.findByText(/unable to load event collaborators/i)).toBeInTheDocument();
+    expect(document.querySelector('#collaboratorIds')).toBeDisabled();
+  });
+
+  it('keeps the creator and POC selects disabled when users fail to load', async () => {
+    window.localStorage.clear();
+    const admin = { id: 1, permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }], name: 'Ted' };
+    fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', {
+      ...completedForm,
+      regionId: 1,
+    });
+    fetchMock.get(/\/api\/users\/training-report-users\?regionId=1(&eventId=.*)?$/, 500, {
+      overwriteRoutes: true,
+    });
+
+    act(() => {
+      renderTrainingReportForm('R01-PD-1234', admin);
+    });
+
+    expect(
+      await screen.findByText(/error fetching collaborators and points of contact/i)
+    ).toBeInTheDocument();
+    expect(document.querySelector('#pocIds')).toBeDisabled();
+    expect(document.querySelector('#ownerId')).toBeDisabled();
+  });
+
+  it('only fetches the event and users once', async () => {
     fetchMock.get('/api/events/id/R01-PD-1234?includeSessions=false', {
       id: 1,
       eventId: 'R01-PD-1234',
