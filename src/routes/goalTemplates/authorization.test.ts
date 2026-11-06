@@ -1,14 +1,17 @@
 import type { Request, Response } from 'express';
 import { CREATION_METHOD, GOAL_STATUS } from '../../constants';
 import { goalRegionsById } from '../../goalServices/goals';
+import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
+import { userById } from '../../services/users';
 import { createRecipient, createRegion, getUniqueId } from '../../testUtils';
 import { getPrompts } from './handlers';
 
 jest.mock('../../services/accessValidation', () => ({ getUserReadRegions: jest.fn() }));
 jest.mock('../../services/currentUser', () => ({ currentUserId: jest.fn() }));
+jest.mock('../../services/users', () => ({ userById: jest.fn() }));
 
 const {
   Goal,
@@ -113,6 +116,10 @@ describe('prompt authorization for mapped goals', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(currentUserId).mockResolvedValue(1);
+    // never rely on whichever user happens to have id 1 in the shared database
+    jest.mocked(userById).mockResolvedValue({
+      permissions: [{ regionId: regions[0].id, scopeId: SCOPES.READ_REPORTS }],
+    });
     jest.mocked(getUserReadRegions).mockResolvedValue([regions[0].id]);
   });
 
@@ -173,6 +180,23 @@ describe('prompt authorization for mapped goals', () => {
       expect(res.json).not.toHaveBeenCalled();
     }
   );
+
+  it('lets an administrator read responses across regions', async () => {
+    jest.mocked(userById).mockResolvedValue({
+      permissions: [{ regionId: regions[0].id, scopeId: SCOPES.ADMIN }],
+    });
+    const req = {
+      params: { goalTemplateId: String(template.id) },
+      query: {
+        goalIds: [String(accessibleGoal.id), String(mappedGoal.id)],
+        isForActivityReport: 'false',
+      },
+    };
+    const res = { sendStatus: jest.fn(), json: jest.fn() };
+    await getPrompts(req as unknown as Request, res as unknown as Response);
+    expect(res.sendStatus).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalled();
+  });
 
   it('still returns authorized curated responses', async () => {
     const req = {
