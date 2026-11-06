@@ -80,7 +80,7 @@ const mockRealFilters = () => {
 
 describe('timeline navigation restoration', () => {
   beforeEach(() => {
-    window.sessionStorage.removeItem('timeline-filters');
+    window.sessionStorage.removeItem('timeline-filters-401');
     getRecipientTimeline.mockReset();
     useFilters.mockReturnValue({
       filters: [],
@@ -296,6 +296,85 @@ describe('timeline navigation restoration', () => {
     expect(
       getRecipientTimeline.mock.calls.at(-1)[2].filters.filter(({ topic }) => topic === 'standard')
     ).toHaveLength(1);
+  });
+
+  it("does not write one recipient's filters under the next recipient's saved key", async () => {
+    const realFilters = mockRealFilters();
+    const saved = [{ id: 'saved', topic: 'eventType', condition: 'is', query: ['Goal closed'] }];
+    window.sessionStorage.setItem('timeline-filters-644', JSON.stringify(saved));
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    const history = createMemoryHistory({ initialEntries: ['/timeline/401/1'] });
+    render(
+      <UserContext.Provider value={{ user: { homeRegionId: 1 } }}>
+        <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+          <Router history={history}>
+            <Route
+              path="/timeline/:recipientId/:regionId"
+              render={({ match }) => (
+                <Timeline recipientId={match.params.recipientId} regionId={match.params.regionId} />
+              )}
+            />
+          </Router>
+        </AriaLiveContext.Provider>
+      </UserContext.Provider>
+    );
+    await screen.findByText('No results found.');
+    const filter = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
+    act(() => realFilters.setFilters(filter));
+    await waitFor(() =>
+      expect(window.sessionStorage.getItem('timeline-filters-401')).toContain('Goal added')
+    );
+    act(() => history.push('/timeline/644/6'));
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith('644', '6', expect.anything())
+    );
+    expect(window.sessionStorage.getItem('timeline-filters-644')).toContain('Goal closed');
+    expect(window.sessionStorage.getItem('timeline-filters-644')).not.toContain('Goal added');
+    window.sessionStorage.removeItem('timeline-filters-644');
+  });
+
+  it('keeps focus on the View dropdown after changing to a different view', async () => {
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(historyAt({ timelineView: view }));
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'goals')
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('goals')
+    );
+    expect(screen.getByRole('combobox', { name: 'View' })).toHaveFocus();
+  });
+
+  it('does not take focus when Back returns to a different view', async () => {
+    const history = historyAt({ timelineView: view });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(history);
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'goals')
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('goals')
+    );
+    act(() => history.goBack());
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('desc'));
+    expect(screen.getByRole('combobox', { name: 'View' })).not.toHaveFocus();
+  });
+
+  it('nests event titles one level below their category headings in grouped views', async () => {
+    const events = batch(1, 2).map((event) => ({
+      ...event,
+      tags: [{ label: 'Monitoring', flagged: true }],
+    }));
+    getRecipientTimeline.mockResolvedValue({
+      count: 2,
+      events,
+      categories: [{ label: 'Monitoring', statuses: ['In Progress'] }],
+    });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    expect(await screen.findByRole('heading', { name: 'Event 1', level: 4 })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /Monitoring In Progress/, level: 3 })).toBeVisible();
   });
 
   it.each(['monitoring', 'goals'])(
@@ -635,7 +714,7 @@ describe('timeline navigation restoration', () => {
   });
 
   it('preserves a session-restored empty filter state when navigating Back', async () => {
-    window.sessionStorage.setItem('timeline-filters', JSON.stringify([]));
+    window.sessionStorage.setItem('timeline-filters-401', JSON.stringify([]));
     const realFilters = mockRealFilters();
     const history = createMemoryHistory({
       initialEntries: ['/detail', '/timeline'],
