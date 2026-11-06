@@ -5,32 +5,35 @@ import { RECIPIENT_TIMELINE_SOURCES } from './recipientTimelineSources';
 
 jest.mock('../models', () => ({ sequelize: { query: jest.fn() } }));
 jest.mock('./recipientTimelineSources', () => {
-  const sources = ['activityReport', 'goalStatusChange', 'communicationLog'].map((name) => ({
-    name,
-    supportedFilterTopics: [],
-    buildIndexQuery: jest.fn(() => `SELECT * FROM "${name}"`),
-    populate: jest.fn(
-      async () =>
-        new Map([
-          [
-            1,
-            {
-              title: 'Event',
-              subtitle: null,
-              durationHours: null,
-              byline: null,
-              indicators: [],
-              tags: [],
-              details: [],
-              links: [],
-            },
-          ],
-        ])
-    ),
-  }));
+  const sources = ['activityReport', 'goalStatusChange', 'communicationLog', 'ttaRequest'].map(
+    (name) => ({
+      name,
+      supportedFilterTopics: [],
+      buildIndexQuery: jest.fn(() => `SELECT * FROM "${name}"`),
+      populate: jest.fn(
+        async () =>
+          new Map([
+            [
+              1,
+              {
+                title: 'Event',
+                subtitle: null,
+                durationHours: null,
+                byline: null,
+                indicators: [],
+                tags: [],
+                details: [],
+                links: [],
+              },
+            ],
+          ])
+      ),
+    })
+  );
   return {
     RECIPIENT_TIMELINE_SOURCES: sources,
     COMMUNICATION_LOG_TIMELINE_SOURCE: sources[2],
+    TTA_REQUEST_TIMELINE_SOURCE: sources[3],
   };
 });
 
@@ -89,4 +92,50 @@ it('includes communication logs in indexing and population when authorized', asy
   expect(jest.mocked(sequelize.query).mock.calls[0][0]).toContain('communicationLog');
   expect(RECIPIENT_TIMELINE_SOURCES[2].populate).toHaveBeenCalledWith([1], params);
   expect(result).toMatchObject({ count: 3, events: [{ source: 'communicationLog' }] });
+});
+
+it.each([undefined, {}, { canReadTtaRequests: false }, { canReadCommunicationLogs: true }])(
+  'excludes TTA requests before indexing and population without explicit permission (%j)',
+  async (access) => {
+    jest
+      .mocked(sequelize.query)
+      .mockResolvedValue([
+        {
+          count: '2',
+          source: 'activityReport',
+          sourceId: 1,
+          date: '2026-01-01',
+          eventType: 'TTA activity',
+        },
+      ] as never);
+
+    const result = await getRecipientTimeline(params, access);
+
+    expect(jest.mocked(sequelize.query).mock.calls[0][0]).not.toContain('ttaRequest');
+    expect(RECIPIENT_TIMELINE_SOURCES[3].buildIndexQuery).not.toHaveBeenCalled();
+    expect(RECIPIENT_TIMELINE_SOURCES[3].populate).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ count: 2, events: [{ source: 'activityReport' }] });
+  }
+);
+
+it('authorizes TTA requests independently of communication logs', async () => {
+  jest
+    .mocked(sequelize.query)
+    .mockResolvedValue([
+      {
+        count: '1',
+        source: 'ttaRequest',
+        sourceId: 1,
+        date: '2026-01-01',
+        eventType: 'TTA request',
+      },
+    ] as never);
+
+  const result = await getRecipientTimeline(params, { canReadTtaRequests: true });
+
+  const sql = jest.mocked(sequelize.query).mock.calls[0][0];
+  expect(sql).toContain('ttaRequest');
+  expect(sql).not.toContain('communicationLog');
+  expect(RECIPIENT_TIMELINE_SOURCES[3].populate).toHaveBeenCalledWith([1], params);
+  expect(result).toMatchObject({ count: 1, events: [{ source: 'ttaRequest' }] });
 });

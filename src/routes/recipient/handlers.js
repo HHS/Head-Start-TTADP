@@ -5,6 +5,7 @@ import goalsByIdAndRecipient, {
 import handleErrors from '../../lib/apiErrorHandler';
 import CommunicationLogPolicy from '../../policies/communicationLog';
 import Recipient from '../../policies/recipient';
+import TtaRequestPolicy from '../../policies/ttaRequest';
 import Users from '../../policies/user';
 import filtersToScopes from '../../scopes';
 import { getUserReadRegions } from '../../services/accessValidation';
@@ -208,13 +209,14 @@ export async function getRecipientTimeline(req, res) {
     const user = await userById(await currentUserId(req, res));
     const { regionId } = res.locals.validatedParams;
     const canReadCommunicationLogs = new CommunicationLogPolicy(user, regionId).canReadLog();
+    const canReadTtaRequests = new TtaRequestPolicy(user, regionId).canReadInRegion();
 
     const timeline = await getRecipientTimelineService(
       {
         ...res.locals.validatedParams,
         ...res.locals.recipientTimelineQuery,
       },
-      { canReadCommunicationLogs }
+      { canReadCommunicationLogs, canReadTtaRequests }
     );
 
     res.json(timeline);

@@ -3,10 +3,18 @@ get:
     - recipient
   summary: Retrieve timeline events for a recipient in a region
   description: |
-    Includes approved TTA activities, goal status history, and communication logs for the recipient
-    and region. Communication logs are included only when the user passes the communication-log
-    read policy. Otherwise, logs are excluded before counting and pagination, while other
-    timeline sources remain available.
+    Includes approved TTA activities, goal status history, training sessions, communication logs,
+    monitoring reports, and submitted TTA requests for the recipient and region. Communication
+    logs require the communication-log read policy; TTA requests require the TTA request policy's
+    regional read permission. Unauthorized sources are excluded before counting and pagination.
+    Monitoring events use source `monitoringReport` and the delivered review ID as `sourceId`.
+    Complete, undeleted reviews delivered on or after 2025-01-21 appear once per review, even
+    when linked to multiple recipient grants. Inactive grants are included. The event date is
+    report_delivery_date, and its standard is always Monitoring.
+    TTA request events use source `ttaRequest` and the request ID as `sourceId`. Only submitted,
+    undeleted requests with a submittedAt timestamp appear; ordering preserves that timestamp.
+    The active goal template supplies the standard. Requests without an active template match
+    no positive standard filter and are included by negative filters for unmatched standards.
     Each request indexes and populates all sources within one repeatable-read database snapshot.
     Concurrent edits appear on subsequent requests; they cannot change the current page's
     presentation or multi-recipient indicators independently of its filters, count, and ordering.
@@ -420,8 +428,61 @@ get:
                           external:
                             type: boolean
           example:
-            count: 3
+            count: 5
             events:
+              - source: ttaRequest
+                sourceId: 901
+                date: 2026-05-22
+                eventType: TTA request
+                durationHours: null
+                title: TTA request
+                subtitle: R14-REQ-901
+                byline:
+                  label: By
+                  values:
+                    - Jane Hooper, ECS
+                indicators: []
+                tags:
+                  - label: Monitoring
+                    flagged: true
+                details:
+                  - label: Originator
+                    items:
+                      - text: Regional Office
+                  - label: Context
+                    items:
+                      - text: Request support with monitoring findings.
+                  - label: Recipient aware
+                    items:
+                      - text: 'Yes'
+                links:
+                  - label: View TTA request
+                    to: /recipient-tta-records/100/region/14/tta-request/view/901
+              - source: monitoringReport
+                sourceId: 902
+                date: 2026-05-21
+                eventType: Monitoring report received
+                durationHours: null
+                title: Monitoring report received
+                subtitle: FY2026 Focus Area Two
+                byline: null
+                indicators: []
+                tags:
+                  - label: Monitoring
+                    flagged: true
+                details:
+                  - label: Review type
+                    items:
+                      - text: FA2
+                  - label: Outcome
+                    items:
+                      - text: Non Compliant
+                  - label: Grant numbers
+                    items:
+                      - text: 14CH013042
+                links:
+                  - label: View monitoring review
+                    to: /recipient-tta-records/100/region/14/monitoring/review
               - source: sessionReport
                 sourceId: 789
                 date: 2026-05-21

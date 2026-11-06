@@ -428,7 +428,7 @@ describe('getRecipientTimeline', () => {
 
     expect(getRecipientTimelineService).toHaveBeenCalledWith(
       { recipientId: 100000, regionId: 1, ...timelineQuery },
-      { canReadCommunicationLogs: true }
+      { canReadCommunicationLogs: true, canReadTtaRequests: true }
     );
     expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
   });
@@ -448,11 +448,32 @@ describe('getRecipientTimeline', () => {
 
       expect(getRecipientTimelineService).toHaveBeenCalledWith(
         { recipientId: 100000, regionId: 1, ...timelineQuery },
-        { canReadCommunicationLogs: allowed }
+        expect.objectContaining({ canReadCommunicationLogs: allowed })
       );
       expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
     }
   );
+
+  it.each([
+    [SCOPES.READ_REPORTS, 1, true],
+    [SCOPES.READ_WRITE_TTA_REQUESTS, 1, true],
+    [SCOPES.REVIEW_TTA_REQUESTS, 1, true],
+    [SCOPES.APPROVE_TTA_REQUESTS, 1, true],
+    [SCOPES.BACKUP_APPROVE_TTA_REQUESTS, 1, true],
+    [SCOPES.READ_REPORTS, 2, false],
+    [SCOPES.APPROVE_REPORTS, 1, false],
+    [SCOPES.READ_WRITE_REPORTS, 1, false],
+    [SCOPES.ADMIN, 14, false],
+  ])('passes TTA request policy for scope %s in region %s', async (scopeId, regionId, allowed) => {
+    userById.mockResolvedValue({ id: 1000, permissions: [{ scopeId, regionId }] });
+
+    await getRecipientTimeline(req, mockResponse);
+
+    expect(getRecipientTimelineService).toHaveBeenCalledWith(
+      { recipientId: 100000, regionId: 1, ...timelineQuery },
+      expect.objectContaining({ canReadTtaRequests: allowed })
+    );
+  });
 
   it('rejects users without access to the requested region', async () => {
     getUserReadRegions.mockResolvedValue([2]);
