@@ -16,9 +16,11 @@ import StaffProvider from '../../components/StaffProvider';
 import Tabs from '../../components/Tabs';
 import TrainingReportAlerts from '../../components/TrainingReportAlerts';
 import WidgetContainer from '../../components/WidgetContainer';
+import FilterContext from '../../FilterContext';
 import { deleteEvent, getEventsByStatus } from '../../fetchers/event';
 import { deleteSession } from '../../fetchers/session';
 import useFilters from '../../hooks/useFilters';
+import useSessionSort from '../../hooks/useSessionSort';
 import UserContext from '../../UserContext';
 import { expandFilters, filtersToQueryString } from '../../utils';
 import { showFilterWithMyRegions } from '../regionHelpers';
@@ -26,6 +28,7 @@ import EventCards from './components/EventCards';
 import { TRAINING_REPORT_FILTER_CONFIG } from './constants';
 
 const FILTER_KEY = 'training-report-filters';
+export const EVENTS_PER_PAGE = 10;
 
 const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) => ({
   key: TRAINING_REPORT_STATUSES_URL_PARAMS[status],
@@ -85,7 +88,7 @@ export const evaluateMessageFromHistory = (history) => {
   return null;
 };
 
-export default function TrainingReports({ match }) {
+function TrainingReportsContent({ match }) {
   const {
     params: { status },
   } = match;
@@ -93,6 +96,9 @@ export default function TrainingReports({ match }) {
   const [error, updateError] = useState();
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [displayEvents, setDisplayEvents] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  // bumped to refetch the current page after an event leaves it
+  const [refetchKey, setRefetchKey] = useState(0);
   const [cardsInternalMessage, setCardsInternalMessage] = useState();
   const history = useHistory();
   // eslint-disable-next-line max-len
@@ -116,16 +122,54 @@ export default function TrainingReports({ match }) {
     TRAINING_REPORT_FILTER_CONFIG
   );
 
+  // kept in session storage so returning from an event (e.g. "Edit event") keeps the page
+  const [sortConfig, setSortConfig] = useSessionSort(
+    { sortBy: 'eventId', direction: 'asc', activePage: 1 },
+    'trainingReportsEvents'
+  );
+  const { activePage } = sortConfig;
+  const offset = (activePage - 1) * EVENTS_PER_PAGE;
+
+  const handlePageChange = (pageNumber) => {
+    setSortConfig((prev) => ({ ...prev, activePage: pageNumber }));
+  };
+
+  // switching tabs or changing filters starts back on page 1. This adjusts state during
+  // render (not in an effect) so the events fetch never runs with the previous page.
+  const [pageScope, setPageScope] = useState({ status, filters });
+  if (pageScope.status !== status || pageScope.filters !== filters) {
+    setPageScope({ status, filters });
+    if (activePage !== 1) {
+      handlePageChange(1);
+    }
+  }
+
   useEffect(() => {
+    let ignore = false;
     async function fetchEvents() {
       setAppLoadingText('Fetching events...');
       setIsAppLoading(true);
       const filterQuery = filtersToQueryString(expandFilters(filters));
+      const pageQuery = `limit=${EVENTS_PER_PAGE}&offset=${offset}`;
+      const query = filterQuery ? `${filterQuery}&${pageQuery}` : pageQuery;
       try {
-        const events = await getEventsByStatus(status, filterQuery);
-        setDisplayEvents(events);
+        const { count, rows } = await getEventsByStatus(status, query);
+        if (ignore) {
+          return;
+        }
+        // a remembered page can be past the end if events were removed since
+        if (rows.length === 0 && offset > 0) {
+          const lastPage = Math.max(1, Math.ceil(count / EVENTS_PER_PAGE));
+          setSortConfig((prev) => ({ ...prev, activePage: lastPage }));
+          return;
+        }
+        setDisplayEvents(rows);
+        setTotalCount(count);
         updateError('');
       } catch (e) {
+        if (ignore) {
+          return;
+        }
         // eslint-disable-next-line no-console
         console.log(e);
         updateError('Unable to fetch events');
@@ -134,7 +178,19 @@ export default function TrainingReports({ match }) {
       }
     }
     fetchEvents();
-  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters]);
+    return () => {
+      ignore = true;
+    };
+  }, [
+    status,
+    user.homeRegionId,
+    setAppLoadingText,
+    setIsAppLoading,
+    filters,
+    offset,
+    setSortConfig,
+    refetchKey,
+  ]);
 
   const regionLabel = () => {
     if (defaultRegion === 14 || hasMultipleRegions) {
@@ -167,11 +223,10 @@ export default function TrainingReports({ match }) {
   };
 
   const removeEventFromDisplay = (id) => {
-    // update the UI, exclude the deleted event.
-    const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
-
-    // update the events state.
-    setDisplayEvents(events);
+    // hide the card right away, then refetch so the page backfills from the next one and
+    // the count stays accurate (an emptied page falls back to the last page in the fetch)
+    setDisplayEvents((events) => events.filter((e) => e.id !== id));
+    setRefetchKey((key) => key + 1);
   };
 
   /**
@@ -270,8 +325,13 @@ export default function TrainingReports({ match }) {
                 title="Events"
                 loading={false}
                 loadingLabel="Training events loading"
-                showPaging={false}
                 showHeaderBorder={false}
+                showPagingBottom={totalCount > 0}
+                currentPage={activePage}
+                totalCount={totalCount}
+                offset={offset}
+                perPage={EVENTS_PER_PAGE}
+                handlePageChange={handlePageChange}
               >
                 <Tabs tabs={tabValues} ariaLabel="Training events" />
                 <EventCards
@@ -298,7 +358,7 @@ export default function TrainingReports({ match }) {
   );
 }
 
-TrainingReports.propTypes = {
+const trainingReportsPropTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
@@ -315,6 +375,20 @@ TrainingReports.propTypes = {
   }),
 };
 
-TrainingReports.defaultProps = {
+const trainingReportsDefaultProps = {
   user: null,
 };
+
+TrainingReportsContent.propTypes = trainingReportsPropTypes;
+TrainingReportsContent.defaultProps = trainingReportsDefaultProps;
+
+export default function TrainingReports(props) {
+  return (
+    <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+      <TrainingReportsContent {...props} />
+    </FilterContext.Provider>
+  );
+}
+
+TrainingReports.propTypes = trainingReportsPropTypes;
+TrainingReports.defaultProps = trainingReportsDefaultProps;
