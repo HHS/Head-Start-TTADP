@@ -121,6 +121,9 @@ export default function TrainingReports({ match }) {
   // the page is tied to the status tab and filters it was chosen for,
   // so switching tabs or changing filters starts back on page 1
   const [pageState, setPageState] = useState({ status, filters, activePage: 1 });
+  useEffect(() => {
+    setPageState({ status, filters, activePage: 1 });
+  }, [status, filters]);
   const activePage =
     pageState.status === status && pageState.filters === filters ? pageState.activePage : 1;
   const offset = (activePage - 1) * EVENTS_PER_PAGE;
