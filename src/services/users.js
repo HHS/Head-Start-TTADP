@@ -337,7 +337,8 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
     // get event report pilot that has the matching full event display id.
     const eventReportPilot = await EventReportPilot.findOne({
       attributes: ['id', 'ownerId'],
-      where: { eventId },
+      // only events in the region the caller is authorized for
+      where: { eventId, regionId },
     });
 
     if (eventReportPilot) {
@@ -348,7 +349,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       if (!currentOwner) {
         // If the current ownerId is not in the creators array, add it.
         const owner = await userById(eventReportPilot.ownerId);
-        results.creators.push({ id: owner.id, fullName: owner.fullName });
+        if (owner) {
+          results.creators.push({ id: owner.id, fullName: owner.fullName });
+        }
       }
     }
   }
