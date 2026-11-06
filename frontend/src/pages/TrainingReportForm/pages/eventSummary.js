@@ -65,6 +65,7 @@ const EventSummary = ({
   showSavedDraft,
   updateShowSavedDraft,
   regionId,
+  usersLoaded,
 }) => {
   const { register, control, getValues, watch, setValue } = useFormContext();
 
@@ -76,10 +77,11 @@ const EventSummary = ({
   // prefer the region passed from the parent (parsed from the event id until the event
   // loads, then the event's actual region) so trainer options load in parallel with the
   // event fetch rather than after it
-  const { trainerOptions, optionsForValue } = useEventAndSessionStaff(
-    { ...data, regionId: regionId ?? data.regionId },
-    true
-  );
+  const {
+    trainerOptions,
+    optionsForValue,
+    loading: staffLoading,
+  } = useEventAndSessionStaff({ ...data, regionId: regionId ?? data.regionId }, true);
 
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate-');
@@ -191,6 +193,7 @@ const EventSummary = ({
                       }}
                       inputRef={register({ required: 'Select an event creator' })}
                       options={creators || []}
+                      isDisabled={!usersLoaded}
                       getOptionLabel={(option) => option.fullName}
                       getOptionValue={(option) => option.id}
                       onBlur={onBlur}
@@ -359,6 +362,8 @@ const EventSummary = ({
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
                   options={optionsForValue.filter((option) => option.id !== data.ownerId)}
+                  // stale or empty options would hide (and then drop) saved collaborators
+                  isDisabled={staffLoading}
                   getOptionLabel={(option) => option.fullName}
                   getOptionValue={(option) => option.id}
                   required
@@ -403,6 +408,7 @@ const EventSummary = ({
                         getOptionLabel={(option) => option.fullName}
                         getOptionValue={(option) => option.id}
                         options={pointOfContact}
+                        isDisabled={!usersLoaded}
                         onBlur={onBlur}
                         required
                         isMulti
@@ -635,6 +641,8 @@ EventSummary.propTypes = {
   showSavedDraft: PropTypes.bool,
   updateShowSavedDraft: PropTypes.func,
   regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  // until fresh users arrive, editing could drop selections missing from cached options
+  usersLoaded: PropTypes.bool,
 };
 
 EventSummary.defaultProps = {
@@ -642,6 +650,7 @@ EventSummary.defaultProps = {
   showSavedDraft: false,
   updateShowSavedDraft: () => {},
   regionId: null,
+  usersLoaded: true,
 };
 
 export default EventSummary;

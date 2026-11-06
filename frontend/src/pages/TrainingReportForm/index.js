@@ -87,6 +87,8 @@ export default function TrainingReportForm({ match }) {
   // (see the use effect below)
   const [reportFetched, setReportFetched] = useState(false);
   const [fetchedRegionId, setFetchedRegionId] = useState(null);
+  // the region the current users list was fetched for (cached users may be stale)
+  const [usersRegion, setUsersRegion] = useState(null);
 
   // this holds the key for the date pickers to force re-render
   // as the truss component doesn't re-render when the default value changes
@@ -133,6 +135,7 @@ export default function TrainingReportForm({ match }) {
         const users = await getTrainingReportUsers(eventRegion, trainingReportId);
         if (!cancelled) {
           updateAdditionalData({ users });
+          setUsersRegion(eventRegion);
         }
       } catch (e) {
         if (!cancelled) {
@@ -336,6 +339,7 @@ export default function TrainingReportForm({ match }) {
               additionalData={additionalData}
               formData={formData}
               regionId={eventRegion}
+              usersLoaded={usersRegion === eventRegion}
               isAppLoading={isAppLoading}
               onSaveDraft={onSave}
               datePickerKey={datePickerKey}

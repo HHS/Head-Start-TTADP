@@ -258,6 +258,30 @@ describe('useEventAndSessionStaff', () => {
     });
   });
 
+  describe('loading', () => {
+    it('is true while either trainer list is still loading', () => {
+      useFetch
+        .mockReturnValueOnce({ data: mockRegionalTrainers, loading: false, error: null })
+        .mockReturnValueOnce({ data: [], loading: true, error: null });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff({ regionId: 1 }, true), {
+        wrapper,
+      });
+
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('is false once both trainer lists have loaded', () => {
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useEventAndSessionStaff({ regionId: 1 }, true), {
+        wrapper,
+      });
+
+      expect(result.current.loading).toBe(false);
+    });
+  });
+
   describe('REGIONAL_TTA_NO_NATIONAL_CENTERS', () => {
     it('returns only regional trainers with flat array structure', () => {
       const event = {

@@ -21,13 +21,13 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     return '';
   }, [event]);
 
-  const { data: regionalTrainers } = useFetch(
+  const { data: regionalTrainers, loading: regionalLoading } = useFetch(
     [],
     async () => (event?.regionId ? getRegionalTrainerOptions(String(event.regionId)) : []),
     [event?.regionId]
   );
 
-  const { data: nationalCenterTrainers } = useFetch(
+  const { data: nationalCenterTrainers, loading: nationalCenterLoading } = useFetch(
     [],
     async () => (event?.regionId ? getNationalCenterTrainerOptions(String(event.regionId)) : []),
     [event?.regionId]
@@ -48,6 +48,9 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
       return true;
     });
   }, [regionalTrainers, isEvent]);
+
+  // true until trainer options for the current region have arrived
+  const loading = regionalLoading || nationalCenterLoading;
 
   return useMemo(() => {
     let optionsForValue = [];
@@ -102,6 +105,14 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     return {
       trainerOptions,
       optionsForValue,
+      loading,
     };
-  }, [eventOrganizer, facilitation, isEvent, nationalCenterTrainers, regionalTrainersForDisplay]);
+  }, [
+    eventOrganizer,
+    facilitation,
+    isEvent,
+    nationalCenterTrainers,
+    regionalTrainersForDisplay,
+    loading,
+  ]);
 }
