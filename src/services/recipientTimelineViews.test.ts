@@ -90,7 +90,7 @@ describe('timeline views', () => {
     ]);
   });
 
-  it('scopes category lookup to recipient/region and non-draft unmerged RTTAPA goals', async () => {
+  it('scopes category lookup to recipient/region and non-draft unmerged RTTAPA goals from approved reports', async () => {
     (Goal.findAll as jest.Mock).mockResolvedValue([
       goal('Monitoring'),
       goal('Family Support', 'Closed'),
@@ -109,6 +109,13 @@ describe('timeline views', () => {
           mapsToParentGoalId: null,
           [Op.and]: [
             { [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }] },
+            {
+              [Op.or]: [
+                { createdVia: null },
+                { createdVia: { [Op.ne]: 'activityReport' } },
+                { onApprovedAR: true },
+              ],
+            },
             { [Op.or]: [{ isRttapa: 'Yes' }, { '$goalTemplate.creationMethod$': 'Curated' }] },
           ],
         },
