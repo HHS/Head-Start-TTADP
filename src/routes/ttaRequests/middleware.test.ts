@@ -177,8 +177,8 @@ describe('TTA request body middleware', () => {
       expect(req.body).toEqual({ status: 'needs_action', note: 'Add the agenda' });
     });
 
-    it('accepts needs action without a note', () => {
-      const { next } = run(checkReviewTtaRequestBody, { status: 'needs_action', note: '' });
+    it.each(['', null])('accepts needs action with a note of %j', (note) => {
+      const { next } = run(checkReviewTtaRequestBody, { status: 'needs_action', note });
       expect(next).toHaveBeenCalled();
     });
 

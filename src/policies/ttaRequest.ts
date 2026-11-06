@@ -109,6 +109,9 @@ export default class TtaRequest {
     return true;
   }
 
+  // the request's reviewerId is who reviews it. Its reviewer approver row is only synced to it
+  // on submission, and the creator can change the reviewer while it is back with them, so the
+  // two agree whenever the request is submitted, which is the only time it can be reviewed
   isReviewer() {
     return !!this.ttaRequest?.reviewerId && this.ttaRequest.reviewerId === this.user.id;
   }

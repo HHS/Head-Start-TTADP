@@ -748,6 +748,82 @@ describe('ttaRequests service', () => {
       expect(replaced.status).toBe(APPROVER_STATUSES.NEEDS_ACTION);
     });
 
+    it('removes a replaced reviewer who never reviewed the request', async () => {
+      const submitted = await submittedRequest();
+
+      await resubmit(submitted, { reviewerId: otherReviewer.id });
+
+      const replaced = await TtaRequestApprover.findOne({
+        where: { ttaRequestId: submitted.id, userId: reviewer.id },
+        paranoid: false,
+      });
+      expect(replaced).toBeNull();
+    });
+
+    it('brings back a reviewer who is picked again, pending once more', async () => {
+      const submitted = await submittedRequest();
+      let request = await reviewTtaRequest(
+        submitted,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Ask someone else' },
+        reviewer.id
+      );
+      request = await resubmit(request, { reviewerId: otherReviewer.id });
+      request = await reviewTtaRequest(
+        request,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Back to the first reviewer' },
+        otherReviewer.id
+      );
+
+      const resubmitted = await resubmit(request, { reviewerId: reviewer.id });
+
+      expect(resubmitted.approvers).toHaveLength(1);
+      expect(resubmitted.approvers[0]).toMatchObject({ userId: reviewer.id, status: null });
+      const rows = await TtaRequestApprover.findAll({
+        where: { ttaRequestId: submitted.id },
+        paranoid: false,
+      });
+      expect(rows).toHaveLength(2);
+      const replaced = rows.find((row) => row.userId === otherReviewer.id);
+      expect(replaced.deletedAt).not.toBeNull();
+      expect(replaced.status).toBe(APPROVER_STATUSES.NEEDS_ACTION);
+    });
+
+    it('rejects a resubmission to someone who cannot review in the region', async () => {
+      const submitted = await submittedRequest();
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        { status: APPROVER_STATUSES.NEEDS_ACTION },
+        reviewer.id
+      );
+
+      await expect(resubmit(reviewed, { reviewerId: creator.id })).rejects.toMatchObject({
+        statusCode: 400,
+      });
+    });
+
+    it('returns the history oldest first, and the approvers, with their users and roles', async () => {
+      const submitted = await submittedRequest('First');
+      await reviewTtaRequest(
+        submitted,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Second' },
+        reviewer.id
+      );
+
+      const found = (await ttaRequestById(submitted.id)).toJSON();
+
+      expect(found.notes.map(({ note }) => note)).toEqual(['First', 'Second']);
+      expect(found.notes.map(({ user }) => user.id)).toEqual([creator.id, reviewer.id]);
+      expect(Array.isArray(found.notes[0].user.roles)).toBe(true);
+      expect(found.approvers).toEqual([
+        expect.objectContaining({
+          userId: reviewer.id,
+          step: TTA_REQUEST_STEPS.REVIEWER,
+          status: APPROVER_STATUSES.NEEDS_ACTION,
+          user: expect.objectContaining({ id: reviewer.id, name: reviewer.name }),
+        }),
+      ]);
+    });
+
     it('lists requests sent back for changes', async () => {
       const submitted = await submittedRequest();
       await reviewTtaRequest(submitted, { status: APPROVER_STATUSES.NEEDS_ACTION }, reviewer.id);

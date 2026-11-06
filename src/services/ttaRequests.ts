@@ -412,17 +412,18 @@ export async function updateTtaRequest(
 }
 
 /**
- * The request's reviewer is the one picked on the form. A reviewer who was replaced is
- * soft deleted, so what they did stays on record, and the current one is pending again.
+ * The request's reviewer is the one picked on the form. A replaced reviewer who had reviewed
+ * it is soft deleted, so what they did stays on record; one who never reviewed it has nothing
+ * to show, so is removed, as collaboration report approvers are. The current one is pending again.
  */
 async function syncReviewerApprover(ttaRequestId: number, reviewerId: number) {
-  await TtaRequestApprover.destroy({
-    where: {
-      ttaRequestId,
-      step: TTA_REQUEST_STEPS.REVIEWER,
-      userId: { [Op.ne]: reviewerId },
-    },
-  });
+  const replaced = {
+    ttaRequestId,
+    step: TTA_REQUEST_STEPS.REVIEWER,
+    userId: { [Op.ne]: reviewerId },
+  };
+  await TtaRequestApprover.destroy({ where: { ...replaced, status: null }, force: true });
+  await TtaRequestApprover.destroy({ where: replaced });
 
   const existing = await TtaRequestApprover.findOne({
     where: { ttaRequestId, userId: reviewerId, step: TTA_REQUEST_STEPS.REVIEWER },
@@ -497,14 +498,11 @@ export async function submitTtaRequest(
  * are added to the request's history; the creator sees both when they edit the request.
  */
 export async function reviewTtaRequest(
-  existing: { id: number; reviewerId: number | null },
-  { status, note }: TtaRequestReviewPayload,
+  existing: { id: number },
+  { note }: TtaRequestReviewPayload,
   userId: number
 ) {
-  if (status !== APPROVER_STATUSES.NEEDS_ACTION) {
-    throw dataError('A TTA request review can only ask for changes');
-  }
-
+  // the body is checked by checkReviewTtaRequestBody, so the status can only be needs action
   const [updated] = await TtaRequestApprover.update(
     { status: APPROVER_STATUSES.NEEDS_ACTION },
     { where: { ttaRequestId: existing.id, userId, step: TTA_REQUEST_STEPS.REVIEWER } }

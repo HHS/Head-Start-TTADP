@@ -220,6 +220,7 @@ export default function ActiveTtaRequestsTable({
   filters = NO_FILTERS,
   canCreate,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
+  // the table is also shown outside of a signed-in user's pages, so there may be no user
   const { user } = (useContext(UserContext) || {}) as { user?: { id: number } };
   const userId: number | null = user?.id ?? null;
   // where a request lives depends on whether this table spans regions or one recipient

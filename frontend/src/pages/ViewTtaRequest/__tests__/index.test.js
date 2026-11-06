@@ -217,10 +217,11 @@ describe('ViewTtaRequest', () => {
 
     expect(await screen.findByRole('heading', { name: 'Review and submit' })).toBeVisible();
     const status = screen.getByLabelText(/choose review status/i);
-    expect(within(status).getAllByRole('option').map((option) => option.textContent)).toEqual([
-      '- Select -',
-      'Needs action',
-    ]);
+    expect(
+      within(status)
+        .getAllByRole('option')
+        .map((option) => option.textContent)
+    ).toEqual(['- Select -', 'Needs action']);
 
     userEvent.selectOptions(status, 'needs_action');
     userEvent.type(screen.getByLabelText(/add ttac or manager notes/i), 'Add the agenda');
@@ -258,6 +259,18 @@ describe('ViewTtaRequest', () => {
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     expect(await screen.findByText(/error submitting your review/i)).toBeVisible();
+  });
+
+  it('says why the server rejected the review', async () => {
+    fetchMock.get(URL, SUBMITTED_REQUEST);
+    fetchMock.put(REVIEW_URL, { status: 400, body: { error: 'Only the reviewer can review it' } });
+    renderView({}, REVIEWER);
+
+    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'needs_action');
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText('Only the reviewer can review it')).toBeVisible();
+    expect(screen.queryByText(/error submitting your review/i)).toBeNull();
   });
 
   it('does not offer a review to anyone but the reviewer', async () => {

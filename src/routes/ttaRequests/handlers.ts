@@ -218,6 +218,8 @@ export async function reviewTtaRequest(req: Request, res: Response) {
     const ttaRequest = await reviewTtaRequestService(existing, req.body, userId);
     res.json(ttaRequest);
   } catch (error) {
+    // the service rejects a review before it writes anything, so there is nothing for the
+    // wrapper to roll back, unlike a submission
     if (respondWithServiceError(res, error)) {
       return;
     }

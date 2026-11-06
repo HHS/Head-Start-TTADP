@@ -9,10 +9,10 @@ import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
 import TtaRequestNotesSummary from '../../components/TtaRequestNotesSummary';
+import { toNotesSummary } from '../../components/TtaRequestNotesSummary/notes';
 import { getTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import UserContext from '../../UserContext';
-import { toNotesSummary } from '../TtaRequestForm/notes';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
 import TtaRequestReview from './TtaRequestReview';
 
@@ -43,7 +43,7 @@ export default function ViewTtaRequest({
   backLinkTo = '/tta-requests',
 }: ViewTtaRequestProps): React.ReactElement | null {
   const { ttaRequestId } = useParams<{ ttaRequestId: string }>();
-  const { user } = (useContext(UserContext) || {}) as { user?: { id: number } };
+  const { user } = useContext(UserContext);
 
   const fetchTtaRequest = useCallback(
     (): Promise<TtaRequestResponse> => getTtaRequest(Number(ttaRequestId)),

@@ -24,9 +24,8 @@ interface TtaRequestSubmittedAlertProps {
 
 /**
  * Says a TTA request was submitted, or sent back to its creator for changes, on the page the
- * form returned the user to. The form puts
- * the message in the location's state; it is taken from there once, so it doesn't show again
- * on a refresh or on coming back to the page.
+ * form or review returned the user to. They put the message in the location's state; it is
+ * taken from there once, so it doesn't show again on a refresh or on coming back to the page.
  */
 export default function TtaRequestSubmittedAlert({
   requestRoot,

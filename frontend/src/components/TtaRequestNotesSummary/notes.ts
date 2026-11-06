@@ -1,6 +1,6 @@
 import { TTA_REQUEST_NOTE_ACTIONS, TTA_REQUEST_STEPS } from '@ttahub/common';
-import type { TtaRequestNote } from '../../components/TtaRequestNotesSummary';
-import type { TtaRequestNoteData, TtaRequestUser } from './types';
+import type { TtaRequestNoteData, TtaRequestUser } from '@ttahub/common/src/ttaRequests';
+import type { TtaRequestNote } from '.';
 
 const noteKey = (step: string, action: string) => `${step}:${action}`;
 
@@ -16,9 +16,9 @@ const NOTE_PHASES: Record<string, string> = {
 };
 
 const STEP_ROLES: Record<TtaRequestNoteData['step'], TtaRequestNote['role']> = {
-  creator: 'Creator',
-  reviewer: 'Reviewer',
-  approver: 'Approver',
+  [TTA_REQUEST_STEPS.CREATOR]: 'Creator',
+  [TTA_REQUEST_STEPS.REVIEWER]: 'Reviewer',
+  [TTA_REQUEST_STEPS.APPROVER]: 'Approver',
 };
 
 /** the request's history as the notes summary shows it, in the order it happened */
@@ -40,8 +40,3 @@ export const nameWithRole = (user: TtaRequestUser | null | undefined) => {
   const roles = (user.roles ?? []).map((role) => role.name).join(', ');
   return roles ? `${user.name} (${roles})` : user.name;
 };
-
-/** the latest review that sent the request back for changes, if there is one */
-export const latestNeedsAction = (notes: TtaRequestNoteData[] = []) =>
-  [...notes].reverse().find(({ action }) => action === TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION) ??
-  null;

@@ -142,6 +142,14 @@ describe('TtaRequest policy', () => {
       expect(policy.canUpdate()).toBe(true);
     });
 
+    it('is false for anyone else once the request is sent back for changes', () => {
+      const policy = new TtaRequest(createUser({ id: 3, write: true }), 1, {
+        ...draft,
+        status: TTA_REQUEST_STATUSES.NEEDS_ACTION,
+      });
+      expect(policy.canUpdate()).toBe(false);
+    });
+
     it('is false when the creator has lost write permission', () => {
       const policy = new TtaRequest(createUser({ read: true }), 1, draft);
       expect(policy.canUpdate()).toBe(false);

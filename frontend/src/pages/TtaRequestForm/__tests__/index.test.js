@@ -418,6 +418,20 @@ describe('TtaRequestForm', () => {
           },
         },
       ],
+      approvers: [
+        {
+          id: 1,
+          userId: 6,
+          step: 'reviewer',
+          status: 'needs_action',
+          user: {
+            id: 6,
+            name: 'Ross Geller',
+            fullName: 'Ross Geller, TTAC',
+            roles: [{ name: 'TTAC' }],
+          },
+        },
+      ],
     };
 
     const renderNeedsAction = () => {
@@ -435,7 +449,9 @@ describe('TtaRequestForm', () => {
       expect(
         await screen.findByText('Ross Geller (TTAC) is asking for changes to this TTA request.')
       ).toBeVisible();
-      expect(screen.getByText(/please review any notes below and resubmit for review/i)).toBeVisible();
+      expect(
+        screen.getByText(/please review any notes below and resubmit for review/i)
+      ).toBeVisible();
       // the creator stays on the form rather than going to the read-only view
       expect(history.location.pathname).toBe('/tta-requests/42');
 
@@ -449,7 +465,7 @@ describe('TtaRequestForm', () => {
 
       expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('');
       expect(screen.getByText('Needs action').closest('li')).toHaveTextContent(
-        'Needs action from Ross Geller (TTAC)'
+        'Needs action from Ross Geller, TTAC'
       );
       expect(screen.getByRole('button', { name: 'Update request' })).toBeVisible();
       expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull();

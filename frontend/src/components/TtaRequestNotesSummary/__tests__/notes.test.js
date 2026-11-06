@@ -1,6 +1,11 @@
-import { latestNeedsAction, nameWithRole, toNotesSummary } from '../notes';
+import { nameWithRole, toNotesSummary } from '../notes';
 
-const RACHEL = { id: 1, name: 'Rachel Green', fullName: 'Rachel Green, ECS', roles: [{ name: 'ECS' }] };
+const RACHEL = {
+  id: 1,
+  name: 'Rachel Green',
+  fullName: 'Rachel Green, ECS',
+  roles: [{ name: 'ECS' }],
+};
 const MONICA = {
   id: 2,
   name: 'Monica Geller',
@@ -82,17 +87,6 @@ describe('TTA request notes', () => {
 
     it('is blank without a user', () => {
       expect(nameWithRole(null)).toBe('');
-    });
-  });
-
-  describe('latestNeedsAction', () => {
-    it('finds the most recent review that asked for changes', () => {
-      const again = { ...NOTES[1], id: 4, note: 'One more thing' };
-      expect(latestNeedsAction([...NOTES, again])).toBe(again);
-    });
-
-    it('is null when no one has asked for changes', () => {
-      expect(latestNeedsAction([NOTES[0]])).toBeNull();
     });
   });
 });

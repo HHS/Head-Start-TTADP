@@ -1,9 +1,9 @@
 import { Alert, Button } from '@trussworks/react-uswds';
-import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, TTA_REQUEST_STATUSES, TTA_REQUEST_STEPS } from '@ttahub/common';
 import useInterval from '@use-it/interval';
 import { isEqual } from 'lodash';
 import moment from 'moment-timezone';
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
@@ -11,6 +11,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
+import { nameWithRole, toNotesSummary } from '../../components/TtaRequestNotesSummary/notes';
 import { HTTPError } from '../../fetchers';
 import {
   createTtaRequest,
@@ -34,7 +35,6 @@ import {
 } from './constants';
 import { toApiPayload, toFormValues } from './formData';
 import GoalAndContext from './GoalAndContext';
-import { latestNeedsAction, nameWithRole, toNotesSummary } from './notes';
 import SubmitForReview from './SubmitForReview';
 import TtaRequestFormHeading from './TtaRequestFormHeading';
 import type {
@@ -303,6 +303,13 @@ function TtaRequestFormBody({
   // nothing to show until the draft in the route has been fetched, as the other forms wait for
   // their report; the form's defaults would otherwise be saved over it. An id that can't be a
   // request's has nothing to fetch.
+  const notes = useMemo(() => toNotesSummary(savedRequest?.notes), [savedRequest]);
+  // the reviewer whose review the request is waiting on, and where they stand
+  const reviewers = useMemo(
+    () => (savedRequest?.approvers ?? []).filter(({ step }) => step === TTA_REQUEST_STEPS.REVIEWER),
+    [savedRequest]
+  );
+
   if (!isNewRequest && !savedRequest) {
     const error = routeId === null ? LOAD_ERROR : loadError;
     return error ? (
@@ -325,7 +332,7 @@ function TtaRequestFormBody({
   // who sent the request back, so the creator knows who is waiting on the changes
   const needsAction = savedRequest?.status === TTA_REQUEST_STATUSES.NEEDS_ACTION;
   const changesRequestedBy = needsAction
-    ? nameWithRole(latestNeedsAction(savedRequest.notes)?.user)
+    ? nameWithRole(reviewers.find(({ status }) => status === APPROVER_STATUSES.NEEDS_ACTION)?.user)
     : '';
 
   return (
@@ -350,21 +357,11 @@ function TtaRequestFormBody({
           <form onSubmit={hookForm.handleSubmit(onSubmit)}>
             <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />
             <GoalAndContext regionId={effectiveRegionId} />
-            <SubmitForReview
-              regionId={effectiveRegionId}
-              notes={toNotesSummary(savedRequest?.notes)}
-            />
+            <SubmitForReview regionId={effectiveRegionId} notes={notes} />
             {needsAction && (
               <div className="margin-top-4">
                 <p className="text-bold margin-top-0 margin-bottom-1">Review status</p>
-                <ApproverStatusList
-                  approverStatus={[
-                    {
-                      status: TTA_REQUEST_STATUSES.NEEDS_ACTION,
-                      user: { fullName: changesRequestedBy },
-                    },
-                  ]}
-                />
+                <ApproverStatusList approverStatus={reviewers} />
               </div>
             )}
             {saveError && (

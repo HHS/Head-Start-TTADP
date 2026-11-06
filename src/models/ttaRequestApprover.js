@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { APPROVER_STATUSES } = require('@ttahub/common');
+const { APPROVER_STATUSES, TTA_REQUEST_STEPS } = require('@ttahub/common');
 
 /**
  * Who is on a step of a TTA request - its reviewer, or later its approver - and where they
@@ -46,7 +46,7 @@ export default (sequelize, DataTypes) => {
       },
       step: {
         allowNull: false,
-        type: DataTypes.ENUM(['reviewer', 'approver']),
+        type: DataTypes.ENUM([TTA_REQUEST_STEPS.REVIEWER, TTA_REQUEST_STEPS.APPROVER]),
       },
       status: {
         allowNull: true,

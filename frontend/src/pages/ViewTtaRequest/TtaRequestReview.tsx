@@ -1,11 +1,12 @@
 import { Alert, Button, Dropdown, Textarea } from '@trussworks/react-uswds';
-import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES } from '@ttahub/common';
 import moment from 'moment-timezone';
 import React, { useContext, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import FormItem from '../../components/FormItem';
+import { HTTPError } from '../../fetchers';
 import { reviewTtaRequest } from '../../fetchers/ttaRequests';
 import { SELECT_PLACEHOLDER } from '../TtaRequestForm/constants';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
@@ -14,7 +15,7 @@ export const REVIEW_ERROR =
   'There was an error submitting your review of the TTA request. Please try again later.';
 
 // needs action is the only review there is until requests can be sent on for approval
-const REVIEW_STATUSES = [{ value: TTA_REQUEST_STATUSES.NEEDS_ACTION, label: 'Needs action' }];
+const REVIEW_STATUSES = [{ value: APPROVER_STATUSES.NEEDS_ACTION, label: 'Needs action' }];
 
 interface ReviewFormValues {
   status: string;
@@ -67,8 +68,11 @@ export default function TtaRequestReview({
           status: reviewed.status,
         },
       });
-    } catch {
-      setError(REVIEW_ERROR);
+    } catch (e) {
+      // a review the server rejects says why, which retrying would not change
+      const validationMessage =
+        e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
+      setError(validationMessage || REVIEW_ERROR);
     } finally {
       setIsAppLoading(false);
     }

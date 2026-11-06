@@ -282,6 +282,18 @@ describe('ActiveTtaRequestsTable', () => {
     expect(within(firstRow).queryByRole('link', { name: 'Needs action' })).toBeNull();
   });
 
+  it('links a request sent back for changes to its read-only view without a user', async () => {
+    renderTable([apiRequest(1, { status: 'needs_action' })], true, null);
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+  });
+
   it('freezes the status column to the right of the table', async () => {
     renderTable();
     await waitForRows();

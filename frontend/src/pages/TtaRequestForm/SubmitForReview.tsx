@@ -3,8 +3,10 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import FormItem from '../../components/FormItem';
-import TtaRequestNotesSummary, { type TtaRequestNote } from '../../components/TtaRequestNotesSummary';
 import selectOptionsReset from '../../components/selectOptionsReset';
+import TtaRequestNotesSummary, {
+  type TtaRequestNote,
+} from '../../components/TtaRequestNotesSummary';
 import { getTtaRequestReviewers } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import { SELECT_PLACEHOLDER, TTA_REQUEST_FIELDS } from './constants';
