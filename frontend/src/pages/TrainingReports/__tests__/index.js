@@ -237,8 +237,9 @@ describe('TrainingReports', () => {
     });
 
     it('handles success', async () => {
-      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, {
-        message: 'Success!',
+      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, () => {
+        fetchMock.get(notStartedUrl, paged([]), { overwriteRoutes: true });
+        return { message: 'Success!' };
       });
       expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
 
@@ -479,7 +480,11 @@ describe('TrainingReports', () => {
       data: { ...notStartedEvents[0].data, eventName: 'Page two event', eventId: '-20' },
     };
     fetchMock.get(notStartedPage2, paged([pageTwoEvent], 11));
-    fetchMock.delete('/api/events/id/-20', { message: 'Success!' });
+    fetchMock.delete('/api/events/id/-20', () => {
+      // once deleted, page two is past the end
+      fetchMock.get(notStartedPage2, paged([], 10), { overwriteRoutes: true });
+      return { message: 'Success!' };
+    });
 
     act(() => {
       renderTrainingReports({
@@ -506,6 +511,59 @@ describe('TrainingReports', () => {
     });
 
     expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(2);
+  });
+
+  it('backfills the page and count when an event on it is deleted', async () => {
+    const pageOne = Array.from({ length: 10 }, (_, i) => ({
+      ...notStartedEvents[0],
+      id: 100 + i,
+      eventId: `-${100 + i}`,
+      data: {
+        ...notStartedEvents[0].data,
+        eventName: `Page one event ${i}`,
+        eventId: `-${100 + i}`,
+      },
+    }));
+    const nextEvent = {
+      ...notStartedEvents[0],
+      id: 200,
+      eventId: '-200',
+      data: { ...notStartedEvents[0].data, eventName: 'Backfilled event', eventId: '-200' },
+    };
+    fetchMock.get(notStartedUrl, paged(pageOne, 11), { overwriteRoutes: true });
+    fetchMock.delete('/api/events/id/-100', () => {
+      fetchMock.get(notStartedUrl, paged([...pageOne.slice(1), nextEvent], 10), {
+        overwriteRoutes: true,
+      });
+      return { message: 'Success!' };
+    });
+
+    act(() => {
+      renderTrainingReports({
+        ...nonCentralOfficeUser,
+        permissions: [
+          { regionId: 2, scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS },
+          { regionId: 2, scopeId: SCOPE_IDS.ADMIN },
+        ],
+      });
+    });
+
+    expect(await screen.findByText(/1-10 of 11/i)).toBeInTheDocument();
+
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /actions for event -100/i }));
+    });
+    await act(async () => {
+      userEvent.click(screen.getByRole('button', { name: /delete event/i }));
+    });
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /delete event/i, hidden: true }));
+    });
+
+    expect(await screen.findByText('Backfilled event')).toBeInTheDocument();
+    expect(await screen.findByText(/1-10 of 10/i)).toBeInTheDocument();
+    expect(screen.queryByText('Page one event 0')).toBeNull();
     expect(fetchMock.calls(notStartedUrl)).toHaveLength(2);
   });
 

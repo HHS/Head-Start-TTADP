@@ -97,6 +97,8 @@ function TrainingReportsContent({ match }) {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [displayEvents, setDisplayEvents] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  // bumped to refetch the current page after an event leaves it
+  const [refetchKey, setRefetchKey] = useState(0);
   const [cardsInternalMessage, setCardsInternalMessage] = useState();
   const history = useHistory();
   // eslint-disable-next-line max-len
@@ -187,6 +189,7 @@ function TrainingReportsContent({ match }) {
     filters,
     offset,
     setSortConfig,
+    refetchKey,
   ]);
 
   const regionLabel = () => {
@@ -220,17 +223,10 @@ function TrainingReportsContent({ match }) {
   };
 
   const removeEventFromDisplay = (id) => {
-    // update the UI, exclude the deleted event.
-    const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
-
-    // update the events state.
-    setDisplayEvents(events);
-    setTotalCount((count) => Math.max(count - 1, 0));
-
-    // if that emptied the page, step back to the previous one
-    if (events.length === 0 && activePage > 1) {
-      handlePageChange(activePage - 1);
-    }
+    // hide the card right away, then refetch so the page backfills from the next one and
+    // the count stays accurate (an emptied page falls back to the last page in the fetch)
+    setDisplayEvents((events) => events.filter((e) => e.id !== id));
+    setRefetchKey((key) => key + 1);
   };
 
   /**
