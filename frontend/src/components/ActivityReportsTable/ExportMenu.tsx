@@ -1,7 +1,8 @@
 import { faChevronDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button } from '@trussworks/react-uswds';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import AppLoadingContext from '../../AppLoadingContext';
 import colors from '../../colors';
 import Container from '../Container';
 import './ExportMenu.css';
@@ -48,6 +49,7 @@ export default function ExportMenu({
   setScope,
   onExport,
 }: Props) {
+  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState('');
@@ -94,6 +96,8 @@ export default function ExportMenu({
   const download = async (dataSet: ExportDataSet) => {
     setIsDownloading(true);
     setError('');
+    setAppLoadingText(selected ? 'Exporting row(s)...' : 'Exporting table...');
+    setIsAppLoading(true);
     try {
       await onExport(dataSet, selected ? selectedIds : undefined);
     } catch (downloadError) {
@@ -104,6 +108,7 @@ export default function ExportMenu({
       );
     } finally {
       setIsDownloading(false);
+      setIsAppLoading(false);
     }
   };
 

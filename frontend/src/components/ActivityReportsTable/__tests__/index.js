@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
+import AppLoadingContext from '../../../AppLoadingContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import { downloadActivityReportExport } from '../../../fetchers/activityReports';
 import { getReportsDownloadURL } from '../../../fetchers/helpers';
@@ -38,36 +39,38 @@ const mockFetchWithRegionOne = () => {
 const TableMock = ({ user, dateTime }) => {
   const [resetPagination, setResetPagination] = React.useState(false);
   return (
-    <MemoryRouter>
-      <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
-        <UserContext.Provider value={{ user }}>
-          <button
-            type="button"
-            onClick={() => setResetPagination(!resetPagination)}
-            data-testid="reset-pagination"
-          >
-            Reset pagination
-          </button>
-          <ActivityReportsTable
-            filters={[
-              {
-                id: '1',
-                topic: 'region',
-                condition: 'is',
-                query: '1',
-              },
-            ]}
-            showFilter
-            onUpdateFilters={() => {}}
-            tableCaption="Activity Reports"
-            dateTime={dateTime}
-            exportIdPrefix="activity-reports-"
-            resetPagination={resetPagination}
-            setResetPagination={setResetPagination}
-          />
-        </UserContext.Provider>
-      </AriaLiveContext.Provider>
-    </MemoryRouter>
+    <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, setAppLoadingText: () => {} }}>
+      <MemoryRouter>
+        <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
+          <UserContext.Provider value={{ user }}>
+            <button
+              type="button"
+              onClick={() => setResetPagination(!resetPagination)}
+              data-testid="reset-pagination"
+            >
+              Reset pagination
+            </button>
+            <ActivityReportsTable
+              filters={[
+                {
+                  id: '1',
+                  topic: 'region',
+                  condition: 'is',
+                  query: '1',
+                },
+              ]}
+              showFilter
+              onUpdateFilters={() => {}}
+              tableCaption="Activity Reports"
+              dateTime={dateTime}
+              exportIdPrefix="activity-reports-"
+              resetPagination={resetPagination}
+              setResetPagination={setResetPagination}
+            />
+          </UserContext.Provider>
+        </AriaLiveContext.Provider>
+      </MemoryRouter>
+    </AppLoadingContext.Provider>
   );
 };
 

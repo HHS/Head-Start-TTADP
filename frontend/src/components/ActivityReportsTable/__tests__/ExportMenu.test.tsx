@@ -1,26 +1,35 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
+import AppLoadingContext from '../../../AppLoadingContext';
 import ExportMenu, { type ExportScope } from '../ExportMenu';
 
 const onExport = jest.fn();
+const setIsAppLoading = jest.fn();
+const setAppLoadingText = jest.fn();
 
 function TestMenu({ count = 55705, selectedIds = [1, 2, 3] }) {
   const [scope, setScope] = useState<ExportScope>(null);
   return (
-    <ExportMenu
-      count={count}
-      selectedIds={selectedIds}
-      exportIdPrefix="test-"
-      scope={scope}
-      setScope={setScope}
-      onExport={onExport}
-    />
+    <AppLoadingContext.Provider value={{ setIsAppLoading, setAppLoadingText }}>
+      <ExportMenu
+        count={count}
+        selectedIds={selectedIds}
+        exportIdPrefix="test-"
+        scope={scope}
+        setScope={setScope}
+        onExport={onExport}
+      />
+    </AppLoadingContext.Provider>
   );
 }
 
 describe('Activity report export chooser', () => {
-  beforeEach(() => onExport.mockReset());
+  beforeEach(() => {
+    onExport.mockReset();
+    setIsAppLoading.mockReset();
+    setAppLoadingText.mockReset();
+  });
 
   it('labels the trigger Actions without an outlined button border', () => {
     render(<TestMenu />);
@@ -117,6 +126,9 @@ describe('Activity report export chooser', () => {
     expect(onExport).not.toHaveBeenCalled();
     await userEvent.click(within(dialog).getByRole('button', { name: label }));
     expect(onExport).toHaveBeenCalledWith(dataSet, [1, 2, 3]);
+    expect(setAppLoadingText).toHaveBeenCalledWith('Exporting row(s)...');
+    expect(setIsAppLoading).toHaveBeenNthCalledWith(1, true);
+    expect(setIsAppLoading).toHaveBeenLastCalledWith(false);
     await waitFor(() => expect(dialog).toHaveAttribute('aria-busy', 'false'));
   });
 
@@ -134,6 +146,9 @@ describe('Activity report export chooser', () => {
     ).toBeVisible();
     await userEvent.click(within(dialog).getByRole('button', { name: label }));
     expect(onExport).toHaveBeenCalledWith(dataSet, undefined);
+    expect(setAppLoadingText).toHaveBeenCalledWith('Exporting table...');
+    expect(setIsAppLoading).toHaveBeenNthCalledWith(1, true);
+    expect(setIsAppLoading).toHaveBeenLastCalledWith(false);
     await waitFor(() => expect(dialog).toHaveAttribute('aria-busy', 'false'));
   });
 
@@ -171,8 +186,11 @@ describe('Activity report export chooser', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
     await userEvent.click(screen.getByRole('button', { name: 'AR' }));
     expect(screen.getByRole('button', { name: 'Goals' })).toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent('Exporting...');
+    expect(setAppLoadingText).toHaveBeenCalledWith('Exporting row(s)...');
+    expect(setIsAppLoading).toHaveBeenCalledWith(true);
+    expect(screen.getByRole('status')).toHaveTextContent('Downloading reports...');
     await act(async () => rejectDownload(new Error('Please try again.')));
+    expect(setIsAppLoading).toHaveBeenLastCalledWith(false);
     expect(await screen.findByRole('alert')).toHaveTextContent('Please try again.');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Goals' })).toBeEnabled());
     expect(screen.getByRole('button', { name: 'AR' })).toHaveFocus();
