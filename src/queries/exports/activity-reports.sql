@@ -114,7 +114,13 @@ SET LOCAL TIME ZONE 'America/New_York';
 WITH ars AS MATERIALIZED (
 SELECT
   ar.id arid,
-  'R' || LPAD("regionId"::text, 2, '0') || '-AR-' || ar.id report_id,
+  COALESCE(
+    NULLIF(ar."legacyId", ''),
+    CASE
+      WHEN ar."regionId" IS NULL OR ar."regionId" = 0 THEN '???'
+      ELSE 'R' || LPAD(ar."regionId"::text, 2, '0')
+    END || '-AR-' || ar.id
+  ) report_id,
   ar."regionId" region,
   ar."calculatedStatus" ar_status,
   u.name creator,
@@ -144,7 +150,7 @@ SELECT
   -- precise updatedAt, used only as the sort key for last_saved (not output)
   ar."updatedAt"::timestamp updated_at_et
 FROM "ActivityReports" ar
-JOIN "Users" u
+LEFT JOIN "Users" u
   ON ar."userId" = u.id
 WHERE ar."calculatedStatus" = 'approved'
   -- Narrowing point: AR id list resolved upstream from the Landing filters.
@@ -420,7 +426,7 @@ SELECT
   approved_at_et,
   approved_at_local
 FROM ars
-JOIN recipients ON arid = r_arid
+LEFT JOIN recipients ON arid = r_arid
 LEFT JOIN collaborators ON arid = c_arid
 LEFT JOIN approvers ON arid = a_arid
 LEFT JOIN ar_attachments ON arid = att_arid

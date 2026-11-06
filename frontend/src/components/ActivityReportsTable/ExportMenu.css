@@ -1,0 +1,77 @@
+.ttahub-ar-export-control {
+  position: relative;
+}
+
+.ttahub-ar-export {
+  inset-inline-end: 0;
+  max-width: calc(100vw - 3rem);
+  width: 27rem;
+}
+
+.ttahub-ar-export__trigger,
+.ttahub-ar-export__trigger:hover {
+  border: 0;
+  box-shadow: none;
+  color: #46789b;
+  white-space: nowrap;
+}
+
+.ttahub-ar-export-control :not(:disabled):focus-visible,
+.ttahub-ar-table .ttahub-ar-export-control :not(:disabled):focus-visible {
+  outline: 2px solid #1b1b1b;
+  outline-offset: 2px;
+}
+
+.ttahub-ar-export__menu {
+  margin-left: auto;
+  max-width: 16rem;
+}
+
+.ttahub-ar-export__menu .usa-button--unstyled {
+  color: #1b1b1b;
+  text-decoration: none;
+}
+
+.ttahub-ar-export__menu .text-bold {
+  color: #336a90;
+}
+
+.ttahub-ar-export__status {
+  align-items: center;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* Own animation rather than fa-spin, which is disabled under prefers-reduced-motion. */
+.ttahub-ar-export__spinner {
+  animation: ttahub-ar-export-spin 1s linear infinite;
+  vertical-align: 0;
+}
+
+@keyframes ttahub-ar-export-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ttahub-ar-export__formats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 30rem) {
+  .ttahub-ar-export__formats .usa-button {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 40em) {
+  .ttahub-ar-export {
+    max-width: calc(100vw - 4rem);
+  }
+
+  .ttahub-ar-export-control {
+    position: static;
+  }
+}
