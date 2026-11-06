@@ -153,9 +153,9 @@ describe('TrainingReports', () => {
     ],
   };
 
-  const renderTrainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
+  const trainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
     const user = u || nonCentralOfficeUser;
-    render(
+    return (
       <Router history={history}>
         <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
           <UserContext.Provider value={{ user }}>
@@ -174,10 +174,14 @@ describe('TrainingReports', () => {
     );
   };
 
+  const renderTrainingReports = (u, passedStatus) => render(trainingReports(u, passedStatus));
+
   // Not started.
   const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2${firstPage}`);
 
   beforeEach(async () => {
+    // the active page is remembered in session storage
+    window.sessionStorage.clear();
     fetchMock.get(notStartedUrl, paged(notStartedEvents));
 
     // In progress.
@@ -379,6 +383,130 @@ describe('TrainingReports', () => {
     expect(screen.queryByText(/not started event 1/i)).toBeNull();
     expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
     expect(fetchMock.called(secondPageUrl)).toBe(true);
+  });
+
+  it('starts back on page 1 when switching status tabs', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 12), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    fetchMock.get(notStartedPage2, paged([completeEvents[0]], 12));
+    const inProgressUrl = join(eventUrl, `/${EVENT_STATUS.IN_PROGRESS}?region.in[]=2${firstPage}`);
+
+    let view;
+    act(() => {
+      view = renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 12/i)).toBeInTheDocument();
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
+
+    act(() => {
+      view.rerender(trainingReports(undefined, EVENT_STATUS.IN_PROGRESS));
+    });
+    expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
+    expect(fetchMock.called(inProgressUrl)).toBe(true);
+
+    act(() => {
+      view.rerender(trainingReports(undefined, EVENT_STATUS.NOT_STARTED));
+    });
+    expect(await screen.findByText(/1-10 of 12/i)).toBeInTheDocument();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(2);
+    expect(fetchMock.calls(notStartedPage2)).toHaveLength(1);
+  });
+
+  it('remembers the page when returning to the list', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 12), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    fetchMock.get(notStartedPage2, paged([completeEvents[0]], 12));
+
+    let view;
+    act(() => {
+      view = renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 12/i)).toBeInTheDocument();
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
+
+    // e.g. leaving for "Edit event" and coming back
+    view.unmount();
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(1);
+    expect(fetchMock.calls(notStartedPage2)).toHaveLength(2);
+  });
+
+  it('goes to the last page when a remembered page is past the end', async () => {
+    const notStartedPage3 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=20`
+    );
+    fetchMock.get(notStartedPage3, paged([], 2));
+    window.sessionStorage.setItem('training-report-filters', JSON.stringify([]));
+    window.sessionStorage.setItem(
+      'training-report-filters-trainingReportsEvents-sorting',
+      JSON.stringify({ sortBy: 'eventId', direction: 'asc', activePage: 3 })
+    );
+
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/not started event 1/i)).toBeInTheDocument();
+    expect(fetchMock.called(notStartedPage3)).toBe(true);
+    expect(fetchMock.called(notStartedUrl)).toBe(true);
+  });
+
+  it('steps back a page when the last event on a page is deleted', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 11), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    const pageTwoEvent = {
+      ...notStartedEvents[0],
+      id: 20,
+      eventId: '-20',
+      data: { ...notStartedEvents[0].data, eventName: 'Page two event', eventId: '-20' },
+    };
+    fetchMock.get(notStartedPage2, paged([pageTwoEvent], 11));
+    fetchMock.delete('/api/events/id/-20', { message: 'Success!' });
+
+    act(() => {
+      renderTrainingReports({
+        ...nonCentralOfficeUser,
+        permissions: [
+          { regionId: 2, scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS },
+          { regionId: 2, scopeId: SCOPE_IDS.ADMIN },
+        ],
+      });
+    });
+
+    expect(await screen.findByText(/1-10 of 11/i)).toBeInTheDocument();
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText('Page two event')).toBeInTheDocument();
+
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /actions for event -20/i }));
+    });
+    await act(async () => {
+      userEvent.click(screen.getByRole('button', { name: /delete event/i }));
+    });
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /delete event/i, hidden: true }));
+    });
+
+    expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(2);
   });
 
   describe('delete a session', () => {
