@@ -16,6 +16,7 @@ import {
   reportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
+import validateOtherEntityObjectives from '../../lib/validateOtherEntityObjectives';
 import { auditLogger, logger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -333,17 +334,27 @@ export async function getGoals(req, res) {
  * @param {*} res - response
  */
 export async function saveOtherEntityObjectivesForReport(req, res) {
-  const { objectivesWithoutGoals, activityReportId, region } = req.body;
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
-  const authorization = new User(user);
-
-  if (!authorization.canWriteInRegion(parseInt(region, DECIMAL_BASE))) {
-    res.sendStatus(403);
-    return;
-  }
   try {
+    const { objectivesWithoutGoals, activityReportId, region } = req.body;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new User(user);
     const report = await ActivityReportModel.findByPk(activityReportId);
+
+    if (
+      !report ||
+      Number(region) !== report.regionId ||
+      !authorization.canWriteInRegion(report.regionId)
+    ) {
+      res.sendStatus(403);
+      return;
+    }
+
+    if (!validateOtherEntityObjectives(objectivesWithoutGoals)) {
+      res.sendStatus(400);
+      return;
+    }
+
     await saveObjectivesForReport(objectivesWithoutGoals, report);
     const updatedObjectives = await getObjectivesByReportId(activityReportId);
     res.json(updatedObjectives);
