@@ -78,7 +78,7 @@ describe('Recipient Record - TTA Timeline', () => {
     const multiRecipientIcon = checkbox.parentElement.querySelector('svg');
 
     expect(sortControl).toHaveValue('desc');
-    expect(sortControl).toHaveClass('width-mobile');
+    expect(sortControl).toHaveClass('width-mobile', 'maxw-full');
     expect(checkbox).toBeVisible();
     expect(checkbox.closest('.usa-checkbox')).toHaveClass('ttahub-timeline-checkbox');
     expect(multiRecipientIcon).toHaveClass('height-2', 'width-2');
@@ -86,7 +86,7 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(screen.getByText('Date', { selector: 'strong' })).toBeVisible();
     expect(useFilters).toHaveBeenCalledWith(
       user,
-      'timeline-filters',
+      'timeline-filters-401',
       false,
       [
         expect.objectContaining({
@@ -271,6 +271,55 @@ describe('Recipient Record - TTA Timeline', () => {
       'after-25',
       'after-25',
     ]);
+  });
+
+  it('shows a later slice failure next to the retry button, not above the list', async () => {
+    getRecipientTimeline
+      .mockResolvedValueOnce({ count: 26, events: batch(1, 25), nextCursor: 'after-25' })
+      .mockRejectedValueOnce(new Error('failed'));
+    renderTimeline();
+    await screen.findByRole('heading', { name: 'Event 25' });
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+    );
+    const alert = await screen.findByRole('alert');
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    const retry = screen.getByRole('button', { name: 'Retry loading events' });
+    expect(alert.parentElement).toBe(retry.parentElement);
+    expect(
+      screen.getByRole('list', { name: 'Timeline events' }).compareDocumentPosition(alert) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('saves filters under a key for the recipient being viewed', async () => {
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
+    render(
+      <UserContext.Provider value={{ user }}>
+        <MemoryRouter>
+          <Timeline recipientId="644" regionId="6" />
+        </MemoryRouter>
+      </UserContext.Provider>
+    );
+    await screen.findByText('No results found.');
+    expect(useFilters).toHaveBeenCalledWith(
+      user,
+      'timeline-filters-644',
+      false,
+      expect.any(Array),
+      TIMELINE_FILTER_CONFIG,
+      undefined,
+      true
+    );
+    expect(useFilters).not.toHaveBeenCalledWith(
+      user,
+      'timeline-filters-401',
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything()
+    );
   });
 
   it('renders an error state and retries the first page', async () => {
