@@ -59,6 +59,7 @@ export default function TimelineCategory({
                   event={event}
                   isLast={index === events.length - 1}
                   showGoalCycleDivider
+                  headingLevel={4}
                 />
               </li>
             ))}
