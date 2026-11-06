@@ -22,8 +22,12 @@ interface UserType {
 interface TtaRequestType {
   id: number;
   userId: number;
+  reviewerId?: number | null;
   status: string;
 }
+
+// the creator edits a request while it is a draft, and again when it is sent back for changes
+const EDITABLE_STATUSES: string[] = [TTA_REQUEST_STATUSES.DRAFT, TTA_REQUEST_STATUSES.NEEDS_ACTION];
 
 export default class TtaRequest {
   readonly user: UserType;
@@ -60,7 +64,8 @@ export default class TtaRequest {
   }
 
   /**
-   * Only the creator saves a draft, and only while they can still write in its region
+   * Only the creator saves a draft, or a request sent back to them for changes, and only
+   * while they can still write in its region
    */
   canUpdate() {
     if (!this.isCreator()) {
@@ -68,8 +73,8 @@ export default class TtaRequest {
       return false;
     }
 
-    if (this.ttaRequest?.status !== TTA_REQUEST_STATUSES.DRAFT) {
-      this.logUnauthorizedAttempt('update TTA request', 'request is not a draft');
+    if (!EDITABLE_STATUSES.includes(this.ttaRequest?.status)) {
+      this.logUnauthorizedAttempt('update TTA request', 'request is not editable');
       return false;
     }
 
@@ -79,6 +84,43 @@ export default class TtaRequest {
     }
 
     return true;
+  }
+
+  /**
+   * Only the request's reviewer reviews it, once it has been submitted to them, and only
+   * while they can still review in its region
+   */
+  canReview() {
+    if (!this.isReviewer()) {
+      this.logUnauthorizedAttempt('review TTA request', 'user is not the reviewer');
+      return false;
+    }
+
+    if (this.ttaRequest?.status !== TTA_REQUEST_STATUSES.SUBMITTED) {
+      this.logUnauthorizedAttempt('review TTA request', 'request is not submitted');
+      return false;
+    }
+
+    if (!this.canReviewInRegion()) {
+      this.logUnauthorizedAttempt('review TTA request', 'user lacks review permissions in region');
+      return false;
+    }
+
+    return true;
+  }
+
+  // the request's reviewerId is who reviews it. Its reviewer approver row is only synced to it
+  // on submission, and the creator can change the reviewer while it is back with them, so the
+  // two agree whenever the request is submitted, which is the only time it can be reviewed
+  isReviewer() {
+    return !!this.ttaRequest?.reviewerId && this.ttaRequest.reviewerId === this.user.id;
+  }
+
+  canReviewInRegion() {
+    return this.user.permissions.some(
+      (permission) =>
+        permission.regionId === this.regionId && permission.scopeId === SCOPES.REVIEW_TTA_REQUESTS
+    );
   }
 
   isCreator() {

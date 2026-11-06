@@ -92,6 +92,15 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'approverId',
         as: 'sessionReportsAsApprover',
       });
+      // TTA Request reviewers and notes.
+      User.hasMany(models.TtaRequestApprover, {
+        foreignKey: 'userId',
+        as: 'ttaRequestApprovers',
+      });
+      User.hasMany(models.TtaRequestNote, {
+        foreignKey: 'userId',
+        as: 'ttaRequestNotes',
+      });
     }
   }
   User.init(

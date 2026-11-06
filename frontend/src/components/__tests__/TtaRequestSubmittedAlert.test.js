@@ -37,6 +37,18 @@ describe('TtaRequestSubmittedAlert', () => {
     );
   });
 
+  it('says the request was sent back to its creator after a review', () => {
+    renderAlert({ message: { ...MESSAGE, status: 'needs_action' } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'You sent request R14-REQ-14322 back to its creator for changes on 06/23/2026 at 11:00 am EDT.'
+    );
+    expect(screen.getByRole('link', { name: 'R14-REQ-14322' })).toHaveAttribute(
+      'href',
+      '/tta-requests/view/14322'
+    );
+  });
+
   it('links to the view under the list it is shown on', () => {
     renderAlert(
       { message: MESSAGE },

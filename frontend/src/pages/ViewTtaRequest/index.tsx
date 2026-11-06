@@ -1,6 +1,6 @@
-import { Button } from '@trussworks/react-uswds';
+import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import moment from 'moment';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import { Redirect, useParams } from 'react-router-dom';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
@@ -8,12 +8,13 @@ import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecial
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
-import TtaRequestNotesSummary, {
-  type TtaRequestNote,
-} from '../../components/TtaRequestNotesSummary';
+import TtaRequestNotesSummary from '../../components/TtaRequestNotesSummary';
+import { toNotesSummary } from '../../components/TtaRequestNotesSummary/notes';
 import { getTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
+import UserContext from '../../UserContext';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
+import TtaRequestReview from './TtaRequestReview';
 
 const formatDate = (date: string | null | undefined) =>
   date ? moment(date).format(DATE_DISPLAY_FORMAT) : '';
@@ -28,91 +29,21 @@ const recipientAwareLabel = (recipientAware: boolean | null) => {
 const citationLabel = ({ citation, findingType }: TtaRequestResponse['citations'][number]) =>
   findingType ? `${findingType} - ${citation}` : citation;
 
-// only the creator's submission is recorded so far; review and approval phases come later
-const buildNotes = ({
-  creator,
-  submittedAt,
-  creatorNotes,
-}: TtaRequestResponse): TtaRequestNote[] =>
-  submittedAt
-    ? [
-        {
-          key: 'creator-submission',
-          phase: 'Draft TTA Request',
-          author: creator?.fullName ?? creator?.name ?? '',
-          role: 'Creator',
-          date: submittedAt,
-          note: creatorNotes,
-        },
-      ]
-    : [];
-
-// TODO(TTAHUB-5884): temporary sample notes for checking the notes summary layout. Remove before merging.
-const SAMPLE_NOTES: Omit<TtaRequestNote, 'key'>[] = [
-  {
-    phase: 'TTA Request review - needs action',
-    author: 'Monica Geller, TTAC',
-    role: 'Reviewer',
-    date: '2026-06-23T10:05:00.000Z',
-    note: 'Please add the agenda details we discussed.',
-  },
-  {
-    phase: 'Draft TTA Request',
-    author: 'Rachel Green, ECS',
-    role: 'Creator',
-    date: '2026-06-23T12:43:00.000Z',
-    note: 'Agenda details have been added.',
-  },
-  {
-    phase: 'Send to COR for approval',
-    author: 'Monica Geller, TTAC',
-    role: 'Reviewer',
-    date: '2026-06-23T15:56:00.000Z',
-    note: 'Adding Chandler because I know you will be out later this week.',
-  },
-  {
-    phase: 'TTA Request - needs action',
-    author: 'Joey Tribbiano, COR',
-    role: 'Approver',
-    date: '2026-06-24T09:28:00.000Z',
-    note: 'Update the context with the recent change in scope.',
-  },
-  {
-    phase: 'Send to COR for approval',
-    author: 'Monica Geller, TTAC',
-    role: 'Reviewer',
-    date: '2026-06-24T10:02:00.000Z',
-    note: 'Context updated.',
-  },
-  {
-    phase: 'TTA Request - approved',
-    author: 'Joey Tribbiano, COR',
-    role: 'Approver',
-    date: '2026-06-24T11:40:00.000Z',
-    note: 'Looks good!',
-  },
-];
-
 interface ViewTtaRequestProps {
   /** the list the request was opened from, all regions' or a recipient's */
   backLinkTo?: string;
 }
 
 /**
- * A submitted TTA request, read only. The approver, assigned staff and goals only exist once
- * a request has been approved, so they aren't shown yet.
+ * A submitted TTA request, read only, with every note left on it. The reviewer reviews it
+ * here once it has been submitted to them. The approver, assigned staff and goals only exist
+ * once a request has been approved, so they aren't shown yet.
  */
 export default function ViewTtaRequest({
   backLinkTo = '/tta-requests',
 }: ViewTtaRequestProps): React.ReactElement | null {
   const { ttaRequestId } = useParams<{ ttaRequestId: string }>();
-  // TODO(TTAHUB-5884): temporary, remove with SAMPLE_NOTES
-  const [sampleNotes, setSampleNotes] = useState<TtaRequestNote[]>([]);
-  const addSampleNotes = () =>
-    setSampleNotes((current) => [
-      ...current,
-      ...SAMPLE_NOTES.map((note, index) => ({ ...note, key: `sample-${current.length + index}` })),
-    ]);
+  const { user } = useContext(UserContext);
 
   const fetchTtaRequest = useCallback(
     (): Promise<TtaRequestResponse> => getTtaRequest(Number(ttaRequestId)),
@@ -138,6 +69,10 @@ export default function ViewTtaRequest({
   }
 
   const { displayId, citations } = ttaRequest;
+  const canReview =
+    ttaRequest.status === TTA_REQUEST_STATUSES.SUBMITTED &&
+    !!user &&
+    ttaRequest.reviewer?.id === user.id;
 
   return (
     <div className="maxw-widescreen">
@@ -218,11 +153,17 @@ export default function ViewTtaRequest({
             },
           ]}
         />
-        <TtaRequestNotesSummary notes={[...buildNotes(ttaRequest), ...sampleNotes]} />
-        {/* TODO(TTAHUB-5884): temporary, remove with SAMPLE_NOTES */}
-        <Button type="button" unstyled className="margin-top-2" onClick={addSampleNotes}>
-          Add sample notes
-        </Button>
+        {canReview && (
+          <>
+            <h2 className="font-serif-lg margin-top-4 margin-bottom-3">Review and submit</h2>
+            <dl className="margin-top-0 margin-bottom-3">
+              <dt className="text-bold">Date submitted</dt>
+              <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>
+            </dl>
+          </>
+        )}
+        <TtaRequestNotesSummary notes={toNotesSummary(ttaRequest.notes)} />
+        {canReview && <TtaRequestReview ttaRequest={ttaRequest} backLinkTo={backLinkTo} />}
       </Container>
     </div>
   );

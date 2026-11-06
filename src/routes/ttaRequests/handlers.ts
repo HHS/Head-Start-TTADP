@@ -10,6 +10,7 @@ import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
   lockTtaRequest,
+  reviewTtaRequest as reviewTtaRequestService,
   submitTtaRequest as submitTtaRequestService,
   ttaRequestById,
   ttaRequestReviewers,
@@ -188,6 +189,38 @@ export async function submitTtaRequest(req: Request, res: Response) {
         throw Object.assign(error, { responseBody });
       }
       res.status(error.statusCode).json(responseBody);
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function reviewTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
+    const existing = await ttaRequestById(Number(ttaRequestId));
+
+    if (!existing) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
+
+    if (!authorization.canReview()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await reviewTtaRequestService(existing, req.body, userId);
+    res.json(ttaRequest);
+  } catch (error) {
+    // the service rejects a review before it writes anything, so there is nothing for the
+    // wrapper to roll back, unlike a submission
+    if (respondWithServiceError(res, error)) {
       return;
     }
     await handleErrors(req, res, error, logContext);

@@ -526,6 +526,7 @@ components:
           enum:
             - draft
             - submitted
+            - needs_action
         userId:
           type: integer
         lastUpdatedById:
@@ -628,6 +629,75 @@ components:
               findingType:
                 type: string
                 nullable: true
+        approvers:
+          type: array
+          description: Who is on each step of the request; a null status is pending
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              userId:
+                type: integer
+              step:
+                type: string
+                enum:
+                  - reviewer
+                  - approver
+              status:
+                type: string
+                nullable: true
+                enum:
+                  - needs_action
+                  - approved
+              user:
+                $ref: '#/components/schemas/ttaRequestUser'
+        notes:
+          type: array
+          description: >-
+            The request's history, oldest first. Every submission and review adds
+            an entry, with the note left with it.
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              step:
+                type: string
+                enum:
+                  - creator
+                  - reviewer
+                  - approver
+              action:
+                type: string
+                enum:
+                  - submitted
+                  - needs_action
+              note:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+              user:
+                $ref: '#/components/schemas/ttaRequestUser'
+    ttaRequestUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        fullName:
+          type: string
+          description: The name with the user's roles, e.g. "Tom Geller, TTAC"
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
     sessionReport:
       type: object
       description: A session report

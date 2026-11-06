@@ -146,6 +146,18 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
 export const TTA_REQUEST_STATUSES: {
   readonly DRAFT: 'draft';
   readonly SUBMITTED: 'submitted';
+  readonly NEEDS_ACTION: 'needs_action';
+};
+
+export const TTA_REQUEST_STEPS: {
+  readonly CREATOR: 'creator';
+  readonly REVIEWER: 'reviewer';
+  readonly APPROVER: 'approver';
+};
+
+export const TTA_REQUEST_NOTE_ACTIONS: {
+  readonly SUBMITTED: 'submitted';
+  readonly NEEDS_ACTION: 'needs_action';
 };
 
 export const TTA_REQUEST_ORIGINATORS: readonly [

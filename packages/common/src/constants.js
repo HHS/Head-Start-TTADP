@@ -181,9 +181,27 @@ exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 const TTA_REQUEST_STATUSES = {
   DRAFT: 'draft',
   SUBMITTED: 'submitted',
+  NEEDS_ACTION: 'needs_action',
 };
 
 exports.TTA_REQUEST_STATUSES = TTA_REQUEST_STATUSES;
+
+// the steps a request passes through: the creator submits, the reviewer reviews, the approver approves
+const TTA_REQUEST_STEPS = {
+  CREATOR: 'creator',
+  REVIEWER: 'reviewer',
+  APPROVER: 'approver',
+};
+
+exports.TTA_REQUEST_STEPS = TTA_REQUEST_STEPS;
+
+// what was done at a step when a note was left
+const TTA_REQUEST_NOTE_ACTIONS = {
+  SUBMITTED: 'submitted',
+  NEEDS_ACTION: 'needs_action',
+};
+
+exports.TTA_REQUEST_NOTE_ACTIONS = TTA_REQUEST_NOTE_ACTIONS;
 
 const TTA_REQUEST_ORIGINATORS = ['Central Office', 'Recipient', 'Regional Office', 'TTA Staff'];
 
