@@ -249,12 +249,12 @@ function TimelineContent({
           <div className="padding-3">
             <h2 className="font-sans-lg margin-top-0 margin-bottom-2">TTA timeline</h2>
             <div className="display-flex flex-align-center flex-wrap flex-gap-3">
-              <div className="ttahub-timeline-view display-flex flex-align-center flex-wrap">
+              <div className="display-flex flex-align-center flex-wrap maxw-full">
                 <label className="margin-right-1 text-no-wrap" htmlFor="timeline-sort">
                   View
                 </label>
                 <Dropdown
-                  className="ttahub-timeline-view__select margin-top-0"
+                  className="margin-top-0 width-mobile maxw-full"
                   id="timeline-sort"
                   name="timeline-sort"
                   value={mode === 'chronological' ? direction : mode}

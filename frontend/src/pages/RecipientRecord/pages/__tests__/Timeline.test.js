@@ -78,8 +78,7 @@ describe('Recipient Record - TTA Timeline', () => {
     const multiRecipientIcon = checkbox.parentElement.querySelector('svg');
 
     expect(sortControl).toHaveValue('desc');
-    expect(sortControl).toHaveClass('ttahub-timeline-view__select');
-    expect(sortControl).not.toHaveClass('width-mobile');
+    expect(sortControl).toHaveClass('width-mobile', 'maxw-full');
     expect(checkbox).toBeVisible();
     expect(checkbox.closest('.usa-checkbox')).toHaveClass('ttahub-timeline-checkbox');
     expect(multiRecipientIcon).toHaveClass('height-2', 'width-2');

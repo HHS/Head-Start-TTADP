@@ -1,12 +1,3 @@
 .ttahub-timeline-checkbox .usa-checkbox__label {
   margin-top: 0;
 }
-
-.ttahub-timeline-view {
-  max-width: 100%;
-}
-
-.ttahub-timeline-view__select {
-  max-width: 100%;
-  width: 20rem;
-}
