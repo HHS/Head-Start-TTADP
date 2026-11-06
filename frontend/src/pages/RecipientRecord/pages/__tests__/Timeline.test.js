@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -55,10 +56,28 @@ describe('Recipient Record - TTA Timeline', () => {
       filterConfig: TIMELINE_FILTER_CONFIG,
     });
     getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-timeline',
+      '<feed><entry><summary>About the timeline data from Confluence</summary></entry></feed>'
+    );
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-timeline-filters',
+      '<feed><entry><summary>Filter help from Confluence</summary></entry></feed>'
+    );
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    fetchMock.restore();
+  });
+
+  it('loads the drawer content from the Confluence feed', async () => {
+    renderTimeline();
+
+    expect(await screen.findByText('About the timeline data from Confluence')).toBeInTheDocument();
+    expect(await screen.findByText('Filter help from Confluence')).toBeInTheDocument();
+    expect(fetchMock.called('/api/feeds/item?tag=ttahub-timeline')).toBe(true);
+    expect(fetchMock.called('/api/feeds/item?tag=ttahub-timeline-filters')).toBe(true);
   });
 
   it('renders the page shell and design controls', async () => {
