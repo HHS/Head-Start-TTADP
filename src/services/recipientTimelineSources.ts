@@ -1083,6 +1083,8 @@ const buildMonitoringReportIndexQuery = (
       AND "grant"."regionId" = :regionId
       AND "review"."deletedAt" IS NULL
       AND "review"."review_status" = ${status}
+      AND "review"."review_uuid" IS NOT NULL
+      AND "review"."review_type" IS NOT NULL
       AND "review"."report_delivery_date" IS NOT NULL
       AND "review"."report_delivery_date" >= ${minDeliveryDate}
       ${predicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;

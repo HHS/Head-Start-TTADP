@@ -72,16 +72,20 @@ describe('monitoring report timeline integration', () => {
       reviews = await DeliveredReview.bulkCreate(
         [
           { review_name: ' Review Alpha ', review_type: ' FA2 ', outcome: ' Non Compliant ' },
-          { report_delivery_date: '2025-01-21', review_name: ' ', review_type: null, outcome: '' },
+          { report_delivery_date: '2025-01-21', review_name: ' ', review_type: ' ', outcome: '' },
           { review_status: 'In Progress' },
           { report_delivery_date: null },
           { report_delivery_date: '2025-01-20' },
           {}, // Different recipient.
           {}, // Same recipient, different region.
           { deletedAt: new Date() },
+          { review_uuid: null, report_delivery_date: '2027-01-01' },
+          { review_type: null, report_delivery_date: '2027-01-02' },
         ].map((review) => ({
           id: getUniqueId(),
           mrid: getUniqueId(),
+          review_uuid: `timeline-review-${getUniqueId()}`,
+          review_type: 'FA2',
           review_status: 'Complete',
           report_delivery_date: '2026-05-21',
           ...review,
@@ -190,6 +194,21 @@ describe('monitoring report timeline integration', () => {
       subtitle: null,
       details: [{ label: 'Grant numbers', items: [{ text: grantNumbers[0] }] }],
     });
+  });
+
+  it.each([
+    ['review_uuid', '01/01/2027'],
+    ['review_type', '01/02/2027'],
+  ])('excludes reviews with missing %s before counting and pagination', async (_field, date) => {
+    const result = await getTimeline({
+      limit: 1,
+      filters: [
+        { topic: 'eventType', condition: 'is', query: ['Monitoring report received'] },
+        { topic: 'date', condition: 'is on or after', query: date },
+        { topic: 'date', condition: 'is on or before', query: date },
+      ],
+    });
+    expect(result).toEqual({ count: 0, events: [] });
   });
 
   it.each(['is', 'is not'] as const)(

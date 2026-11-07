@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -10,6 +11,7 @@ import {
 import { getRecipientTimeline } from '../../../../fetchers/recipient';
 import useFilters from '../../../../hooks/useFilters';
 import UserContext from '../../../../UserContext';
+import { RECIPIENT_TTA_REQUEST_FEATURE_FLAG, TTA_TIMELINE_FEATURE_FLAG } from '../constants';
 import Timeline from '../Timeline';
 
 jest.mock('../../../../hooks/useFilters');
@@ -37,10 +39,17 @@ const batch = (start, length) =>
     links: [],
   }));
 
-const renderTimeline = () =>
+const renderTimeline = (currentUser = user, mode = 'chronological') =>
   render(
-    <UserContext.Provider value={{ user }}>
-      <MemoryRouter>
+    <UserContext.Provider value={{ user: currentUser }}>
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/',
+            state: { timelineView: { recipientId: '401', regionId: '1', mode } },
+          },
+        ]}
+      >
         <Timeline recipientId="401" regionId="1" />
       </MemoryRouter>
     </UserContext.Provider>
@@ -193,6 +202,82 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(screen.getAllByRole('article')).toHaveLength(2);
     expect(screen.getByRole('list', { name: 'Timeline events' })).toBeVisible();
   });
+
+  it.each(
+    ['chronological', 'monitoring', 'goals'].flatMap((mode) =>
+      [
+        { name: 'a timeline-only reader', flags: [TTA_TIMELINE_FEATURE_FLAG], allowed: false },
+        {
+          name: 'a reader with both flags',
+          flags: [TTA_TIMELINE_FEATURE_FLAG, RECIPIENT_TTA_REQUEST_FEATURE_FLAG],
+          allowed: true,
+        },
+        { name: 'a reader without flags', flags: undefined, allowed: false },
+        { name: 'an admin without flags', flags: undefined, admin: true, allowed: true },
+      ].map((access) => ({ mode, ...access }))
+    )
+  )(
+    'renders the request event and gates its link for $name in $mode view',
+    async ({ mode, flags, admin, allowed }) => {
+      const requestEvent = {
+        ...batch(1, 1)[0],
+        source: 'ttaRequest',
+        eventType: 'TTA request',
+        title: 'TTA request',
+        tags: [{ label: 'Monitoring', flagged: true }],
+        details: [{ label: 'Originator', items: [{ text: 'Regional Office' }] }],
+        links: [
+          {
+            label: 'View TTA request',
+            to: '/recipient-tta-records/401/region/1/tta-request/view/1',
+          },
+        ],
+      };
+      const activityEvent = {
+        ...batch(2, 1)[0],
+        tags: [{ label: 'Monitoring', flagged: true }],
+        links: [{ label: 'View activity report', to: '/activity-reports/view/2' }],
+      };
+      const response = {
+        count: 2,
+        events: [requestEvent, activityEvent],
+        categories: [{ label: 'Monitoring', statuses: [] }],
+      };
+      getRecipientTimeline.mockResolvedValue(response);
+      renderTimeline(
+        {
+          ...user,
+          flags,
+          permissions: [{ regionId: 1, scopeId: admin ? SCOPE_IDS.ADMIN : SCOPE_IDS.READ_REPORTS }],
+        },
+        mode
+      );
+
+      expect(await screen.findByTestId('timeline-results')).toHaveTextContent('2 timeline events');
+      expect(screen.getByRole('heading', { name: 'TTA request' })).toBeVisible();
+      await act(async () =>
+        userEvent.click(screen.getByRole('button', { name: /View details for TTA request/ }))
+      );
+      expect(screen.getByText('Regional Office')).toBeVisible();
+      if (allowed) {
+        expect(screen.getByRole('link', { name: 'View TTA request' })).toHaveAttribute(
+          'href',
+          '/recipient-tta-records/401/region/1/tta-request/view/1'
+        );
+      } else {
+        expect(screen.queryByRole('link', { name: 'View TTA request' })).not.toBeInTheDocument();
+      }
+      await act(async () =>
+        userEvent.click(screen.getByRole('button', { name: /View details for Event 2/ }))
+      );
+      expect(screen.getByRole('link', { name: 'View activity report' })).toHaveAttribute(
+        'href',
+        '/activity-reports/view/2'
+      );
+      // Hiding a link must not mutate the fetched events or their cached presentation.
+      expect(requestEvent.links).toHaveLength(1);
+    }
+  );
 
   it('renders loaded events when the response count is malformed', async () => {
     getRecipientTimeline.mockResolvedValueOnce({ count: 'many', events: batch(1, 2) });

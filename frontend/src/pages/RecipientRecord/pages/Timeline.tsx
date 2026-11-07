@@ -19,8 +19,10 @@ import TimelineCategory from '../../../components/TimelineCategory';
 import TimelineEvent from '../../../components/TimelineEvent';
 import useFilters from '../../../hooks/useFilters';
 import useTimelineNavigation from '../../../hooks/useTimelineNavigation';
+import { canSeeBehindFeatureFlag } from '../../../permissions';
 import UserContext from '../../../UserContext';
 import { filtersToQueryString } from '../../../utils';
+import { RECIPIENT_TTA_REQUEST_FEATURE_FLAG } from './constants';
 import './Timeline.css';
 
 interface TimelineProps {
@@ -108,7 +110,7 @@ function TimelineContent({
   const filterQuery = useMemo(() => filtersToQueryString(supportedFilters), [supportedFilters]);
 
   const {
-    events,
+    events: timelineEvents,
     categories,
     count,
     error,
@@ -122,6 +124,17 @@ function TimelineContent({
     listRef,
     restoring,
   } = useTimelineNavigation(recipientId, regionId, supportedFilters, filterQuery);
+  const canViewTtaRequests = canSeeBehindFeatureFlag(user, RECIPIENT_TTA_REQUEST_FEATURE_FLAG);
+  // The API authorizes request data separately from the destination page's release flag.
+  const events = useMemo(
+    () =>
+      canViewTtaRequests
+        ? timelineEvents
+        : timelineEvents.map((event) =>
+            event.source === 'ttaRequest' ? { ...event, links: [] } : event
+          ),
+    [timelineEvents, canViewTtaRequests]
+  );
   const changeView = (value: string) => {
     const nextMode: RecipientTimelineView =
       value === 'monitoring' || value === 'goals' ? value : 'chronological';

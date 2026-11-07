@@ -9,7 +9,8 @@ get:
     regional read permission. Unauthorized sources are excluded before counting and pagination.
     Monitoring events use source `monitoringReport` and the delivered review ID as `sourceId`.
     Complete, undeleted reviews delivered on or after 2025-01-21 appear once per review, even
-    when linked to multiple recipient grants. Inactive grants are included. The event date is
+    when linked to multiple recipient grants. Reviews missing review_uuid or review_type are
+    excluded, matching the Monitoring tab. Inactive grants are included. The event date is
     report_delivery_date, and its standard is always Monitoring.
     TTA request events use source `ttaRequest` and the request ID as `sourceId`. Only submitted,
     undeleted requests with a submittedAt timestamp appear; ordering preserves that timestamp.
