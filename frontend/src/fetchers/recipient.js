@@ -120,6 +120,7 @@ export const getRecipientTimeline = async (
     excludeMultiRecipientCommunications = false,
     limit = 25,
     offset = 0,
+    cursor,
   } = {}
 ) => {
   const id = parsePositiveInteger(recipientId);
@@ -148,6 +149,7 @@ export const getRecipientTimeline = async (
     offset: String(parsedOffset),
   });
   if (view) controls.set('view', view);
+  if (cursor) controls.set('cursor', cursor);
   controls.set('excludeMultiRecipientCommunications', String(excludeMultiRecipientCommunications));
   const filterQuery = filtersToQueryString(filters);
 
