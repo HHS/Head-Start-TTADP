@@ -57,12 +57,13 @@ const renderTimeline = (currentUser = user, mode = 'chronological') =>
 
 describe('Recipient Record - TTA Timeline', () => {
   beforeEach(() => {
-    useFilters.mockReturnValue({
-      filters: createInitialTimelineFilters(),
+    const initialFilters = createInitialTimelineFilters();
+    useFilters.mockImplementation((_user, _key, _regions, _initial, filterConfig) => ({
+      filters: initialFilters,
       onApplyFilters,
       onRemoveFilter,
-      filterConfig: TIMELINE_FILTER_CONFIG,
-    });
+      filterConfig,
+    }));
     getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });
   });
 
@@ -217,7 +218,7 @@ describe('Recipient Record - TTA Timeline', () => {
       ].map((access) => ({ mode, ...access }))
     )
   )(
-    'renders the request event and gates its link for $name in $mode view',
+    'gates request events and the filter option for $name in $mode view',
     async ({ mode, flags, admin, allowed }) => {
       const requestEvent = {
         ...batch(1, 1)[0],
@@ -239,8 +240,8 @@ describe('Recipient Record - TTA Timeline', () => {
         links: [{ label: 'View activity report', to: '/activity-reports/view/2' }],
       };
       const response = {
-        count: 2,
-        events: [requestEvent, activityEvent],
+        count: allowed ? 2 : 1,
+        events: allowed ? [requestEvent, activityEvent] : [activityEvent],
         categories: [{ label: 'Monitoring', statuses: [] }],
       };
       getRecipientTimeline.mockResolvedValue(response);
@@ -253,18 +254,21 @@ describe('Recipient Record - TTA Timeline', () => {
         mode
       );
 
-      expect(await screen.findByTestId('timeline-results')).toHaveTextContent('2 timeline events');
-      expect(screen.getByRole('heading', { name: 'TTA request' })).toBeVisible();
-      await act(async () =>
-        userEvent.click(screen.getByRole('button', { name: /View details for TTA request/ }))
+      expect(await screen.findByTestId('timeline-results')).toHaveTextContent(
+        allowed ? '2 timeline events' : '1 timeline event'
       );
-      expect(screen.getByText('Regional Office')).toBeVisible();
       if (allowed) {
+        expect(screen.getByRole('heading', { name: 'TTA request' })).toBeVisible();
+        await act(async () =>
+          userEvent.click(screen.getByRole('button', { name: /View details for TTA request/ }))
+        );
+        expect(screen.getByText('Regional Office')).toBeVisible();
         expect(screen.getByRole('link', { name: 'View TTA request' })).toHaveAttribute(
           'href',
           '/recipient-tta-records/401/region/1/tta-request/view/1'
         );
       } else {
+        expect(screen.queryByRole('heading', { name: 'TTA request' })).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'View TTA request' })).not.toBeInTheDocument();
       }
       await act(async () =>
@@ -274,8 +278,25 @@ describe('Recipient Record - TTA Timeline', () => {
         'href',
         '/activity-reports/view/2'
       );
-      // Hiding a link must not mutate the fetched events or their cached presentation.
-      expect(requestEvent.links).toHaveLength(1);
+      await act(async () =>
+        userEvent.click(screen.getByRole('button', { name: /open filters for this page/i }))
+      );
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'topic' }), 'eventType')
+      );
+      await act(async () =>
+        userEvent.selectOptions(screen.getByRole('combobox', { name: 'condition' }), 'is')
+      );
+      await act(async () =>
+        userEvent.click(screen.getByLabelText('Select TTA event types to filter by'))
+      );
+      expect(screen.getByText('Monitoring report received')).toBeVisible();
+      const requestOption = document.querySelector('.ttahub-filter-select__option');
+      expect(requestOption).toBeInTheDocument();
+      const options = [...document.querySelectorAll('.ttahub-filter-select__option')].map(
+        (option) => option.textContent
+      );
+      expect(options.includes('TTA request')).toBe(allowed);
     }
   );
 

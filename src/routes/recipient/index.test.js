@@ -30,6 +30,7 @@ describe('recipient routes', () => {
     currentUserId.mockResolvedValue(1000);
     userById.mockResolvedValue({
       id: 1000,
+      flags: ['recipient_tta_request'],
       permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
     });
     getRecipientTimeline.mockResolvedValue({ count: 0, events: [] });

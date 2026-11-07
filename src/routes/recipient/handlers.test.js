@@ -58,6 +58,7 @@ jest.mock('../../services/accessValidation');
 
 const mockUserById = {
   id: 1000,
+  flags: ['recipient_tta_request'],
   permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
 };
 
@@ -465,13 +466,41 @@ describe('getRecipientTimeline', () => {
     [SCOPES.READ_WRITE_REPORTS, 1, false],
     [SCOPES.ADMIN, 14, false],
   ])('passes TTA request policy for scope %s in region %s', async (scopeId, regionId, allowed) => {
-    userById.mockResolvedValue({ id: 1000, permissions: [{ scopeId, regionId }] });
+    userById.mockResolvedValue({
+      id: 1000,
+      flags: ['recipient_tta_request'],
+      permissions: [{ scopeId, regionId }],
+    });
 
     await getRecipientTimeline(req, mockResponse);
 
     expect(getRecipientTimelineService).toHaveBeenCalledWith(
       { recipientId: 100000, regionId: 1, ...timelineQuery },
       expect.objectContaining({ canReadTtaRequests: allowed })
+    );
+  });
+
+  it.each([
+    [undefined, false, false],
+    [[], false, false],
+    [['tta_timeline'], false, false],
+    [['recipient_tta_request'], false, true],
+    [[], true, true],
+  ])('gates request visibility for flags %j and admin %s', async (flags, admin, allowed) => {
+    userById.mockResolvedValue({
+      id: 1000,
+      flags,
+      permissions: [
+        { scopeId: SCOPES.READ_REPORTS, regionId: 1 },
+        ...(admin ? [{ scopeId: SCOPES.ADMIN, regionId: 14 }] : []),
+      ],
+    });
+
+    await getRecipientTimeline(req, mockResponse);
+
+    expect(getRecipientTimelineService).toHaveBeenCalledWith(
+      { recipientId: 100000, regionId: 1, ...timelineQuery },
+      { canReadCommunicationLogs: true, canReadTtaRequests: allowed }
     );
   });
 

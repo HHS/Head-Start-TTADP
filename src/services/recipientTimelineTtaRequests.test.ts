@@ -1,11 +1,22 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import type { RecipientTimelineRequestParams } from '@ttahub/common/src/recipientTimeline';
+import express from 'express';
+import httpContext from 'express-http-context';
 import { Op } from 'sequelize';
+import request from 'supertest';
 import * as s3 from '../lib/s3';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
+import recipientRouter from '../routes/recipient';
 import { getUniqueId } from '../testUtils';
+import * as currentUser from './currentUser';
 import { getRecipientTimeline, queryTimelineEventIndex } from './recipientTimeline';
 import { TTA_REQUEST_TIMELINE_SOURCE } from './recipientTimelineSources';
+import * as users from './users';
+
+jest.mock('../routes/utils', () => ({
+  checkRecipientAccessAndExistence: jest.fn().mockResolvedValue(true),
+}));
 
 const {
   CommunicationLog,
@@ -48,11 +59,49 @@ afterEach(() => jest.restoreAllMocks());
 afterAll(async () => sequelize.close());
 
 describe('TTA request timeline integration', () => {
+  const app = express();
+  app.use(httpContext.middleware);
+  app.use('/recipient', recipientRouter);
   let requests;
   let creator;
   let roles;
   let templates;
   let log;
+
+  it.each([
+    [undefined, false, false],
+    [[], false, false],
+    [['tta_timeline'], false, false],
+    [['recipient_tta_request'], false, true],
+    [[], true, true],
+  ])(
+    'gates request events and counts at the route for flags %j and admin %s',
+    async (flags, admin, allowed) => {
+      jest.spyOn(currentUser, 'currentUserId').mockResolvedValue(creator.id);
+      jest.spyOn(users, 'userById').mockResolvedValue({
+        id: creator.id,
+        flags,
+        permissions: [
+          { regionId: params.regionId, scopeId: SCOPES.READ_REPORTS },
+          ...(admin ? [{ regionId: params.regionId, scopeId: SCOPES.ADMIN }] : []),
+        ],
+      });
+      const path = `/recipient/${params.recipientId}/region/${params.regionId}/timeline`;
+      const response = await request(app).get(path).query({ limit: 1 });
+      expect(response.status).toBe(200);
+      expect(response.body.count).toBe(allowed ? 4 : 1);
+      expect(response.body.events).toMatchObject([
+        {
+          source: allowed ? 'ttaRequest' : 'communicationLog',
+          sourceId: allowed ? requests[0].id : log.id,
+        },
+      ]);
+      const filtered = await request(app).get(path).query({ 'eventType.in[]': 'TTA request' });
+      expect(filtered.status).toBe(200);
+      expect(filtered.body.count).toBe(allowed ? 3 : 0);
+      if (!allowed) expect(filtered.body.events).toEqual([]);
+    }
+  );
 
   beforeAll(async () => {
     await sequelize.transaction(async (transaction) => {

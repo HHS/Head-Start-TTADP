@@ -209,7 +209,11 @@ export async function getRecipientTimeline(req, res) {
     const user = await userById(await currentUserId(req, res));
     const { regionId } = res.locals.validatedParams;
     const canReadCommunicationLogs = new CommunicationLogPolicy(user, regionId).canReadLog();
-    const canReadTtaRequests = new TtaRequestPolicy(user, regionId).canReadInRegion();
+    const canReadTtaRequests =
+      new TtaRequestPolicy(user, regionId).canReadInRegion() &&
+      new Users({ permissions: user.permissions, flags: user.flags ?? [] }).canSeeBehindFeatureFlag(
+        'recipient_tta_request'
+      );
 
     const timeline = await getRecipientTimelineService(
       {

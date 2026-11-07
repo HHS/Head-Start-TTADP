@@ -11,8 +11,8 @@ import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import {
   createInitialTimelineFilters,
+  getTimelineFilterConfig,
   getTimelineFilterKey,
-  TIMELINE_FILTER_CONFIG,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
 import TimelineCategory from '../../../components/TimelineCategory';
@@ -83,13 +83,14 @@ function TimelineContent({
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
   const filterHelpDrawerRef = useRef<HTMLButtonElement>(null);
   const { user } = useContext(UserContext);
+  const canViewTtaRequests = canSeeBehindFeatureFlag(user, RECIPIENT_TTA_REQUEST_FEATURE_FLAG);
   const initialFilters = useMemo(() => createInitialTimelineFilters(), []);
   const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
     user,
     getTimelineFilterKey(recipientId),
     false,
     initialFilters,
-    TIMELINE_FILTER_CONFIG,
+    getTimelineFilterConfig(canViewTtaRequests),
     undefined,
     true
   );
@@ -110,7 +111,7 @@ function TimelineContent({
   const filterQuery = useMemo(() => filtersToQueryString(supportedFilters), [supportedFilters]);
 
   const {
-    events: timelineEvents,
+    events,
     categories,
     count,
     error,
@@ -124,17 +125,6 @@ function TimelineContent({
     listRef,
     restoring,
   } = useTimelineNavigation(recipientId, regionId, supportedFilters, filterQuery);
-  const canViewTtaRequests = canSeeBehindFeatureFlag(user, RECIPIENT_TTA_REQUEST_FEATURE_FLAG);
-  // The API authorizes request data separately from the destination page's release flag.
-  const events = useMemo(
-    () =>
-      canViewTtaRequests
-        ? timelineEvents
-        : timelineEvents.map((event) =>
-            event.source === 'ttaRequest' ? { ...event, links: [] } : event
-          ),
-    [timelineEvents, canViewTtaRequests]
-  );
   const changeView = (value: string) => {
     const nextMode: RecipientTimelineView =
       value === 'monitoring' || value === 'goals' ? value : 'chronological';

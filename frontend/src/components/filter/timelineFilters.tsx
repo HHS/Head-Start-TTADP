@@ -89,7 +89,7 @@ const dateFilter = {
   ),
 };
 
-const eventTypeFilter = {
+const eventTypeFilter = (canViewTtaRequests: boolean) => ({
   id: 'eventType',
   display: 'TTA event type',
   conditions: TIMELINE_SELECT_FILTER_CONDITIONS,
@@ -105,11 +105,13 @@ const eventTypeFilter = {
       onApply={onApplyQuery}
       inputId={`event-type-${condition}-${id}`}
       labelText="Select TTA event types to filter by"
-      options={EVENT_TYPE_OPTIONS}
+      options={EVENT_TYPE_OPTIONS.filter(
+        ({ value }) => canViewTtaRequests || value !== 'TTA request'
+      )}
       selectedValues={query}
     />
   ),
-};
+});
 
 // Filters are saved per recipient, like the RTTAPA and TTA History tabs.
 export const getTimelineFilterKey = (recipientId: string | number): string =>
@@ -119,8 +121,15 @@ export const TIMELINE_FILTER_CONFIG = [
   dateFilter,
   purposeFilter,
   goalCategoryFilter,
-  eventTypeFilter,
+  eventTypeFilter(false),
 ].sort((a, b) => a.display.localeCompare(b.display));
+
+const TIMELINE_FILTER_CONFIG_WITH_TTA_REQUESTS = TIMELINE_FILTER_CONFIG.map((filter) =>
+  filter.id === 'eventType' ? eventTypeFilter(true) : filter
+);
+
+export const getTimelineFilterConfig = (canViewTtaRequests: boolean) =>
+  canViewTtaRequests ? TIMELINE_FILTER_CONFIG_WITH_TTA_REQUESTS : TIMELINE_FILTER_CONFIG;
 
 export const createInitialTimelineFilters = (): TimelineFilter[] => [
   {
