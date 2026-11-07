@@ -7,6 +7,7 @@ import {
   populateTimelineEventIndex,
   queryTimelineEventIndex,
   type TimelineIndexResponse,
+  timelineEventIndexHasEvents,
 } from './recipientTimeline';
 import type { TimelineEventSource } from './recipientTimelineSources';
 
@@ -174,7 +175,11 @@ describe('queryTimelineEventIndex', () => {
         const ascending = await queryTestTimeline({ ...timelineParams, direction: 'asc' }, sources);
         expect(ascending.events).toEqual([...descending.events].reverse());
         const page = await queryTestTimeline({ ...timelineParams, limit: 2, offset: 2 }, sources);
-        expect(page).toEqual({ count: 6, events: descending.events.slice(2, 4) });
+        expect(page).toEqual({
+          count: 6,
+          events: descending.events.slice(2, 4),
+          nextCursor: expect.any(String),
+        });
         const filtered = await queryTestTimeline(
           {
             ...timelineParams,
@@ -279,6 +284,186 @@ describe('queryTimelineEventIndex', () => {
     await expect(queryTestTimeline({ ...timelineParams, offset: 20 })).resolves.toEqual({
       count: 5,
       events: [],
+    });
+  });
+
+  describe('event existence', () => {
+    const hasEvents = (overrides: Partial<RecipientTimelineRequestParams> = {}) =>
+      timelineEventIndexHasEvents({ ...timelineParams, ...overrides, sources: timelineSources });
+
+    it('is true when any event matches and false when none do', async () => {
+      expect(await hasEvents()).toBe(true);
+      expect(
+        await hasEvents({
+          filters: [{ topic: 'eventType', condition: 'is', query: ['TTA activity'] }],
+        })
+      ).toBe(true);
+      expect(
+        await hasEvents({
+          filters: [{ topic: 'date', condition: 'is on or after', query: '01/01/2030' }],
+        })
+      ).toBe(false);
+      expect(await hasEvents({ recipientId: 999999 })).toBe(false);
+    });
+
+    it('agrees with the total count of the paged query', async () => {
+      const filters = [
+        { topic: 'date' as const, condition: 'is on or after' as const, query: '08/22/2026' },
+      ];
+      const { count } = await queryTestTimeline({ ...timelineParams, filters });
+      expect(count > 0).toBe(await hasEvents({ filters }));
+    });
+
+    it('has no events without sources', async () => {
+      expect(await timelineEventIndexHasEvents({ ...timelineParams, sources: [] })).toBe(false);
+    });
+  });
+
+  describe('cursor pagination', () => {
+    const walk = async (
+      params: RecipientTimelineRequestParams,
+      sources: readonly TimelineEventSource[] = timelineSources
+    ) => {
+      const pages = [];
+      let cursor: string | undefined;
+      do {
+        const page = await queryTestTimeline({ ...params, cursor }, sources);
+        pages.push(page);
+        cursor = page.nextCursor;
+      } while (cursor);
+      return pages;
+    };
+    const rows = (ids: number[]) =>
+      source(
+        'communicationLog',
+        `SELECT * FROM (VALUES ${ids
+          .map((id) => `(${id}, DATE '2026-08-${10 + (id % 3)}', 'Email communication', 100000, 1)`)
+          .join(', ')}
+        ) AS "event"("sourceId", "date", "eventType", "recipientId", "regionId")`
+      );
+
+    it.each(['asc', 'desc'] as const)(
+      'visits every event once in %s order, including ties on the same date',
+      async (direction) => {
+        const all = await queryTestTimeline({ ...timelineParams, direction, limit: 100 });
+        expect(all.nextCursor).toBeUndefined();
+        const pages = await walk({ ...timelineParams, direction, limit: 2 });
+        expect(pages.map(({ events }) => events.length)).toEqual([2, 2, 1]);
+        expect(pages.flatMap(({ events }) => events)).toEqual(all.events);
+        expect(pages.every(({ count }) => count === 5)).toBe(true);
+        expect(pages[pages.length - 1].nextCursor).toBeUndefined();
+      }
+    );
+
+    it('does not offer a next page when the last page is exactly full', async () => {
+      const page = await queryTestTimeline({ ...timelineParams, limit: 5 });
+      expect(page.events).toHaveLength(5);
+      expect(page.nextCursor).toBeUndefined();
+    });
+
+    it('does not skip an event when a loaded event is deleted before the next page', async () => {
+      const before = rows([1, 2, 3, 4, 5, 6]);
+      const first = await queryTestTimeline({ ...timelineParams, limit: 3 }, [before]);
+      const unchanged = await queryTestTimeline(
+        { ...timelineParams, limit: 3, cursor: first.nextCursor },
+        [before]
+      );
+      // Delete the first event on the page already loaded.
+      const afterDelete = await queryTestTimeline(
+        { ...timelineParams, limit: 3, cursor: first.nextCursor },
+        [rows([2, 3, 4, 5, 6])]
+      );
+      expect(afterDelete.events).toEqual(unchanged.events);
+      expect(afterDelete.count).toBe(5);
+    });
+
+    it('does not repeat or shift events when one is added ahead of the cursor', async () => {
+      const dated = (entries: Array<[number, string]>) =>
+        source(
+          'communicationLog',
+          `SELECT * FROM (VALUES ${entries
+            .map(([id, date]) => `(${id}, DATE '${date}', 'Email communication', 100000, 1)`)
+            .join(', ')}
+          ) AS "event"("sourceId", "date", "eventType", "recipientId", "regionId")`
+        );
+      const base: Array<[number, string]> = [
+        [1, '2026-08-15'],
+        [2, '2026-08-14'],
+        [3, '2026-08-13'],
+        [4, '2026-08-12'],
+        [5, '2026-08-11'],
+      ];
+      const first = await queryTestTimeline({ ...timelineParams, limit: 2 }, [dated(base)]);
+      expect(first.events.map(({ sourceId }) => sourceId)).toEqual([1, 2]);
+      // A newer event appears above the loaded page; offsets would repeat event 2 here.
+      const next = await queryTestTimeline(
+        { ...timelineParams, limit: 2, cursor: first.nextCursor },
+        [dated([[9, '2026-08-16'], ...base])]
+      );
+      expect(next.events.map(({ sourceId }) => sourceId)).toEqual([3, 4]);
+      expect(next.count).toBe(6);
+    });
+
+    it('keeps sub-millisecond timestamps in the cursor', async () => {
+      const microsecondSource = source(
+        'goalStatusChange',
+        `SELECT * FROM (VALUES
+          (1, TIMESTAMPTZ '2026-08-22 10:00:00.000123+00', 'Goal added', 100000, 1),
+          (2, TIMESTAMPTZ '2026-08-22 10:00:00.000456+00', 'Goal added', 100000, 1),
+          (3, TIMESTAMPTZ '2026-08-22 10:00:00.000789+00', 'Goal added', 100000, 1)
+        ) AS "event"("sourceId", "date", "eventType", "recipientId", "regionId")`
+      );
+      const pages = await walk({ ...timelineParams, limit: 1 }, [microsecondSource]);
+      expect(pages.flatMap(({ events }) => events.map(({ sourceId }) => sourceId))).toEqual([
+        3, 2, 1,
+      ]);
+    });
+
+    it.each([
+      ['not base64 json', 'not-a-cursor'],
+      ['wrong shape', Buffer.from(JSON.stringify({ a: 1 })).toString('base64url')],
+      [
+        'a malformed timestamp',
+        Buffer.from(
+          JSON.stringify(["2026-08-22'; DROP TABLE x --", 'communicationLog', 1])
+        ).toString('base64url'),
+      ],
+      ...[
+        '2026-99-99 10:00:00',
+        '2026-02-30 10:00:00',
+        '2026-08-22 25:00:00',
+        '2026-08-22 10:61:00',
+        '2026-08-22T10:00:61.123456',
+        '0000-01-01 10:00:00',
+      ].map((occurredAt) => [
+        `an out of range timestamp (${occurredAt})`,
+        Buffer.from(JSON.stringify([occurredAt, 'communicationLog', 1])).toString('base64url'),
+      ]),
+      [
+        'an unsafe source name',
+        Buffer.from(JSON.stringify(['2026-08-22 10:00:00', 'a b', 1])).toString('base64url'),
+      ],
+      [
+        'a non-integer id',
+        Buffer.from(JSON.stringify(['2026-08-22 10:00:00', 'communicationLog', '1'])).toString(
+          'base64url'
+        ),
+      ],
+    ])('rejects a cursor that is %s', async (_description, cursor) => {
+      await expect(queryTestTimeline({ ...timelineParams, cursor })).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Timeline cursor is invalid',
+      });
+    });
+
+    it('rejects a cursor combined with an offset', async () => {
+      const first = await queryTestTimeline({ ...timelineParams, limit: 2 });
+      await expect(
+        queryTestTimeline({ ...timelineParams, offset: 2, cursor: first.nextCursor })
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Timeline cursor cannot be combined with offset',
+      });
     });
   });
 

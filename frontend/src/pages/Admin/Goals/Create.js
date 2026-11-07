@@ -106,7 +106,9 @@ export default function Create() {
   useEffect(() => {
     async function fetchPrompts() {
       try {
-        const templatePrompts = await getGoalTemplatePrompts(templateId);
+        // The response is [promptsWithResponses, prompts]. The second entry is only set
+        // for activity reports, so it is null here.
+        const [templatePrompts] = await getGoalTemplatePrompts(templateId);
         setPrompts(templatePrompts);
       } catch (err) {
         // eslint-disable-next-line no-console
