@@ -136,9 +136,10 @@ describe('Recipient Record - TTA Timeline', () => {
       expect(getRecipientTimeline).toHaveBeenLastCalledWith(
         '401',
         '1',
-        expect.objectContaining({ direction: 'asc', offset: 0 })
+        expect.objectContaining({ direction: 'asc' })
       )
     );
+    expect(getRecipientTimeline.mock.calls.at(-1)[2].cursor).toBeUndefined();
   });
 
   it('does not render or submit filters removed from the timeline configuration', async () => {
@@ -206,7 +207,7 @@ describe('Recipient Record - TTA Timeline', () => {
 
   it('falls back to a "Load more events" button without IntersectionObserver', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 27, events: batch(1, 25) })
+      .mockResolvedValueOnce({ count: 27, events: batch(1, 25), nextCursor: 'after-25' })
       .mockResolvedValueOnce({ count: 27, events: batch(26, 2) });
     renderTimeline();
     await screen.findByRole('heading', { name: 'Event 25' });
@@ -217,7 +218,7 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(getRecipientTimeline).toHaveBeenLastCalledWith(
       '401',
       '1',
-      expect.objectContaining({ limit: 25, offset: 25 })
+      expect.objectContaining({ limit: 25, cursor: 'after-25' })
     );
     expect(screen.getAllByRole('listitem')).toHaveLength(27);
     expect(screen.getByTestId('timeline-results')).toHaveTextContent('27 timeline events');
@@ -234,8 +235,8 @@ describe('Recipient Record - TTA Timeline', () => {
     'announces %i-based non-final batches with %i distinct events loaded',
     async (start, loaded) => {
       getRecipientTimeline
-        .mockResolvedValueOnce({ count: 75, events: batch(1, 25) })
-        .mockResolvedValueOnce({ count: 75, events: batch(start, 25) });
+        .mockResolvedValueOnce({ count: 75, events: batch(1, 25), nextCursor: 'after-25' })
+        .mockResolvedValueOnce({ count: 75, events: batch(start, 25), nextCursor: 'after-50' });
       renderTimeline();
       await waitFor(() =>
         expect(screen.getByRole('status')).toHaveTextContent('25 of 75 events loaded.')
@@ -251,7 +252,7 @@ describe('Recipient Record - TTA Timeline', () => {
 
   it('keeps loaded events visible and retries when a later slice fails', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 26, events: batch(1, 25) })
+      .mockResolvedValueOnce({ count: 26, events: batch(1, 25), nextCursor: 'after-25' })
       .mockRejectedValueOnce(new Error('failed'))
       .mockResolvedValueOnce({ count: 26, events: batch(26, 1) });
     renderTimeline();
@@ -266,14 +267,15 @@ describe('Recipient Record - TTA Timeline', () => {
     );
     expect(await screen.findByRole('heading', { name: 'Event 26' })).toBeVisible();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(getRecipientTimeline.mock.calls.slice(1).map((call) => call[2].offset)).toEqual([
-      25, 25,
+    expect(getRecipientTimeline.mock.calls.slice(1).map((call) => call[2].cursor)).toEqual([
+      'after-25',
+      'after-25',
     ]);
   });
 
   it('shows a later slice failure next to the retry button, not above the list', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 26, events: batch(1, 25) })
+      .mockResolvedValueOnce({ count: 26, events: batch(1, 25), nextCursor: 'after-25' })
       .mockRejectedValueOnce(new Error('failed'));
     renderTimeline();
     await screen.findByRole('heading', { name: 'Event 25' });
@@ -331,8 +333,9 @@ describe('Recipient Record - TTA Timeline', () => {
     expect(getRecipientTimeline).toHaveBeenLastCalledWith(
       '401',
       '1',
-      expect.objectContaining({ offset: 0, limit: 25 })
+      expect.objectContaining({ limit: 25 })
     );
+    expect(getRecipientTimeline.mock.calls.at(-1)[2].cursor).toBeUndefined();
   });
 
   it('loads the next slice on scroll, keeps existing events visible, and ends without visible wording', async () => {
@@ -345,7 +348,7 @@ describe('Recipient Record - TTA Timeline', () => {
     });
     let resolveNext;
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 27, events: batch(1, 25) })
+      .mockResolvedValueOnce({ count: 27, events: batch(1, 25), nextCursor: 'after-25' })
       .mockReturnValueOnce(
         new Promise((resolve) => {
           resolveNext = resolve;
@@ -357,8 +360,9 @@ describe('Recipient Record - TTA Timeline', () => {
       expect(getRecipientTimeline).toHaveBeenCalledWith(
         '401',
         '1',
-        expect.objectContaining({ limit: 25, offset: 0 })
+        expect.objectContaining({ limit: 25 })
       );
+      expect(getRecipientTimeline.mock.calls[0][2].cursor).toBeUndefined();
       act(() => {
         intersect([{ isIntersecting: true }]);
         intersect([{ isIntersecting: true }]);
@@ -369,7 +373,7 @@ describe('Recipient Record - TTA Timeline', () => {
       expect(getRecipientTimeline).toHaveBeenLastCalledWith(
         '401',
         '1',
-        expect.objectContaining({ limit: 25, offset: 25 })
+        expect.objectContaining({ limit: 25, cursor: 'after-25' })
       );
       await act(async () => resolveNext({ count: 27, events: batch(25, 2) }));
       expect(screen.getAllByRole('listitem')).toHaveLength(26);

@@ -143,8 +143,10 @@ function TimelineContent({
             event.tags.some(({ label }) => label === category.label)
           ),
         }))
-        .filter((group) => group.events.length > 0),
-    [categories, events]
+        // The API lists every category with events in the filters, so show all of them while more
+        // events are still to come. Once everything has loaded, hide any category left empty.
+        .filter((group) => hasMore || group.events.length > 0),
+    [categories, events, hasMore]
   );
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => new Set());
   const allCategoriesCollapsed =
@@ -311,6 +313,7 @@ function TimelineContent({
                         <TimelineCategory
                           category={category}
                           events={categoryEvents}
+                          awaitingEvents={hasMore}
                           expanded={!collapsedCategories.has(category.label)}
                           onExpandedChange={(expanded) => {
                             setCollapsedCategories((current) => {

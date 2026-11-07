@@ -56,8 +56,12 @@ get:
     Filters combine with AND, including the multi-recipient exclusion when enabled. Filtering and
     ordering apply to the full combined event index before counts, limit, and offset. Newest first
     (desc) is the default; asc returns oldest first. Clients must send the same controls on each
-    page request and reset offset to zero when controls change. Ordering is stable for unchanged
-    data; concurrent changes between requests may shift offset-based pages.
+    page request and start over without a cursor when controls change. Ordering is stable for
+    unchanged data. When more events follow a page, the response includes `nextCursor`; send it
+    as `cursor` to get the next page, which starts immediately after the last returned event even
+    if events were added or deleted in between. Offset pages can skip or repeat events when data
+    changes between requests, so clients should use `cursor`. `cursor` cannot be combined with a
+    nonzero `offset`; a malformed cursor returns 400.
     Goal presentations include the event title, goal name as subtitle, recorded author and roles
     as byline (falling back to the associated user's name), and available previous/new status,
     reason, context, and grant number details. Missing optional values are omitted from details;
@@ -69,7 +73,11 @@ get:
     Curated standard templates qualify without requiring the legacy isRttapa flag, which the
     current standard-goal creation flow leaves unset.
     View constraints combine with user filters before counts and pagination. Grouped responses
-    include categories sorted alphabetically. Each category's statuses array contains at most
+    include categories sorted alphabetically, limited to categories with at least one event under
+    the request's filters. The first page (no cursor, zero offset) lists every such category.
+    Later pages list only the categories of the events on that page, so a client can add a
+    category that had no events when the first page loaded, such as after a backdated event was
+    added. Each category's statuses array contains at most
     one value: the current status of its eligible goal with the latest status change, using
     performedAt or the history row's createdAt. Goals without history use their creation date;
     timestamp ties use the higher goal ID. A missing status produces an empty array. Header
@@ -106,6 +114,14 @@ get:
         type: integer
         minimum: 0
         default: 0
+    - in: query
+      name: cursor
+      required: false
+      description: Opaque value from a previous response's `nextCursor`. Replaces `offset`.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
     - in: query
       name: sortBy
       required: false
@@ -276,7 +292,11 @@ get:
             properties:
               categories:
                 type: array
-                description: Category metadata for monitoring and goals views; omitted for chronological.
+                description: >-
+                  Category metadata for monitoring and goals views. The first page lists every
+                  category with events under the request's filters. Pages requested with a cursor
+                  or offset list only the categories of that page's events. Omitted for
+                  chronological.
                 items:
                   type: object
                   required: [label, statuses]
@@ -290,6 +310,9 @@ get:
               count:
                 type: integer
                 minimum: 0
+              nextCursor:
+                type: string
+                description: Present only when more events follow this page. Send as `cursor`.
               events:
                 type: array
                 items:

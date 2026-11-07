@@ -66,7 +66,8 @@ it.each([undefined, {}, { canReadCommunicationLogs: false }])(
     expect(sql).not.toContain('communicationLog');
     expect(sql).toContain('activityReport');
     expect(sql).toContain('goalStatusChange');
-    expect(options).toMatchObject({ replacements: { timelineLimit: 1, timelineOffset: 1 } });
+    // The query asks for one row beyond the page size to learn whether another page exists.
+    expect(options).toMatchObject({ replacements: { timelineLimit: 2, timelineOffset: 1 } });
     expect(result).toMatchObject({ count: 2, events: [{ source: 'goalStatusChange' }] });
     expect(RECIPIENT_TIMELINE_SOURCES[2].buildIndexQuery).not.toHaveBeenCalled();
     expect(RECIPIENT_TIMELINE_SOURCES[2].populate).not.toHaveBeenCalled();
