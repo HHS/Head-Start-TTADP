@@ -51,6 +51,12 @@ Three vocabularies, matching the three tables they're recorded in:
 
 - `reviews_created` → `reviews_created_region_zero` (alert)
 - `findings_delivered` → `findings_delivered_month_spike` (alert)
+- `findings_delivered_deficiency` → `findings_delivered_deficiency_month_spike` (alert)
+- `closure_count` → `finding_closure_month_spike` (alert), `finding_closure_stalled` (alert)
+- `import_lag_elevated_z` → `import_lag_zscore_elevated` (alert)
+- `source_lag_elevated_z` → `source_lag_zscore_elevated` (alert)
+- `completion_gap_elevated_z` → `completion_gap_zscore_elevated` (alert)
+- *(no backing stat — computed inline from the same per-review data as the three Z-score stats above)* → `review_lag_region_week_all_elevated` (alert)
 
 ### Gate checks (no backing observation)
 
@@ -123,6 +129,18 @@ Data logic only — severity, message wording, and freshness windows are in [Che
 
 **`findings_delivered`** (`monitoring_findings`, monthly, per region/geo **and national**) — distinct findings by first delivery date. A finding on grants in multiple regions is counted in each region slice, so per-region rows must not be summed for a national figure; the `region_id = 0` row carries the deduplicated national count instead.
 
+**`findings_delivered_<type>`** (`monitoring_findings`, monthly, per region/geo **and national**) — the same `findings_delivered` measure, split into `findings_delivered_area_of_concern` / `findings_delivered_deficiency` / `findings_delivered_noncompliance` by `Citations.calculated_finding_type`. Sourced from `Citations` (`initial_report_delivery_date`, `calculated_finding_type`).
+
+**`closure_count`** (`monitoring_finding_closure`, monthly, per region/geo **and national**) — distinct Citations whose `closed_date` fell in that month. `closed_date` is a raw passthrough on `Citations`, not computed through the status-chain logic the way `active`/`active_through` are — fine as a trend to watch, but not reliable enough to use as a filter classifying a finding as open or closed elsewhere.
+
+Three weekly, national-only measures (`import_lag_days`, `source_lag_days`, `completion_gap_days`) share one mechanic: each week, a review counts as "elevated" past its own day-threshold; the week's elevated fraction (`elevated_count / sample_count`) is then expressed as a Z-score against the trailing 52 weeks of that same weekly fraction (mean and standard deviation of the prior weeks' fractions, not of individual reviews) — self-calibrating, so a given Z-score means the same thing regardless of the measure's natural scale, without a hand-picked trigger percentage. The Z-score is the stored `value`; `elevated_count` and `sample_count` are stored alongside as their own stats for context. No Z-score is recorded for a week with fewer than 20 trailing weeks of data or fewer than 20 reviews in the current week itself. Recomputed over the full history each run, same as the other stats. Weekly and national-only: weekly regional volume is too sparse for a fraction to be meaningful.
+
+**`import_lag_days`** — the gap between a review's `reportDeliveryDate` and when our own audit log first recorded it (`dml_timestamp`). Elevated at >7 days, chosen to land at a ~3.7% baseline rate (matches the day-count the existing per-entity `review_delivery_report_lag` check already uses). Stats: `import_lag_elevated_z`, `import_lag_elevated_count`, `import_lag_sample_count`.
+
+**`source_lag_days`** — the same gap, but against `sourceUpdatedAt` as of that same audit row instead of our own write time, isolating lag introduced in steps outside TTA Hub. Elevated at >5 days (~3.5% baseline). Stats: `source_lag_elevated_z`, `source_lag_elevated_count`, `source_lag_sample_count`.
+
+**`completion_gap_days`** — the absolute gap between a review's first transition to `Complete` status and `sourceUpdatedAt` as of the same audit row used for `source_lag_days` — not `reportDeliveryDate`'s own value, which is routinely backdated and doesn't represent when it was actually recorded. Absolute value because either side can lead: both the delivery record and the `Complete` status have to be set before a review's citations are visible in the TTA Hub, so a large gap in either direction is the same kind of problem. Elevated at >2 days (~4.5% baseline). Stats: `completion_gap_elevated_z`, `completion_gap_elevated_count`, `completion_gap_sample_count`.
+
 ## Check definitions
 
 Severity, message logic, and window for each check that can reach Slack. See [Windows](./monitoring-data-validation.md#conventions) in the process doc for what `since previous cycle` means mechanically.
@@ -138,6 +156,20 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 **`reviews_created_region_zero`** — alert when a region created zero reviews over the last four complete weeks, and the cross-region four-week average exceeds 5 (so a quiet season doesn't false-alarm). Window: none (recomputed fresh every run over its own rolling 4-week data window).
 
 **`findings_delivered_month_spike`** — alert when the last complete month delivered >50% as many findings as the entire twelve months before it. Window: none (recomputed fresh every run over its own rolling 13-month data window).
+
+**`findings_delivered_deficiency_month_spike`** — same shape as `findings_delivered_month_spike`, applied to the Deficiency-only slice so a type-specific spike can fire even when the blended total looks unremarkable. Window: none (recomputed fresh every run over its own rolling 13-month data window).
+
+**`finding_closure_month_spike`** — alert when the last complete month closed >50% as many findings as the entire twelve months before it. Window: none (recomputed fresh every run over its own rolling 13-month data window).
+
+**`finding_closure_stalled`** — alert when zero findings closed nationally in each of the last 2 complete months while more than 20 Citations are currently `active`. Window: none (recomputed fresh every run over its own rolling 2-month data window plus the current live Citations count).
+
+**`import_lag_zscore_elevated`** — alert when the last complete week's `import_lag_elevated_z` exceeds +2. Window: none (recomputed fresh every run over its own rolling 53-week data window: the current week plus 52 trailing weeks).
+
+**`source_lag_zscore_elevated`** — alert when the last complete week's `source_lag_elevated_z` exceeds +2. Window: none (recomputed fresh every run over its own rolling 53-week data window: the current week plus 52 trailing weeks).
+
+**`completion_gap_zscore_elevated`** — alert when the last complete week's `completion_gap_elevated_z` exceeds +2. Window: none (recomputed fresh every run over its own rolling 53-week data window: the current week plus 52 trailing weeks).
+
+**`review_lag_region_week_all_elevated`** — alert when every review a region delivered in the last complete week (at least 2) was elevated on at least one of `import_lag_days`/`source_lag_days`/`completion_gap_days`. Backtested against production data: fired only on the weeks of two known real incidents (including an early-2025 import slowdown) across roughly two years of history. Window: none (recomputed fresh every run over the last complete week only).
 
 ### Entity-based
 

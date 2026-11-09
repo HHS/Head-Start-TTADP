@@ -10,7 +10,6 @@ import { QueryTypes } from 'sequelize';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
 import { auditLogger, logger } from '../../logger';
 import { sequelize } from '../../models';
-import safeParse from '../../models/helpers/safeParse';
 import {
   activityReportsApprovedByDate,
   activityReportsChangesRequestedByDate,
@@ -668,6 +667,120 @@ export const trSessionSubmittedForApproval = async (event, session) => {
 };
 
 /**
+ * Notifies each event collaborator (except the owner) that a TR session was submitted for
+ * approval, provided they have opted in to receiving this email immediately. Callers are
+ * responsible for only invoking this on a first submission; resubmissions are TR-5d.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ */
+export const trSessionSubmittedToCollaborators = async (event, session) => {
+  if (process.env.CI) return;
+  try {
+    const { eventId, ownerId } = event;
+    const collaboratorIds = [...new Set(event.collaboratorIds ?? [])].filter(
+      (collaboratorId) => collaboratorId !== ownerId
+    );
+
+    await Promise.all(
+      collaboratorIds.map(async (collaboratorId) => {
+        const setting = await userSettingOverridesById(
+          collaboratorId,
+          EMAIL_ACTIONS.SESSION_SUBMITTED_COLLABORATOR_TRAINING_REPORT
+        );
+        if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return null;
+
+        const collaborator = await userById(collaboratorId, true);
+        if (!collaborator) return null;
+
+        const emailTo = filterAndDeduplicateEmails([collaborator.email]);
+        if (emailTo.length === 0) {
+          logger.info(
+            `Did not send tr session submitted collaborator notification for ${eventId} preferences are not set or marked as "no-send"`
+          );
+          return null;
+        }
+
+        const data = {
+          displayId: eventId,
+          sessionName: session.data.sessionName,
+          reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId}`,
+          emailTo,
+          debugMessage: `MAILER: Notifying ${collaborator.email} that session ${session.id} for TR ${event.id} was submitted for approval`,
+          templatePath: 'tr_session_submitted',
+          report: {
+            displayId: eventId,
+          },
+          ...referenceData(),
+        };
+
+        return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED, data);
+      })
+    );
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * Notifies the event creator (owner) that the approver requested changes to a TR session,
+ * provided they have opted in to receiving this email immediately.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ */
+export const trSessionChangesRequested = async (event, session) => {
+  if (process.env.CI) return;
+  try {
+    const { ownerId, eventId } = event;
+
+    const setting = await userSettingOverridesById(
+      ownerId,
+      EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT
+    );
+    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+
+    const [owner, approver] = await Promise.all([
+      userById(ownerId, true),
+      session.approverId ? userById(session.approverId) : null,
+    ]);
+    if (!owner) {
+      throw new Error(
+        `Unable to notify owner ${ownerId} that changes were requested on session ${session.id}, a user with that ID does not exist`
+      );
+    }
+
+    const emailTo = filterAndDeduplicateEmails([owner.email]);
+
+    if (emailTo.length === 0) {
+      logger.info(
+        `Did not send tr session changes requested notification for ${eventId} preferences are not set or marked as "no-send"`
+      );
+      return;
+    }
+
+    const data = {
+      displayId: eventId,
+      sessionName: session.data.sessionName,
+      approverName: approver?.fullName || approver?.name,
+      comments: session.data.managerNotes,
+      reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${session.id}`,
+      emailTo,
+      debugMessage: `MAILER: Notifying ${owner.email} that changes were requested on session ${session.id} for TR ${event.id}`,
+      templatePath: 'tr_session_changes_requested',
+      report: {
+        displayId: eventId,
+      },
+      ...referenceData(),
+    };
+
+    await notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
  *
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
@@ -682,9 +795,7 @@ export const trCollaboratorAdded = async (report, newCollaboratorId) => {
       );
     }
 
-    // due to the way sequelize sends the JSON column :(
-    const parsedData = safeParse(report); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
+    const { eventId } = report;
     const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
@@ -726,9 +837,7 @@ export const trOwnerAdded = async (report, ownerId) => {
   try {
     const owner = await userById(ownerId, true);
 
-    // due to the way sequelize sends the JSON column :(
-    const parsedData = safeParse(report); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
+    const { eventId } = report;
     if (!eventId) {
       throw new Error(
         `Missing eventId for trOwnerAdded notification on TR ${report?.id || 'unknown'}`
@@ -766,8 +875,7 @@ export const trEventComplete = async (event) => {
       (id) => id && id !== event.ownerId
     );
 
-    const parsedData = safeParse(event); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
+    const { eventId } = event;
     const eId = eventId;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
 
@@ -1315,6 +1423,7 @@ const TR_EMAIL_ACTIONS = [
   EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
   EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
   EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED,
+  EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION,
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
   EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,

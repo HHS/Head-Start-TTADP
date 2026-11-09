@@ -11,6 +11,7 @@ import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import {
   createInitialTimelineFilters,
+  getTimelineFilterKey,
   TIMELINE_FILTER_CONFIG,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
@@ -22,11 +23,13 @@ import UserContext from '../../../UserContext';
 import { filtersToQueryString } from '../../../utils';
 import './Timeline.css';
 
-const FILTER_KEY = 'timeline-filters';
-
 interface TimelineProps {
   recipientId: string;
   regionId: string;
+}
+
+interface TimelineContentProps extends TimelineProps {
+  focusViewOnMount: boolean;
 }
 
 export default function Timeline(props: TimelineProps): React.ReactElement {
@@ -35,7 +38,13 @@ export default function Timeline(props: TimelineProps): React.ReactElement {
   }>();
   const mode = state?.timelineView?.mode || 'chronological';
   const { action } = useHistory();
-  const [navigation, setNavigation] = useState({ pathname, search, mode, version: 0 });
+  const [navigation, setNavigation] = useState({
+    pathname,
+    search,
+    mode,
+    version: 0,
+    focusView: false,
+  });
   if (
     navigation.pathname !== pathname ||
     navigation.search !== search ||
@@ -49,25 +58,43 @@ export default function Timeline(props: TimelineProps): React.ReactElement {
       search,
       mode,
       version: navigation.version + (action === 'POP' || navigation.mode !== mode ? 1 : 0),
+      // The remount drops focus to the page body. Put it back on View, but not on Back/Forward.
+      focusView: action !== 'POP' && navigation.mode !== mode,
     });
   }
-  return <TimelineContent key={navigation.version} {...props} />;
+  // Filters are saved per recipient, so switching recipients must remount to read the
+  // destination's filters instead of writing the previous recipient's under its key.
+  return (
+    <TimelineContent
+      key={`${props.recipientId}-${props.regionId}-${navigation.version}`}
+      focusViewOnMount={navigation.focusView}
+      {...props}
+    />
+  );
 }
 
-function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactElement {
+function TimelineContent({
+  recipientId,
+  regionId,
+  focusViewOnMount,
+}: TimelineContentProps): React.ReactElement {
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
   const filterHelpDrawerRef = useRef<HTMLButtonElement>(null);
   const { user } = useContext(UserContext);
   const initialFilters = useMemo(() => createInitialTimelineFilters(), []);
   const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
     user,
-    FILTER_KEY,
+    getTimelineFilterKey(recipientId),
     false,
     initialFilters,
     TIMELINE_FILTER_CONFIG,
     undefined,
     true
   );
+
+  useEffect(() => {
+    if (focusViewOnMount) document.getElementById('timeline-sort')?.focus();
+  }, [focusViewOnMount]);
 
   const supportedFilterTopics = useMemo(
     () => new Set(filterConfig.map(({ id }) => id)),
@@ -102,25 +129,10 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
       mode: nextMode,
       direction: value === 'asc' ? ('asc' as const) : ('desc' as const),
     };
-    if (nextMode !== mode) {
-      const otherFilters = supportedFilters.filter(({ topic }) => topic !== 'standard');
-      setView(
-        changes,
-        nextMode === 'monitoring'
-          ? [
-              ...otherFilters,
-              {
-                id: 'timeline-monitoring-category',
-                topic: 'standard',
-                condition: 'is',
-                query: ['Monitoring'],
-              },
-            ]
-          : otherFilters
-      );
-      return;
-    }
-    setView(changes);
+    // The API applies each view's goal category constraint itself, so the Monitoring view adds
+    // no filter pill, and a goal category filter chosen by the user persists across views.
+    // A mode change keeps the current filters but still starts a new history entry.
+    setView(changes, nextMode !== mode ? supportedFilters : undefined);
   };
   const groupedEvents = useMemo(
     () =>
@@ -131,8 +143,10 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
             event.tags.some(({ label }) => label === category.label)
           ),
         }))
-        .filter((group) => group.events.length > 0),
-    [categories, events]
+        // The API lists every category with events in the filters, so show all of them while more
+        // events are still to come. Once everything has loaded, hide any category left empty.
+        .filter((group) => hasMore || group.events.length > 0),
+    [categories, events, hasMore]
   );
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => new Set());
   const allCategoriesCollapsed =
@@ -237,12 +251,12 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
           <div className="padding-3">
             <h2 className="font-sans-lg margin-top-0 margin-bottom-2">TTA timeline</h2>
             <div className="display-flex flex-align-center flex-wrap flex-gap-3">
-              <div className="display-flex flex-align-center">
+              <div className="display-flex flex-align-center flex-wrap maxw-full">
                 <label className="margin-right-1 text-no-wrap" htmlFor="timeline-sort">
                   View
                 </label>
                 <Dropdown
-                  className="margin-top-0 width-mobile"
+                  className="margin-top-0 width-mobile maxw-full"
                   id="timeline-sort"
                   name="timeline-sort"
                   value={mode === 'chronological' ? direction : mode}
@@ -280,7 +294,7 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
           </div>
 
           <div className="border-top smart-hub-border-base-lighter padding-3 minh-card">
-            {error && (
+            {error && events.length === 0 && (
               <Alert type="error" role="alert" headingLevel="h3" slim>
                 {error}
               </Alert>
@@ -299,6 +313,7 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
                         <TimelineCategory
                           category={category}
                           events={categoryEvents}
+                          awaitingEvents={hasMore}
                           expanded={!collapsedCategories.has(category.label)}
                           onExpandedChange={(expanded) => {
                             setCollapsedCategories((current) => {
@@ -337,6 +352,12 @@ function TimelineContent({ recipientId, regionId }: TimelineProps): React.ReactE
                   </span>
                 )}
               </p>
+              {/* A failed later slice reports next to Retry, not above the list. */}
+              {error && events.length > 0 && (
+                <Alert type="error" role="alert" headingLevel="h3" slim>
+                  {error}
+                </Alert>
+              )}
               {/* Infinite scroll replaces "Load more" where supported; retry is always offered. */}
               {!loading && (error || (hasMore && !restoring && !supportsIntersectionObserver)) && (
                 <Button type="button" onClick={loadMore} className="margin-top-2">
