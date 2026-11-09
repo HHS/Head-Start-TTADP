@@ -606,6 +606,29 @@ function run_task {
     fi
 }
 
+# Print the app's task list, retrying when cf cannot list it. Returns non-zero after the last
+# failed attempt so callers never read an API error as "no active tasks". Callers run this
+# under `if`/`||`/`!`, where errexit is off, so the status must be checked explicitly
+function list_tasks() {
+    local app_name=$1
+    local attempts=${2:-3}
+    local attempt output
+
+    for (( attempt = 1; attempt <= attempts; attempt++ )); do
+        if output=$(cf tasks "$app_name" 2>&1); then
+            echo "$output"
+            return 0
+        fi
+        log "WARN" "Failed to list tasks for '$app_name' (attempt $attempt of $attempts): $output"
+        if (( attempt < attempts )); then
+            sleep 10
+        fi
+    done
+
+    log "ERROR" "Could not list tasks for '$app_name'."
+    return 1
+}
+
 # Function to monitor task
 function monitor_task {
     local app_name="tta-automation"
@@ -614,16 +637,21 @@ function monitor_task {
 
     validate_parameters "$task_name"
     local start_time
-    local task_id
+    local task_id=""
     local task_state="PENDING"
     start_time=$(date +%s)
     log "INFO" "Monitoring task status. Waiting for task to complete..."
     while true; do
-        local task_info
-        task_info=$(cf tasks "$app_name" | grep "$task_name" | head -n 1)
-        task_id=$(echo "$task_info" | awk '{print $1}')
-        task_state=$(echo "$task_info" | awk '{print $3}')
-        log "INFO" "Task $task_id is currently $task_state."
+        local tasks task_info
+        # On a failed listing keep the last known task ID, so a timeout can still terminate it
+        if tasks=$(list_tasks "$app_name"); then
+            task_info=$(awk -v name="$task_name" '$2 == name {print; exit}' <<< "$tasks")
+            task_id=$(awk '{print $1}' <<< "$task_info")
+            task_state=$(awk '{print $3}' <<< "$task_info")
+        else
+            task_state="UNKNOWN"
+        fi
+        log "INFO" "Task ${task_id:-?} is currently $task_state."
         if [[ "$task_state" == "SUCCEEDED" ]]; then
             log "INFO" "Task completed successfully."
             return 0
@@ -667,11 +695,17 @@ function terminate_task_and_wait() {
     start_time=$(date +%s)
     local current_time
     local task_state
+    local tasks
     while true; do
-        task_state=$(cf tasks "$app_name" | awk -v id="$task_id" '$1 == id {print $3}')
-        if [[ "$task_state" != "PENDING" && "$task_state" != "RUNNING" && "$task_state" != "CANCELING" ]]; then
-            log "INFO" "Task $task_id is no longer active (${task_state:-not listed})."
-            return 0
+        # A failed listing says nothing about the task, so keep waiting rather than report it stopped
+        if tasks=$(list_tasks "$app_name"); then
+            task_state=$(awk -v id="$task_id" '$1 == id {print $3}' <<< "$tasks")
+            if [[ "$task_state" != "PENDING" && "$task_state" != "RUNNING" && "$task_state" != "CANCELING" ]]; then
+                log "INFO" "Task $task_id is no longer active (${task_state:-not listed})."
+                return 0
+            fi
+        else
+            task_state="UNKNOWN"
         fi
 
         current_time=$(date +%s)
@@ -695,8 +729,14 @@ function terminate_active_tasks_matching() {
 
     validate_json "$patterns_json"
 
+    local tasks
+    if ! tasks=$(list_tasks "$app_name"); then
+        log "ERROR" "Cannot tell whether a task that must be stopped is active."
+        return 1
+    fi
+
     local active_tasks
-    active_tasks=$(cf tasks "$app_name" | awk '/^[0-9]+/ && ($3 == "RUNNING" || $3 == "PENDING" || $3 == "CANCELING") {print $1, $2}')
+    active_tasks=$(awk '/^[0-9]+/ && ($3 == "RUNNING" || $3 == "PENDING" || $3 == "CANCELING") {print $1, $2}' <<< "$tasks")
 
     local task_id task_name
     while read -r task_id task_name; do
@@ -720,9 +760,15 @@ function check_active_tasks() {
     start_time=$(date +%s)
     local current_time
     local active_tasks
+    local tasks
 
     while true; do
-        active_tasks=$(cf tasks "$app_name" | grep -E "RUNNING|PENDING|CANCELING")
+        # A failed listing counts as still active, so cleanup never runs beside a live task
+        if tasks=$(list_tasks "$app_name"); then
+            active_tasks=$(awk '/^[0-9]+/ && ($3 == "RUNNING" || $3 == "PENDING" || $3 == "CANCELING")' <<< "$tasks")
+        else
+            active_tasks="unknown"
+        fi
 
         if [ -z "$active_tasks" ]; then
             log "INFO" "No active tasks found in application '$app_name'."
