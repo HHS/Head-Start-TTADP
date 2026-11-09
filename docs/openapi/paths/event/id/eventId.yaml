@@ -9,13 +9,20 @@ get:
       required: true
       schema:
         type: integer
+    - name: includeSessions
+      in: query
+      description: Set to false to omit session reports (returned as an empty array)
+      required: false
+      schema:
+        type: boolean
+        default: true
   responses:
-    '200':
+    "200":
       description: OK
       content:
         application/json:
           schema:
-            $ref: '../../../index.yaml#/components/schemas/event'
+            $ref: "../../../index.yaml#/components/schemas/event"
 put:
   tags:
     - event
@@ -60,5 +67,5 @@ delete:
       schema:
         type: integer
   responses:
-    '200':
+    "200":
       description: OK

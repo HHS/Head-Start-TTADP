@@ -105,6 +105,8 @@
   $ref: './event/pocId/pocId.yaml'
 '/event/collaboratorId/${collaboratorId}':
   $ref: './event/collaboratorId/collaboratorId.yaml'
+'/events/{status}':
+  $ref: './event/status/status.yaml'
 
 '/session-reports':
   $ref: './session-reports/index.yaml'
