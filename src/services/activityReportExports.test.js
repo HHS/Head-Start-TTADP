@@ -366,7 +366,11 @@ describe('activityReportExports', () => {
         expect(rowCount).toBe(1);
         expect(csv).toContain(`R${REGION_ID}-AR-${report.id}`);
         expect(findReports).toHaveBeenCalledWith(
-          expect.objectContaining({ attributes: ['id'], raw: true })
+          expect.objectContaining({
+            attributes: ['id'],
+            raw: true,
+            transaction: expect.objectContaining({ finished: 'commit' }),
+          })
         );
       } finally {
         findReports.mockRestore();

@@ -16,11 +16,10 @@
 //      keep pulling past the deadline, and a race against the per-chunk
 //      backpressure wait stops a client stalled on 'drain' (which Postgres'
 //      statement/idle timeouts can't catch, since no query is in flight there).
-import { REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
-import { Op, QueryTypes, type Transaction } from 'sequelize';
+import { QueryTypes, type Transaction } from 'sequelize';
 import db from '../models';
-import filtersToScopes from '../scopes';
+import { approvedActivityReportWhere } from './activityReports';
 import { readJsonHeaderFromFile } from './ssdi';
 
 export const EXPORT_DATA_SETS = {
@@ -272,14 +271,9 @@ export async function streamActivityReportExportCsv(
     });
 
     if (filters !== undefined) {
-      const { activityReport: scopes } = await filtersToScopes(filters, { userId });
       const reports = await db.ActivityReport.findAll({
         attributes: ['id'],
-        where: {
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-          regionId: { [Op.in]: regionIds },
-          [Op.and]: scopes,
-        },
+        where: await approvedActivityReportWhere(filters, regionIds, userId),
         raw: true,
         transaction,
       });
