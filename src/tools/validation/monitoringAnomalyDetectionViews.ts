@@ -35,6 +35,8 @@ export const recreateAnomalyDetectionViews = async (
     )
     SELECT
       c.mfid entity_id,
+      c.active citation_active,
+      (c.calculated_finding_type = 'Area of Concern') aoc,
       category.category category,
       citation_review_count.scalar citation_review_count,
       citation_grant_count.scalar citation_grant_count,
@@ -42,6 +44,7 @@ export const recreateAnomalyDetectionViews = async (
       citation_days_review_1_to_2.category citation_days_review_1_to_2_status,
       citation_days_review_2_to_3.scalar citation_days_review_2_to_3,
       citation_days_review_2_to_3.category citation_days_review_2_to_3_status,
+      (citation_days_review_2_to_3.entity_id IS NOT NULL) citation_days_review_2_to_3_exists,
       raw_finding_type.category raw_finding_type,
       finding_deadline.category finding_deadline,
       reported_date.category reported_date,
@@ -159,6 +162,7 @@ export const recreateAnomalyDetectionViews = async (
     )
     SELECT
       dr.mrid entity_id,
+      dr.complete review_complete,
       delivery_report_lag_days.scalar delivery_report_lag_days,
       finding_count.scalar finding_count,
       review_type.category review_type,

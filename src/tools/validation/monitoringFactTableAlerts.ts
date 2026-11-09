@@ -12,11 +12,15 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     -- citation_ar_linked: findings (via their Citation) actually cited on a
     -- real (non-deleted) Activity Report - a real temp table since it's used
     -- by both alert statements below (a CTE only scopes to one statement).
+    -- DISTINCT ON picks one representative AR per finding (the earliest by
+    -- id) so the on-AR alert below can point at a concrete report.
     DROP TABLE IF EXISTS pg_temp.citation_ar_linked;
     CREATE TEMP TABLE citation_ar_linked
     ON COMMIT DROP
     AS
-    SELECT DISTINCT c.mfid
+    SELECT DISTINCT ON (c.mfid)
+      c.mfid,
+      ar.id first_ar_id
     FROM "ActivityReportObjectiveCitations" aroc
     JOIN "ActivityReportObjectives" aro
       ON aro.id = aroc."activityReportObjectiveId"
@@ -25,86 +29,156 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       AND ar."calculatedStatus" <> 'deleted'
     JOIN "Citations" c
       ON c.id = aroc."citationId"
+    ORDER BY c.mfid, ar.id
     ;
 
-    -- citation_reopened_on_activity_report
+    -- citation_reopened_on_activity_report. Citation/review identification
+    -- comes from Citations/DeliveredReviews - see docs/monitoring-fact-tables.md.
+    WITH flagged AS (
+      SELECT vr.entity_id, al.first_ar_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      JOIN citation_ar_linked al
+        ON al.mfid = vr.entity_id
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'citation_reopened'
+        AND vr.category = 'reopened'
+        AND (vr.context->>'reopened_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.first_ar_id,
+        c.mfid,
+        c.citation,
+        dr.review_name
+      FROM flagged f
+      JOIN "Citations" c
+        ON c.mfid = f.entity_id
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.review_uuid = c.latest_review_uuid
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'citation_reopened_on_activity_report',
-      COUNT(*) || ' citation(s) previously considered resolved have reopened and are cited on an activity report',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review')
+        || ' was previously considered resolved but has reopened. It is referenced on AR ' || s.first_ar_id || '.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'citation_reopened',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    JOIN citation_ar_linked al
-      ON al.mfid = vr.entity_id
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'citation_reopened'
-      AND vr.category = 'reopened'
-      AND (vr.context->>'reopened_at')::timestamptz >= (NOW() - INTERVAL '7 days')
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- citation_reopened: the same reopening, but not (yet) cited on any report.
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'citation_reopened'
+        AND vr.category = 'reopened'
+        AND (vr.context->>'reopened_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+        AND NOT EXISTS (
+          SELECT 1 FROM citation_ar_linked al WHERE al.mfid = vr.entity_id
+        )
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        c.mfid,
+        c.citation,
+        dr.review_name
+      FROM flagged f
+      JOIN "Citations" c
+        ON c.mfid = f.entity_id
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.review_uuid = c.latest_review_uuid
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'citation_reopened',
-      COUNT(*) || ' citation(s) previously considered resolved have reopened',
+      'Citation ' || COALESCE(s.citation, 'unknown') || ' (' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review')
+        || ' was previously considered resolved but has reopened.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'citation_reopened',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'citation_reopened'
-      AND vr.category = 'reopened'
-      AND (vr.context->>'reopened_at')::timestamptz >= (NOW() - INTERVAL '7 days')
-      AND NOT EXISTS (
-        SELECT 1 FROM citation_ar_linked al WHERE al.mfid = vr.entity_id
-      )
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- delivered_review_reopened
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'delivered_review_completion_state'
+        AND vr.category = 'reopened'
+        AND (vr.context->>'reopened_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'delivered_review_reopened',
-      COUNT(*) || ' delivered review(s) previously considered complete are no longer complete',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' was previously considered complete but is no longer complete.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'delivered_review_completion_state',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'delivered_review_completion_state'
-      AND vr.category = 'reopened'
-      AND (vr.context->>'reopened_at')::timestamptz >= (NOW() - INTERVAL '7 days')
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- activity_report_citation_source_deleted / _editable. Points at the
@@ -118,7 +192,9 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     SELECT
       ar.id report_id,
       ar."calculatedStatus" report_status,
-      rec.name recipient_name
+      rec.name recipient_name,
+      c.mfid,
+      c.citation
     FROM "ValidationRecords" vr
     CROSS JOIN validation_run cur
     JOIN "Citations" c
@@ -146,7 +222,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       WHERE report_status = 'approved'
     ),
     first_report AS (
-      SELECT report_id, recipient_name
+      SELECT report_id, recipient_name, mfid, citation
       FROM aroc_source_deleted
       WHERE report_status = 'approved'
       ORDER BY report_id
@@ -156,7 +232,14 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     SELECT
       cur.run_id,
       'activity_report_citation_source_deleted',
-      summary.report_count || ' approved AR(s) reference citation(s) no longer present in the Monitoring data',
+      'Citation ' || COALESCE(first_report.citation, 'unknown') || ' (' || first_report.mfid
+        || ') referenced by approved AR ' || first_report.report_id || ' for '
+        || COALESCE(LEFT(first_report.recipient_name, 40), 'an unknown recipient')
+        || ' is no longer present in the Monitoring data.'
+        || CASE WHEN summary.report_count > 1
+          THEN ' There are ' || summary.report_count || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
@@ -179,7 +262,7 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
       WHERE report_status <> 'approved'
     ),
     first_report AS (
-      SELECT report_id, recipient_name
+      SELECT report_id, recipient_name, mfid, citation
       FROM aroc_source_deleted
       WHERE report_status <> 'approved'
       ORDER BY report_id
@@ -189,7 +272,14 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     SELECT
       cur.run_id,
       'activity_report_citation_source_deleted_editable',
-      summary.report_count || ' draft/submitted AR(s) reference citation(s) no longer present in the Monitoring data',
+      'Citation ' || COALESCE(first_report.citation, 'unknown') || ' (' || first_report.mfid
+        || ') referenced by draft/submitted AR ' || first_report.report_id || ' for '
+        || COALESCE(LEFT(first_report.recipient_name, 40), 'an unknown recipient')
+        || ' is no longer present in the Monitoring data.'
+        || CASE WHEN summary.report_count > 1
+          THEN ' There are ' || summary.report_count || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
@@ -207,28 +297,52 @@ const refreshMonitoringFactTableAlerts = async (transaction: Transaction): Promi
     ;
 
     -- delivered_review_citation_no_window
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'delivered_review_citation_no_window'
+        AND vr.category = 'no_authoritative_window'
+        AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        c.mfid,
+        c.citation,
+        dr.review_name
+      FROM flagged f
+      JOIN "Citations" c
+        ON c.mfid = f.entity_id
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.review_uuid = c.latest_review_uuid
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'delivered_review_citation_no_window',
-      COUNT(*) || ' finding(s) have a delivered review that lost a same-day tie-break and was never authoritative for any period',
+      'Citation ' || COALESCE(s.citation, 'unknown') || ' (' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a delivered review that lost a same-day tie-break and was never authoritative for any period.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'delivered_review_citation_no_window',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'delivered_review_citation_no_window'
-      AND vr.category = 'no_authoritative_window'
-      AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
     `,
     { raw: true, transaction }

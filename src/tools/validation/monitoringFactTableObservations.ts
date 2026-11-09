@@ -286,11 +286,18 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     -- so named for what it measures instead.
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
-    SELECT cur.run_id, 'MonitoringFindings', c.mfid, 'reported_to_closed_days', (c.closed_date - c.reported_date), NOW(), NOW()
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      c.mfid,
+      'reported_to_closed_days',
+      (COALESCE(c.closed_date, c.latest_goal_closure::date) - c.reported_date),
+      NOW(),
+      NOW()
     FROM "Citations" c
     CROSS JOIN validation_run cur
     WHERE c."deletedAt" IS NULL
-      AND c.closed_date IS NOT NULL
+      AND COALESCE(c.closed_date, c.latest_goal_closure::date) IS NOT NULL
       AND c.reported_date IS NOT NULL
     ;
 
@@ -340,7 +347,7 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     -- than used as a raw category.
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
-    SELECT cur.run_id, 'MonitoringFindings', c.mfid, 'initial_narrative_length', LENGTH(c.initial_narrative), NOW(), NOW()
+    SELECT cur.run_id, 'MonitoringFindings', c.mfid, 'initial_narrative_length', COALESCE(LENGTH(c.initial_narrative), 0), NOW(), NOW()
     FROM "Citations" c
     CROSS JOIN validation_run cur
     WHERE c."deletedAt" IS NULL
@@ -348,7 +355,7 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
 
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
-    SELECT cur.run_id, 'MonitoringFindings', c.mfid, 'latest_narrative_length', LENGTH(c.latest_narrative), NOW(), NOW()
+    SELECT cur.run_id, 'MonitoringFindings', c.mfid, 'latest_narrative_length', COALESCE(LENGTH(c.latest_narrative), 0), NOW(), NOW()
     FROM "Citations" c
     CROSS JOIN validation_run cur
     WHERE c."deletedAt" IS NULL

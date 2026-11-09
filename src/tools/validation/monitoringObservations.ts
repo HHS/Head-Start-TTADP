@@ -176,29 +176,35 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     -- "Dropped"), add it with no further action; if it's a variant of
     -- Noncompliance/Concern/Deficiency, fix updateMonitoringFactTables.ts
     -- first so it isn't silently dropped there too.
+    -- DISTINCT ON picks one row per finding so its reviewId can be included
+    -- in context, for use in building useful alerts.
     WITH finding_unrecognized_determination AS (
-      SELECT
+      SELECT DISTINCT ON (mfh."findingId")
         mfh."findingId",
-        MIN(CASE
-          WHEN mfh.determination IS NULL OR TRIM(mfh.determination) = '' THEN NULL
-          WHEN mfh.determination IN (
-            'Noncompliance', 'Concern', 'Deficiency', 'Withdrawn', 'Abandoned', 'Dropped', 'DROPPED'
-          ) THEN NULL
-          ELSE mfh.determination
-        END) unrecognized_value
+        mfh.determination unrecognized_value,
+        mfh."reviewId"
       FROM "MonitoringFindingHistories" mfh
       WHERE mfh."sourceDeletedAt" IS NULL
         AND mfh."deletedAt" IS NULL
-      GROUP BY 1
+        AND mfh.determination IS NOT NULL
+        AND TRIM(mfh.determination) <> ''
+        AND mfh.determination NOT IN (
+          'Noncompliance', 'Concern', 'Deficiency', 'Withdrawn', 'Abandoned', 'Dropped', 'DROPPED'
+        )
+      ORDER BY mfh."findingId", mfh.determination
     )
     INSERT INTO "ValidationRecords"
-      (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
+      (run_id, entity_type, entity_id, observation_name, category, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'MonitoringFindings',
       mf.id,
       'history_determination_recognized',
       COALESCE(fud.unrecognized_value, 'consistent'),
+      CASE WHEN fud."findingId" IS NOT NULL
+        THEN jsonb_build_object('review_uuid', fud."reviewId")
+        ELSE NULL
+      END,
       NOW(),
       NOW()
     FROM "MonitoringFindings" mf
@@ -400,7 +406,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- finding_review_history_duplicated
+    -- finding_review_history_duplicated. DISTINCT ON (not BOOL_OR) picks the
+    -- pair to report - preferring a disagreeing one, then any duplicated one
+    -- - so its reviewId can go in context.
     WITH finding_review_pairs AS (
       SELECT
         "findingId",
@@ -413,25 +421,46 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         AND "deletedAt" IS NULL
       GROUP BY 1, 2
     ),
-    finding_history_duplication AS (
+    finding_review_pair_flags AS (
       SELECT
         "findingId",
-        BOOL_OR(cnt > 1 AND (status_variants > 1 OR determination_variants > 1)) any_disagreeing,
-        BOOL_OR(cnt > 1) any_duplicated
+        "reviewId",
+        (cnt > 1 AND (status_variants > 1 OR determination_variants > 1)) disagreeing,
+        (cnt > 1) duplicated,
+        (status_variants > 1) status_disagrees,
+        (determination_variants > 1) determination_disagrees
       FROM finding_review_pairs
-      GROUP BY 1
+    ),
+    finding_history_duplication AS (
+      SELECT DISTINCT ON ("findingId")
+        "findingId",
+        "reviewId",
+        disagreeing,
+        duplicated,
+        status_disagrees,
+        determination_disagrees
+      FROM finding_review_pair_flags
+      ORDER BY "findingId", disagreeing DESC, duplicated DESC, "reviewId"
     )
     INSERT INTO "ValidationRecords"
-      (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
+      (run_id, entity_type, entity_id, observation_name, category, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'MonitoringFindings',
       mf.id,
       'finding_review_history_duplicated',
       CASE
-        WHEN fhd.any_disagreeing THEN 'duplicated_disagreeing'
-        WHEN fhd.any_duplicated THEN 'duplicated_agreeing'
+        WHEN fhd.disagreeing THEN 'duplicated_disagreeing'
+        WHEN fhd.duplicated THEN 'duplicated_agreeing'
         ELSE 'consistent'
+      END,
+      CASE WHEN fhd.duplicated
+        THEN jsonb_build_object(
+          'review_uuid', fhd."reviewId",
+          'status_disagrees', fhd.status_disagrees,
+          'determination_disagrees', fhd.determination_disagrees
+        )
+        ELSE NULL
       END,
       NOW(),
       NOW()
@@ -750,7 +779,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         ELSE 'consistent'
       END,
       jsonb_build_object(
-        'learned_at', GREATEST(hsl.learned_at, fsl.learned_at)
+        'learned_at', GREATEST(hsl.learned_at, fsl.learned_at),
+        'review_id', fld.latest_review_id,
+        'finding_status', kfs.name
       ),
       NOW(),
       NOW()
@@ -784,7 +815,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         ELSE 'consistent'
       END,
       jsonb_build_object(
-        'learned_at', GREATEST(ool.learned_at, hsl.learned_at)
+        'learned_at', GREATEST(ool.learned_at, hsl.learned_at),
+        'review_id', fld.latest_review_id,
+        'history_status', fld.latest_history_status
       ),
       NOW(),
       NOW()

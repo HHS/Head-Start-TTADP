@@ -153,6 +153,11 @@ describe('validateMonitoringData', () => {
   // A CLASS review with a linked finding, for review_type_shape. No
   // reportDeliveryDate, so it can't also trip delivery-based checks.
   const reviewIdClassWithFindings = uuidv4();
+  // A second review for findingIdDupHistory's history rows, duplicated but
+  // agreeing (same status, same determination) - lets
+  // finding_review_history_duplicated's pair-selection prove it picks the
+  // disagreeing pair on reviewIdCompliant over this one.
+  const reviewIdDupHistorySecond = uuidv4();
   const reportDeliveryDateBadStatus = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   const reportDeliveryDateCompliant = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
 
@@ -551,9 +556,15 @@ describe('validateMonitoringData', () => {
     ]);
 
     // Three more reviews: one with an unresolvable status, one Compliant
-    // review hosting most of the findings below, and one CLASS review.
+    // review hosting most of the findings below, and one CLASS review. Plus a
+    // fourth for findingIdDupHistory's second history pair.
     await Promise.all(
-      [reviewIdBadStatus, reviewIdCompliant, reviewIdClassWithFindings].map((id) =>
+      [
+        reviewIdBadStatus,
+        reviewIdCompliant,
+        reviewIdClassWithFindings,
+        reviewIdDupHistorySecond,
+      ].map((id) =>
         MonitoringReviewLink.findOrCreate({ where: { reviewId: id }, defaults: linkTimestamps })
       )
     );
@@ -596,6 +607,19 @@ describe('validateMonitoringData', () => {
         reviewType: 'CLASS',
         reportDeliveryDate: null,
         name: 'Review VMD class',
+        hash: `hash-${uuidv4()}`,
+        ...timestamps,
+        sourceCreatedAt: new Date(),
+      }),
+      MonitoringReview.create({
+        reviewId: reviewIdDupHistorySecond,
+        contentId: uuidv4(),
+        statusId: REVIEW_STATUS_COMPLETE_ID,
+        startDate: '2026-06-01',
+        endDate: '2026-06-15',
+        reviewType: 'FA-1',
+        reportDeliveryDate: null,
+        name: 'Review VMD dup history second',
         hash: `hash-${uuidv4()}`,
         ...timestamps,
         sourceCreatedAt: new Date(),
@@ -834,6 +858,30 @@ describe('validateMonitoringData', () => {
         ordinal: 1,
         determination: 'Noncompliance',
         name: 'History VMD dup 2',
+        ...timestamps,
+      },
+      // A second, merely-duplicated (not disagreeing) pair on a different
+      // review - the disagreeing pair above must still be the one picked.
+      {
+        reviewId: reviewIdDupHistorySecond,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdDupHistory,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Narrative VMD dup 3',
+        ordinal: 0,
+        determination: 'Deficiency',
+        name: 'History VMD dup 3',
+        ...timestamps,
+      },
+      {
+        reviewId: reviewIdDupHistorySecond,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdDupHistory,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Narrative VMD dup 4',
+        ordinal: 1,
+        determination: 'Deficiency',
+        name: 'History VMD dup 4',
         ...timestamps,
       },
       {
@@ -1283,7 +1331,12 @@ describe('validateMonitoringData', () => {
       force: true,
     });
     const lagReviewIds = [reviewIdLagStale, reviewIdLagFresh, reviewIdTooOld];
-    const otherReviewIds = [reviewIdBadStatus, reviewIdCompliant, reviewIdClassWithFindings];
+    const otherReviewIds = [
+      reviewIdBadStatus,
+      reviewIdCompliant,
+      reviewIdClassWithFindings,
+      reviewIdDupHistorySecond,
+    ];
     await MonitoringReview.destroy({
       where: { reviewId: [reviewId, ...lagReviewIds, ...otherReviewIds] },
       force: true,
@@ -1799,12 +1852,22 @@ describe('validateMonitoringData', () => {
       raw: true,
     });
     expect(record.category).toBe('duplicated_disagreeing');
+    // The disagreeing pair (reviewIdCompliant) must be the one named in
+    // context, not the merely-duplicated pair on reviewIdDupHistorySecond.
+    expect(record.context.review_uuid).toBe(reviewIdCompliant);
+    expect(record.context.determination_disagrees).toBe(true);
+    expect(record.context.status_disagrees).toBe(false);
 
     const alerts = await ValidationAlert.findAll({
       where: { run_id: run.id, check_name: 'finding_review_history_duplicated' },
       raw: true,
     });
     expect(alerts[0].context.sample_entity_ids).toContain(finding.id);
+    // review_name comes from the DeliveredReviews fact table, which this
+    // suite never populates - message falls back to "an unnamed review"
+    // regardless of which reviewId was picked, so the real regression guard
+    // for the picked pair is record.context.review_uuid above.
+    expect(alerts[0].message).toContain('determination');
   });
 
   it('flags an unrecognized history determination value', async () => {
