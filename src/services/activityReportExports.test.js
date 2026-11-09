@@ -389,6 +389,7 @@ describe('activityReportExports', () => {
       const grantId = getUniqueId();
       report = await createReport({
         regionId: REGION_ID,
+        legacyId: '',
         activityRecipients: [{ grantId }],
       });
       // Pass status explicitly: defaultGoal() in testUtils sets a bad (array) status.
@@ -429,6 +430,7 @@ describe('activityReportExports', () => {
       expect(rowCount).toBe(1);
       expect(csv).toContain('goal_id'); // header
       expect(csv).toContain(String(goal.id));
+      expect(csv).toContain(report.displayId);
     });
 
     it('emits the objective row for the in-scope report', async () => {
@@ -441,7 +443,27 @@ describe('activityReportExports', () => {
       expect(csv).toContain('objective_id'); // header
       expect(csv).toContain(String(objective.id));
       expect(csv).toContain(OBJECTIVE_TITLE);
+      expect(csv).toContain(report.displayId);
     });
+
+    it.each(['goals', 'objectives'])(
+      'uses the legacy display id for %s exports',
+      async (dataSet) => {
+        await report.update({ legacyId: `LEGACY-${getUniqueId()}` });
+        try {
+          const { csv, rowCount } = await collect({
+            dataSet,
+            reportIds: [report.id],
+            regionIds: [REGION_ID],
+          });
+          expect(rowCount).toBe(1);
+          expect(csv).toContain(report.displayId);
+          expect(csv).not.toContain(`R${REGION_ID}-AR-${report.id}`);
+        } finally {
+          await report.update({ legacyId: '' });
+        }
+      }
+    );
 
     it('excludes goal and objective rows when the region is not permitted', async () => {
       const goals = await collect({ dataSet: 'goals', reportIds: [report.id], regionIds: [1] });

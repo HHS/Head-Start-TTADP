@@ -8,7 +8,7 @@ JSON: {
   "output": {
     "defaultName": "activity_report_export",
     "schema": [
-      { "columnName": "report_id", "type": "string", "nullable": false, "description": "Region-prefixed report id, e.g. R01-AR-1234." },
+      { "columnName": "report_id", "type": "string", "nullable": false, "description": "Legacy report id when present; otherwise region-prefixed report id, e.g. R01-AR-1234, with ??? for a missing or zero region." },
       { "columnName": "region", "type": "integer", "nullable": false, "description": "Region id (1-12)." },
       { "columnName": "ar_status", "type": "string", "nullable": false, "description": "calculatedStatus of the report." },
       { "columnName": "start_date", "type": "date", "nullable": true, "description": "Activity start date." },
