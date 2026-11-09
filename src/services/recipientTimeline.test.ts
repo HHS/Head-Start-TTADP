@@ -358,6 +358,24 @@ describe('queryTimelineEventIndex', () => {
     }
   );
 
+  it.each([[''], ['   '], [null], [42]])(
+    'rejects invalid standards for direct service callers: %j',
+    async (standard) => {
+      await expect(
+        queryTestTimeline(
+          {
+            ...timelineParams,
+            filters: [{ topic: 'standard', condition: 'is', query: [standard] }],
+          } as RecipientTimelineRequestParams,
+          [{ ...timelineSources[0], supportedFilterTopics: ['standard'] }]
+        )
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Timeline standard filter contains an invalid value',
+      });
+    }
+  );
+
   it('rejects duplicate or unsafe source names', async () => {
     await expect(
       queryTestTimeline(timelineParams, [

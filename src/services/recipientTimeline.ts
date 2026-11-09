@@ -217,6 +217,13 @@ const validateFilters = (
     }
 
     if (
+      topic === 'standard' &&
+      query.some((standard) => typeof standard !== 'string' || !standard.trim())
+    ) {
+      throw badTimelineRequest('Timeline standard filter contains an invalid value');
+    }
+
+    if (
       topic === 'purpose' &&
       query.some(
         (purpose) => typeof purpose !== 'string' || !COMMUNICATION_PURPOSES.includes(purpose.trim())
