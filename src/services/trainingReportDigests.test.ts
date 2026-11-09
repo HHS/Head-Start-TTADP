@@ -1,0 +1,99 @@
+import { faker } from '@faker-js/faker';
+import { frequencyToInterval } from '../lib/mailer';
+import db from '../models';
+import { createUser } from '../testUtils';
+import { REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS } from './eventFlow';
+import { trainingReportsWherePocByDate } from './trainingReportDigests';
+
+jest.mock('bull');
+
+const { EventReportPilot, User, sequelize } = db;
+
+const DAILY = frequencyToInterval('today');
+
+describe('training report digests', () => {
+  let owner;
+  let poc;
+  const eventIds: number[] = [];
+
+  const createEvent = async (
+    pocIds: number[],
+    eventOrganizer = REGIONAL_PD_WITH_NATIONAL_CENTERS,
+    ownerId = owner.id
+  ) => {
+    const event = await EventReportPilot.create({
+      ownerId,
+      pocIds,
+      collaboratorIds: [],
+      regionId: 1,
+      eventId: `R01-TR-${faker.string.numeric(8)}`,
+      data: { eventOrganizer },
+    });
+    eventIds.push(event.id);
+    return event;
+  };
+
+  // a digest window that starts now, so audit rows written before this call fall outside it
+  const windowStartingNow = async () => {
+    const [[{ now }]] = (await sequelize.query('SELECT clock_timestamp() AS now')) as [
+      [{ now: Date }],
+      unknown,
+    ];
+    return `'${now.toISOString()}'::timestamptz`;
+  };
+
+  beforeAll(async () => {
+    [owner, poc] = await Promise.all([createUser({}), createUser({})]);
+  });
+
+  afterAll(async () => {
+    await EventReportPilot.destroy({ where: { id: eventIds } });
+    await User.destroy({ where: { id: [owner.id, poc.id] } });
+    await sequelize.close();
+  });
+
+  describe('trainingReportsWherePocByDate', () => {
+    it('returns reports the user was added to as a POC within the interval', async () => {
+      const added = await createEvent([]);
+      const since = await windowStartingNow();
+      const created = await createEvent([poc.id]);
+      await added.update({ pocIds: [poc.id] });
+
+      const reports = await trainingReportsWherePocByDate(poc.id, since);
+      const ids = reports.map((r) => r.id);
+
+      expect(ids).toEqual(expect.arrayContaining([created.id, added.id]));
+      expect(reports.find((r) => r.id === added.id)).toEqual({
+        id: added.id,
+        displayId: added.eventId,
+      });
+    });
+
+    it('skips reports where the user was already a POC before the interval', async () => {
+      const event = await createEvent([poc.id]);
+      const since = await windowStartingNow();
+      await event.update({ collaboratorIds: [owner.id] });
+
+      const reports = await trainingReportsWherePocByDate(poc.id, since);
+
+      expect(reports.map((r) => r.id)).not.toContain(event.id);
+    });
+
+    it('skips reports the user was removed from, events without National Centers, and owners', async () => {
+      const removed = await createEvent([poc.id]);
+      await removed.update({ pocIds: [] });
+      const noNationalCenters = await createEvent([poc.id], REGIONAL_TTA_NO_NATIONAL_CENTERS);
+      const ownedByPoc = await createEvent([poc.id], REGIONAL_PD_WITH_NATIONAL_CENTERS, poc.id);
+
+      const ids = (await trainingReportsWherePocByDate(poc.id, DAILY)).map((r) => r.id);
+
+      expect(ids).not.toContain(removed.id);
+      expect(ids).not.toContain(noNationalCenters.id);
+      expect(ids).not.toContain(ownedByPoc.id);
+    });
+
+    it('returns nothing for a non-integer user id', async () => {
+      expect(await trainingReportsWherePocByDate('1 OR 1=1', DAILY)).toEqual([]);
+    });
+  });
+});

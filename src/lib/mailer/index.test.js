@@ -58,6 +58,7 @@ import {
   trCollaboratorAdded,
   trEventComplete,
   trOwnerAdded,
+  trPocAdded,
   trSessionChangesRequested,
   trSessionCreated,
   trSessionSubmittedForApproval,
@@ -1016,6 +1017,29 @@ describe('mailer tests', () => {
   });
 
   describe('sendTrainingReportNotification', () => {
+    it('renders the TR POC added email (TR-1b)', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      process.env.CI = '';
+      const email = await sendTrainingReportNotification(
+        {
+          data: {
+            emailTo: [mockNewCollaborator.email],
+            templatePath: 'tr_poc_added',
+            displayId: 'R01-TR-25-2345',
+            reportPath: '/training-report/view/R01-TR-25-2345',
+            report: { displayId: 'R01-TR-25-2345' },
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe('Training Report R01-TR-25-2345: Added as a Point of contact');
+      expect(message.text).toContain(
+        'You have been added as a Point of contact on Training Report R01-TR-25-2345.'
+      );
+      expect(message.text).toContain('Access this report in the TTA Hub.');
+      expect(message.text).toContain('/training-report/view/R01-TR-25-2345');
+    });
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
       process.env.CI = '';
@@ -1757,6 +1781,59 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Training report POC added digest', () => {
+    const trReport = { id: 99, displayId: 'R01-TR-25-1796' };
+    const trReportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/R01-TR-25-1796`;
+
+    it('renders the populated digest with links to the training reports', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [trReport],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: added as a regional point of contact`);
+      expect(message.text).toContain('Below are your report notifications for today.');
+      expect(message.text).toContain(
+        'You were added as a regional point of contact on these Training Reports:'
+      );
+      expect(message.text).toContain(`* ${trReport.displayId}`);
+      expect(message.text).toContain(trReportPath);
+      expect(message.text).not.toContain('/activity-reports/');
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.MONTHLY,
+            subjectFreq: MONTHLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `TTA Hub ${MONTHLY} digest: no new regional point of contact notifications`
+      );
+      expect(message.text).toContain(
+        "You haven't been added as a regional point of contact on any Training Reports this month."
+      );
+    });
+  });
+
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
       it('returns null without calling the email sender when notifications are disabled', async () => {
@@ -1821,9 +1898,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 6 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 7 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(6);
+        expect(entries).toHaveLength(7);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
@@ -2481,6 +2558,71 @@ describe('mailer tests', () => {
       it('returns early on CI', async () => {
         process.env.CI = 'true';
         await trSessionSubmittedToCollaborators(collabEvent, submittedSession);
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('trPocAdded', () => {
+      const immediately = {
+        key: EMAIL_ACTIONS.ADDED_AS_POC_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      };
+
+      it('emails each opted-in new POC', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockImplementation((id) => Promise.resolve({ email: `poc${id}@test.gov` }));
+        await trPocAdded(mockEvent, [4, 5]);
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          4,
+          EMAIL_ACTIONS.ADDED_AS_POC_TRAINING_REPORT
+        );
+        expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+        [4, 5].forEach((id) => {
+          expect(notificationQueueMock.add).toHaveBeenCalledWith(
+            EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
+            expect.objectContaining({
+              displayId: 'tr-1234',
+              emailTo: [`poc${id}@test.gov`],
+              templatePath: 'tr_poc_added',
+              reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/view/tr-1234`,
+            })
+          );
+        });
+      });
+
+      it('skips POCs who have not opted in to immediate emails', async () => {
+        userSettingOverridesById.mockImplementation((id) =>
+          Promise.resolve(
+            id === 4
+              ? immediately
+              : { ...immediately, value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST }
+          )
+        );
+        userById.mockResolvedValue({ email: 'poc@test.gov' });
+        await trPocAdded(mockEvent, [4, 5]);
+        expect(userById).toHaveBeenCalledTimes(1);
+        expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
+      });
+
+      it('skips no-send POCs and missing users', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockImplementation((id) =>
+          Promise.resolve(id === 4 ? { email: 'no-send_poc@test.gov' } : null)
+        );
+        await trPocAdded(mockEvent, [4, 5]);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs and swallows errors', async () => {
+        userSettingOverridesById.mockRejectedValue(new Error('boom'));
+        await trPocAdded(mockEvent, [4]);
+        expect(auditLogger.error).toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('returns early on CI', async () => {
+        process.env.CI = 'true';
+        await trPocAdded(mockEvent, [4]);
         expect(userSettingOverridesById).not.toHaveBeenCalled();
       });
     });
