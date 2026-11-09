@@ -64,7 +64,7 @@ const MESSAGE_TEMPLATES = {
 
 export const evaluateMessageFromHistory = (history) => {
   const { state } = history.location;
-  if (state && state.message) {
+  if (state?.message) {
     const { message } = state;
 
     if (!message.eventId) {
@@ -124,14 +124,23 @@ function TrainingReportsContent({ match }) {
 
   // kept in session storage so returning from an event (e.g. "Edit event") keeps the page
   const [sortConfig, setSortConfig] = useSessionSort(
-    { sortBy: 'eventId', direction: 'asc', activePage: 1 },
+    { sortBy: 'eventId', direction: 'asc', activePage: 1, perPage: EVENTS_PER_PAGE },
     'trainingReportsEvents'
   );
-  const { activePage } = sortConfig;
-  const offset = (activePage - 1) * EVENTS_PER_PAGE;
+  const { activePage, perPage: pageSize } = sortConfig;
+  const showAll = pageSize === 'all';
+  // with "all" there's a single page as long as the whole list
+  const perPage = showAll ? Math.max(totalCount, 1) : pageSize;
+  const offset = showAll ? 0 : (activePage - 1) * pageSize;
 
   const handlePageChange = (pageNumber) => {
     setSortConfig((prev) => ({ ...prev, activePage: pageNumber }));
+  };
+
+  const perPageChange = (e) => {
+    const { value } = e.target;
+    const newPageSize = value === 'all' ? 'all' : Number(value);
+    setSortConfig((prev) => ({ ...prev, perPage: newPageSize, activePage: 1 }));
   };
 
   // switching tabs or changing filters starts back on page 1. This adjusts state during
@@ -144,14 +153,16 @@ function TrainingReportsContent({ match }) {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refetchKey isn't read here, bumping it refetches the current page after an event leaves it
   useEffect(() => {
     let ignore = false;
     async function fetchEvents() {
       setAppLoadingText('Fetching events...');
       setIsAppLoading(true);
       const filterQuery = filtersToQueryString(expandFilters(filters));
-      const pageQuery = `limit=${EVENTS_PER_PAGE}&offset=${offset}`;
-      const query = filterQuery ? `${filterQuery}&${pageQuery}` : pageQuery;
+      // the API returns every event when there's no limit
+      const pageQuery = showAll ? '' : `limit=${pageSize}&offset=${offset}`;
+      const query = [filterQuery, pageQuery].filter(Boolean).join('&');
       try {
         const { count, rows } = await getEventsByStatus(status, query);
         if (ignore) {
@@ -159,7 +170,7 @@ function TrainingReportsContent({ match }) {
         }
         // a remembered page can be past the end if events were removed since
         if (rows.length === 0 && offset > 0) {
-          const lastPage = Math.max(1, Math.ceil(count / EVENTS_PER_PAGE));
+          const lastPage = Math.max(1, Math.ceil(count / pageSize));
           setSortConfig((prev) => ({ ...prev, activePage: lastPage }));
           return;
         }
@@ -183,11 +194,12 @@ function TrainingReportsContent({ match }) {
     };
   }, [
     status,
-    user.homeRegionId,
     setAppLoadingText,
     setIsAppLoading,
     filters,
     offset,
+    pageSize,
+    showAll,
     setSortConfig,
     refetchKey,
   ]);
@@ -262,97 +274,104 @@ function TrainingReportsContent({ match }) {
         <Helmet>
           <title>{titleCaseStatus} - Training Reports</title>
         </Helmet>
-        <>
-          <RegionPermissionModal
-            filters={filters}
-            user={user}
-            showFilterWithMyRegions={() =>
-              showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
-            }
-          />
-          {msg && (
-            <Alert
-              type="success"
-              role="alert"
-              className="margin-bottom-2"
-              cta={
-                <Button
-                  role="button"
-                  unstyled
-                  aria-label="dismiss alert"
-                  onClick={() => setMsg(null)}
-                >
-                  <span className="fa-sm margin-right-2">
-                    <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
-                  </span>
-                </Button>
-              }
-            >
-              {msg}
-            </Alert>
-          )}
-          <Grid>
-            <Grid row gap>
-              <Grid>
-                <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
-              </Grid>
-            </Grid>
-            <Grid row>
-              {error && (
-                <Alert className="margin-bottom-2" type="error" role="alert">
-                  {error}
-                </Alert>
-              )}
-            </Grid>
-            <Grid
-              col={12}
-              className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
-            >
-              <FilterPanel
-                applyButtonAria="apply filters for training reports"
-                filters={filters}
-                onApplyFilters={onApplyFilters}
-                onRemoveFilter={onRemoveFilter}
-                filterConfig={filterConfig}
-                allUserRegions={regions}
-              />
-            </Grid>
 
-            <TrainingReportAlerts />
-
-            <Grid row>
-              <WidgetContainer
-                title="Events"
-                loading={false}
-                loadingLabel="Training events loading"
-                showHeaderBorder={false}
-                showPagingBottom={totalCount > 0}
-                currentPage={activePage}
-                totalCount={totalCount}
-                offset={offset}
-                perPage={EVENTS_PER_PAGE}
-                handlePageChange={handlePageChange}
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={() =>
+            showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
+        />
+        {msg && (
+          <Alert
+            type="success"
+            role="alert"
+            className="margin-bottom-2"
+            cta={
+              <Button
+                role="button"
+                unstyled
+                aria-label="dismiss alert"
+                onClick={() => setMsg(null)}
               >
-                <Tabs tabs={tabValues} ariaLabel="Training events" />
-                <EventCards
-                  events={displayEvents}
-                  eventType={status}
-                  onRemoveSession={onRemoveSession}
-                  onDeleteEvent={onDeleteEvent}
-                  removeEventFromDisplay={removeEventFromDisplay}
-                  alerts={{
-                    message: cardsInternalMessage,
-                    setMessage: setCardsInternalMessage,
-                    setParentMessage: (updatedMessage) => {
-                      setCardsInternalMessage(null);
-                      setMsg(updatedMessage);
-                    },
-                  }}
-                />
-              </WidgetContainer>
+                <span className="fa-sm margin-right-2">
+                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
+                </span>
+              </Button>
+            }
+          >
+            {msg}
+          </Alert>
+        )}
+        <Grid>
+          <Grid row gap>
+            <Grid>
+              <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
             </Grid>
           </Grid>
-        </>
+          <Grid row>
+            {error && (
+              <Alert className="margin-bottom-2" type="error" role="alert">
+                {error}
+              </Alert>
+            )}
+          </Grid>
+          <Grid
+            col={12}
+            className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
+          >
+            <FilterPanel
+              applyButtonAria="apply filters for training reports"
+              filters={filters}
+              onApplyFilters={onApplyFilters}
+              onRemoveFilter={onRemoveFilter}
+              filterConfig={filterConfig}
+              allUserRegions={regions}
+            />
+          </Grid>
+
+          <TrainingReportAlerts />
+
+          <Grid row>
+            <WidgetContainer
+              title="Events"
+              loading={false}
+              loadingLabel="Training events loading"
+              showHeaderBorder={false}
+              showPagingTop={totalCount > 0}
+              showPagingBottom={totalCount > 0}
+              currentPage={activePage}
+              totalCount={totalCount}
+              offset={offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+              paginationCardTopProps={{
+                perPageChange,
+                noXofX: true,
+                perPageSelectValue: pageSize,
+                allOptionValue: 'all',
+                hidePagination: true,
+              }}
+            >
+              <Tabs tabs={tabValues} ariaLabel="Training events" />
+              <EventCards
+                events={displayEvents}
+                eventType={status}
+                onRemoveSession={onRemoveSession}
+                onDeleteEvent={onDeleteEvent}
+                removeEventFromDisplay={removeEventFromDisplay}
+                alerts={{
+                  message: cardsInternalMessage,
+                  setMessage: setCardsInternalMessage,
+                  setParentMessage: (updatedMessage) => {
+                    setCardsInternalMessage(null);
+                    setMsg(updatedMessage);
+                  },
+                }}
+              />
+            </WidgetContainer>
+          </Grid>
+        </Grid>
       </div>
     </StaffProvider>
   );

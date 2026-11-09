@@ -386,6 +386,56 @@ describe('TrainingReports', () => {
     expect(fetchMock.called(secondPageUrl)).toBe(true);
   });
 
+  it('changes how many events are shown per page', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 30), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    fetchMock.get(notStartedPage2, paged([completeEvents[0]], 30));
+    const twentyFivePerPage = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=25&offset=0`
+    );
+    fetchMock.get(twentyFivePerPage, paged(inProgressEvents, 30));
+
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 30/i)).toBeInTheDocument();
+    const select = screen.getByLabelText('Select per page');
+
+    // a page size change starts back on page 1
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText(/11-20 of 30/i)).toBeInTheDocument();
+
+    act(() => userEvent.selectOptions(select, '25'));
+    expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1-25 of 30/i)).toBeInTheDocument();
+    expect(select).toHaveValue('25');
+    expect(fetchMock.called(twentyFivePerPage)).toBe(true);
+  });
+
+  it('shows every event when "all" is selected', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 30), { overwriteRoutes: true });
+    // no limit or offset asks the API for everything
+    const allUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`);
+    fetchMock.get(allUrl, paged(inProgressEvents, 30));
+
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 30/i)).toBeInTheDocument();
+    act(() => userEvent.selectOptions(screen.getByLabelText('Select per page'), 'all'));
+
+    expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1-30 of 30/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /next page/i })).toBeNull();
+    expect(fetchMock.called(allUrl)).toBe(true);
+  });
+
   it('starts back on page 1 when switching status tabs', async () => {
     fetchMock.get(notStartedUrl, paged(notStartedEvents, 12), { overwriteRoutes: true });
     const notStartedPage2 = join(
