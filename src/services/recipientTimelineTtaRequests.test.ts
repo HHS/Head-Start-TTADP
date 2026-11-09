@@ -82,8 +82,10 @@ describe('TTA request timeline integration', () => {
         id: creator.id,
         flags,
         permissions: [
-          { regionId: params.regionId, scopeId: SCOPES.READ_REPORTS },
-          ...(admin ? [{ regionId: params.regionId, scopeId: SCOPES.ADMIN }] : []),
+          {
+            regionId: admin ? 14 : params.regionId,
+            scopeId: admin ? SCOPES.ADMIN : SCOPES.READ_REPORTS,
+          },
         ],
       });
       const path = `/recipient/${params.recipientId}/region/${params.regionId}/timeline`;

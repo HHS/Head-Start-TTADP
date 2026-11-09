@@ -7,7 +7,8 @@ get:
     monitoring reports, and submitted TTA requests for the recipient and region. Communication
     logs require the communication-log read policy; TTA requests require the TTA request policy's
     regional read permission and access to the existing recipient_tta_request feature flag.
-    Admins retain the feature-flag bypass. Unauthorized sources are excluded before counting and
+    Admins retain both request-read access and the feature-flag bypass, matching the TTA request
+    endpoints. Unauthorized sources are excluded before counting and
     pagination, including when a saved or explicit filter selects TTA requests.
     Monitoring events use source `monitoringReport` and the delivered review ID as `sourceId`.
     Complete, undeleted reviews delivered on or after 2025-01-21 appear once per review, even

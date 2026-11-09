@@ -210,7 +210,7 @@ export async function getRecipientTimeline(req, res) {
     const { regionId } = res.locals.validatedParams;
     const canReadCommunicationLogs = new CommunicationLogPolicy(user, regionId).canReadLog();
     const canReadTtaRequests =
-      new TtaRequestPolicy(user, regionId).canReadInRegion() &&
+      new TtaRequestPolicy(user, regionId).canGet() &&
       new Users({ permissions: user.permissions, flags: user.flags ?? [] }).canSeeBehindFeatureFlag(
         'recipient_tta_request'
       );

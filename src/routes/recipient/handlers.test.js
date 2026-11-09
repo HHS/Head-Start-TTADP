@@ -464,7 +464,7 @@ describe('getRecipientTimeline', () => {
     [SCOPES.READ_REPORTS, 2, false],
     [SCOPES.APPROVE_REPORTS, 1, false],
     [SCOPES.READ_WRITE_REPORTS, 1, false],
-    [SCOPES.ADMIN, 14, false],
+    [SCOPES.ADMIN, 14, true],
   ])('passes TTA request policy for scope %s in region %s', async (scopeId, regionId, allowed) => {
     userById.mockResolvedValue({
       id: 1000,
@@ -491,8 +491,7 @@ describe('getRecipientTimeline', () => {
       id: 1000,
       flags,
       permissions: [
-        { scopeId: SCOPES.READ_REPORTS, regionId: 1 },
-        ...(admin ? [{ scopeId: SCOPES.ADMIN, regionId: 14 }] : []),
+        { scopeId: admin ? SCOPES.ADMIN : SCOPES.READ_REPORTS, regionId: admin ? 14 : 1 },
       ],
     });
 

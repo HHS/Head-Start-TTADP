@@ -213,13 +213,44 @@ describe('Recipient Record - TTA Timeline', () => {
           flags: [TTA_TIMELINE_FEATURE_FLAG, RECIPIENT_TTA_REQUEST_FEATURE_FLAG],
           allowed: true,
         },
+        {
+          name: 'an approval-only reader with both flags',
+          flags: [TTA_TIMELINE_FEATURE_FLAG, RECIPIENT_TTA_REQUEST_FEATURE_FLAG],
+          scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+          allowed: false,
+        },
+        {
+          name: 'a report writer with both flags',
+          flags: [TTA_TIMELINE_FEATURE_FLAG, RECIPIENT_TTA_REQUEST_FEATURE_FLAG],
+          scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+          allowed: false,
+        },
+        {
+          name: 'a reader with permission in another region',
+          flags: [TTA_TIMELINE_FEATURE_FLAG, RECIPIENT_TTA_REQUEST_FEATURE_FLAG],
+          permissionRegionId: 2,
+          allowed: false,
+        },
+        {
+          name: 'a request reviewer with both flags',
+          flags: [TTA_TIMELINE_FEATURE_FLAG, RECIPIENT_TTA_REQUEST_FEATURE_FLAG],
+          scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS,
+          allowed: true,
+        },
         { name: 'a reader without flags', flags: undefined, allowed: false },
         { name: 'an admin without flags', flags: undefined, admin: true, allowed: true },
       ].map((access) => ({ mode, ...access }))
     )
   )(
     'gates request events and the filter option for $name in $mode view',
-    async ({ mode, flags, admin, allowed }) => {
+    async ({
+      mode,
+      flags,
+      admin,
+      allowed,
+      scopeId = SCOPE_IDS.READ_REPORTS,
+      permissionRegionId = 1,
+    }) => {
       const requestEvent = {
         ...batch(1, 1)[0],
         source: 'ttaRequest',
@@ -249,7 +280,12 @@ describe('Recipient Record - TTA Timeline', () => {
         {
           ...user,
           flags,
-          permissions: [{ regionId: 1, scopeId: admin ? SCOPE_IDS.ADMIN : SCOPE_IDS.READ_REPORTS }],
+          permissions: [
+            {
+              regionId: admin ? 14 : permissionRegionId,
+              scopeId: admin ? SCOPE_IDS.ADMIN : scopeId,
+            },
+          ],
         },
         mode
       );
