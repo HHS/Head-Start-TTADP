@@ -32,6 +32,19 @@ const renderEvent = (overrides: Partial<RecipientTimelineEvent> = {}, defaultExp
   );
 
 describe('TimelineEvent', () => {
+  it('uses an h3 title by default and the requested heading level when given one', () => {
+    const { unmount } = renderEvent();
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Email communication');
+    unmount();
+    render(
+      <MemoryRouter>
+        <TimelineEvent event={event} headingLevel={4} />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Email communication');
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
+  });
+
   it.each(['Goal added', 'Goal reopened', 'Goal closed'] as const)(
     'shows the numbered cycle boundary for %s with details collapsed',
     (eventType) => {

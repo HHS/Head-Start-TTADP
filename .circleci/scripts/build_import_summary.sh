@@ -10,14 +10,26 @@ EXPECTED_TASKS="${3:-8}"
 # creation vs validation+gate). OHS_FILE is what the OHS contractor-customer
 # channel gets: goal creation always, plus the alerts half only when
 # OHS_MONITORING_ALERTS_ENABLED is truthy. TEAM_NOTIFICATIONS_FILE holds
-# team_notification-severity validation alerts - entirely separate from
-# SUMMARY_FILE and OHS_FILE, posted to its own channel by .circleci/config.yml.
-# See docs/monitoring-data-validation.md (Channels).
+# team_notification-severity validation alerts. ALERT_ONLY_FILE is a copy of
+# SUMMARY_FILE gated on HAS_ALERT (see below) - empty on a quiet day, so
+# .circleci/config.yml's notify_slack no-ops (its "missing message" skip) for
+# whichever channel it's wired to; that wiring is prod-only (see
+# base_channel_alert_only in .circleci/config.yml). TEAM_COMPREHENSIVE_FILE is
+# SUMMARY_FILE plus TEAM_NOTIFICATIONS_FILE, always populated, for the channel
+# that wants full visibility every run. See docs/monitoring-data-validation.md
+# (Channels).
 GOAL_FILE="${4:-monitoring-goal-updates.txt}"
 ALERTS_FILE="${5:-monitoring-validation-alerts.txt}"
 OHS_FILE="${6:-monitoring-ohs-updates.txt}"
 TEAM_NOTIFICATIONS_FILE="${7:-monitoring-validation-team-notifications.txt}"
+ALERT_ONLY_FILE="${8:-monitoring-alert-only.txt}"
+TEAM_COMPREHENSIVE_FILE="${9:-monitoring-team-comprehensive.txt}"
 LOGIN_LOG="${ARTIFACT_DIR}/logs/phase-login.log"
+
+# Set true by any branch below that writes real alert/critical/failure content
+# (as opposed to a "no alerts" / "no critical findings" confirmation line).
+# Drives ALERT_ONLY_FILE at the end of the script.
+HAS_ALERT=false
 
 if [[ ! -f "$STATUS_FILE" ]]; then
   echo "Import status file not found: $STATUS_FILE" >&2
@@ -152,6 +164,7 @@ append_validation_summary() {
           printf '%s\n' "$alerts"
           printf '```\n'
         } >> "$ALERTS_FILE"
+        HAS_ALERT=true
       else
         printf 'Monitoring Validation (as of %s): no alerts\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
       fi
@@ -167,7 +180,10 @@ append_validation_summary() {
     fi
   fi
 
+  # No parseable result from a phase that should always log one: treat as
+  # alert-worthy rather than silently swallowed.
   printf 'Monitoring Validation: no result found\n' >> "$ALERTS_FILE"
+  HAS_ALERT=true
 }
 
 # Reports the gate result into ALERTS_FILE, and is called unconditionally after
@@ -211,6 +227,7 @@ append_gate_summary() {
           printf '%s\n' "$critical"
           printf '```\n'
         } >> "$ALERTS_FILE"
+        HAS_ALERT=true
         return
       fi
 
@@ -220,6 +237,7 @@ append_gate_summary() {
       if [[ -n "$status" && "$status" != "success" ]]; then
         [[ -s "$ALERTS_FILE" && -n "$(tail -c1 "$ALERTS_FILE")" ]] && printf '\n' >> "$ALERTS_FILE"
         printf 'Monitoring Gate: did not complete, data was not validated (as of %s)\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
+        HAS_ALERT=true
         return
       fi
 
@@ -230,9 +248,11 @@ append_gate_summary() {
     fi
   fi
 
-  # No gate line: confirm only on success.
+  # No gate line: confirm only on success. A gate-less success is itself
+  # anomalous (the phase should always log one), so it's alert-worthy too.
   [[ "$overall_status" == "SUCCEEDED" ]] || return 0
   printf 'Monitoring Gate: no result found\n' >> "$ALERTS_FILE"
+  HAS_ALERT=true
 }
 
 # Parses report_log's "Recent Monitoring Updates" line into GOAL_FILE. report_updates
@@ -274,6 +294,7 @@ write_failure_summary() {
   fi
 
   failure_message=$(extract_failure_message "$failed_phase")
+  HAS_ALERT=true
 
   # Route to ALERTS_FILE, not GOAL_FILE, whenever GOAL_FILE already holds real
   # goal-creation content (write_goal_summary succeeded - a later phase failed
@@ -335,6 +356,32 @@ if [[ "$ohs_enabled" =~ ^(true|1|yes)$ ]]; then
 else
   cp "$GOAL_FILE" "$OHS_FILE"
 fi
+
+# A failed import is always alert-worthy, regardless of which branch above
+# produced the failure message (belt-and-suspenders alongside the HAS_ALERT=true
+# already set within write_failure_summary itself).
+[[ "$overall_status" == "FAILED" ]] && HAS_ALERT=true
+
+# ALERT_ONLY_FILE: SUMMARY_FILE content when there's a real alert/critical/
+# failure to report, otherwise empty - so notify_slack's "missing message"
+# check skips the post entirely on a quiet day. See the header comment and
+# docs/monitoring-data-validation.md (Channels).
+if [[ "$HAS_ALERT" == "true" ]]; then
+  cp "$SUMMARY_FILE" "$ALERT_ONLY_FILE"
+else
+  : > "$ALERT_ONLY_FILE"
+fi
+
+# TEAM_COMPREHENSIVE_FILE: SUMMARY_FILE plus TEAM_NOTIFICATIONS_FILE, always
+# populated - the full-visibility message for the channel that wants
+# everything every run, alert or not.
+{
+  cat "$SUMMARY_FILE"
+  if [[ -s "$TEAM_NOTIFICATIONS_FILE" ]]; then
+    [[ -s "$SUMMARY_FILE" && -n "$(tail -c1 "$SUMMARY_FILE")" ]] && printf '\n'
+    cat "$TEAM_NOTIFICATIONS_FILE"
+  fi
+} > "$TEAM_COMPREHENSIVE_FILE"
 
 echo
 cat "$SUMMARY_FILE"
