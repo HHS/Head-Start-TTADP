@@ -119,7 +119,7 @@ describe('goal status change timeline integration', () => {
     }
   });
 
-  it('retains the category of an RTTAPA goal with a NULL status', async () => {
+  it('keeps the category of an RTTAPA goal with a NULL status in the lookup but lists no empty accordion', async () => {
     const originalStatus = goals[0].status;
     const originalIsRttapa = goals[0].isRttapa;
     try {
@@ -128,9 +128,8 @@ describe('goal status change timeline integration', () => {
       expect(await getTimelineGoalCategories(params.recipientId, params.regionId)).toEqual(
         expected
       );
-      expect((await getRecipientTimeline({ ...params, view: 'goals' })).categories).toEqual(
-        expected
-      );
+      // Goals without a status have no timeline events, so the grouped view has nothing to show.
+      expect((await getRecipientTimeline({ ...params, view: 'goals' })).categories).toEqual([]);
     } finally {
       await goals[0].update(
         { status: originalStatus, isRttapa: originalIsRttapa },
@@ -187,6 +186,64 @@ describe('goal status change timeline integration', () => {
       await goals[0].update({ isRttapa: null }, { hooks: false });
       await GoalStatusChange.destroy({ where: { goalId: extraIds }, force: true });
       await Goal.unscoped().destroy({ where: { id: extraIds }, force: true, hooks: false });
+    }
+  });
+
+  it('names a category on a later page when a backdated event is added to a category with none', async () => {
+    const lateStandard = `Late standard ${getUniqueId()}`;
+    const lateTemplate = await GoalTemplate.create({
+      templateName: `(${lateStandard}) Timeline goal`,
+      creationMethod: 'Curated',
+    });
+    const lateGoal = await Goal.create(
+      { grantId: grantIds[0], goalTemplateId: lateTemplate.id, status: 'In Progress' },
+      { hooks: false }
+    );
+    let lateChange;
+    try {
+      const first = await getRecipientTimeline({ ...params, view: 'goals', limit: 2 });
+      // The goal is eligible, but its category has no events under the filters yet.
+      expect(first.categories).toEqual([{ label: standards[0], statuses: ['In Progress'] }]);
+      expect(first.nextCursor).toBeDefined();
+
+      // Older than every existing event, so descending order places it after the cursor.
+      lateChange = await GoalStatusChange.create(
+        {
+          goalId: lateGoal.id,
+          oldStatus: null,
+          newStatus: 'Not Started',
+          performedAt: new Date('2020-01-01T00:00:00Z'),
+        },
+        { hooks: false }
+      );
+
+      const laterPages = [];
+      let cursor = first.nextCursor;
+      while (cursor) {
+        // eslint-disable-next-line no-await-in-loop
+        const page = await getRecipientTimeline({ ...params, view: 'goals', limit: 2, cursor });
+        laterPages.push(page);
+        cursor = page.nextCursor;
+      }
+      const lateEvent = laterPages
+        .flatMap(({ events }) => events)
+        .find(({ sourceId }) => sourceId === lateChange.id);
+      expect(lateEvent.tags).toEqual([{ label: lateStandard, flagged: false }]);
+      // The page that returns the event also names its category, so a client can show it.
+      const lateCategory = { label: lateStandard, statuses: ['In Progress'] };
+      const pageWithEvent = laterPages.find(({ events }) =>
+        events.some(({ sourceId }) => sourceId === lateChange.id)
+      );
+      expect(pageWithEvent.categories).toContainEqual(lateCategory);
+      // Pages name only the categories of their own events, never an unrelated one.
+      laterPages.forEach(({ events, categories }) => {
+        const labels = new Set(events.flatMap(({ tags }) => tags.map(({ label }) => label)));
+        expect(categories.every(({ label }) => labels.has(label))).toBe(true);
+      });
+    } finally {
+      await GoalStatusChange.destroy({ where: { goalId: lateGoal.id }, force: true });
+      await Goal.unscoped().destroy({ where: { id: lateGoal.id }, force: true, hooks: false });
+      await GoalTemplate.destroy({ where: { id: lateTemplate.id }, force: true });
     }
   });
 
@@ -533,6 +590,195 @@ describe('goal status change timeline integration', () => {
       'Goal closed',
       'Goal closed',
     ]);
+  });
+
+  describe('goals on a recipient with a shared standard', () => {
+    const createStandardGoals = async (
+      goalAttributes: Array<Record<string, unknown>>,
+      statusChanges: Array<Array<Record<string, unknown>>>
+    ) => {
+      const standard = `Shared standard ${getUniqueId()}`;
+      const template = await GoalTemplate.create({
+        templateName: `(${standard}) Shared goal`,
+        creationMethod: 'Curated',
+      });
+      templates.push(template);
+      const created = await Goal.bulkCreate(
+        goalAttributes.map((attributes) => ({
+          grantId: grantIds[1],
+          goalTemplateId: template.id,
+          createdVia: 'rtr',
+          ...attributes,
+        })),
+        { hooks: false }
+      );
+      goals.push(...created);
+      const createdChanges = await GoalStatusChange.bulkCreate(
+        created.flatMap((goal, index) =>
+          statusChanges[index].map((change) => ({ goalId: goal.id, ...change }))
+        ),
+        { hooks: false }
+      );
+      const changeIdsByGoal = created.map((goal) =>
+        createdChanges.filter(({ goalId }) => goalId === goal.id).map(({ id }) => id)
+      );
+      const timeline = () =>
+        getRecipientTimeline({
+          ...params,
+          recipientId: recipientIds[1],
+          direction: 'asc',
+          filters: [{ topic: 'standard', condition: 'is', query: [standard] }],
+        });
+      const categoryStatuses = async () =>
+        (await getTimelineGoalCategories(recipientIds[1], regionIds[0])).find(
+          ({ label }) => label === standard
+        )?.statuses;
+      return { created, changeIdsByGoal, timeline, categoryStatuses };
+    };
+
+    it('does not rewrite a past "Goal added" event when an earlier goal is closed later', async () => {
+      const { changeIdsByGoal, timeline } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2024-05-02T12:00:00Z' },
+          { status: 'Closed', createdAt: '2024-09-28T12:00:00Z' },
+          { status: 'Not Started', createdAt: '2025-09-01T12:00:00Z' },
+        ],
+        [
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2024-05-02T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-08-20T12:00:00Z' },
+          ],
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2024-09-28T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-08-25T12:00:00Z' },
+          ],
+          [{ oldStatus: null, newStatus: 'Not Started', performedAt: '2025-09-01T12:00:00Z' }],
+        ]
+      );
+
+      const { events } = await timeline();
+      const titleFor = (changeId: number) =>
+        events.find(({ sourceId }) => sourceId === changeId)?.title;
+      // The earlier goal was still open on 09/28/2024, so there was nothing to reopen.
+      expect(titleFor(changeIdsByGoal[1][0])).toBe('Goal added');
+      // It was closed by the time the third goal was created.
+      expect(titleFor(changeIdsByGoal[2][0])).toBe('Goal reopened');
+    });
+
+    it("ignores a backfilled creation snapshot that carries the goal's current status", async () => {
+      const { changeIdsByGoal, timeline } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2024-05-02T12:00:00Z' },
+          { status: 'Closed', createdAt: '2024-09-28T12:00:00Z' },
+          { status: 'Not Started', createdAt: '2025-09-01T12:00:00Z' },
+        ],
+        [
+          [
+            // The backfill migration stamped the current status (Closed) on the creation date.
+            {
+              oldStatus: null,
+              newStatus: 'Closed',
+              reason: 'Goal created',
+              context: 'Creation',
+              performedAt: '2024-05-02T12:00:00Z',
+            },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-07-20T12:00:00Z' },
+          ],
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2024-09-28T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-08-25T12:00:00Z' },
+          ],
+          [{ oldStatus: null, newStatus: 'Not Started', performedAt: '2025-09-01T12:00:00Z' }],
+        ]
+      );
+
+      const { events } = await timeline();
+      const titleFor = (changeId: number) =>
+        events.find(({ sourceId }) => sourceId === changeId)?.title;
+      expect(titleFor(changeIdsByGoal[1][0])).toBe('Goal added');
+      expect(titleFor(changeIdsByGoal[2][0])).toBe('Goal reopened');
+    });
+
+    it("uses the first later transition's old status when a goal has no earlier history", async () => {
+      const { changeIdsByGoal, timeline } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2024-05-02T12:00:00Z' },
+          { status: 'Closed', createdAt: '2025-01-10T12:00:00Z' },
+        ],
+        [
+          [
+            // Legacy goal: the first recorded change shows it was Closed before 06/2025.
+            { oldStatus: 'Closed', newStatus: 'In Progress', performedAt: '2025-06-01T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-09-01T12:00:00Z' },
+          ],
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2025-01-10T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-10-01T12:00:00Z' },
+          ],
+        ]
+      );
+
+      const { events } = await timeline();
+      expect(events.find(({ sourceId }) => sourceId === changeIdsByGoal[1][0])?.title).toBe(
+        'Goal reopened'
+      );
+    });
+
+    it('keeps a genuine transition from a missing status instead of using the current status', async () => {
+      const { changeIdsByGoal, timeline } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2024-05-02T12:00:00Z' },
+          { status: 'Closed', createdAt: '2025-06-10T12:00:00Z' },
+        ],
+        [
+          // The legacy goal had no status until it was Closed in December.
+          [{ oldStatus: null, newStatus: 'Closed', performedAt: '2025-12-01T12:00:00Z' }],
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2025-06-10T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2025-12-15T12:00:00Z' },
+          ],
+        ]
+      );
+
+      const { events } = await timeline();
+      expect(events.find(({ sourceId }) => sourceId === changeIdsByGoal[1][0])?.title).toBe(
+        'Goal added'
+      );
+    });
+
+    it('only counts goals from approved activity reports in the events and category status', async () => {
+      const { created, changeIdsByGoal, timeline, categoryStatuses } = await createStandardGoals(
+        [
+          { status: 'Closed', createdAt: '2026-01-01T12:00:00Z' },
+          {
+            status: 'Not Started',
+            createdVia: 'activityReport',
+            onApprovedAR: false,
+            createdAt: '2026-10-02T12:00:00Z',
+          },
+        ],
+        [
+          [
+            { oldStatus: null, newStatus: 'In Progress', performedAt: '2026-01-01T12:00:00Z' },
+            { oldStatus: 'In Progress', newStatus: 'Closed', performedAt: '2026-02-01T12:00:00Z' },
+          ],
+          [{ oldStatus: null, newStatus: 'Not Started', performedAt: '2026-10-02T12:00:00Z' }],
+        ]
+      );
+
+      expect(await categoryStatuses()).toEqual(['Closed']);
+      const unapproved = await timeline();
+      expect(unapproved.events.map(({ sourceId }) => sourceId)).toEqual(changeIdsByGoal[0]);
+      expect(unapproved.count).toBe(2);
+
+      await created[1].update({ onApprovedAR: true }, { hooks: false });
+      expect(await categoryStatuses()).toEqual(['Not Started']);
+      const approved = await timeline();
+      expect(approved.events.map(({ sourceId }) => sourceId)).toEqual([
+        ...changeIdsByGoal[0],
+        ...changeIdsByGoal[1],
+      ]);
+    });
   });
 });
 

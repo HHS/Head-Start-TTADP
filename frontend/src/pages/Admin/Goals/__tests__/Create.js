@@ -165,13 +165,31 @@ describe('Create', () => {
       userEvent.click(selectInitiativeGoal);
     });
 
-    fetchMock.get(promptsUrl, []);
+    // The API returns [promptsWithResponses, null] when the request is not for an activity report.
+    fetchMock.get(promptsUrl, [
+      [
+        {
+          promptId: 1,
+          title: 'FEI root cause',
+          prompt: 'Select the FEI root cause',
+          fieldType: 'multiselect',
+          options: ['Community Partnerships', 'Workforce'],
+          validations: {
+            required: 'Select a root cause',
+            rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+          },
+          response: [],
+        },
+      ],
+      null,
+    ]);
 
     const goalSelector = await screen.findByLabelText(/OHS standard goal/i);
     act(() => {
       userEvent.selectOptions(goalSelector, 'This is a curated goal template provided by OHS');
     });
 
+    expect(await screen.findByText(/Select the FEI root cause/i)).toBeVisible();
     expect(fetchMock.called(promptsUrl)).toBe(true);
   });
 
