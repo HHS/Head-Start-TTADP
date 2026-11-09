@@ -111,6 +111,10 @@ const eventTypeFilter = {
   ),
 };
 
+// Filters are saved per recipient, like the RTTAPA and TTA History tabs.
+export const getTimelineFilterKey = (recipientId: string | number): string =>
+  `timeline-filters-${recipientId}`;
+
 export const TIMELINE_FILTER_CONFIG = [
   dateFilter,
   purposeFilter,
