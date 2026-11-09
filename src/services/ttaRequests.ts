@@ -140,14 +140,19 @@ export async function ttaRequestById(id: number) {
         as: 'notes',
         attributes: ['id', 'step', 'action', 'note', 'createdAt'],
         include: [userWithRoles('user')],
+        // the history grows with each review, so it is loaded in its own query rather than
+        // multiplying the rows of the grants and citations joined above
+        separate: true,
+        // the history reads in the order it happened
+        order: [
+          ['createdAt', 'ASC'],
+          ['id', 'ASC'],
+        ],
       },
     ],
     order: [
       [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
       [{ model: TtaRequestCitation, as: 'citations' }, 'citation', 'ASC'],
-      // the history reads in the order it happened
-      [{ model: TtaRequestNote, as: 'notes' }, 'createdAt', 'ASC'],
-      [{ model: TtaRequestNote, as: 'notes' }, 'id', 'ASC'],
     ],
   });
 }

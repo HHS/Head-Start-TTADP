@@ -71,6 +71,18 @@ const draft = {
 
 const mockRequestModel = (data) => ({ ...data, toJSON: () => data });
 
+type WrappedRequest = Request & {
+  inTransactionWrapper?: boolean;
+  transactionCommittedCallbacks?: (() => void | Promise<void>)[];
+};
+
+// as the transaction wrapper does once the request's transaction has committed
+const commit = async (request: Partial<Request>) => {
+  for (const callback of (request as WrappedRequest).transactionCommittedCallbacks ?? []) {
+    await callback();
+  }
+};
+
 // how the service rejects grants the request can't have
 const badGrants = () => serviceError(400, 'bad grants', { error: 'bad grants' });
 
@@ -222,6 +234,17 @@ describe('TTA request handlers', () => {
       expect(json).toHaveBeenCalledWith(draft);
     });
 
+    it('inside the transaction wrapper, responds only once the draft has committed', async () => {
+      (createTtaRequestService as jest.Mock).mockResolvedValue(draft);
+      (req as WrappedRequest).inTransactionWrapper = true;
+      await createTtaRequest(req as Request, res as Response);
+      expect(json).not.toHaveBeenCalled();
+
+      await commit(req);
+      expect(status).toHaveBeenCalledWith(201);
+      expect(json).toHaveBeenCalledWith(draft);
+    });
+
     it('returns 403 without write permission in the region', async () => {
       req.body = { regionId: 2 };
       await createTtaRequest(req as Request, res as Response);
@@ -265,6 +288,18 @@ describe('TTA request handlers', () => {
       await saveTtaRequest(req as Request, res as Response);
       expect(lockTtaRequest).toHaveBeenCalledWith(1);
       expect(updateTtaRequest).toHaveBeenCalledWith(existing, req.body, CREATOR_ID);
+      expect(json).toHaveBeenCalledWith(saved);
+    });
+
+    it('inside the transaction wrapper, responds only once the save has committed', async () => {
+      const saved = { ...draft, context: 'updated' };
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
+      (updateTtaRequest as jest.Mock).mockResolvedValue(saved);
+      (req as WrappedRequest).inTransactionWrapper = true;
+      await saveTtaRequest(req as Request, res as Response);
+      expect(json).not.toHaveBeenCalled();
+
+      await commit(req);
       expect(json).toHaveBeenCalledWith(saved);
     });
 
@@ -314,6 +349,18 @@ describe('TTA request handlers', () => {
       expect(json).toHaveBeenCalledWith(submitted);
     });
 
+    it('inside the transaction wrapper, responds only once the submission has committed', async () => {
+      const submitted = { ...draft, status: TTA_REQUEST_STATUSES.SUBMITTED };
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
+      (submitTtaRequestService as jest.Mock).mockResolvedValue(submitted);
+      (req as WrappedRequest).inTransactionWrapper = true;
+      await submitTtaRequest(req as Request, res as Response);
+      expect(json).not.toHaveBeenCalled();
+
+      await commit(req);
+      expect(json).toHaveBeenCalledWith(submitted);
+    });
+
     it('returns 404 when the request does not exist', async () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(null);
       await submitTtaRequest(req as Request, res as Response);
@@ -348,7 +395,7 @@ describe('TTA request handlers', () => {
     it('rethrows rejected data inside the transaction wrapper so the save rolls back', async () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
       (submitTtaRequestService as jest.Mock).mockRejectedValue(serviceError(400, 'no citations'));
-      (req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper = true;
+      (req as WrappedRequest).inTransactionWrapper = true;
       await expect(submitTtaRequest(req as Request, res as Response)).rejects.toMatchObject({
         statusCode: 400,
         responseBody: { error: 'no citations' },
@@ -391,6 +438,18 @@ describe('TTA request handlers', () => {
       await reviewTtaRequest(req as Request, res as Response);
       expect(lockTtaRequest).toHaveBeenCalledWith(1);
       expect(reviewTtaRequestService).toHaveBeenCalledWith(existing, req.body, REVIEWER_ID);
+      expect(json).toHaveBeenCalledWith(reviewed);
+    });
+
+    it('inside the transaction wrapper, responds only once the review has committed', async () => {
+      const reviewed = { ...submitted, status: TTA_REQUEST_STATUSES.NEEDS_ACTION };
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(submitted));
+      (reviewTtaRequestService as jest.Mock).mockResolvedValue(reviewed);
+      (req as WrappedRequest).inTransactionWrapper = true;
+      await reviewTtaRequest(req as Request, res as Response);
+      expect(json).not.toHaveBeenCalled();
+
+      await commit(req);
       expect(json).toHaveBeenCalledWith(reviewed);
     });
 

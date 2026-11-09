@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { SCOPE_IDS } from '@ttahub/common';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -7,6 +8,7 @@ import React from 'react';
 import { Route, Router } from 'react-router-dom';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
 import { AUTOSAVE_INTERVAL, NO_REGION_ERROR, SAVE_ERROR, SUBMIT_ERROR } from '../constants';
 import TtaRequestForm from '../index';
@@ -102,17 +104,26 @@ const BACK_LINK = '/recipient-tta-records/10/region/14/tta-request';
 const mockSetIsAppLoading = jest.fn();
 const mockSetAppLoadingText = jest.fn();
 
-const renderWithAppLoading = (ui) =>
+// the saved requests below are this user's, in a region they can write in
+const CREATOR = {
+  id: 1,
+  name: 'Rachel Green',
+  permissions: [{ regionId: 14, scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS }],
+};
+
+const renderWithAppLoading = (ui, user = CREATOR) =>
   render(
-    <AppLoadingContext.Provider
-      value={{
-        isAppLoading: false,
-        setIsAppLoading: mockSetIsAppLoading,
-        setAppLoadingText: mockSetAppLoadingText,
-      }}
-    >
-      {ui}
-    </AppLoadingContext.Provider>
+    <UserContext.Provider value={{ user }}>
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: false,
+          setIsAppLoading: mockSetIsAppLoading,
+          setAppLoadingText: mockSetAppLoadingText,
+        }}
+      >
+        {ui}
+      </AppLoadingContext.Provider>
+    </UserContext.Provider>
   );
 
 const renderForm = (props = {}, history = createMemoryHistory()) =>
@@ -123,14 +134,15 @@ const renderForm = (props = {}, history = createMemoryHistory()) =>
   );
 
 // rendered the way the routes do, so the form can read the request id
-const renderFormAt = (path, props = {}) => {
+const renderFormAt = (path, props = {}, user = CREATOR) => {
   const history = createMemoryHistory({ initialEntries: [path] });
   renderWithAppLoading(
     <Router history={history}>
       <Route path="/tta-requests/:ttaRequestId(new|[0-9]*)">
         <TtaRequestForm backLinkTo="/tta-requests" {...props} />
       </Route>
-    </Router>
+    </Router>,
+    user
   );
   return history;
 };
@@ -140,6 +152,7 @@ const SAVED_REQUEST = {
   displayId: 'R14-REQ-42',
   regionId: 14,
   status: 'draft',
+  creator: { id: CREATOR.id, name: CREATOR.name },
   recipientAware: false,
   originator: 'Regional Office',
   context: '<p>Saved context</p>',
@@ -434,14 +447,30 @@ describe('TtaRequestForm', () => {
       ],
     };
 
-    const renderNeedsAction = () => {
+    const renderNeedsAction = (user = CREATOR) => {
       fetchMock.get('/api/tta-requests/42', NEEDS_ACTION_REQUEST);
-      return renderFormAt('/tta-requests/42', {
-        recipient: RECIPIENT,
-        recipientOptions: [RECIPIENT],
-        regionId: 14,
-      });
+      return renderFormAt(
+        '/tta-requests/42',
+        {
+          recipient: RECIPIENT,
+          recipientOptions: [RECIPIENT],
+          regionId: 14,
+        },
+        user
+      );
     };
+
+    it("sends anyone but its creator to the request's read-only view", async () => {
+      const history = renderNeedsAction({ ...CREATOR, id: 2 });
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
+    });
+
+    it('sends a creator who can no longer write in its region to the read-only view', async () => {
+      const history = renderNeedsAction({ ...CREATOR, permissions: [] });
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
+    });
 
     it('says who asked for changes, with the notes so far, for the creator to edit', async () => {
       const history = renderNeedsAction();

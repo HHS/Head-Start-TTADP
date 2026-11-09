@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import UserContext from '../../../UserContext';
 import RecipientTtaRequestForm from '../RecipientTtaRequestForm';
 
 jest.mock(
@@ -39,9 +40,11 @@ describe('RecipientTtaRequestForm', () => {
     const { id, ...withoutId } = RECIPIENT;
 
     render(
-      <MemoryRouter>
-        <RecipientTtaRequestForm recipient={withoutId} regionId="14" />
-      </MemoryRouter>
+      <UserContext.Provider value={{ user: { id: 1, permissions: [] } }}>
+        <MemoryRouter>
+          <RecipientTtaRequestForm recipient={withoutId} regionId="14" />
+        </MemoryRouter>
+      </UserContext.Provider>
     );
 
     expect(screen.getByText('Children and Families First - 14HP1234 - EHS')).toBeVisible();
@@ -49,9 +52,11 @@ describe('RecipientTtaRequestForm', () => {
 
   it('lists only the grant rather than repeating the recipient', () => {
     render(
-      <MemoryRouter>
-        <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
-      </MemoryRouter>
+      <UserContext.Provider value={{ user: { id: 1, permissions: [] } }}>
+        <MemoryRouter>
+          <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
+        </MemoryRouter>
+      </UserContext.Provider>
     );
 
     // there is only ever one recipient on offer here, and the grant already names them
@@ -63,9 +68,11 @@ describe('RecipientTtaRequestForm', () => {
 
   it('fixes the recipient and returns to their TTA requests', () => {
     render(
-      <MemoryRouter>
-        <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
-      </MemoryRouter>
+      <UserContext.Provider value={{ user: { id: 1, permissions: [] } }}>
+        <MemoryRouter>
+          <RecipientTtaRequestForm recipient={RECIPIENT} regionId="14" />
+        </MemoryRouter>
+      </UserContext.Provider>
     );
 
     expect(screen.getByRole('link', { name: 'Back to TTA Requests' })).toHaveAttribute(

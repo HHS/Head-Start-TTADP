@@ -17,12 +17,26 @@ import {
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
 
 const logContext = {
   namespace,
 };
+
+/**
+ * The form reads the request, or the list it is in, again as soon as it has a write's
+ * response, so inside the transaction wrapper the response waits until the write has
+ * committed; sent before, those reads could still see the request as it was
+ */
+function respondOnceCommitted(req: Request, respond: () => void) {
+  if ((req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper) {
+    onTransactionCommitted(req, respond);
+    return;
+  }
+  respond();
+}
 
 export async function getTtaRequests(req: Request, res: Response) {
   try {
@@ -117,7 +131,7 @@ export async function createTtaRequest(req: Request, res: Response) {
     }
 
     const ttaRequest = await createTtaRequestService(data, userId);
-    res.status(httpCodes.CREATED).json(ttaRequest);
+    respondOnceCommitted(req, () => res.status(httpCodes.CREATED).json(ttaRequest));
   } catch (error) {
     if (respondWithServiceError(res, error)) {
       return;
@@ -147,7 +161,7 @@ export async function saveTtaRequest(req: Request, res: Response) {
     }
 
     const ttaRequest = await updateTtaRequest(existing, req.body, userId);
-    res.json(ttaRequest);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
   } catch (error) {
     if (respondWithServiceError(res, error)) {
       return;
@@ -178,7 +192,7 @@ export async function submitTtaRequest(req: Request, res: Response) {
     }
 
     const ttaRequest = await submitTtaRequestService(existing, req.body, userId);
-    res.json(ttaRequest);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
   } catch (error) {
     // Errors that set their own statusCode are deliberate client responses
     if (error?.statusCode) {
@@ -216,7 +230,7 @@ export async function reviewTtaRequest(req: Request, res: Response) {
     }
 
     const ttaRequest = await reviewTtaRequestService(existing, req.body, userId);
-    res.json(ttaRequest);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
   } catch (error) {
     // the service rejects a review before it writes anything, so there is nothing for the
     // wrapper to roll back, unlike a submission

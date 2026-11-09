@@ -1,8 +1,9 @@
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import {
   allRegionsUserHasTtaRequestPermissionTo,
   canCreateCommunicationLog,
   canCreateTtaRequest,
+  canEditTtaRequest,
   hasTtaRequestReadWrite,
 } from './permissions';
 
@@ -296,5 +297,40 @@ describe('canCreateTtaRequest', () => {
     expect(canCreateTtaRequest(user, 14)).toBe(false);
     expect(canCreateTtaRequest(writer, null)).toBe(false);
     expect(canCreateTtaRequest(null, 1)).toBe(false);
+  });
+});
+
+describe('canEditTtaRequest', () => {
+  const creator = {
+    id: 1,
+    permissions: [{ scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS, regionId: 3 }],
+  };
+  const request = { creator: { id: 1 }, regionId: 3, status: TTA_REQUEST_STATUSES.NEEDS_ACTION };
+
+  it.each([TTA_REQUEST_STATUSES.DRAFT, TTA_REQUEST_STATUSES.NEEDS_ACTION])(
+    'is true for the creator with write permission in its region while it is %s',
+    (status) => {
+      expect(canEditTtaRequest(creator, { ...request, status })).toBe(true);
+    }
+  );
+
+  it('is false for anyone but the creator', () => {
+    expect(canEditTtaRequest({ ...creator, id: 2 }, request)).toBe(false);
+  });
+
+  it('is false for the creator without write permission in its region', () => {
+    expect(canEditTtaRequest(creator, { ...request, regionId: 4 })).toBe(false);
+    expect(canEditTtaRequest({ ...creator, permissions: undefined }, request)).toBe(false);
+  });
+
+  it('is false once the request has been submitted', () => {
+    expect(
+      canEditTtaRequest(creator, { ...request, status: TTA_REQUEST_STATUSES.SUBMITTED })
+    ).toBe(false);
+  });
+
+  it('is false without a user or request', () => {
+    expect(canEditTtaRequest(undefined, request)).toBe(false);
+    expect(canEditTtaRequest(creator, null)).toBe(false);
   });
 });

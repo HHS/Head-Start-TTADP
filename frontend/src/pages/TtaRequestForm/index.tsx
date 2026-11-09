@@ -20,6 +20,8 @@ import {
   submitTtaRequest,
 } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
+import { canEditTtaRequest } from '../../permissions';
+import UserContext from '../../UserContext';
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 import ApproverStatusList from '../ActivityReport/Pages/components/ApproverStatusList';
 import {
@@ -91,6 +93,7 @@ function TtaRequestFormBody({
   const [saveError, setSaveError] = useState<string | null>(null);
   // this is used to disable the save button (we don't use the overlay on auto save)
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
+  const { user } = useContext(UserContext);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext) as {
     isAppLoading: boolean;
     setIsAppLoading: (isLoading: boolean) => void;
@@ -319,13 +322,10 @@ function TtaRequestFormBody({
     ) : null;
   }
 
-  // only a draft, or a request sent back for changes, can be edited; a submitted request is
-  // shown read-only, as collaboration reports do
-  if (
-    savedRequest &&
-    savedRequest.status !== TTA_REQUEST_STATUSES.DRAFT &&
-    savedRequest.status !== TTA_REQUEST_STATUSES.NEEDS_ACTION
-  ) {
+  // only the creator edits a draft, or a request sent back to them for changes, and only while
+  // they can write in its region; anyone else, or a submitted request, is shown read-only, as
+  // collaboration reports do, rather than a form whose every save would be refused
+  if (savedRequest && !canEditTtaRequest(user, savedRequest)) {
     return <Redirect to={ttaRequestViewPath(savedRequest.id, backLinkTo)} />;
   }
 
