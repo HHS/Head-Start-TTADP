@@ -122,6 +122,14 @@ export async function getTimelineGoalCategories(
       mapsToParentGoalId: null,
       [Op.and]: [
         { [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }] },
+        // Match the RTTAPA tab: goals created on an activity report count once it is approved.
+        {
+          [Op.or]: [
+            { createdVia: null },
+            { createdVia: { [Op.ne]: 'activityReport' } },
+            { onApprovedAR: true },
+          ],
+        },
         // Current standard goals do not set the legacy isRttapa flag.
         {
           [Op.or]: [

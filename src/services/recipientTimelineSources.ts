@@ -25,6 +25,7 @@ const {
   EventReportPilot,
   File,
   Goal,
+  GoalFieldResponse,
   GoalStatusChange,
   GoalTemplate,
   Grant,
@@ -341,6 +342,8 @@ async function populateActivityReports(
     if (reportId && citation) pushMapValue(citationsByReport, reportId, citation);
   });
 
+  // The Monitoring tab's citation view lists every citation's details for the recipient.
+  const monitoringCitationsLink = `/recipient-tta-records/${context.recipientId}/region/${context.regionId}/monitoring/citation`;
   const presentations = new Map<number, RecipientTimelineEventPresentation>();
   reports.forEach((report) => {
     const presentation = emptyActivityReportPresentation();
@@ -382,7 +385,12 @@ async function populateActivityReports(
       ...(topics.length ? [{ label: 'Topics', items: [{ text: topics.join(', ') }] }] : []),
       ...(deliveryMethod ? [{ label: 'Delivery method', items: [{ text: deliveryMethod }] }] : []),
       ...(citations.length
-        ? [{ label: 'Citations addressed', items: citations.map((text) => ({ text })) }]
+        ? [
+            {
+              label: 'Citations addressed',
+              items: citations.map((text) => ({ text, link: monitoringCitationsLink })),
+            },
+          ]
         : []),
       ...(grants.length
         ? [{ label: 'Grant numbers', items: grants.map((text) => ({ text })) }]
@@ -444,17 +452,74 @@ const GOAL_STATUS_EVENT_RULES: Array<{
   },
 ];
 
+// The RTTAPA tab hides goals created on an activity report until that report is approved
+// (see standardGoalsForRecipient), so the Timeline counts the same goals.
+const goalCountsPredicate = (goalAlias: string) =>
+  `("${goalAlias}"."createdVia" IS DISTINCT FROM 'activityReport' OR "${goalAlias}"."onApprovedAR" = TRUE)`;
+
+// A recorded transition: it has a new status and is not a "Goal created" creation snapshot. The
+// 08/2025 backfill stamped those snapshots with the goal's status at migration time on the
+// creation date, and the next transition's oldStatus (or the goal's current status) already says
+// the same thing for real ones. A genuine transition from a NULL status is kept.
+const goalStatusChangeIsTransition = (alias: string) => `"${alias}"."newStatus" IS NOT NULL
+          AND NOT COALESCE(
+            "${alias}"."oldStatus" IS NULL
+              AND "${alias}"."reason" = 'Goal created'
+              AND "${alias}"."context" = 'Creation',
+            FALSE
+          )`;
+
 // Reopening a standard creates a new goal. Share this predicate between the index and
 // population query so event filters and titles agree, without fetching prior goals one at a time.
-const PRIOR_CLOSED_GOAL_PREDICATE = `EXISTS (
+// A prior goal only counts when it was Closed as of the status change being labelled, so closing
+// an older goal later never rewrites the title of an earlier event. Before a goal's first
+// transition its status is that transition's oldStatus, which may be NULL (no status yet), and a
+// goal with no transitions uses its current status.
+// Index "GoalStatusChanges_goalId_changedAt_id" backs these lookups.
+const priorClosedGoalPredicate = (changeAlias: string) => `EXISTS (
   SELECT 1 FROM "Goals" AS "previousGoal"
   WHERE "previousGoal"."grantId" = "goal"."grantId"
     AND "previousGoal"."goalTemplateId" = "goal"."goalTemplateId"
     AND "previousGoal"."prestandard" = "goal"."prestandard"
-    AND "previousGoal"."status" = 'Closed'
     AND "previousGoal"."deletedAt" IS NULL
     AND "previousGoal"."mapsToParentGoalId" IS NULL
+    AND ${goalCountsPredicate('previousGoal')}
     AND ("previousGoal"."createdAt", "previousGoal"."id") < ("goal"."createdAt", "goal"."id")
+    AND (CASE
+      WHEN EXISTS (
+        SELECT 1 FROM "GoalStatusChanges" AS "previousChange"
+        WHERE "previousChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('previousChange')}
+          AND COALESCE("previousChange"."performedAt", "previousChange"."createdAt")
+            <= COALESCE("${changeAlias}"."performedAt", "${changeAlias}"."createdAt")
+      ) THEN (
+        SELECT "previousChange"."newStatus"
+        FROM "GoalStatusChanges" AS "previousChange"
+        WHERE "previousChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('previousChange')}
+          AND COALESCE("previousChange"."performedAt", "previousChange"."createdAt")
+            <= COALESCE("${changeAlias}"."performedAt", "${changeAlias}"."createdAt")
+        ORDER BY
+          COALESCE("previousChange"."performedAt", "previousChange"."createdAt") DESC,
+          "previousChange"."id" DESC
+        LIMIT 1
+      )
+      WHEN EXISTS (
+        SELECT 1 FROM "GoalStatusChanges" AS "nextChange"
+        WHERE "nextChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('nextChange')}
+      ) THEN (
+        SELECT "nextChange"."oldStatus"
+        FROM "GoalStatusChanges" AS "nextChange"
+        WHERE "nextChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('nextChange')}
+        ORDER BY
+          COALESCE("nextChange"."performedAt", "nextChange"."createdAt") ASC,
+          "nextChange"."id" ASC
+        LIMIT 1
+      )
+      ELSE "previousGoal"."status"
+    END) = 'Closed'
 )`;
 
 const buildGoalStatusChangeIndexQuery = (
@@ -471,7 +536,7 @@ const buildGoalStatusChangeIndexQuery = (
     return `WHEN ("change"."oldStatus" IN (${oldStatuses})
       ${rule.oldStatuses.includes(null) ? 'OR "change"."oldStatus" IS NULL' : ''})
       AND "change"."newStatus" IN (${newStatuses})
-      ${rule.requiresPriorClosedGoal ? `AND ${PRIOR_CLOSED_GOAL_PREDICATE}` : ''}
+      ${rule.requiresPriorClosedGoal ? `AND ${priorClosedGoalPredicate('change')}` : ''}
       THEN ${eventType}`;
   });
   const standardPredicates = context.filters
@@ -502,6 +567,7 @@ const buildGoalStatusChangeIndexQuery = (
       AND "goal"."deletedAt" IS NULL
       AND "goal"."mapsToParentGoalId" IS NULL
       AND "goal"."status" <> 'Draft'
+      AND ${goalCountsPredicate('goal')}
     INNER JOIN "Grants" AS "grant"
       ON "grant"."id" = "goal"."grantId"
     ${standardPredicates.length ? `WHERE ${standardPredicates.join('\n      AND ')}` : ''}`;
@@ -522,7 +588,7 @@ async function populateGoalStatusChanges(
       'newStatus',
       'reason',
       'context',
-      [literal(PRIOR_CLOSED_GOAL_PREDICATE), 'hasPriorClosedGoal'],
+      [literal(priorClosedGoalPredicate('GoalStatusChange')), 'hasPriorClosedGoal'],
     ],
     where: { id: { [Op.in]: [...new Set(sourceIds)] } },
     include: [
@@ -537,6 +603,7 @@ async function populateGoalStatusChanges(
         include: [
           { model: GoalTemplate, as: 'goalTemplate', attributes: ['standard'], required: false },
           { model: Grant.unscoped(), as: 'grant', attributes: ['number'], required: false },
+          { model: GoalFieldResponse, as: 'responses', attributes: ['response'], required: false },
         ],
       },
     ],
@@ -557,12 +624,19 @@ async function populateGoalStatusChanges(
         change.userRoles ?? []
       );
       const standard = change.goal?.goalTemplate?.standard?.trim();
+      // Only FEI goals have field responses; they hold the root causes.
+      const rootCause = (change.goal?.responses ?? [])
+        .flatMap(({ response }) => response ?? [])
+        .map((value) => value?.trim())
+        .filter(Boolean)
+        .join(', ');
       const details = [
         ['Goal number', change.goal ? `G-${change.goal.id}` : null],
         ['Previous status', change.oldStatus],
         ['New status', change.newStatus],
         ['Reason', change.reason],
         ['Context', change.context],
+        ['Root cause', rootCause],
         ['Grant number', change.goal?.grant?.number],
       ]
         .filter(([, value]) => value?.trim())
