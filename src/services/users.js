@@ -238,6 +238,20 @@ export async function userEmailIsVerifiedByUserId(userId) {
 }
 
 /**
+ * Clears a user's email verification so they must verify their email again.
+ *
+ * @param {number} userId
+ * @returns {Promise<number>} number of validation status rows reset
+ */
+export async function requireEmailVerification(userId) {
+  const [count] = await UserValidationStatus.update(
+    { validatedAt: null },
+    { where: { userId, type: 'email' } }
+  );
+  return count;
+}
+
+/**
  * Sets a give feature flag on or off for a set of active users
  *
  * @param {flag:string} flag to set
@@ -283,7 +297,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
 
   const users = await User.findAll({
-    exclude: ['email', 'phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
+    attributes: {
+      exclude: ['phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
+    },
     where: {
       [Op.or]: {
         '$permissions.scopeId$': {
@@ -334,14 +350,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   if (eventId) {
     // get event report pilot that has the matching full event display id.
     const eventReportPilot = await EventReportPilot.findOne({
-      attributes: ['id', 'ownerId', 'data'],
-      where: {
-        data: {
-          eventId: {
-            [Op.eq]: eventId,
-          },
-        },
-      },
+      attributes: ['id', 'ownerId'],
+      // only events in the region the caller is authorized for
+      where: { eventId, regionId },
     });
 
     if (eventReportPilot) {
@@ -352,7 +363,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       if (!currentOwner) {
         // If the current ownerId is not in the creators array, add it.
         const owner = await userById(eventReportPilot.ownerId);
-        results.creators.push({ id: owner.id, fullName: owner.fullName });
+        if (owner) {
+          results.creators.push({ id: owner.id, fullName: owner.fullName });
+        }
       }
     }
   }

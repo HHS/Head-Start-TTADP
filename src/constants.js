@@ -370,6 +370,7 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
   TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
+  TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
@@ -531,9 +532,7 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
-  'monitoring-regional-dashboard',
   'actionable_notifications',
-  'compliant_follow_up_reviews_tta_support',
   'tta_timeline',
   'recipient_tta_request',
 ];

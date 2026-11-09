@@ -32,6 +32,16 @@ const batch = (start, length) =>
     details: [],
     links: [],
   }));
+// Emulates the API's keyset paging. A cursor encodes how many events came before it.
+const pageAt = (total, cursor, size = 25) => {
+  const start = cursor ? Number(cursor.replace('after-', '')) : 0;
+  const length = Math.min(size, total - start);
+  return {
+    count: total,
+    events: batch(start + 1, length),
+    ...(start + length < total ? { nextCursor: `after-${start + length}` } : {}),
+  };
+};
 const view = {
   mode: 'chronological',
   recipientId: '401',
@@ -81,7 +91,7 @@ const mockRealFilters = () => {
 
 describe('timeline navigation restoration', () => {
   beforeEach(() => {
-    window.sessionStorage.removeItem('timeline-filters');
+    window.sessionStorage.removeItem('timeline-filters-401');
     fetchMock.get('begin:/api/feeds/item?tag=ttahub-timeline', '<feed></feed>');
     getRecipientTimeline.mockReset();
     useFilters.mockReturnValue({
@@ -152,15 +162,13 @@ describe('timeline navigation restoration', () => {
       expect(getRecipientTimeline.mock.calls.at(-1)[2].view).toBeUndefined();
       act(() => history.goForward());
       await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue(mode));
-      expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toEqual(
-        mode === 'goals'
-          ? []
-          : [expect.objectContaining({ topic: 'standard', query: ['Monitoring'] })]
-      );
+      expect(getRecipientTimeline.mock.calls.at(-1)[2].filters).toEqual([
+        expect.objectContaining({ topic: 'standard', query: ['Family Support'] }),
+      ]);
     }
   );
 
-  it('switches views, replaces only goal filters, and restores the chosen view after details', async () => {
+  it('keeps all filters when switching views and restores the chosen view after details', async () => {
     mockRealFilters();
     const initialFilters = [
       { id: 'goal', topic: 'standard', condition: 'is', query: ['Family Support'] },
@@ -189,15 +197,16 @@ describe('timeline navigation restoration', () => {
         '1',
         expect.objectContaining({
           view: 'monitoring',
-          offset: 0,
           excludeMultiRecipientCommunications: true,
           filters: [
+            expect.objectContaining({ topic: 'standard', query: ['Family Support'] }),
             expect.objectContaining({ topic: 'eventType' }),
-            expect.objectContaining({ topic: 'standard', query: ['Monitoring'] }),
           ],
         })
       )
     );
+    expect(screen.getByText('Goal category', { selector: 'strong' })).toBeInTheDocument();
+    expect(screen.queryByText('Monitoring', { selector: 'strong' })).not.toBeInTheDocument();
     await act(async () =>
       userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'goals')
     );
@@ -207,16 +216,43 @@ describe('timeline navigation restoration', () => {
         '1',
         expect.objectContaining({
           view: 'goals',
-          offset: 0,
           excludeMultiRecipientCommunications: true,
-          filters: [expect.objectContaining({ topic: 'eventType' })],
+          filters: [
+            expect.objectContaining({ topic: 'standard', query: ['Family Support'] }),
+            expect.objectContaining({ topic: 'eventType' }),
+          ],
         })
       )
     );
-    expect(screen.queryByText('Goal category', { selector: 'strong' })).not.toBeInTheDocument();
+    expect(screen.getByText('Goal category', { selector: 'strong' })).toBeInTheDocument();
     await act(async () => userEvent.click(screen.getByRole('link', { name: 'View details' })));
     act(() => history.goBack());
     expect(await screen.findByRole('combobox', { name: 'View' })).toHaveValue('goals');
+  });
+
+  it('applies no goal category filter pill in the Monitoring view', async () => {
+    mockRealFilters();
+    const history = createMemoryHistory({
+      initialEntries: [{ pathname: '/timeline', search: '', state: { timelineView: view } }],
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(history);
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'monitoring')
+    );
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith(
+        '401',
+        '1',
+        expect.objectContaining({ view: 'monitoring' })
+      )
+    );
+    expect(
+      getRecipientTimeline.mock.calls.at(-1)[2].filters.filter(({ topic }) => topic === 'standard')
+    ).toHaveLength(0);
+    expect(history.location.search).not.toContain('standard.');
+    expect(screen.queryByText('Goal category', { selector: 'strong' })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -224,66 +260,134 @@ describe('timeline navigation restoration', () => {
     ['monitoring', 'asc'],
     ['goals', 'desc'],
     ['goals', 'asc'],
-  ])(
-    'clears only goal categories when moving from %s to date order %s',
-    async (mode, direction) => {
-      mockRealFilters();
-      const otherFilters = [
-        { id: 'date', topic: 'date', condition: 'is within', query: '2025/10/01-2026/10/26' },
-        { id: 'event', topic: 'eventType', condition: 'is', query: ['TTA activity'] },
-        { id: 'purpose', topic: 'purpose', condition: 'is', query: [COMMUNICATION_PURPOSES[0]] },
-      ];
-      const initialFilters = [
-        ...otherFilters,
-        { id: 'goal', topic: 'standard', condition: 'is', query: ['Monitoring'] },
-        { id: 'excludedGoal', topic: 'standard', condition: 'is not', query: ['Family Support'] },
-      ];
-      const history = createMemoryHistory({
-        initialEntries: [
-          {
-            pathname: '/timeline',
-            search: `?${filtersToQueryString(initialFilters)}`,
-            state: { timelineView: { ...view, mode, excludeMultiRecipientCommunications: true } },
-          },
-        ],
+  ])('keeps every filter when moving from %s to date order %s', async (mode, direction) => {
+    mockRealFilters();
+    const initialFilters = [
+      { id: 'date', topic: 'date', condition: 'is within', query: '2025/10/01-2026/10/26' },
+      { id: 'event', topic: 'eventType', condition: 'is', query: ['TTA activity'] },
+      { id: 'purpose', topic: 'purpose', condition: 'is', query: [COMMUNICATION_PURPOSES[0]] },
+      { id: 'goal', topic: 'standard', condition: 'is', query: ['Family Support'] },
+    ];
+    const history = createMemoryHistory({
+      initialEntries: [
+        {
+          pathname: '/timeline',
+          search: `?${filtersToQueryString(initialFilters)}`,
+          state: { timelineView: { ...view, mode, excludeMultiRecipientCommunications: true } },
+        },
+      ],
+    });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(history);
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), direction)
+    );
+    await waitFor(() => {
+      const request = getRecipientTimeline.mock.calls.at(-1)[2];
+      expect(request.view).toBeUndefined();
+      expect(request).toMatchObject({
+        direction,
+        excludeMultiRecipientCommunications: true,
       });
-      getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
-      renderTimeline(history);
-      await screen.findByText('No results found.');
-      await act(async () =>
-        userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), direction)
+      expect(request.filters).toHaveLength(initialFilters.length);
+      expect(request.filters).toEqual(
+        expect.arrayContaining(
+          initialFilters.map(({ id, ...filter }) => expect.objectContaining(filter))
+        )
       );
-      await waitFor(() => {
-        const request = getRecipientTimeline.mock.calls.at(-1)[2];
-        expect(request.view).toBeUndefined();
-        expect(request).toMatchObject({
-          direction,
-          offset: 0,
-          excludeMultiRecipientCommunications: true,
-        });
-        expect(request.filters).toHaveLength(otherFilters.length);
-        expect(request.filters).toEqual(
-          expect.arrayContaining(
-            otherFilters.map(({ id, ...filter }) => expect.objectContaining(filter))
-          )
-        );
-      });
-      expect(history.location.search).not.toContain('standard.');
-      expect(screen.queryByText('Goal category', { selector: 'strong' })).not.toBeInTheDocument();
-      expect(
-        screen.getByRole('checkbox', { name: 'Hide multi-recipient communications' })
-      ).toBeChecked();
-      // A view switch is one history entry, and Back still restores the old view and filters.
-      expect(history.length).toBe(2);
-      act(() => history.goBack());
-      await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue(mode));
-      expect(
-        getRecipientTimeline.mock.calls
-          .at(-1)[2]
-          .filters.filter(({ topic }) => topic === 'standard')
-      ).toHaveLength(2);
-    }
-  );
+    });
+    expect(screen.getByText('Goal category', { selector: 'strong' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', { name: 'Hide multi-recipient communications' })
+    ).toBeChecked();
+    // A view switch is one history entry, and Back still restores the old view and filters.
+    expect(history.length).toBe(2);
+    act(() => history.goBack());
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue(mode));
+    expect(
+      getRecipientTimeline.mock.calls.at(-1)[2].filters.filter(({ topic }) => topic === 'standard')
+    ).toHaveLength(1);
+  });
+
+  it("does not write one recipient's filters under the next recipient's saved key", async () => {
+    const realFilters = mockRealFilters();
+    const saved = [{ id: 'saved', topic: 'eventType', condition: 'is', query: ['Goal closed'] }];
+    window.sessionStorage.setItem('timeline-filters-644', JSON.stringify(saved));
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    const history = createMemoryHistory({ initialEntries: ['/timeline/401/1'] });
+    render(
+      <UserContext.Provider value={{ user: { homeRegionId: 1 } }}>
+        <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+          <Router history={history}>
+            <Route
+              path="/timeline/:recipientId/:regionId"
+              render={({ match }) => (
+                <Timeline recipientId={match.params.recipientId} regionId={match.params.regionId} />
+              )}
+            />
+          </Router>
+        </AriaLiveContext.Provider>
+      </UserContext.Provider>
+    );
+    await screen.findByText('No results found.');
+    const filter = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
+    act(() => realFilters.setFilters(filter));
+    await waitFor(() =>
+      expect(window.sessionStorage.getItem('timeline-filters-401')).toContain('Goal added')
+    );
+    act(() => history.push('/timeline/644/6'));
+    await waitFor(() =>
+      expect(getRecipientTimeline).toHaveBeenLastCalledWith('644', '6', expect.anything())
+    );
+    expect(window.sessionStorage.getItem('timeline-filters-644')).toContain('Goal closed');
+    expect(window.sessionStorage.getItem('timeline-filters-644')).not.toContain('Goal added');
+    window.sessionStorage.removeItem('timeline-filters-644');
+  });
+
+  it('keeps focus on the View dropdown after changing to a different view', async () => {
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(historyAt({ timelineView: view }));
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'goals')
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('goals')
+    );
+    expect(screen.getByRole('combobox', { name: 'View' })).toHaveFocus();
+  });
+
+  it('does not take focus when Back returns to a different view', async () => {
+    const history = historyAt({ timelineView: view });
+    getRecipientTimeline.mockResolvedValue({ count: 0, events: [], categories: [] });
+    renderTimeline(history);
+    await screen.findByText('No results found.');
+    await act(async () =>
+      userEvent.selectOptions(screen.getByRole('combobox', { name: 'View' }), 'goals')
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('goals')
+    );
+    act(() => history.goBack());
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('desc'));
+    expect(screen.getByRole('combobox', { name: 'View' })).not.toHaveFocus();
+  });
+
+  it('nests event titles one level below their category headings in grouped views', async () => {
+    const events = batch(1, 2).map((event) => ({
+      ...event,
+      tags: [{ label: 'Monitoring', flagged: true }],
+    }));
+    getRecipientTimeline.mockResolvedValue({
+      count: 2,
+      events,
+      categories: [{ label: 'Monitoring', statuses: ['In Progress'] }],
+    });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    expect(await screen.findByRole('heading', { name: 'Event 1', level: 4 })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /Monitoring In Progress/, level: 3 })).toBeVisible();
+  });
 
   it.each(['monitoring', 'goals'])(
     'keeps goal dividers visible and unique across pages in %s view',
@@ -308,8 +412,8 @@ describe('timeline navigation restoration', () => {
       ];
       const categories = [{ label: 'Monitoring', statuses: ['In Progress'] }];
       getRecipientTimeline
-        .mockResolvedValueOnce({ count: 26, events: first, categories })
-        .mockResolvedValueOnce({ count: 26, events: second, categories });
+        .mockResolvedValueOnce({ count: 26, events: first, categories, nextCursor: 'after-25' })
+        .mockResolvedValueOnce({ count: 26, events: second });
       renderTimeline(historyAt({ timelineView: { ...view, mode } }));
       expect(await screen.findByText('Goal G-109560 reopened')).toBeVisible();
       userEvent.click(screen.getByRole('button', { name: 'Load more events' }));
@@ -340,7 +444,9 @@ describe('timeline navigation restoration', () => {
         ];
         const page = (offset) => ({
           count: 75,
-          categories,
+          // Categories come with the first page only.
+          ...(offset === 0 ? { categories } : {}),
+          ...(offset + 25 < 75 ? { nextCursor: `after-${offset + 25}` } : {}),
           events: batch(offset + 1, 25).map((event) => ({
             ...event,
             tags: categories.map(({ label }) => ({ label, flagged: false })),
@@ -378,13 +484,105 @@ describe('timeline navigation restoration', () => {
         await waitFor(() => expect(observers.length).toBeGreaterThan(observerCount));
         act(() => observers.at(-1).callback([{ isIntersecting: true }]));
         await waitFor(() => expect(getRecipientTimeline).toHaveBeenCalledTimes(3));
-        expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 50]);
+        expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+          undefined,
+          'after-25',
+          'after-50',
+        ]);
         await screen.findByRole('heading', { name: 'Event 75' });
       } finally {
         window.IntersectionObserver = originalObserver;
       }
     }
   );
+
+  it('shows an event added to a category that had none, below the categories already shown', async () => {
+    const withTag = (label, items) =>
+      items.map((event) => ({ ...event, tags: [{ label, flagged: false }] }));
+    getRecipientTimeline
+      .mockResolvedValueOnce({
+        count: 25,
+        categories: [{ label: 'Monitoring', statuses: ['In Progress'] }],
+        events: withTag('Monitoring', batch(1, 25)),
+        nextCursor: 'after-25',
+      })
+      // A backdated Governance event was added after the first page loaded.
+      .mockResolvedValueOnce({
+        count: 26,
+        categories: [{ label: 'Governance', statuses: ['Closed'] }],
+        events: withTag('Governance', batch(26, 1)),
+      });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    await screen.findByRole('list', { name: 'Monitoring timeline events' });
+    expect(screen.queryByRole('button', { name: /Governance/ })).not.toBeInTheDocument();
+
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+    );
+    const governance = await screen.findByRole('list', { name: 'Governance timeline events' });
+    // Every loaded event is on screen, not just those of the categories known at first.
+    expect(within(governance).getAllByRole('article')).toHaveLength(1);
+    expect(
+      within(screen.getByRole('list', { name: 'Monitoring timeline events' })).getAllByRole(
+        'article'
+      )
+    ).toHaveLength(25);
+    const accordionButtons = Array.from(
+      screen
+        .getByRole('list', { name: 'Timeline events' })
+        .querySelectorAll('.usa-accordion__button')
+    );
+    expect(accordionButtons.map((button) => button.textContent.trim())).toEqual([
+      'MonitoringIn Progress',
+      'GovernanceClosed',
+    ]);
+  });
+
+  it('lists every category from the first page, before their events have loaded', async () => {
+    const categories = [
+      { label: 'Family Support', statuses: [] },
+      { label: 'Governance', statuses: [] },
+      { label: 'Monitoring', statuses: ['In Progress'] },
+    ];
+    const withTag = (label, items) =>
+      items.map((event) => ({ ...event, tags: [{ label, flagged: false }] }));
+    getRecipientTimeline
+      .mockResolvedValueOnce({
+        count: 30,
+        categories,
+        events: withTag('Monitoring', batch(1, 25)),
+        nextCursor: 'after-25',
+      })
+      .mockResolvedValueOnce({ count: 30, events: withTag('Governance', batch(26, 5)) });
+    renderTimeline(historyAt({ timelineView: { ...view, mode: 'goals' } }));
+    await screen.findByRole('list', { name: 'Monitoring timeline events' });
+    const accordionButtons = Array.from(
+      screen
+        .getByRole('list', { name: 'Timeline events' })
+        .querySelectorAll('.usa-accordion__button')
+    );
+    expect(accordionButtons.map((button) => button.textContent.trim())).toEqual([
+      'Family Support',
+      'Governance',
+      'MonitoringIn Progress',
+    ]);
+    // Categories with nothing loaded yet say so instead of showing an empty accordion.
+    expect(screen.getAllByText('Events in this category appear as more events load.')).toHaveLength(
+      2
+    );
+
+    await act(async () =>
+      userEvent.click(screen.getByRole('button', { name: 'Load more events' }))
+    );
+    const governance = await screen.findByRole('list', { name: 'Governance timeline events' });
+    expect(within(governance).getAllByRole('article')).toHaveLength(5);
+    // Nothing is left to load, and no event matched Family Support, so it no longer shows.
+    expect(screen.queryByRole('button', { name: /Family Support/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Events in this category appear as more events load.')
+    ).not.toBeInTheDocument();
+    expect(getRecipientTimeline).toHaveBeenCalledTimes(2);
+  });
 
   it('groups multi-category events alphabetically in independently expanded accordions', async () => {
     const events = batch(1, 2).map((event) => ({
@@ -452,7 +650,6 @@ describe('timeline navigation restoration', () => {
           '401',
           '1',
           expect.objectContaining({
-            offset: 0,
             filters: [
               expect.objectContaining({
                 topic: 'purpose',
@@ -492,7 +689,6 @@ describe('timeline navigation restoration', () => {
         '401',
         '1',
         expect.objectContaining({
-          offset: 0,
           filters: [expect.objectContaining({ topic: 'date', condition: 'is' })],
         })
       )
@@ -506,15 +702,15 @@ describe('timeline navigation restoration', () => {
       expect(getRecipientTimeline).toHaveBeenLastCalledWith(
         '401',
         '1',
-        expect.objectContaining({ filters: [], offset: 0 })
+        expect.objectContaining({ filters: [] })
       )
     );
     expect(screen.queryByText('Date', { selector: 'strong' })).not.toBeInTheDocument();
   });
 
   it('saves loaded depth and visible event without extra history entries, then restores on refresh', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = historyAt({ unrelated: 'preserved' });
     const { unmount } = renderTimeline(history);
@@ -540,7 +736,11 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 50]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+      'after-50',
+    ]);
     expect(screen.getAllByRole('article')).toHaveLength(75);
     expect(screen.queryByText('Restoring timeline position…')).not.toBeInTheDocument();
   });
@@ -549,8 +749,8 @@ describe('timeline navigation restoration', () => {
     mockRealFilters();
     const filters = [{ id: 'type', topic: 'eventType', condition: 'is', query: ['TTA activity'] }];
     const search = `?${filtersToQueryString(filters)}`;
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 125, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(125, cursor))
     );
     const history = createMemoryHistory({
       initialEntries: ['/detail', `/timeline${search}`],
@@ -581,8 +781,8 @@ describe('timeline navigation restoration', () => {
   it('does not recreate a filtered URL when Back returns to an unfiltered timeline', async () => {
     window.sessionStorage.clear();
     const realFilters = mockRealFilters();
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset, filters }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, filters.length ? 25 : 1) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor, filters }) =>
+      Promise.resolve(pageAt(100, cursor, filters.length ? 25 : 1))
     );
     const history = createMemoryHistory({
       initialEntries: ['/detail', '/timeline'],
@@ -622,7 +822,7 @@ describe('timeline navigation restoration', () => {
   });
 
   it('preserves a session-restored empty filter state when navigating Back', async () => {
-    window.sessionStorage.setItem('timeline-filters', JSON.stringify([]));
+    window.sessionStorage.setItem('timeline-filters-401', JSON.stringify([]));
     const realFilters = mockRealFilters();
     const history = createMemoryHistory({
       initialEntries: ['/detail', '/timeline'],
@@ -642,8 +842,8 @@ describe('timeline navigation restoration', () => {
   });
 
   it('does not replace location state while at the top, even after several slices', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = historyAt({ unrelated: 'preserved' });
     const { key } = history.location;
@@ -661,8 +861,8 @@ describe('timeline navigation restoration', () => {
   });
 
   it('flushes pending scroll saves before a link and restores on browser Back', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = historyAt();
     renderTimeline(history);
@@ -682,7 +882,10 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+    ]);
     act(() => history.goForward());
     expect(screen.getByText('Detail page')).toBeVisible();
   });
@@ -714,7 +917,6 @@ describe('timeline navigation restoration', () => {
       expect.objectContaining({
         direction: 'asc',
         excludeMultiRecipientCommunications: true,
-        offset: 0,
       })
     );
     expect(screen.getByRole('combobox', { name: 'View' })).toHaveValue('asc');
@@ -725,10 +927,10 @@ describe('timeline navigation restoration', () => {
 
   it('pauses restoration after an error and resumes at the failed slice on retry', async () => {
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 100, events: batch(1, 25) })
+      .mockResolvedValueOnce(pageAt(100))
       .mockRejectedValueOnce(new Error('offline'))
-      .mockResolvedValueOnce({ count: 100, events: batch(26, 25) })
-      .mockResolvedValueOnce({ count: 100, events: batch(51, 25) });
+      .mockResolvedValueOnce(pageAt(100, 'after-25'))
+      .mockResolvedValueOnce(pageAt(100, 'after-50'));
     renderTimeline(historyAt({ timelineView: view, timelinePosition: position }));
     await screen.findByRole('alert');
     expect(window.scrollTo).not.toHaveBeenCalled();
@@ -737,7 +939,12 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 25, 50]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+      'after-25',
+      'after-50',
+    ]);
   });
 
   it('stops at the new end and falls back to the saved scroll if the anchor was deleted', async () => {
@@ -752,8 +959,8 @@ describe('timeline navigation restoration', () => {
   });
 
   it('restores when navigating Forward to the timeline', async () => {
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = createMemoryHistory({
       initialIndex: 0,
@@ -767,11 +974,19 @@ describe('timeline navigation restoration', () => {
     await waitFor(() =>
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25, 50]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+      'after-50',
+    ]);
   });
 
   it('restores the raw loaded depth even when batches contain duplicate events', async () => {
-    getRecipientTimeline.mockResolvedValue({ count: 75, events: batch(1, 25) });
+    getRecipientTimeline.mockResolvedValue({
+      count: 75,
+      events: batch(1, 25),
+      nextCursor: 'after-25',
+    });
     renderTimeline(
       historyAt({
         timelineView: view,
@@ -793,7 +1008,7 @@ describe('timeline navigation restoration', () => {
   it('cancels restoration when sort changes and ignores the old pending slice', async () => {
     let resolveOld;
     getRecipientTimeline
-      .mockResolvedValueOnce({ count: 100, events: batch(1, 25) })
+      .mockResolvedValueOnce(pageAt(100))
       .mockReturnValueOnce(
         new Promise((resolve) => {
           resolveOld = resolve;
@@ -814,7 +1029,7 @@ describe('timeline navigation restoration', () => {
     expect(getRecipientTimeline).toHaveBeenLastCalledWith(
       '401',
       '1',
-      expect.objectContaining({ direction: 'asc', offset: 0 })
+      expect.objectContaining({ direction: 'asc' })
     );
   });
 
@@ -844,8 +1059,8 @@ describe('timeline navigation restoration', () => {
       { id: 'next', topic: 'eventType', condition: 'is', query: ['Email communication'] },
     ];
     const realFilters = mockRealFilters();
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const history = createMemoryHistory({
       initialEntries: [`/timeline?${filtersToQueryString(firstFilters)}`],
@@ -895,8 +1110,8 @@ describe('timeline navigation restoration', () => {
     // Back remounts with filters read from the URL. A date "is" value comes back as an array,
     // and the select case guards the multi-value merge in queryStringToFilters.
     const realFilters = mockRealFilters();
-    getRecipientTimeline.mockImplementation((_recipient, _region, { offset }) =>
-      Promise.resolve({ count: 100, events: batch(offset + 1, 25) })
+    getRecipientTimeline.mockImplementation((_recipient, _region, { cursor }) =>
+      Promise.resolve(pageAt(100, cursor))
     );
     const urlFilters = [{ id: 'url', topic: 'eventType', condition: 'is', query: ['Goal added'] }];
     const history = createMemoryHistory({
@@ -910,7 +1125,7 @@ describe('timeline navigation restoration', () => {
       expect(getRecipientTimeline).toHaveBeenCalledWith(
         '401',
         '1',
-        expect.objectContaining({ filters: [filter], offset: 0 })
+        expect.objectContaining({ filters: [filter] })
       )
     );
     await screen.findByRole('heading', { name: 'Event 25' });
@@ -926,7 +1141,10 @@ describe('timeline navigation restoration', () => {
       expect(window.scrollTo).toHaveBeenCalledWith({ top: 3120, behavior: 'auto' })
     );
     expect(history.location.search).toBe(`?${filtersToQueryString([filter])}`);
-    expect(getRecipientTimeline.mock.calls.map((call) => call[2].offset)).toEqual([0, 25]);
+    expect(getRecipientTimeline.mock.calls.map((call) => call[2].cursor)).toEqual([
+      undefined,
+      'after-25',
+    ]);
   });
 
   it.each([

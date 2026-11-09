@@ -9,12 +9,14 @@ import db from '../models';
 import {
   checkUserExists,
   checkUserExistsByNationalCenter,
+  countEventHelperBlob,
   createEvent,
   csvImport,
   destroyEvent,
   filterEventSessions,
   findAllEvents,
   findEventByDbId,
+  findEventBySmartsheetId,
   findEventHelper,
   findEventHelperBlob,
   findEventsByCollaboratorId,
@@ -592,6 +594,31 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('findEventBySmartsheetId omits sessions only when includeSessions is false', async () => {
+      const created = await createAnEvent(98_989);
+      const sessionReport = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: { sessionName: 'Smartsheet session' },
+      });
+
+      const [withoutSessions, withSessions] = await Promise.all([
+        findEventBySmartsheetId(created.eventId, [{}], { includeSessions: false }),
+        findEventBySmartsheetId(created.eventId),
+      ]);
+
+      expect(withoutSessions.sessionReports).toEqual([]);
+      expect(withoutSessions).toHaveProperty('ownerId', 98_989);
+      expect(withoutSessions).toHaveProperty('regionId', 98_989);
+      expect(withoutSessions).toHaveProperty('eventId', created.eventId);
+      expect(withoutSessions.data).toHaveProperty('status');
+
+      expect(withSessions.sessionReports).toHaveLength(1);
+      expect(withSessions.sessionReports[0]).toHaveProperty('id', sessionReport.id);
+
+      await db.SessionReportPilot.destroy({ where: { id: sessionReport.id } });
+      await destroyEvent(created.id);
+    });
+
     it('findEventsByOwnerId', async () => {
       const created = await createAnEvent(98_989);
       const found = await findEventsByOwnerId(created.ownerId);
@@ -730,6 +757,33 @@ describe('event service', () => {
       await destroyEvent(found[0].id);
       await destroyEvent(found[1].id);
       await destroyEvent(found[2].id);
+    });
+
+    it('findEventHelperBlob paginates and countEventHelperBlob counts all matches', async () => {
+      const created = await Promise.all(
+        ['A', 'B', 'C'].map((eventId) =>
+          createAnEventWithData(11_111, { eventId, status: TRS.NOT_STARTED })
+        )
+      );
+      const options = {
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        allowNull: true,
+        scopes: [{ id: created.map((e) => e.id) }],
+      };
+
+      const [page, count] = await Promise.all([
+        findEventHelperBlob({ ...options, limit: 2, offset: 1 }),
+        countEventHelperBlob(options),
+      ]);
+
+      expect(count).toBe(3);
+      expect(page).toHaveLength(2);
+      expect(page[0]).toHaveProperty('eventId', 'B');
+      expect(page[1]).toHaveProperty('eventId', 'C');
+
+      await Promise.all(created.map((e) => destroyEvent(e.id)));
     });
 
     it('findEventHelperBlob use scopes', async () => {
