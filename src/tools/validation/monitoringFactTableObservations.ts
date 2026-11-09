@@ -283,22 +283,35 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     ;
 
     -- reported_to_closed_days: no single source column to match (derived),
-    -- so named for what it measures instead.
+    -- so named for what it measures instead. latest_goal_closure is grant-level,
+    -- not citation-level, so it only stands in for closed_date under the same
+    -- condition updateMonitoringFactTables.ts's active_through CASE uses it under.
+    WITH citation_closed_date AS (
+      SELECT
+        c.mfid,
+        c.reported_date,
+        CASE
+          WHEN c.calculated_finding_type = 'Area of Concern' AND c.calculated_status = 'Closed'
+            THEN COALESCE(c.closed_date, c.latest_goal_closure::date)
+          ELSE c.closed_date
+        END closed_date
+      FROM "Citations" c
+      WHERE c."deletedAt" IS NULL
+    )
     INSERT INTO "ValidationRecords"
       (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'MonitoringFindings',
-      c.mfid,
+      ccd.mfid,
       'reported_to_closed_days',
-      (COALESCE(c.closed_date, c.latest_goal_closure::date) - c.reported_date),
+      (ccd.closed_date - ccd.reported_date),
       NOW(),
       NOW()
-    FROM "Citations" c
+    FROM citation_closed_date ccd
     CROSS JOIN validation_run cur
-    WHERE c."deletedAt" IS NULL
-      AND COALESCE(c.closed_date, c.latest_goal_closure::date) IS NOT NULL
-      AND c.reported_date IS NOT NULL
+    WHERE ccd.closed_date IS NOT NULL
+      AND ccd.reported_date IS NOT NULL
     ;
 
     -- initial_determination / latest_determination: straight passthroughs of

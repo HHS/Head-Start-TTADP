@@ -825,6 +825,58 @@ describe('validateMonitoringData', () => {
       },
     ]);
 
+    // A second audit event on findingIdDupHistory/reviewIdCompliant (already
+    // created above) whose old_row_data matches their current live values
+    // exactly - no tracked column actually changed, so this extra band
+    // should not count as a change for the finding/review *_change_count
+    // observations asserted on these same fixtures below.
+    const [dupHistoryFinding, compliantReviewForChangeCount] = await Promise.all([
+      MonitoringFinding.findOne({ where: { findingId: findingIdDupHistory } }),
+      MonitoringReview.findOne({ where: { reviewId: reviewIdCompliant } }),
+    ]);
+    await Promise.all([
+      sequelize.query(
+        `
+        INSERT INTO "ZALMonitoringFindings"
+          (data_id, dml_type, old_row_data, dml_timestamp, dml_by, dml_as, dml_txid)
+        VALUES
+          (:dataId, 'UPDATE', :oldRowData::jsonb, :dmlTimestamp, -1, -1, :dmlTxid)
+        `,
+        {
+          replacements: {
+            dataId: dupHistoryFinding.id,
+            oldRowData: JSON.stringify({
+              statusId: FINDING_STATUS_ACTIVE_ID,
+              correctionDeadLine: null,
+              findingType: 'Deficiency',
+              source: 'FA-1',
+            }),
+            dmlTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            dmlTxid: uuidv4(),
+          },
+        }
+      ),
+      sequelize.query(
+        `
+        INSERT INTO "ZALMonitoringReviews"
+          (data_id, dml_type, old_row_data, dml_timestamp, dml_by, dml_as, dml_txid)
+        VALUES
+          (:dataId, 'UPDATE', :oldRowData::jsonb, :dmlTimestamp, -1, -1, :dmlTxid)
+        `,
+        {
+          replacements: {
+            dataId: compliantReviewForChangeCount.id,
+            oldRowData: JSON.stringify({
+              statusId: REVIEW_STATUS_COMPLETE_ID,
+              outcome: 'Compliant',
+            }),
+            dmlTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            dmlTxid: uuidv4(),
+          },
+        }
+      ),
+    ]);
+
     await MonitoringFindingHistory.bulkCreate([
       {
         reviewId: reviewIdCompliant,
@@ -1770,6 +1822,25 @@ describe('validateMonitoringData', () => {
     expect(alerts).toHaveLength(1);
     expect(alerts[0].severity).toBe(VALIDATION_ALERT_SEVERITY.ALERT);
     expect(alerts[0].context.sample_entity_ids).toContain(compliantReview.id);
+
+    // Reuses this same review: a synthetic audit event with no real column
+    // change was added above, regression-testing the *_change_count
+    // LAG(col, 1, col) fix (a bare LAG(col) would wrongly count it).
+    const [reviewStatusChange, reviewOutcomeChange] = await Promise.all(
+      ['review_status_change_count', 'review_outcome_change_count'].map((observation_name) =>
+        ValidationRecord.findOne({
+          where: {
+            run_id: run.id,
+            entity_type: 'MonitoringReviews',
+            entity_id: compliantReview.id,
+            observation_name,
+          },
+          raw: true,
+        })
+      )
+    );
+    expect(Number(reviewStatusChange.scalar)).toBe(0);
+    expect(Number(reviewOutcomeChange.scalar)).toBe(0);
   });
 
   it('flags a CLASS review with a linked finding', async () => {
@@ -1868,6 +1939,32 @@ describe('validateMonitoringData', () => {
     // regardless of which reviewId was picked, so the real regression guard
     // for the picked pair is record.context.review_uuid above.
     expect(alerts[0].message).toContain('determination');
+
+    // Reuses this same finding: a synthetic audit event with no real column
+    // change was added above, regression-testing the *_change_count
+    // LAG(col, 1, col) fix (a bare LAG(col) would wrongly count it).
+    const [statusChange, deadlineChange, typeChange, sourceChange] = await Promise.all(
+      [
+        'finding_status_change_count',
+        'finding_correction_deadline_change_count',
+        'finding_type_change_count',
+        'finding_source_change_count',
+      ].map((observation_name) =>
+        ValidationRecord.findOne({
+          where: {
+            run_id: run.id,
+            entity_type: 'MonitoringFindings',
+            entity_id: finding.id,
+            observation_name,
+          },
+          raw: true,
+        })
+      )
+    );
+    expect(Number(statusChange.scalar)).toBe(0);
+    expect(Number(deadlineChange.scalar)).toBe(0);
+    expect(Number(typeChange.scalar)).toBe(0);
+    expect(Number(sourceChange.scalar)).toBe(0);
   });
 
   it('flags an unrecognized history determination value', async () => {

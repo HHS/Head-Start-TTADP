@@ -258,14 +258,16 @@ export const recreateTimeseriesFunction = async (
     -- forward 1ms per its position (by zid) within its data_id, so every
     -- row's dml_timestamp is strictly greater than the previous one - this
     -- is what lets timeband_start below use that ordering directly with no
-    -- separate gap added on top.
+    -- separate gap added on top. data_id is in the join to disambiguate live
+    -- rows added by the UNION ALL above.
     UPDATE flat_z fz
     SET dml_timestamp = fz.dml_timestamp + ((sub.rn - 1) * interval '1 millisecond')
     FROM (
-      SELECT zid, ROW_NUMBER() OVER (PARTITION BY data_id ORDER BY zid) rn
+      SELECT zid, data_id, ROW_NUMBER() OVER (PARTITION BY data_id ORDER BY zid) rn
       FROM flat_z
     ) sub
-    WHERE fz.zid = sub.zid;
+    WHERE fz.zid = sub.zid
+      AND fz.data_id = sub.data_id;
     -- create group ids for each column to identify which iteration
     -- of column value each record should have
     qry := 'DROP TABLE IF EXISTS group_z;

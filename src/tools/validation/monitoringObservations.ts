@@ -846,10 +846,10 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     AS
     SELECT
       data_id,
-      "statusId" IS DISTINCT FROM LAG("statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
-      "correctionDeadLine" IS DISTINCT FROM LAG("correctionDeadLine") OVER (PARTITION BY data_id ORDER BY timeband_start) deadline_changed,
-      "findingType" IS DISTINCT FROM LAG("findingType") OVER (PARTITION BY data_id ORDER BY timeband_start) type_changed,
-      source IS DISTINCT FROM LAG(source) OVER (PARTITION BY data_id ORDER BY timeband_start) source_changed
+      "statusId" IS DISTINCT FROM LAG("statusId", 1, "statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
+      "correctionDeadLine" IS DISTINCT FROM LAG("correctionDeadLine", 1, "correctionDeadLine") OVER (PARTITION BY data_id ORDER BY timeband_start) deadline_changed,
+      "findingType" IS DISTINCT FROM LAG("findingType", 1, "findingType") OVER (PARTITION BY data_id ORDER BY timeband_start) type_changed,
+      source IS DISTINCT FROM LAG(source, 1, source) OVER (PARTITION BY data_id ORDER BY timeband_start) source_changed
     FROM "MonitoringFindings_timeseries"
     ;
 
@@ -953,8 +953,8 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     AS
     SELECT
       data_id,
-      "statusId" IS DISTINCT FROM LAG("statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
-      outcome IS DISTINCT FROM LAG(outcome) OVER (PARTITION BY data_id ORDER BY timeband_start) outcome_changed
+      "statusId" IS DISTINCT FROM LAG("statusId", 1, "statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
+      outcome IS DISTINCT FROM LAG(outcome, 1, outcome) OVER (PARTITION BY data_id ORDER BY timeband_start) outcome_changed
     FROM "MonitoringReviews_timeseries"
     ;
 
