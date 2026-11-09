@@ -1,26 +1,39 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 import AppLoadingContext from '../../../AppLoadingContext';
+import Loader from '../../Loader';
 import ExportMenu, { type ExportScope } from '../ExportMenu';
 
 const onExport = jest.fn();
 const setIsAppLoading = jest.fn();
 const setAppLoadingText = jest.fn();
 
-function TestMenu({ count = 55705, selectedIds = [1, 2, 3] }) {
+function TestMenu({ count = 55705, selectedIds = [1, 2, 3], withLoader = false }) {
   const [scope, setScope] = useState<ExportScope>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('');
   return (
-    <AppLoadingContext.Provider value={{ setIsAppLoading, setAppLoadingText }}>
-      <ExportMenu
-        count={count}
-        selectedIds={selectedIds}
-        exportIdPrefix="test-"
-        scope={scope}
-        setScope={setScope}
-        onExport={onExport}
-      />
-    </AppLoadingContext.Provider>
+    <>
+      {withLoader && (
+        <Loader loading={loading} loadingLabel={`App ${loadingText}`} text={loadingText} isFixed />
+      )}
+      <AppLoadingContext.Provider
+        value={{
+          setIsAppLoading: withLoader ? setLoading : setIsAppLoading,
+          setAppLoadingText: withLoader ? setLoadingText : setAppLoadingText,
+        }}
+      >
+        <ExportMenu
+          count={count}
+          selectedIds={selectedIds}
+          exportIdPrefix="test-"
+          scope={scope}
+          setScope={setScope}
+          onExport={onExport}
+        />
+      </AppLoadingContext.Provider>
+    </>
   );
 }
 
@@ -171,6 +184,38 @@ describe('Activity report export chooser', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('preserves the chooser and recovery message after clicking the loading overlay', async () => {
+    let rejectDownload: (error: Error) => void = () => {};
+    onExport.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectDownload = reject;
+        })
+    );
+    render(<TestMenu withLoader />);
+    await userEvent.click(screen.getByRole('button', { name: 'Actions for activity report exports' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Export selected rows' }));
+    await userEvent.click(screen.getByRole('button', { name: 'AR' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Export selected rows' });
+    const overlay = screen.getByRole('status', { name: 'App Exporting row(s)...' });
+    expect(overlay).toBeVisible();
+    await userEvent.click(overlay);
+    fireEvent.blur(dialog, { relatedTarget: overlay });
+    expect(dialog).toBeVisible();
+    expect(dialog).toHaveAttribute('aria-busy', 'true');
+
+    await act(async () => rejectDownload(new Error('Network failed. Please try again.')));
+    expect(screen.queryByRole('status', { name: 'App Exporting row(s)...' })).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Network failed. Please try again.');
+    expect(screen.getByRole('button', { name: 'AR' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Goals' })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Goals' }));
+    await waitFor(() => expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument());
+    expect(onExport).toHaveBeenLastCalledWith('goals', [1, 2, 3]);
   });
 
   it('disables choices while downloading and supports retry after an error', async () => {

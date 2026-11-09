@@ -63,6 +63,7 @@ export default function ExportMenu({
   const headingId = `${exportIdPrefix}export-heading`;
 
   const close = () => {
+    if (isDownloading) return;
     setMenuOpen(false);
     setScope(null);
   };
@@ -89,9 +90,9 @@ export default function ExportMenu({
         setScope(null);
       }
     };
-    if (open) document.addEventListener('mousedown', handleOutsideClick);
+    if (open && !isDownloading) document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [open, setScope]);
+  }, [open, isDownloading, setScope]);
 
   const download = async (dataSet: ExportDataSet) => {
     setIsDownloading(true);
@@ -122,7 +123,7 @@ export default function ExportMenu({
         if (!event.currentTarget.contains(event.relatedTarget as Node)) close();
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' && !isDownloading) {
           event.preventDefault();
           close();
           triggerRef.current?.focus();

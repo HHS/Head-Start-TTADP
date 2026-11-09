@@ -648,6 +648,12 @@ describe('ActivityReportsTable', () => {
   });
 
   describe('format downloads', () => {
+    mockWindowProperty('sessionStorage', {
+      setItem: jest.fn(),
+      getItem: jest.fn(),
+      removeItem: jest.fn(),
+    });
+
     const originalCreateObjectURL = URL.createObjectURL;
     const originalRevokeObjectURL = URL.revokeObjectURL;
     let click;
@@ -703,6 +709,27 @@ describe('ActivityReportsTable', () => {
       expect(downloadActivityReportExport).toHaveBeenCalledWith(
         'goals',
         [Number(checkboxes[1].value)],
+        'region.in[]=1'
+      );
+    });
+
+    it('opens the selected export chooser from a row and downloads goals', async () => {
+      const checkboxes = screen.getAllByRole('checkbox', { name: /select /i });
+      const checkbox = checkboxes[1];
+      await userEvent.click(checkbox);
+      await userEvent.click(
+        within(checkbox.closest('tr')).getByRole('button', { name: 'Export 1 selected reports' })
+      );
+
+      const dialog = await screen.findByRole('dialog', { name: 'Export selected rows' });
+      expect(dialog).toBeVisible();
+      await waitFor(() => expect(within(dialog).getByRole('button', { name: 'AR' })).toHaveFocus());
+
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Goals' }));
+      await waitFor(() => expect(click).toHaveBeenCalled());
+      expect(downloadActivityReportExport).toHaveBeenCalledWith(
+        'goals',
+        [Number(checkbox.value)],
         'region.in[]=1'
       );
     });
