@@ -95,7 +95,7 @@ describe('timeline views', () => {
     ]);
   });
 
-  it('scopes category lookup to recipient/region and non-draft unmerged RTTAPA goals', async () => {
+  it('scopes category lookup to recipient/region and non-draft unmerged RTTAPA goals from approved reports', async () => {
     (Goal.findAll as jest.Mock).mockResolvedValue([
       goal('Monitoring'),
       goal('Family Support', 'Closed'),
@@ -114,6 +114,13 @@ describe('timeline views', () => {
           mapsToParentGoalId: null,
           [Op.and]: [
             { [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }] },
+            {
+              [Op.or]: [
+                { createdVia: null },
+                { createdVia: { [Op.ne]: 'activityReport' } },
+                { onApprovedAR: true },
+              ],
+            },
             { [Op.or]: [{ isRttapa: 'Yes' }, { '$goalTemplate.creationMethod$': 'Curated' }] },
           ],
         },
@@ -191,7 +198,8 @@ describe('timeline views', () => {
       // It only asks whether an event exists: no total count, ordering, or paging.
       const categorySql = calls[1][0];
       expect(categorySql).toContain('SELECT EXISTS (SELECT 1 FROM "filteredTimelineEvents")');
-      expect(categorySql).not.toMatch(/COUNT\(\*\)|LIMIT|OFFSET|ORDER BY "occurredAt"/);
+      // "LIMIT 1" is allowed: the goal status lookups use it to pick one change per goal.
+      expect(categorySql).not.toMatch(/COUNT\(\*\)|LIMIT(?! 1\b)|OFFSET|ORDER BY "occurredAt"/);
     });
 
     it('returns no categories without any query for them when no events match', async () => {

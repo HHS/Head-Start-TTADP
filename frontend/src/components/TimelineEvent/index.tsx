@@ -214,7 +214,13 @@ function TimelineEvent({
                         key={`${text}-${itemIndex}`}
                       >
                         {link && isSafeRenderableLink(link) ? (
-                          <Link href={link}>{text}</Link>
+                          link.startsWith('/') ? (
+                            <RouterLink className="usa-link" to={link}>
+                              {text}
+                            </RouterLink>
+                          ) : (
+                            <Link href={link}>{text}</Link>
+                          )
                         ) : (
                           text
                         )}
