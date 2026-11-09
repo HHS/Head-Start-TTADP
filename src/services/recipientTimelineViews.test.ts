@@ -198,7 +198,8 @@ describe('timeline views', () => {
       // It only asks whether an event exists: no total count, ordering, or paging.
       const categorySql = calls[1][0];
       expect(categorySql).toContain('SELECT EXISTS (SELECT 1 FROM "filteredTimelineEvents")');
-      expect(categorySql).not.toMatch(/COUNT\(\*\)|LIMIT|OFFSET|ORDER BY "occurredAt"/);
+      // "LIMIT 1" is allowed: the goal status lookups use it to pick one change per goal.
+      expect(categorySql).not.toMatch(/COUNT\(\*\)|LIMIT(?! 1\b)|OFFSET|ORDER BY "occurredAt"/);
     });
 
     it('returns no categories without any query for them when no events match', async () => {
