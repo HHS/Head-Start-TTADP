@@ -1834,6 +1834,58 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Training report collaborator added digest', () => {
+    const trReport = { id: 98, displayId: 'R01-TR-25-1797' };
+
+    it('renders the populated digest with links to the training reports', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [trReport],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${WEEKLY} digest: added as an Event Collaborator`);
+      expect(message.text).toContain(
+        'You were added as an Event Collaborator on these Training Reports:'
+      );
+      expect(message.text).toContain(`* ${trReport.displayId}`);
+      expect(message.text).toContain(
+        `${process.env.TTA_SMART_HUB_URI}/training-report/view/R01-TR-25-1797`
+      );
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `TTA Hub ${WEEKLY} digest: no new Event Collaborator notifications`
+      );
+      expect(message.text).toContain(
+        "You haven't been added as an Event Collaborator on any Training Reports this week."
+      );
+    });
+  });
+
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
       it('returns null without calling the email sender when notifications are disabled', async () => {
@@ -1898,9 +1950,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 7 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 8 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(7);
+        expect(entries).toHaveLength(8);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');

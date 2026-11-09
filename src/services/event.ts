@@ -22,6 +22,7 @@ import EventReport from '../policies/event';
 import { getNewPocIds } from './eventFlow';
 import {
   archiveSessionNeedsActionNotifications,
+  createNotificationForNewCollaborators,
   createNotificationForNewPocs,
 } from './notifications/trainingReport';
 import type {
@@ -132,6 +133,22 @@ async function notifyNewPocs(
   );
 }
 
+/**
+ * Notifies the users newly added as Event Collaborators in-app (TR-2a). A notification failure
+ * must never fail the save.
+ */
+async function notifyNewCollaborators(
+  event: { id: number; eventId: string; ownerId: number },
+  previousCollaboratorIds: number[] | null | undefined,
+  currentCollaboratorIds: number[] | null | undefined
+): Promise<void> {
+  await runInSavepoint(
+    () =>
+      createNotificationForNewCollaborators(event, previousCollaboratorIds, currentCollaboratorIds),
+    `Error creating collaborator added notifications for event ${event.id}:`
+  );
+}
+
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
   validateFields(request, ['ownerId', 'regionId', 'data']);
 
@@ -156,6 +173,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
   });
 
   await notifyNewPocs(created, [], pocIds);
+  await notifyNewCollaborators(created, [], collaboratorIds);
 
   return created;
 }
@@ -529,6 +547,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
 
   const persistedData = { ...storedData, ...incomingData };
   const previousPocIds = event.pocIds ?? [];
+  const previousCollaboratorIds = event.collaboratorIds ?? [];
 
   await evt.update(
     {
@@ -546,6 +565,11 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
     previousPocIds,
     pocIds
+  );
+  await notifyNewCollaborators(
+    { id: evt.id, eventId: evt.eventId, ownerId },
+    previousCollaboratorIds,
+    collaboratorIds
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;

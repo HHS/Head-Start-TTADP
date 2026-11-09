@@ -167,6 +167,7 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCollaboratorReportSubmittedForReview` |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCreatorReportSubmittedForReview` |
 | `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
+| `ADDED_AS_COLLABORATOR_TRAINING_REPORT` | `TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST` | `emailWhenAddedAsCollaboratorTrainingReport` |
 
 Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`. Their fetchers live in `src/services/trainingReportDigests.ts` and read the `ZALEventReportPilots` audit log. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 

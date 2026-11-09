@@ -2,7 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import runInSavepoint from '../../lib/runInSavepoint';
 import db from '../../models';
 import Users from '../../policies/user';
-import { getNewPocIds } from '../eventFlow';
+import { getAddedUserIds, getNewPocIds } from '../eventFlow';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
@@ -53,6 +53,69 @@ export async function createNotificationForNewPocs(
           skipExisting: 'archived',
         }),
       `Error creating POC added notification for user ${user.id} on event ${event.id}:`
+    );
+  }
+}
+
+/**
+ * Creates the "added as a Collaborator" in-app notification (TR-2a) for each newly added Event
+ * Collaborator on a Training Report, naming the Event Creator (owner). The owner and
+ * collaborators who were already on the report are skipped, as are users without the
+ * `actionable_notifications` feature flag. The user's in-app setting is applied by
+ * `createNotification`.
+ * @param event The saved Training Report (EventReportPilot).
+ * @param previousCollaboratorIds The collaborator user ids before the save.
+ * @param currentCollaboratorIds The collaborator user ids after the save.
+ * @returns {Promise<void>} Resolves once notifications are created.
+ */
+export async function createNotificationForNewCollaborators(
+  event: { id: number; eventId: string; ownerId: number },
+  previousCollaboratorIds: number[] | null | undefined,
+  currentCollaboratorIds: number[] | null | undefined
+): Promise<void> {
+  const newCollaboratorIds = getAddedUserIds(
+    event.ownerId,
+    previousCollaboratorIds,
+    currentCollaboratorIds
+  );
+
+  if (!newCollaboratorIds.length) {
+    return;
+  }
+
+  const [users, owner] = await Promise.all([
+    db.User.findAll({
+      where: { id: newCollaboratorIds },
+      attributes: ['id', 'flags'],
+      include: [{ model: db.Permission, as: 'permissions' }],
+    }),
+    db.User.findOne({ where: { id: event.ownerId }, attributes: ['name'] }),
+  ]);
+
+  const recipients = users.filter((user) =>
+    new Users(user).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG)
+  );
+
+  // one savepoint per recipient so a failure only skips that recipient; run sequentially
+  // because concurrent savepoints on the same transaction connection would interleave
+  for (const user of recipients) {
+    await runInSavepoint(
+      () =>
+        createNotification(
+          user.id,
+          event.id,
+          NOTIFICATION_TYPES.TRAINING_REPORT_COLLABORATOR_ADDED,
+          {
+            metadata: {
+              author: owner?.name,
+              displayId: event.eventId,
+              id: event.id,
+            },
+            // a removed and re-added collaborator gets a new notification once they archived the old one
+            skipExisting: 'archived',
+          }
+        ),
+      `Error creating collaborator added notification for user ${user.id} on event ${event.id}:`
     );
   }
 }
