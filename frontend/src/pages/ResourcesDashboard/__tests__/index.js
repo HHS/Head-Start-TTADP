@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
@@ -316,7 +316,7 @@ describe('Resource Dashboard page', () => {
   afterEach(() => fetchMock.restore());
 
   const renderResourcesDashboard = (user) => {
-    render(
+    return render(
       <UserContext.Provider value={{ user }}>
         <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
           <Router history={history}>
@@ -326,6 +326,39 @@ describe('Resource Dashboard page', () => {
       </UserContext.Provider>
     );
   };
+
+  it('restores the saved activity report page when returning', async () => {
+    const filterKey = 'regional-resources-dashboard-filters';
+    const sortingKey = `${filterKey}-resource-dashboard-activity-report-sort-sorting`;
+    sessionStorage.setItem(
+      filterKey,
+      JSON.stringify([
+        { id: 'region-1', topic: 'region', condition: 'is', query: '1' },
+        { id: 'region-2', topic: 'region', condition: 'is', query: '2' },
+        { id: 'saved-date', topic: 'startDate', condition: 'is within', query: defaultDate },
+      ])
+    );
+    sessionStorage.setItem(
+      sortingKey,
+      JSON.stringify({ sortBy: 'updatedAt', direction: 'desc', activePage: 3 })
+    );
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}`, resourcesDefault);
+    fetchMock.post(reportPostUrl, reportResponse);
+
+    const { unmount } = renderResourcesDashboard({
+      homeRegionId: 14,
+      permissions: [1, 2].map((regionId) => ({
+        regionId,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      })),
+    });
+
+    await waitFor(() => expect(fetchMock.called(reportPostUrl)).toBe(true));
+    expect(JSON.parse(fetchMock.lastOptions(reportPostUrl).body).offset).toBe(20);
+    unmount();
+    sessionStorage.removeItem(filterKey);
+    sessionStorage.removeItem(sortingKey);
+  });
 
   it('renders correctly', async () => {
     // Page Load.

@@ -4,6 +4,7 @@ import type {
 } from '@ttahub/common/src/recipientTimeline';
 import { useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { getTimelineFilterKey } from '../components/filter/timelineFilters';
 import { filtersToQueryString } from '../utils';
 import useRecipientTimeline from './useRecipientTimeline';
 
@@ -218,7 +219,8 @@ export default function useTimelineNavigation(
         search: query ? `?${query}` : '',
         state: {
           ...state,
-          filtersExplicitlyEmptyFor: nextFilters.length === 0 ? 'timeline-filters' : undefined,
+          filtersExplicitlyEmptyFor:
+            nextFilters.length === 0 ? getTimelineFilterKey(recipientId) : undefined,
         },
       });
       return;

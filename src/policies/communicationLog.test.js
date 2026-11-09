@@ -176,6 +176,27 @@ describe('Communication Log policies', () => {
     });
   });
 
+  describe('getWritableRegionIds', () => {
+    it('returns the unique regions where the user can write', () => {
+      const user = {
+        id: 99,
+        permissions: [
+          { scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 1 },
+          { scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 1 },
+          { scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 3 },
+          { scopeId: SCOPES.READ_REPORTS, regionId: 2 },
+          { scopeId: SCOPES.ADMIN, regionId: 4 },
+        ],
+      };
+      expect(new CommunicationLog(user, 1).getWritableRegionIds()).toEqual([1, 3]);
+    });
+
+    it('is empty when the user cannot write anywhere', () => {
+      const user = createUser({ read: true, regionId: 1 });
+      expect(new CommunicationLog(user, 1).getWritableRegionIds()).toEqual([]);
+    });
+  });
+
   describe('constructor', () => {
     it('assigns default value to log', () => {
       const user = createUser({});

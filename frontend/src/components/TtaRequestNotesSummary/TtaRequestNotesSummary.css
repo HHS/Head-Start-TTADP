@@ -1,0 +1,26 @@
+/* no USWDS utility for the TTA Hub blue */
+.ttahub-notes-summary__header {
+  border-bottom: 2px solid var(--ttahub-medium-blue);
+}
+
+/* matches the avatar beside it */
+.ttahub-notes-summary__author {
+  color: var(--ttahub-medium-blue);
+  line-height: 24px;
+}
+
+/* notes come from a textarea, so keep the line breaks the user typed */
+.ttahub-notes-summary__note {
+  white-space: pre-line;
+}
+
+/* font-sans-2xs sets a 17.112px line height; design calls for 24px */
+.ttahub-notes-summary__meta {
+  line-height: 24px;
+}
+
+/* the shared avatar is sized for the header; design calls for 32px here */
+.ttahub-notes-summary__avatar .avatar {
+  height: 2rem;
+  width: 2rem;
+}

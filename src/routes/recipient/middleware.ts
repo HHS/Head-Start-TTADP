@@ -22,6 +22,7 @@ const purposeQuery = Joi.array()
 const recipientTimelineQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
   offset: Joi.number().integer().min(0).default(0),
+  cursor: Joi.string().trim().min(1).max(500),
   sortBy: Joi.string().valid('date').default('date'),
   direction: Joi.string().valid('asc', 'desc').default('desc'),
   view: Joi.string().valid('chronological', 'monitoring', 'goals'),
