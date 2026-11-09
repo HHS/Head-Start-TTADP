@@ -301,6 +301,17 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenAddedAsCollaboratorTrainingReport',
   },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED]: {
+    textFn: ({ sessionName }) => `Session: ${sessionName} submitted for approval.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionReviewRequestedTrainingReport',
+  },
   [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR]: {
     textFn: ({ sessionName }) => `Session: ${sessionName} submitted for approval.`,
     actionable: false,

@@ -1886,6 +1886,54 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Training report session submitted digest', () => {
+    const trReport = { id: 97, displayId: 'R01-TR-25-1798' };
+
+    it('renders the populated digest with links to the training reports', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [trReport],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: session submitted for review`);
+      expect(message.text).toContain(
+        'Sessions were submitted for review on these Training Reports:'
+      );
+      expect(message.text).toContain(`* ${trReport.displayId}`);
+      expect(message.text).toContain(
+        `${process.env.TTA_SMART_HUB_URI}/training-report/view/R01-TR-25-1798`
+      );
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: no new sessions submitted for review`);
+      expect(message.text).toContain('No sessions were submitted for your review today.');
+    });
+  });
+
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
       it('returns null without calling the email sender when notifications are disabled', async () => {
@@ -1950,9 +1998,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 8 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 9 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(8);
+        expect(entries).toHaveLength(9);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');

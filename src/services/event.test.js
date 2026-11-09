@@ -29,12 +29,14 @@ import {
 } from './event';
 import {
   archiveSessionNeedsActionNotifications,
+  archiveSessionSubmittedNotifications,
   createNotificationForNewCollaborators,
   createNotificationForNewPocs,
 } from './notifications/trainingReport';
 
 jest.mock('./notifications/trainingReport', () => ({
   archiveSessionNeedsActionNotifications: jest.fn(),
+  archiveSessionSubmittedNotifications: jest.fn(),
   createNotificationForNewCollaborators: jest.fn(),
   createNotificationForNewPocs: jest.fn(),
 }));
@@ -203,19 +205,24 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
-    it('archives session needs action notifications for each session when destroyed', async () => {
+    it('archives session notifications for each session when destroyed', async () => {
       const created = await createAnEvent(98_989);
       const sessions = await Promise.all([
         db.SessionReportPilot.create({ eventId: created.id, data: {} }),
         db.SessionReportPilot.create({ eventId: created.id, data: {} }),
       ]);
       archiveSessionNeedsActionNotifications.mockClear();
+      archiveSessionSubmittedNotifications.mockClear();
 
       await destroyEvent(created.id);
 
       expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledTimes(2);
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledTimes(2);
       sessions.forEach((session) => {
         expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(session.id, {
+          removeLink: true,
+        });
+        expect(archiveSessionSubmittedNotifications).toHaveBeenCalledWith(session.id, {
           removeLink: true,
         });
       });

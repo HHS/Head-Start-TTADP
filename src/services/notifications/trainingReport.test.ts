@@ -5,11 +5,13 @@ import Users from '../../policies/user';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 import {
   archiveSessionNeedsActionNotifications,
+  archiveSessionSubmittedNotifications,
   createNotificationForNewCollaborators,
   createNotificationForNewPocs,
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
   createSessionNeedsActionNotificationForCollaborators,
+  createSessionSubmittedNotification,
 } from './trainingReport';
 
 jest.mock('./index', () => ({
@@ -343,6 +345,93 @@ describe('createSessionNeedsActionNotification', () => {
 
     expect(findOneSpy).toHaveBeenCalledTimes(1);
     expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('createSessionSubmittedNotification', () => {
+  let findOneSpy: jest.SpyInstance;
+  let flagSpy: jest.SpyInstance;
+
+  const event = { eventId: 'R01-TR-1234' };
+  const session = { id: 9, approverId: 6, data: { sessionName: 'Opening session' } };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findOneSpy = jest
+      .spyOn(db.User, 'findOne')
+      .mockResolvedValue({ id: 6, flags: [], permissions: [] } as never);
+    flagSpy = jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('notifies the approver with a link to the session', async () => {
+    await createSessionSubmittedNotification(event, session);
+
+    expect(flagSpy).toHaveBeenCalledWith('actionable_notifications');
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      6,
+      9,
+      NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED,
+      {
+        metadata: { sessionName: 'Opening session', displayId: 'R01-TR-1234', id: 9 },
+        skipExisting: 'archived',
+      }
+    );
+  });
+
+  it('does nothing without an approver', async () => {
+    await createSessionSubmittedNotification(event, { ...session, approverId: null });
+
+    expect(findOneSpy).not.toHaveBeenCalled();
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('skips an approver who is missing or lacks the feature flag', async () => {
+    flagSpy.mockReturnValueOnce(false);
+    await createSessionSubmittedNotification(event, session);
+
+    findOneSpy.mockResolvedValueOnce(null);
+    await createSessionSubmittedNotification(event, session);
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('archiveSessionSubmittedNotifications', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('archives the TR-3a type for the session', async () => {
+    const updateSpy = jest.spyOn(db.Notification, 'update').mockResolvedValue([0]);
+
+    await archiveSessionSubmittedNotifications(55);
+
+    expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(55, [
+      NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED,
+    ]);
+    expect(updateSpy).not.toHaveBeenCalled();
+    updateSpy.mockRestore();
+  });
+
+  it('clears the link when removeLink is set', async () => {
+    const updateSpy = jest.spyOn(db.Notification, 'update').mockResolvedValue([1]);
+
+    await archiveSessionSubmittedNotifications(55, { removeLink: true });
+
+    expect(updateSpy).toHaveBeenCalledWith(
+      { link: null },
+      {
+        where: {
+          entityId: 55,
+          type: [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED],
+        },
+      }
+    );
+    updateSpy.mockRestore();
   });
 });
 
