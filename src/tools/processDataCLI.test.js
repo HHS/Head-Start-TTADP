@@ -7,6 +7,10 @@ jest.mock('./processData', () => ({
   __esModule: true,
   default: jest.fn(() => new Promise(() => {})),
 }));
+jest.mock('./verifyProcessedData', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
 
 // processData runs when the CLI module is imported, before any test body
 const processDataCalls = processData.mock.calls.length;
@@ -18,6 +22,59 @@ describe('processDataCLI', () => {
 
   it('runs processData on import', () => {
     expect(processDataCalls).toBe(1);
+  });
+
+  describe('verification', () => {
+    let exitSpy;
+
+    // Re-import the CLI in a fresh module registry so it runs again with the given outcomes
+    const runCli = async ({ verifyResult }) => {
+      let mocks;
+      jest.isolateModules(() => {
+        mocks = {
+          auditLogger: require('../logger').auditLogger,
+          processData: require('./processData').default,
+          verifyProcessedData: require('./verifyProcessedData').default,
+        };
+        // Stand in for the transaction: processData calls verify before it resolves
+        mocks.processData.mockImplementation((_mockReport, { verify }) => verify());
+        mocks.verifyProcessedData.mockImplementation(() => verifyResult);
+        require('./processDataCLI');
+      });
+      await new Promise(setImmediate);
+      return mocks;
+    };
+
+    beforeEach(() => {
+      exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      exitSpy.mockRestore();
+    });
+
+    it('passes verifyProcessedData to processData to run before commit', async () => {
+      const mocks = await runCli({ verifyResult: Promise.resolve() });
+
+      expect(mocks.processData).toHaveBeenCalledWith(undefined, {
+        verify: mocks.verifyProcessedData,
+      });
+      expect(mocks.verifyProcessedData).toHaveBeenCalledTimes(1);
+      expect(mocks.auditLogger.error).not.toHaveBeenCalled();
+      expect(exitSpy).not.toHaveBeenCalled();
+    });
+
+    it('logs and exits non-zero when verification fails', async () => {
+      const error = new Error('Processed data verification failed: {"unanonymizedUsers":1}');
+      error.name = 'ProcessedDataVerificationError';
+
+      const mocks = await runCli({ verifyResult: Promise.reject(error) });
+
+      expect(mocks.auditLogger.error).toHaveBeenCalledWith(
+        'processData failed: ProcessedDataVerificationError'
+      );
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
   });
 
   it('logs only the error name and code, with a fixed message', () => {

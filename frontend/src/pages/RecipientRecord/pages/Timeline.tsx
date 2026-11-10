@@ -6,21 +6,27 @@ import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useHistory, useLocation } from 'react-router-dom';
 import Container from '../../../components/Container';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import {
   createInitialTimelineFilters,
+  getTimelineFilterConfig,
   getTimelineFilterKey,
-  TIMELINE_FILTER_CONFIG,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
 import TimelineCategory from '../../../components/TimelineCategory';
 import TimelineEvent from '../../../components/TimelineEvent';
 import useFilters from '../../../hooks/useFilters';
 import useTimelineNavigation from '../../../hooks/useTimelineNavigation';
+import isAdmin, {
+  allRegionsUserHasTtaRequestPermissionTo,
+  canSeeBehindFeatureFlag,
+} from '../../../permissions';
 import UserContext from '../../../UserContext';
 import { filtersToQueryString } from '../../../utils';
+import { RECIPIENT_TTA_REQUEST_FEATURE_FLAG } from './constants';
 import './Timeline.css';
 
 interface TimelineProps {
@@ -81,13 +87,16 @@ function TimelineContent({
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
   const filterHelpDrawerRef = useRef<HTMLButtonElement>(null);
   const { user } = useContext(UserContext);
+  const canViewTtaRequests =
+    canSeeBehindFeatureFlag(user, RECIPIENT_TTA_REQUEST_FEATURE_FLAG) &&
+    (isAdmin(user) || allRegionsUserHasTtaRequestPermissionTo(user).includes(Number(regionId)));
   const initialFilters = useMemo(() => createInitialTimelineFilters(), []);
   const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
     user,
     getTimelineFilterKey(recipientId),
     false,
     initialFilters,
-    TIMELINE_FILTER_CONFIG,
+    getTimelineFilterConfig(canViewTtaRequests),
     undefined,
     true
   );
@@ -219,25 +228,13 @@ function TimelineContent({
             Get help using filters
           </DrawerTriggerButton>
           <Drawer title="TTA timeline filters" triggerRef={filterHelpDrawerRef}>
-            <p className="usa-prose">
-              Choose filters and select Apply filters to update the timeline. Remove an applied
-              filter using the remove button on its pill, or choose Clear all filters and apply to
-              view all dates.
-            </p>
-            <p className="usa-prose">
-              Use View to change the date order, show Monitoring related TTA, or group TTA by RTTAPA
-              goal category. Select Hide multi-recipient communications to exclude communications
-              associated with more than one recipient.
-            </p>
+            <ContentFromFeedByTag tagName="ttahub-timeline-filters" />
           </Drawer>
           <DrawerTriggerButton drawerTriggerRef={aboutDrawerRef} customClass="">
             About this data
           </DrawerTriggerButton>
           <Drawer title="About the TTA timeline" triggerRef={aboutDrawerRef}>
-            <p className="usa-prose">
-              The TTA timeline brings together TTA activity, communications, goals, requests,
-              training sessions, and monitoring events for this recipient.
-            </p>
+            <ContentFromFeedByTag tagName="ttahub-timeline" />
           </Drawer>
         </div>
 

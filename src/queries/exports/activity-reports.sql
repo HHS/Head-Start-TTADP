@@ -8,7 +8,7 @@ JSON: {
   "output": {
     "defaultName": "activity_report_export",
     "schema": [
-      { "columnName": "report_id", "type": "string", "nullable": false, "description": "Region-prefixed report id, e.g. R01-AR-1234." },
+      { "columnName": "report_id", "type": "string", "nullable": false, "description": "Legacy report id when present; otherwise region-prefixed report id, e.g. R01-AR-1234, with ??? for a missing or zero region." },
       { "columnName": "region", "type": "integer", "nullable": false, "description": "Region id (1-12)." },
       { "columnName": "ar_status", "type": "string", "nullable": false, "description": "calculatedStatus of the report." },
       { "columnName": "start_date", "type": "date", "nullable": true, "description": "Activity start date." },
@@ -114,7 +114,13 @@ SET LOCAL TIME ZONE 'America/New_York';
 WITH ars AS MATERIALIZED (
 SELECT
   ar.id arid,
-  'R' || LPAD("regionId"::text, 2, '0') || '-AR-' || ar.id report_id,
+  COALESCE(
+    NULLIF(ar."legacyId", ''),
+    CASE
+      WHEN ar."regionId" IS NULL OR ar."regionId" = 0 THEN '???'
+      ELSE 'R' || LPAD(ar."regionId"::text, 2, '0')
+    END || '-AR-' || ar.id
+  ) report_id,
   ar."regionId" region,
   ar."calculatedStatus" ar_status,
   u.name creator,
@@ -144,7 +150,7 @@ SELECT
   -- precise updatedAt, used only as the sort key for last_saved (not output)
   ar."updatedAt"::timestamp updated_at_et
 FROM "ActivityReports" ar
-JOIN "Users" u
+LEFT JOIN "Users" u
   ON ar."userId" = u.id
 WHERE ar."calculatedStatus" = 'approved'
   -- Narrowing point: AR id list resolved upstream from the Landing filters.
@@ -420,7 +426,7 @@ SELECT
   approved_at_et,
   approved_at_local
 FROM ars
-JOIN recipients ON arid = r_arid
+LEFT JOIN recipients ON arid = r_arid
 LEFT JOIN collaborators ON arid = c_arid
 LEFT JOIN approvers ON arid = a_arid
 LEFT JOIN ar_attachments ON arid = att_arid

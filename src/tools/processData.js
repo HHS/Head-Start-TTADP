@@ -45,7 +45,7 @@ const normalizeEmail = (email) => (email || '').trim().toLowerCase();
 
 // Predefined list of users from HSES (Head Start Enterprise System) with their details such as
 // name, username, user ID, and email
-const hsesUsers = [
+export const hsesUsers = [
   {
     name: 'Adam tta',
     hsesUsername: 'test.tta.adam',
@@ -866,6 +866,9 @@ export const bootstrapUsers = async () => {
   }
 };
 
+// Audit tables that hold audit configuration rather than audited row data, so they are kept
+export const KEPT_AUDIT_TABLES = ['ZALDDL', 'ZALZADescriptor', 'ZALZAFilter'];
+
 // Function to truncate audit tables in the database while disabling and re-enabling triggers
 export const truncateAuditTables = async () => {
   // Query the database to find all audit tables (tables starting with 'ZAL') except for specific
@@ -875,9 +878,9 @@ export const truncateAuditTables = async () => {
     SELECT table_name FROM information_schema.tables
     WHERE
       table_name like 'ZAL%' AND
-      table_name not in ('ZALDDL', 'ZALZADescriptor', 'ZALZAFilter')
+      table_name not in (:keptAuditTables)
   `,
-    { raw: true }
+    { raw: true, replacements: { keptAuditTables: KEPT_AUDIT_TABLES } }
   );
 
   // Iterate through each table and perform truncation
@@ -1200,7 +1203,7 @@ export const processCitationGrantNumbers = async (where = '') =>
  * database functions, hiding users, recipients, and grants, processing activity reports and files,
  * and truncating audit tables
  */
-const processData = async (mockReport) =>
+const processData = async (mockReport, { verify } = {}) =>
   sequelize.transaction(async () => {
     // If a mockReport is provided, extract the activity report ID and relevant data
     let activityReportId = null;
@@ -1260,7 +1263,13 @@ const processData = async (mockReport) =>
     await convertUserNameDrop();
 
     // Truncate audit tables
-    return truncateAuditTables();
+    await truncateAuditTables();
+
+    // Verify before committing, so a failed check rolls back to the raw data and a retry starts
+    // over from it instead of reprocessing data that was already anonymized
+    if (verify) {
+      await verify();
+    }
   });
 
 // Export the main processData function as the default export of the module
