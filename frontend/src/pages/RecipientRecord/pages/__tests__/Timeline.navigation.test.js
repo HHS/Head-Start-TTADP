@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { COMMUNICATION_PURPOSES } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Link, Route, Router } from 'react-router-dom';
@@ -91,6 +92,7 @@ const mockRealFilters = () => {
 describe('timeline navigation restoration', () => {
   beforeEach(() => {
     window.sessionStorage.removeItem('timeline-filters-401');
+    fetchMock.get('begin:/api/feeds/item?tag=ttahub-timeline', '<feed></feed>');
     getRecipientTimeline.mockReset();
     useFilters.mockReturnValue({
       filters: [],
@@ -109,7 +111,10 @@ describe('timeline navigation restoration', () => {
     });
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.restoreAllMocks();
+    fetchMock.restore();
+  });
 
   it.each(['monitoring', 'goals'])(
     'restores the original view and filters with Back after switching to %s',
