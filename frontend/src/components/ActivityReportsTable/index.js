@@ -4,8 +4,7 @@ import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { REPORTS_PER_PAGE } from '../../Constants';
-import { downloadReports, getReports } from '../../fetchers/activityReports';
-import { getAllReportsDownloadURL, getReportsDownloadURL } from '../../fetchers/helpers';
+import { downloadActivityReportExport, getReports } from '../../fetchers/activityReports';
 import useSessionSort from '../../hooks/useSessionSort';
 import { filtersToQueryString } from '../../utils';
 import ReportsTable from './ReportsTable';
@@ -81,64 +80,27 @@ function ActivityReportsTable({
     fetchReports();
   }, [sortConfig, offset, filters, resetPagination]);
 
-  const handleDownloadAllReports = async (
-    setIsDownloading,
-    setDownloadError,
-    downloadAllButtonRef
-  ) => {
-    const filterQuery = filtersToQueryString(filters);
-    const downloadURL = getAllReportsDownloadURL(filterQuery);
-
-    /* istanbul ignore next: cannot test "assign" */
+  const handleExport = async (dataSet, reportIds) => {
+    let csv;
     try {
-      // changed the way this works ever so slightly because I was thinking
-      // you'd want a try/catch around the fetching of the reports and not the
-      // window.location.assign
-      setIsDownloading(true);
-      const blob = await downloadReports(downloadURL);
-      const csv = URL.createObjectURL(blob);
-      window.location.assign(csv);
+      const blob = await downloadActivityReportExport(
+        dataSet,
+        reportIds,
+        filtersToQueryString(filters)
+      );
+      csv = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = csv;
+      link.download = `${dataSet}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-      setDownloadError(true);
+      throw new Error(
+        err.data?.error || 'Sorry, something went wrong. Please try your request again.'
+      );
     } finally {
-      setIsDownloading(false);
-      downloadAllButtonRef.current.focus();
-    }
-  };
-
-  /* istanbul ignore next: cannot test "assign" */
-  const handleDownloadClick = async (
-    reportCheckboxes,
-    setIsDownloading,
-    setDownloadError,
-    downloadSelectedButtonRef
-  ) => {
-    const toDownloadableReportIds = (accumulator, entry) => {
-      if (!reports) return accumulator;
-      const [key, value] = entry;
-      if (value === false) return accumulator;
-      accumulator.push(key);
-      return accumulator;
-    };
-
-    const downloadable = Object.entries(reportCheckboxes).reduce(toDownloadableReportIds, []);
-    if (downloadable.length) {
-      const downloadURL = getReportsDownloadURL(downloadable);
-      try {
-        setIsDownloading(true);
-        const blob = await downloadReports(downloadURL);
-        const csv = URL.createObjectURL(blob);
-        window.location.assign(csv);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
-        setDownloadError(true);
-      } finally {
-        setIsDownloading(false);
-        downloadSelectedButtonRef.current.focus();
-      }
+      if (csv) URL.revokeObjectURL(csv);
     }
   };
 
@@ -153,8 +115,7 @@ function ActivityReportsTable({
       </Grid>
 
       <ReportsTable
-        handleDownloadAllReports={handleDownloadAllReports}
-        handleDownloadClick={handleDownloadClick}
+        onExport={handleExport}
         reportsCount={reportsCount}
         tableCaption={tableCaption}
         exportIdPrefix={exportIdPrefix}
