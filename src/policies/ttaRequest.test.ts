@@ -126,6 +126,22 @@ describe('TtaRequest policy', () => {
       expect(policy.canUpdate()).toBe(false);
     });
 
+    it('is true for an admin once the request is sent back for changes', () => {
+      const policy = new TtaRequest(createUser({ id: 2, admin: true }), 1, {
+        ...draft,
+        status: TTA_REQUEST_STATUSES.NEEDS_ACTION,
+      });
+      expect(policy.canUpdate()).toBe(true);
+    });
+
+    it('is false for an admin once the request is submitted', () => {
+      const policy = new TtaRequest(createUser({ id: 2, admin: true }), 1, {
+        ...draft,
+        status: TTA_REQUEST_STATUSES.SUBMITTED,
+      });
+      expect(policy.canUpdate()).toBe(false);
+    });
+
     it('is false once the request is submitted', () => {
       const policy = new TtaRequest(createUser({ write: true }), 1, {
         ...draft,

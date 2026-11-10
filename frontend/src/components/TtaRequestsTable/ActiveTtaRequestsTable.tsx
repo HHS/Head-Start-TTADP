@@ -6,6 +6,7 @@ import { getTtaRequests, getTtaRequestsByRecipient } from '../../fetchers/ttaReq
 import useFetch from '../../hooks/useFetch';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
 import { ttaRequestViewPath } from '../../pages/TtaRequestForm/constants';
+import isAdmin from '../../permissions';
 import UserContext from '../../UserContext';
 import AddTtaRequestButton from '../AddTtaRequestButton';
 import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
@@ -146,8 +147,8 @@ const stateCodes = (request: ActiveTtaRequest) =>
   [...new Set(request.grants.map((grant) => grant.stateCode).filter(Boolean))].join(', ');
 
 /*
-  The request id and the status open a request its creator can edit - a draft, or one sent
-  back to them for changes - in its form; any other request's id opens it read only, which
+  The request id and the status open a request the user can edit - their draft, or one sent
+  back for changes to them as its creator, or to any admin - in its form; any other request's id opens it read only, which
   is where its reviewer reviews it. The recipient name opens that recipient's record. Approver and assigned
   staff only exist once a request has been approved, so until then they are blank.
 */
@@ -156,12 +157,14 @@ const toTableRow = (
   requestUrl: (requestId: number) => string,
   viewUrl: (requestId: number) => string,
   showRecipientColumns: boolean,
-  userId: number | null
+  userId: number | null,
+  userIsAdmin: boolean
 ): TtaRequestsTableRow => {
   const status = STATUS_LABELS[request.status] ?? request.status;
   const isEditable =
     request.status === TTA_REQUEST_STATUSES.DRAFT ||
-    (request.status === TTA_REQUEST_STATUSES.NEEDS_ACTION && request.creator.id === userId);
+    (request.status === TTA_REQUEST_STATUSES.NEEDS_ACTION &&
+      (request.creator.id === userId || userIsAdmin));
 
   return {
     id: request.id,
@@ -185,7 +188,7 @@ const toTableRow = (
       { title: COLUMNS.REVIEWER, value: request.reviewer?.name ?? BLANK },
       { title: COLUMNS.APPROVER, value: BLANK },
       { title: COLUMNS.ASSIGNED_STAFF, value: BLANK },
-      // only what the creator can edit is clickable, it takes them back into the request
+      // only what the user can edit is clickable, it takes them back into the request
       isEditable
         ? {
             title: COLUMNS.STATUS,
@@ -221,8 +224,11 @@ export default function ActiveTtaRequestsTable({
   canCreate,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
   // the table is also shown outside of a signed-in user's pages, so there may be no user
-  const { user } = (useContext(UserContext) || {}) as { user?: { id: number } };
+  const { user } = (useContext(UserContext) || {}) as {
+    user?: { id: number; permissions?: { scopeId: number; regionId: number }[] };
+  };
   const userId: number | null = user?.id ?? null;
+  const userIsAdmin = !!isAdmin(user);
   // where a request lives depends on whether this table spans regions or one recipient
   const requestRoot = showRecipientColumns
     ? '/tta-requests'
@@ -255,9 +261,9 @@ export default function ActiveTtaRequestsTable({
   const rows = useMemo(
     () =>
       (data || NO_REQUESTS).rows.map((request) =>
-        toTableRow(request, requestUrl, viewUrl, showRecipientColumns, userId)
+        toTableRow(request, requestUrl, viewUrl, showRecipientColumns, userId, userIsAdmin)
       ),
-    [data, requestUrl, viewUrl, showRecipientColumns, userId]
+    [data, requestUrl, viewUrl, showRecipientColumns, userId, userIsAdmin]
   );
 
   return (

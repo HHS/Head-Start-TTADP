@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -280,6 +281,25 @@ describe('ActiveTtaRequestsTable', () => {
     );
     expect(within(firstRow).getByText('Needs action')).toBeVisible();
     expect(within(firstRow).queryByRole('link', { name: 'Needs action' })).toBeNull();
+  });
+
+  it('links a request sent back for changes into the form for an admin', async () => {
+    renderTable([apiRequest(1, { status: 'needs_action' })], true, {
+      id: 2,
+      permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }],
+    });
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/101`
+    );
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/101`
+    );
   });
 
   it('links a request sent back for changes to its read-only view without a user', async () => {

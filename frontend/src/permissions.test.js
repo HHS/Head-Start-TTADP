@@ -323,6 +323,19 @@ describe('canEditTtaRequest', () => {
     expect(canEditTtaRequest({ ...creator, permissions: undefined }, request)).toBe(false);
   });
 
+  it('is true for an admin once the request is sent back for changes', () => {
+    const admin = { id: 2, permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }] };
+    expect(canEditTtaRequest(admin, request)).toBe(true);
+  });
+
+  it.each([TTA_REQUEST_STATUSES.DRAFT, TTA_REQUEST_STATUSES.SUBMITTED])(
+    "is false for an admin while someone else's request is %s",
+    (status) => {
+      const admin = { id: 2, permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }] };
+      expect(canEditTtaRequest(admin, { ...request, status })).toBe(false);
+    }
+  );
+
   it('is false once the request has been submitted', () => {
     expect(
       canEditTtaRequest(creator, { ...request, status: TTA_REQUEST_STATUSES.SUBMITTED })

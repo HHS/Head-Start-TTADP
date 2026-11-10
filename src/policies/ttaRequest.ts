@@ -65,9 +65,14 @@ export default class TtaRequest {
 
   /**
    * Only the creator saves a draft, or a request sent back to them for changes, and only
-   * while they can still write in its region
+   * while they can still write in its region. An admin can also save a request sent back
+   * for changes, e.g. when its creator is unavailable.
    */
   canUpdate() {
+    if (this.isAdmin() && this.ttaRequest?.status === TTA_REQUEST_STATUSES.NEEDS_ACTION) {
+      return true;
+    }
+
     if (!this.isCreator()) {
       this.logUnauthorizedAttempt('update TTA request', 'user is not the creator');
       return false;

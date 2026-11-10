@@ -302,7 +302,7 @@ const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, reg
 /**
  * Check if user can edit a saved TTA request, as the API's TTA request policy allows: only its
  * creator, while it is a draft or sent back to them for changes, and only while they can still
- * write in its region
+ * write in its region. An admin can also edit a request sent back for changes.
  * @param {object} user - user object
  * @param {object} ttaRequest - the saved request, with its creator, status and region
  * @returns {boolean} - True if the user can edit the request
@@ -310,6 +310,10 @@ const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, reg
 const canEditTtaRequest = (user, ttaRequest) => {
   if (!user || !ttaRequest) {
     return false;
+  }
+
+  if (isAdmin(user) && ttaRequest.status === TTA_REQUEST_STATUSES.NEEDS_ACTION) {
+    return true;
   }
 
   const editable = [TTA_REQUEST_STATUSES.DRAFT, TTA_REQUEST_STATUSES.NEEDS_ACTION];
