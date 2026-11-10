@@ -233,7 +233,6 @@ describe('Activity report export chooser', () => {
     expect(screen.getByRole('button', { name: 'Goals' })).toBeDisabled();
     expect(setAppLoadingText).toHaveBeenCalledWith('Exporting row(s)...');
     expect(setIsAppLoading).toHaveBeenCalledWith(true);
-    expect(screen.getByRole('status')).toHaveTextContent('Exporting...');
     await act(async () => rejectDownload(new Error('Please try again.')));
     expect(setIsAppLoading).toHaveBeenLastCalledWith(false);
     expect(await screen.findByRole('alert')).toHaveTextContent('Please try again.');

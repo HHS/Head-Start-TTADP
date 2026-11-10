@@ -42,18 +42,6 @@
   vertical-align: middle;
 }
 
-/* Own animation rather than fa-spin, which is disabled under prefers-reduced-motion. */
-.ttahub-ar-export__spinner {
-  animation: ttahub-ar-export-spin 1s linear infinite;
-  vertical-align: 0;
-}
-
-@keyframes ttahub-ar-export-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .ttahub-ar-export__formats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -1,4 +1,4 @@
-import { faChevronDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button } from '@trussworks/react-uswds';
 import React, { useContext, useEffect, useRef, useState } from 'react';
@@ -130,20 +130,6 @@ export default function ExportMenu({
         }
       }}
     >
-      {isDownloading && (
-        <span
-          role="status"
-          className="ttahub-ar-export__status font-sans-xs text-base-dark margin-left-1 margin-right-1"
-        >
-          <FontAwesomeIcon
-            className="ttahub-ar-export__spinner margin-right-1"
-            color={colors.ttahubMediumBlue}
-            icon={faCircleNotch}
-            aria-hidden="true"
-          />
-          Exporting...
-        </span>
-      )}
       <button
         type="button"
         ref={triggerRef}
