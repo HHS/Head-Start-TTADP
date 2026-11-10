@@ -488,6 +488,20 @@ describe('activityReportExports', () => {
     });
 
     it.each(['goals', 'objectives'])(
+      'exports populated %s for the full filtered table',
+      async (dataSet) => {
+        const { csv, rowCount } = await collect({
+          dataSet,
+          filters: { 'region.in': [REGION_ID] },
+          regionIds: [REGION_ID],
+        });
+        expect(rowCount).toBeGreaterThan(0);
+        expect(csv).toContain(report.displayId);
+        expect(csv).toContain(OBJECTIVE_TITLE);
+      }
+    );
+
+    it.each(['goals', 'objectives'])(
       'uses the legacy display id for %s exports',
       async (dataSet) => {
         await report.update({ legacyId: `LEGACY-${getUniqueId()}` });
