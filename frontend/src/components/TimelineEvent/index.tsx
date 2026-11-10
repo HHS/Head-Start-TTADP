@@ -52,6 +52,8 @@ interface TimelineEventProps {
   defaultExpanded?: boolean;
   /** Show goal-cycle boundaries in the Monitoring and RTTAPA grouped views. */
   showGoalCycleDivider?: boolean;
+  /** One level below the heading that contains the event; grouped views pass 4. */
+  headingLevel?: 3 | 4;
 }
 
 /** Renders the shared presentation contract without depending on a particular source model. */
@@ -60,7 +62,9 @@ function TimelineEvent({
   isLast = false,
   defaultExpanded = false,
   showGoalCycleDivider = false,
+  headingLevel = 3,
 }: TimelineEventProps): React.ReactElement {
+  const Heading = `h${headingLevel}` as 'h3' | 'h4';
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [id] = useState(() => uniqueId('timeline-event-'));
   const date = moment.utc(event.date, moment.ISO_8601, true);
@@ -123,7 +127,7 @@ function TimelineEvent({
             </>
           )}
         </div>
-        <h3 id={`${id}-title`} className="ttahub-timeline-event__title margin-0 font-sans-sm">
+        <Heading id={`${id}-title`} className="ttahub-timeline-event__title margin-0 font-sans-sm">
           {event.indicators.includes('multiRecipient') && (
             <>
               <FontAwesomeIcon
@@ -142,7 +146,7 @@ function TimelineEvent({
               : <span className="text-normal">{event.subtitle}</span>
             </>
           )}
-        </h3>
+        </Heading>
         {event.byline && event.byline.values.length > 0 && (
           <p className="margin-0 font-sans-2xs">
             {event.byline.label}
@@ -210,7 +214,13 @@ function TimelineEvent({
                         key={`${text}-${itemIndex}`}
                       >
                         {link && isSafeRenderableLink(link) ? (
-                          <Link href={link}>{text}</Link>
+                          link.startsWith('/') ? (
+                            <RouterLink className="usa-link" to={link}>
+                              {text}
+                            </RouterLink>
+                          ) : (
+                            <Link href={link}>{text}</Link>
+                          )
                         ) : (
                           text
                         )}

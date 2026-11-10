@@ -5,10 +5,17 @@ import { destroy, get, put } from './index';
 
 const eventsUrl = join('/', 'api', 'events');
 
-export const eventById = async (id, readOnly = false) => {
+export const eventById = async (id, readOnly = false, { includeSessions = true } = {}) => {
   let url = `/api/events/id/${id}`;
+  const params = [];
   if (readOnly) {
-    url += '?readOnly=true';
+    params.push('readOnly=true');
+  }
+  if (!includeSessions) {
+    params.push('includeSessions=false');
+  }
+  if (params.length) {
+    url += `?${params.join('&')}`;
   }
   const res = await get(url);
   return res.json();

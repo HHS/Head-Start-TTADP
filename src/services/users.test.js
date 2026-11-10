@@ -480,11 +480,10 @@ describe('Users DB service', () => {
           ownerId: userIds[5],
           pocIds: [],
           collaboratorIds: [],
-          regionId: [1],
+          regionId: 5,
           eventId: eventDisplayId,
-          data: {
-            eventId: eventDisplayId,
-          },
+          // eventId lives in its own column, not in the JSONB data
+          data: {},
           imported: {},
         })
       );
@@ -513,6 +512,19 @@ describe('Users DB service', () => {
       expect(creators.length).toBe(1);
     });
 
+    it('does not return sensitive user attributes', async () => {
+      const result = await getTrainingReportUsersByRegion(5);
+      const [poc] = result.pointOfContact;
+      const fields = Object.keys(poc.toJSON());
+
+      ['phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'].forEach(
+        (field) => {
+          expect(fields).not.toContain(field);
+        }
+      );
+      expect(fields).toContain('fullName');
+    });
+
     it('adds missing creator id when event id is passed', async () => {
       const result = await getTrainingReportUsersByRegion(5, eventDisplayId);
 
@@ -530,6 +542,13 @@ describe('Users DB service', () => {
       expect(creators.includes(userIds[2])).toBeTruthy();
       expect(creators.includes(userIds[5])).toBeTruthy();
       expect(creators.length).toBe(2);
+    });
+
+    it('does not add the owner of an event in another region', async () => {
+      const result = await getTrainingReportUsersByRegion(7, eventDisplayId);
+      const creators = result.creators.map((u) => u.id);
+
+      expect(creators).toEqual([userIds[3]]);
     });
 
     describe('when a user has both POC and collaborator permissions', () => {

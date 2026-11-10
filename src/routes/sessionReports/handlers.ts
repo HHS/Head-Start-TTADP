@@ -1,10 +1,10 @@
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import handleErrors from '../../lib/apiErrorHandler';
-import { trSessionSubmittedForApproval } from '../../lib/mailer';
+import { trSessionChangesRequested, trSessionSubmittedForApproval } from '../../lib/mailer';
 import EventReport from '../../policies/event';
 import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
@@ -29,6 +29,7 @@ import type {
 } from '../../services/types/sessionReport';
 import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
@@ -257,11 +258,23 @@ export const updateHandler = async (req: Request, res: Response) => {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
-    const updatedSession = await updateSession(Number(id), req.body);
+    const updatedSession = await updateSession(Number(id), req.body, (work) =>
+      onTransactionCommitted(req, work)
+    );
 
     // Only notify on the transition into "submitted" so later saves don't resend.
     if (!session?.submitted && updatedSession?.submitted) {
       await trSessionSubmittedForApproval(event, updatedSession);
+    }
+
+    // Likewise, only email the owner on the transition into "needs action".
+    const previousStatus = (session?.data as { status?: string } | undefined)?.status;
+    const updatedStatus = (updatedSession?.data as { status?: string } | undefined)?.status;
+    if (
+      previousStatus !== REPORT_STATUSES.NEEDS_ACTION &&
+      updatedStatus === REPORT_STATUSES.NEEDS_ACTION
+    ) {
+      await trSessionChangesRequested(event, updatedSession);
     }
 
     return res.status(httpCodes.CREATED).send(updatedSession);

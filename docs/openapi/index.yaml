@@ -392,6 +392,27 @@ components:
         - collaboratorIds
         - regionId
         - data
+    eventsByStatusResponse:
+      type: object
+      description: Response object for the get events by status endpoint
+      properties:
+        count:
+          type: integer
+          description: Total number of matching events, ignoring limit and offset
+        rows:
+          type: array
+          description: The requested page of events, each including its sessionReports
+          items:
+            allOf:
+              - $ref: '#/components/schemas/event'
+              - type: object
+                properties:
+                  eventId:
+                    type: string
+                  sessionReports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/sessionReport'
     ttaRequestInput:
       type: object
       description: The fields of a draft TTA request the creator can set. All are optional.

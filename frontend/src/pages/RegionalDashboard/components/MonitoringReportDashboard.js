@@ -4,7 +4,6 @@ import React, { useMemo, useRef } from 'react';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
-import FeatureFlag from '../../../components/FeatureFlag';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import ActiveNoncompliantCitationsWithTtaSupport from '../../../widgets/ActiveNoncompliantCitationsWithTtaSupport';
 import CompliantFollowUpReviewsWithTtaSupport from '../../../widgets/CompliantFollowUpReviewsWithTtaSupport';
@@ -36,12 +35,10 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
         <MonitoringReportDashboardOverview filters={filtersToApply} loading={false} />
       </Grid>
       <Grid row>
-        <FeatureFlag flag="compliant_follow_up_reviews_tta_support">
-          <CompliantFollowUpReviewsWithTtaSupport
-            filters={filtersToApply}
-            detailsFilters={formattedFilters}
-          />
-        </FeatureFlag>
+        <CompliantFollowUpReviewsWithTtaSupport
+          filters={filtersToApply}
+          detailsFilters={formattedFilters}
+        />
       </Grid>
       <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filtersToApply} />

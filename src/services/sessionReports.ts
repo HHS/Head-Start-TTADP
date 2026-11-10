@@ -4,6 +4,7 @@ import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import parseDate from '../lib/date';
+import { trSessionSubmittedToCollaborators } from '../lib/mailer';
 import runInSavepoint from '../lib/runInSavepoint';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
@@ -336,7 +337,16 @@ export async function createSession(request) {
   return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
 }
 
-export async function updateSession(id: number, request) {
+/**
+ * @param runAfterCommit Defers best-effort side effects (emails) until the request's
+ * transaction commits, so their queries can't abort it. Route handlers pass
+ * onTransactionCommitted; the default runs the work immediately.
+ */
+export async function updateSession(
+  id: number,
+  request,
+  runAfterCommit: (work: () => Promise<void>) => void | Promise<void> = (work) => work()
+) {
   const session = await SessionReportPilot.findOne({
     where: { id },
   });
@@ -440,6 +450,10 @@ export async function updateSession(id: number, request) {
         }),
       `Error creating session submitted notifications for session ${id}:`
     );
+
+    // TR-3d: the mailer catches its own errors, but a failed query would still abort the
+    // request transaction (CLS), so send only after the session is committed
+    await runAfterCommit(() => trSessionSubmittedToCollaborators(event, { id, data: newData }));
   }
 
   const wasNeedsAction = existingData.status === REPORT_STATUSES.NEEDS_ACTION;
