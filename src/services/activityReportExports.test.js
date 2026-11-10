@@ -181,6 +181,43 @@ describe('activityReportExports', () => {
   // An empty id set matches no reports, so the full pipeline runs and yields
   // zero rows.
   describe('streaming pipeline', () => {
+    it('converts activity report HTML fields to text without changing other values', async () => {
+      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      const startTransaction = jest
+        .spyOn(db.sequelize, 'transaction')
+        .mockResolvedValue(transaction);
+      const query = jest.spyOn(db.sequelize, 'query').mockImplementation(async (sql) =>
+        sql.startsWith('FETCH ')
+          ? [
+              {
+                context: '<p>Context &amp; details</p><p>Second paragraph</p>',
+                objective_tta_provided: '<p>1.2: <strong>Training</strong><br>Follow-up</p>',
+                creator: 'A & B <team>',
+                duration: 2,
+              },
+              { context: null, objective_tta_provided: '', creator: null, duration: 0 },
+            ]
+          : []
+      );
+      try {
+        const { csv, rowCount } = await collect({
+          dataSet: 'activity-reports',
+          reportIds: [1],
+          regionIds: ALL_REGIONS,
+        });
+        expect(rowCount).toBe(2);
+        expect(csv).toContain('Context & details\n\nSecond paragraph');
+        expect(csv).toContain('1.2: Training\nFollow-up');
+        expect(csv).toContain('A & B <team>');
+        expect(csv).not.toContain('<p>');
+        expect(csv).not.toContain('<strong>');
+        expect(transaction.commit).toHaveBeenCalledTimes(1);
+      } finally {
+        query.mockRestore();
+        startTransaction.mockRestore();
+      }
+    });
+
     it.each(Object.keys(EXPORT_DATA_SETS))(
       'runs the %s export end to end for an empty id set',
       async (dataSet) => {

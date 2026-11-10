@@ -17,6 +17,7 @@
 //      backpressure wait stops a client stalled on 'drain' (which Postgres'
 //      statement/idle timeouts can't catch, since no query is in flight there).
 import stringify from 'csv-stringify/lib/sync';
+import { convert } from 'html-to-text';
 import { QueryTypes, type Transaction } from 'sequelize';
 import db from '../models';
 import { approvedActivityReportWhere } from './activityReports';
@@ -312,6 +313,18 @@ export async function streamActivityReportExportCsv(
       )) as Record<string, any>[];
       if (rows.length === 0) {
         break;
+      }
+      if (dataSet === 'activity-reports') {
+        for (const row of rows) {
+          for (const column of ['context', 'objective_tta_provided']) {
+            if (typeof row[column] === 'string') {
+              row[column] = convert(row[column], {
+                wordwrap: false,
+                selectors: [{ selector: 'table', format: 'dataTable' }],
+              });
+            }
+          }
+        }
       }
       rowCount += rows.length;
       const chunk = stringify(rows, { header: firstBatch, quoted: true, quoted_empty: true });
