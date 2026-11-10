@@ -2,8 +2,8 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { GROUP_COLLABORATORS } from '../../constants';
-import { auditLogger } from '../../logger';
 import parsePositiveInteger from '../../lib/parsePositiveInteger';
+import { auditLogger } from '../../logger';
 import db from '../../models';
 import GroupPolicy, { type GrantType } from '../../policies/group';
 import { currentUserId } from '../../services/currentUser';
@@ -517,6 +517,9 @@ export async function deleteGroup(req: Request, res: Response) {
   try {
     const { groupId: groupIdRaw } = req.params;
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
+    // Lock the group before destroyGroup touches its grant and collaborator rows, so delete
+    // and update both lock the parent group first and cannot deadlock each other
+    await lockGroup(groupId);
     const [userId, groupData] = await Promise.all([
       currentUserId(req, res),
       group(groupId), // Retrieve the group data using the groupId

@@ -590,6 +590,7 @@ describe('Groups Handlers', () => {
       { id: 2, regionId: 2, recipientId: 2, status: 'Active' },
       { id: 3, regionId: 1, recipientId: 3, status: 'Active' },
       { id: 4, regionId: 1, recipientId: 4, status: 'Inactive' },
+      { id: 5, regionId: 2, recipientId: 5, status: 'Inactive' },
     ];
     const malformedGrantIds = [
       ['a SQL fragment', ['1 OR 1=1']],
@@ -784,18 +785,20 @@ describe('Groups Handlers', () => {
 
       it('checks co-owners against active grants only', async () => {
         const coOwnerId = 2;
-        // Both grants are in region 1, which the co-owner cannot access. Inactive grant 4 is left
-        // out of the co-owner check, but active grant 1 still fails it
-        mockUsers({ [userId]: [permission(1)], [coOwnerId]: [permission(2)] });
-        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        const groupResponse = { id: 1, name: 'Group 1' };
+        editGroup.mockResolvedValue(groupResponse);
+        // Inactive grant 5 is in region 2, which the co-owner cannot access. It is already on the
+        // group, so the editor does not need access to it, and it is left out of the co-owner
+        // check, so the co-owner only needs access to active grant 1
+        mockUsers({ [userId]: [permission(1)], [coOwnerId]: [permission(1)] });
+        group.mockResolvedValue(ownedGroup([allGrants[0], allGrants[4]]));
         await updateGroup(
-          { body: { id: 1, name: 'Group 1', grants: [1, 4], coOwners: [coOwnerId] } },
+          { body: { id: 1, name: 'Group 1', grants: [1, 5], coOwners: [coOwnerId] } },
           res
         );
-        expect(statusJson).toHaveBeenCalledWith(
-          expect.objectContaining({ error: 'co-owner-permissions' })
-        );
-        expect(editGroup).not.toHaveBeenCalled();
+        expect(statusJson).not.toHaveBeenCalled();
+        expect(editGroup).toHaveBeenCalledWith(1, expect.objectContaining({ grants: [1, 5] }));
+        expect(res.json).toHaveBeenCalledWith(groupResponse);
       });
     });
   });
@@ -838,6 +841,13 @@ describe('Groups Handlers', () => {
       destroyGroup.mockReturnValue(groupResponse);
       await deleteGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
+    });
+
+    it('locks the group before reading it', async () => {
+      group.mockReturnValue(null);
+      await deleteGroup(req, res);
+      expect(lockGroup).toHaveBeenCalledWith(1);
+      expect(lockGroup.mock.invocationCallOrder[0]).toBeLessThan(group.mock.invocationCallOrder[0]);
     });
 
     it('should return 200 if the group no longer exists', async () => {
