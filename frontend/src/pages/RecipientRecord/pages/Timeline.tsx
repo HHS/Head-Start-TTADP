@@ -11,16 +11,21 @@ import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import {
   createInitialTimelineFilters,
+  getTimelineFilterConfig,
   getTimelineFilterKey,
-  TIMELINE_FILTER_CONFIG,
 } from '../../../components/filter/timelineFilters';
 import NoResultsFound from '../../../components/NoResultsFound';
 import TimelineCategory from '../../../components/TimelineCategory';
 import TimelineEvent from '../../../components/TimelineEvent';
 import useFilters from '../../../hooks/useFilters';
 import useTimelineNavigation from '../../../hooks/useTimelineNavigation';
+import isAdmin, {
+  allRegionsUserHasTtaRequestPermissionTo,
+  canSeeBehindFeatureFlag,
+} from '../../../permissions';
 import UserContext from '../../../UserContext';
 import { filtersToQueryString } from '../../../utils';
+import { RECIPIENT_TTA_REQUEST_FEATURE_FLAG } from './constants';
 import './Timeline.css';
 
 interface TimelineProps {
@@ -81,13 +86,16 @@ function TimelineContent({
   const aboutDrawerRef = useRef<HTMLButtonElement>(null);
   const filterHelpDrawerRef = useRef<HTMLButtonElement>(null);
   const { user } = useContext(UserContext);
+  const canViewTtaRequests =
+    canSeeBehindFeatureFlag(user, RECIPIENT_TTA_REQUEST_FEATURE_FLAG) &&
+    (isAdmin(user) || allRegionsUserHasTtaRequestPermissionTo(user).includes(Number(regionId)));
   const initialFilters = useMemo(() => createInitialTimelineFilters(), []);
   const { filters, onApplyFilters, onRemoveFilter, filterConfig } = useFilters(
     user,
     getTimelineFilterKey(recipientId),
     false,
     initialFilters,
-    TIMELINE_FILTER_CONFIG,
+    getTimelineFilterConfig(canViewTtaRequests),
     undefined,
     true
   );
