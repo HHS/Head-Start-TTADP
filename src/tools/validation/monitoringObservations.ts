@@ -244,6 +244,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     CROSS JOIN validation_run cur
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- review_status_vs_delivery. DISTINCT ON prevents a duplicate-status fan-out.
@@ -307,6 +308,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON rgd."reviewId" = mr."reviewId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- review_grantee_multi_grant
@@ -342,6 +344,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON rgmg."reviewId" = mr."reviewId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- finding_grant_on_own_review
@@ -578,6 +581,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON s."statusId" = mr."statusId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- statuses_table_integrity
@@ -677,6 +681,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON rgo."reviewId" = mr."reviewId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- standard_consistency

@@ -150,8 +150,8 @@ describe('validateMonitoringData', () => {
   // Kept separate from the main `reviewId` so none of this affects its
   // finding_count assertion.
   const reviewIdCompliant = uuidv4();
-  // A CLASS review with a linked finding, for review_type_shape. No
-  // reportDeliveryDate, so it can't also trip delivery-based checks.
+  // A CLASS review with a linked finding, for review_type_shape, which now
+  // requires a reportDeliveryDate (undelivered reviews are never alerted on).
   const reviewIdClassWithFindings = uuidv4();
   // A second review for findingIdDupHistory's history rows, duplicated but
   // agreeing (same status, same determination) - lets
@@ -605,7 +605,7 @@ describe('validateMonitoringData', () => {
         startDate: '2026-06-01',
         endDate: '2026-06-15',
         reviewType: 'CLASS',
-        reportDeliveryDate: null,
+        reportDeliveryDate: reportDeliveryDateCompliant,
         name: 'Review VMD class',
         hash: `hash-${uuidv4()}`,
         ...timestamps,
@@ -1261,7 +1261,13 @@ describe('validateMonitoringData', () => {
     ]);
 
     // citation_review_count / citation_grant_count / citation_days_review_1_to_2 /
-    // citation_days_review_2_to_3 / delivered_review_citation_no_window.
+    // citation_days_review_2_to_3 / delivered_review_citation_no_window /
+    // citation_count_noncompliance / citation_count_deficiency. The citation's
+    // own calculated_finding_type is deliberately the *latest* classification
+    // (Deficiency) and disagrees with its first review's own
+    // calculated_review_finding_type (Noncompliance, set below) - the
+    // follow-up-reclassification scenario citation_count_* must not rewrite
+    // the older review's count for.
     await Citation.bulkCreate([
       {
         id: citationIdTimeline,
@@ -1269,6 +1275,7 @@ describe('validateMonitoringData', () => {
         finding_uuid: uuidv4(),
         active: true,
         calculated_status: 'Active',
+        calculated_finding_type: 'Deficiency',
       },
       {
         id: citationIdNoWindow,
@@ -1305,6 +1312,7 @@ describe('validateMonitoringData', () => {
         deliveredReviewId: deliveredReviewIdTimeline1,
         citationId: citationIdTimeline,
         raw_history_status: 'Deficiency',
+        calculated_review_finding_type: 'Noncompliance',
         latest_review_start: timelineReview1Start,
         latest_review_end: timelineReview1End,
       },
@@ -1312,6 +1320,7 @@ describe('validateMonitoringData', () => {
         deliveredReviewId: deliveredReviewIdTimeline2,
         citationId: citationIdTimeline,
         raw_history_status: 'Active',
+        calculated_review_finding_type: 'Deficiency',
         latest_review_start: timelineReview2Start,
         latest_review_end: timelineOpenPlaceholderEnd,
       },
@@ -2372,6 +2381,35 @@ describe('validateMonitoringData', () => {
     expect(period2to3.category).toBe('Active');
     expect(Number(period2to3.scalar)).toBeGreaterThanOrEqual(39);
     expect(Number(period2to3.scalar)).toBeLessThanOrEqual(41);
+
+    // citation_count_*: the citation's own calculated_finding_type is the
+    // *latest* classification (Deficiency), but review 1's own
+    // calculated_review_finding_type is Noncompliance - review 1's count
+    // must reflect its own classification, not get rewritten to match the
+    // citation's later reclassification.
+    const review1 = await DeliveredReview.findOne({ where: { id: deliveredReviewIdTimeline1 } });
+    const [review1Noncompliance, review1Deficiency] = await Promise.all([
+      ValidationRecord.findOne({
+        where: {
+          run_id: run.id,
+          entity_type: 'MonitoringReviews',
+          entity_id: review1.mrid,
+          observation_name: 'citation_count_noncompliance',
+        },
+        raw: true,
+      }),
+      ValidationRecord.findOne({
+        where: {
+          run_id: run.id,
+          entity_type: 'MonitoringReviews',
+          entity_id: review1.mrid,
+          observation_name: 'citation_count_deficiency',
+        },
+        raw: true,
+      }),
+    ]);
+    expect(Number(review1Noncompliance.scalar)).toBe(1);
+    expect(Number(review1Deficiency.scalar)).toBe(0);
   });
 
   it('flags a DeliveredReviewCitation that lost a same-day tie-break and was never authoritative', async () => {

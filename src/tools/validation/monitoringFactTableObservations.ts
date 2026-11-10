@@ -450,19 +450,16 @@ const refreshMonitoringFactTableObservations = async (transaction: Transaction):
     ;
 
     -- review_finding_type_counts: shared by the three citation_count_*
-    -- observations below. Uses calculated_finding_type here, unlike the
-    -- per-finding measures above - this is just a classification key for
-    -- counting associated entities, not a measure of a finding's own data,
-    -- so the cleaned-up grouping is the right choice.
+    -- observations below.
     DROP TABLE IF EXISTS pg_temp.review_finding_type_counts;
     CREATE TEMP TABLE review_finding_type_counts
     ON COMMIT DROP
     AS
     SELECT
       dr.mrid,
-      COUNT(DISTINCT c.id) FILTER (WHERE c.calculated_finding_type = 'Area of Concern') area_of_concern_count,
-      COUNT(DISTINCT c.id) FILTER (WHERE c.calculated_finding_type = 'Noncompliance') noncompliance_count,
-      COUNT(DISTINCT c.id) FILTER (WHERE c.calculated_finding_type = 'Deficiency') deficiency_count
+      COUNT(DISTINCT c.id) FILTER (WHERE drc.calculated_review_finding_type = 'Area of Concern') area_of_concern_count,
+      COUNT(DISTINCT c.id) FILTER (WHERE drc.calculated_review_finding_type = 'Noncompliance') noncompliance_count,
+      COUNT(DISTINCT c.id) FILTER (WHERE drc.calculated_review_finding_type = 'Deficiency') deficiency_count
     FROM "DeliveredReviews" dr
     LEFT JOIN "DeliveredReviewCitations" drc
       ON drc."deliveredReviewId" = dr.id

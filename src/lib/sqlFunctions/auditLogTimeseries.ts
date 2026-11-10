@@ -260,6 +260,17 @@ export const recreateTimeseriesFunction = async (
     -- is what lets timeband_start below use that ordering directly with no
     -- separate gap added on top. data_id is in the join to disambiguate live
     -- rows added by the UNION ALL above.
+    --
+    -- Known limitation: this assumes zid order tracks real chronological
+    -- order, which isn't airtight (dml_timestamp is each transaction's own
+    -- start time, not commit time, so overlapping transactions on the same
+    -- row could commit, and so get their zid, out of start-time order). In
+    -- practice this needs the same entity to appear more than once within one
+    -- source file with genuinely differing state between those entries (a true
+    -- duplicate entry changes nothing to miscount) and have those writes land
+    -- as overlapping transactions - this app's sequential, one-row-per-entity-
+    -- per-file import (src/lib/importSystem/processRecords.ts,
+    -- processFilesFromZip.ts) doesn't produce that.
     UPDATE flat_z fz
     SET dml_timestamp = fz.dml_timestamp + ((sub.rn - 1) * interval '1 millisecond')
     FROM (

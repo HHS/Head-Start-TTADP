@@ -56,7 +56,7 @@ Three vocabularies, matching the three tables they're recorded in:
 - `import_lag_elevated_z` → `import_lag_zscore_elevated` (alert)
 - `source_lag_elevated_z` → `source_lag_zscore_elevated` (alert)
 - `completion_gap_elevated_z` → `completion_gap_zscore_elevated` (alert)
-- *(no backing stat — computed inline from the same per-review data as the three Z-score stats above)* → `review_lag_region_week_all_elevated` (alert)
+- _(no backing stat — computed inline from the same per-review data as the three Z-score stats above)_ → `review_lag_region_week_all_elevated` (alert)
 
 ### Gate checks (no backing observation)
 
@@ -100,6 +100,8 @@ Data logic only — severity, message wording, and freshness windows are in [Che
 **`delivered_review_citation_no_window`** — a `DeliveredReviewCitations` row whose review was delivered the same day as another review on the same citation, lost the tie-break, and so was never the authoritative review for any period (`latest_review_start IS NULL`).
 
 ### MonitoringReviews
+
+The observations below that back an alert (`review_type_shape`, `review_status_vs_delivery`, `review_grantee_duplicated`, `review_grantee_multi_grant`, `review_status_resolvable`, `review_grantee_orphaned_grant`) only run against delivered reviews (`reportDeliveryDate IS NOT NULL`) — an undelivered review is never itself alert-worthy; it only ever assists in interpreting a delivered one (e.g. `linked_review_undelivered_count`). Observations with no alert of their own (`finding_count`, `review_status_change_count`, `review_outcome_change_count`) aren't scoped this way.
 
 **`delivery_report_lag_days`** — days between a review's `reportDeliveryDate` and when that date first appeared in the imported data (from `ZALMonitoringReviews` audit history).
 
