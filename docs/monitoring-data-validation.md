@@ -25,22 +25,21 @@ Process  (monitoring_post_refresh | monitoring_gate)   a named validation workfl
 ```
 
 - **Process** — a named validation workflow (`ValidationRuns.process_name`; values in `VALIDATION_PROCESS`). Two exist today: `monitoring_post_refresh` (post-refresh, non-blocking) and `monitoring_gate` (the pre-refresh gate). A process is defined by an ordered list of steps and owns its own retention — each of its runs clears the process's prior alerts, and observation records are kept only for the current and previous cycle (see the cycle description below and the retention convention).
-- **Run** — one execution of a process, recorded as a row in `ValidationRuns`. The row is written and committed as `started` *before* any work begins, so a watchdog can later distinguish "never ran" from "started but crashed" (a row stuck at `started`). When the run finishes it is updated to `success` (with counts) or `failure` (with an error). Every run is stamped with the **cycle** it validated (below); a run with no identifiable data version is rejected.
+- **Run** — one execution of a process, recorded as a row in `ValidationRuns`. The row is written and committed as `started` _before_ any work begins, so a watchdog can later distinguish "never ran" from "started but crashed" (a row stuck at `started`). When the run finishes it is updated to `success` (with counts) or `failure` (with an error). Every run is stamped with the **cycle** it validated (below); a run with no identifiable data version is rejected.
 - **Step** — the unit of work inside a run (`ValidationStep`). A step is a function handed the run's transaction; it reads whatever tables it needs and INSERTs its own output — time-series rows, observations, or alerts. All of a run's steps execute in order inside one transaction, because a later step may build on a temp table or rows an earlier one produced; they are not parallelized. Each step is plain SQL, so it can be lifted out and run by hand in psql.
 - **Result** — what a completed run hands back to whatever launched it (`RunValidationResult`): the run id, the counts, and the alert rows, including how many were `critical`. It is a report, not a decision. The run itself never blocks anything.
 
-Cutting across those is the **cycle** — the version of imported data a run saw, recorded on each run as `import_id` + `source_updated_at` (see [ValidationRuns](#validationruns)). The two processes run at different pipeline stages — `monitoring_gate` before the refresh, `monitoring_post_refresh` after — as separate runs with separate `run_id`s; the cycle is what ties them together. Both resolve the same cycle for a given import, so their observations and alerts bucket by data *version* rather than by run, and a same-day re-import is distinguished by a new `import_id`. `getMonitoringImportCycle` (`src/tools/validation/monitoringImportCycle.ts`) resolves it to the latest `PROCESSED` monitoring `ImportFile`.
+Cutting across those is the **cycle** — the version of imported data a run saw, recorded on each run as `import_id` + `source_updated_at` (see [ValidationRuns](#validationruns)). The two processes run at different pipeline stages — `monitoring_gate` before the refresh, `monitoring_post_refresh` after — as separate runs with separate `run_id`s; the cycle is what ties them together. Both resolve the same cycle for a given import, so their observations and alerts bucket by data _version_ rather than by run, and a same-day re-import is distinguished by a new `import_id`. `getMonitoringImportCycle` (`src/tools/validation/monitoringImportCycle.ts`) resolves it to the latest `PROCESSED` monitoring `ImportFile`.
 
 ### The runner
 
 Tying those together is **the runner**, `runValidation` (`src/tools/validation/runValidation.ts`) — the single seam every process goes through. Given a `processName` and its ordered `steps`, it:
-
 1. creates and commits the `ValidationRun` row (`started`), stamped with the required cycle identifier(s) the caller resolved;
 2. opens one transaction — attributes any audited writes to the process, sets UTC, publishes the run id in an `ON COMMIT DROP` temp table (`validation_run`) that steps `CROSS JOIN` instead of interpolating the id into every statement, then runs each step in order;
 3. reads back the run's counts, marks it `success`, and emits one greppable summary line for the reporting chain;
 4. returns the result. On error it marks the run `failure`, emits a failure line, and rethrows.
 
-Crucially, **the runner never acts on a result.** It counts criticals and returns them; the *caller* decides what a critical means. That one separation is what lets identical machinery serve the post-refresh run (caller ignores the count), the pre-refresh gate (caller exits nonzero to pause the pipeline), and a possible future in-refresh gate (caller throws inside the refresh transaction). Who acts, and how, is the only thing that varies between forms.
+Crucially, **the runner never acts on a result.** It counts criticals and returns them; the _caller_ decides what a critical means. That one separation is what lets identical machinery serve the post-refresh run (caller ignores the count), the pre-refresh gate (caller exits nonzero to pause the pipeline), and a possible future in-refresh gate (caller throws inside the refresh transaction). Who acts, and how, is the only thing that varies between forms.
 
 ## Sequencing in the import pipeline
 
@@ -67,29 +66,29 @@ The gate sits between `process` and `update_fact_tables`, so pausing there holds
 
 **Step 1 — `monitoringObservations.ts` → `ValidationRecords`.** Rebuilds one row per entity per observation (scalars in `scalar`, categories in `category`). Runs first so later steps can build on the observations. **Every observation is recorded for every entity it applies to, whether or not the value is alert-worthy** — the on-time reviews and the `consistent` findings are stored alongside the outliers. The current threshold alerts are only a filtered view over these rows; consumers are not expected to stay limited to that, so the full distribution is kept so later work (e.g. anomaly-detection models needing means, quantiles, or z-scores) has the complete data, not just the flagged entities. Observations also let a human drill from an aggregate alert down to the specific entities behind it.
 
-| Observation (`observation_name`) | Entity | Kind | Meaning |
-|---|---|---|---|
-| `category` | `MonitoringFindings` | category | Finding's calculated category (`source`, falling back to standard `guidance`); NULL flags a categoryless finding. |
-| `delivery_report_lag_days` | `MonitoringReviews` | scalar | Days between a review's `reportDeliveryDate` and when that date first appeared in the imported data (from `ZALMonitoringReviews` audit rows). |
-| `finding_count` | `MonitoringReviews` | scalar | Distinct findings linked to the review. |
-| `closure_state` | `MonitoringFindings` | category | `active_with_closed_date` when an Active finding carries a `closedDate`, else `consistent`. |
+| Observation (`observation_name`) | Entity               | Kind     | Meaning                                                                                                                                       |
+| -------------------------------- | -------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `category`                       | `MonitoringFindings` | category | Finding's calculated category (`source`, falling back to standard `guidance`); NULL flags a categoryless finding.                             |
+| `delivery_report_lag_days`       | `MonitoringReviews`  | scalar   | Days between a review's `reportDeliveryDate` and when that date first appeared in the imported data (from `ZALMonitoringReviews` audit rows). |
+| `finding_count`                  | `MonitoringReviews`  | scalar   | Distinct findings linked to the review.                                                                                                       |
+| `closure_state`                  | `MonitoringFindings` | category | `active_with_closed_date` when an Active finding carries a `closedDate`, else `consistent`.                                                   |
 
 **Step 2 — `monitoringTimeSeries.ts` → `ValidationTimeSeries`.** Upserts long/narrow aggregated statistics describing monitoring activity. As of MVP, the full range since `TIME_SERIES_START` (`2025-01-01`) is recomputed every run: the upsert key makes it idempotent, and it self-corrects late-arriving source data (IT-AMS can source-update old records, which shifts historical buckets since stats bucket on source activity). This is simple but its cost grows with the full history — a bounded/incremental recompute is [future work](#future-work). Each stat is built into a temp table, upserted, then **reconciled**: keys in the recomputed range that the temp table no longer produces are deleted, so a period/region whose source records were all invalidated upstream doesn't leave a stale value behind (an upsert alone never removes rows). Shared intermediates (e.g. `finding_deliveries`) are built as temp tables for reuse by later stats, and a stat can also aggregate the per-entity observations from Step 1.
 
-| Stat (`feature_set` / `stat_name`) | Grain | Notes |
-|---|---|---|
-| `monitoring_reviews` / `reviews_created` | weekly, per region/geo | Bucketed on `MonitoringReviews.sourceCreatedAt` (upstream activity), not `createdAt` (our import time), so backfills don't register as spikes. A review spanning regions counts once per region slice. |
+| Stat (`feature_set` / `stat_name`)           | Grain                                    | Notes                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `monitoring_reviews` / `reviews_created`     | weekly, per region/geo                   | Bucketed on `MonitoringReviews.sourceCreatedAt` (upstream activity), not `createdAt` (our import time), so backfills don't register as spikes. A review spanning regions counts once per region slice.                                                                                                                            |
 | `monitoring_findings` / `findings_delivered` | monthly, per region/geo **and national** | Distinct findings by first delivery date (earliest delivered review via `MonitoringFindingHistories`). A finding on grants in multiple regions is counted in each region slice, so per-region rows **must not be summed** for a national figure; a `region_id = 0` (geo `0`) row carries the deduplicated national count instead. |
 
 **Step 3 — `monitoringAlerts.ts` → `ValidationAlerts`.** Raises alerts from threshold checks over the time series and validity checks over the observations, both produced earlier in the same run. Threshold checks look at **complete** periods only (the current partial week/month would always false-alarm). Every alert here is severity `alert`.
 
-| Check (`check_name`) | Fires when |
-|---|---|
-| `reviews_created_region_zero` | A region created zero reviews over the last four complete weeks, *and* the cross-region four-week average exceeds 5 (so quiet seasons don't false-alarm). The region universe comes from `Grants`, so a region with no time-series rows still counts as zero. |
-| `findings_delivered_month_spike` | The last complete month delivered more than 50% as many findings as the entire twelve months before it. Reads the national `region_id = 0` rows, not a sum across regions. |
-| `finding_category_missing` | Aggregate count of findings on delivered reviews with no category (drill in via `ValidationRecords`, `observation_name = 'category' AND category IS NULL`). |
-| `review_delivery_report_lag` | Aggregate count of reviews whose delivery date was imported more than 7 days late (`delivery_report_lag_days > 7`). |
-| `finding_active_with_closed_date` | Aggregate count of Active findings that carry a `closedDate` (`closure_state = 'active_with_closed_date'`). |
+| Check (`check_name`)              | Fires when                                                                                                                                                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reviews_created_region_zero`     | A region created zero reviews over the last four complete weeks, _and_ the cross-region four-week average exceeds 5 (so quiet seasons don't false-alarm). The region universe comes from `Grants`, so a region with no time-series rows still counts as zero. |
+| `findings_delivered_month_spike`  | The last complete month delivered more than 50% as many findings as the entire twelve months before it. Reads the national `region_id = 0` rows, not a sum across regions.                                                                                    |
+| `finding_category_missing`        | Aggregate count of findings on delivered reviews with no category (drill in via `ValidationRecords`, `observation_name = 'category' AND category IS NULL`).                                                                                                   |
+| `review_delivery_report_lag`      | Aggregate count of reviews whose delivery date was imported more than 7 days late (`delivery_report_lag_days > 7`).                                                                                                                                           |
+| `finding_active_with_closed_date` | Aggregate count of Active findings that carry a `closedDate` (`closure_state = 'active_with_closed_date'`).                                                                                                                                                   |
 
 ## The pre-refresh gate process
 
@@ -97,15 +96,14 @@ The gate sits between `process` and `update_fact_tables`, so pausing there holds
 
 Both checks were prompted by a real incident in which an unexpectedly large fraction of findings became source-deleted in the imported data. Each check carries a minimum-denominator guard so a small or empty dataset can never false-pause.
 
-| Check | What it measures | Alert / Critical | Min denominator |
-|---|---|---|---|
-| `findings_mass_source_deletion` | Over **distinct findings** whose recency (`COALESCE(reportedDate, sourceCreatedAt)`) falls in the **rolling last year**, the fraction with **no live row** left in `MonitoringFindings`. | > 25% / > 50% | 100 findings |
-| `open_ar_findings_gone` | Distinct `findingId`s cited on **open** Activity Reports (`ActivityReportObjectiveCitations` → `ActivityReportObjectives` → `ActivityReports` with `calculatedStatus` in draft/submitted/needs_action) that have no live `MonitoringFindings` row. | > 10% / > 20% | 20 findings |
+| Check                           | What it measures                                                                                                                                                                                                                                   | Alert / Critical | Min denominator |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------- |
+| `findings_mass_source_deletion` | Over **distinct findings** whose recency (`COALESCE(reportedDate, sourceCreatedAt)`) falls in the **rolling last year**, the fraction with **no live row** left in `MonitoringFindings`.                                                           | > 25% / > 50%    | 100 findings    |
+| `open_ar_findings_gone`         | Distinct `findingId`s cited on **open** Activity Reports (`ActivityReportObjectiveCitations` → `ActivityReportObjectives` → `ActivityReports` with `calculatedStatus` in draft/submitted/needs_action) that have no live `MonitoringFindings` row. | > 10% / > 20%    | 20 findings     |
 
 Two subtleties in `findings_mass_source_deletion`:
-
-- **Aggregate to `findingId`, not row.** A `findingId` can span several rows (~2 on prod): routine churn in the upstream data sometimes leads the import to represent an updated finding as a new record — source-deleting the old row and inserting a fresh one under the same `findingId`. Counting source-deleted *rows* therefore measures that churn (~30–50% on healthy data), not findings that actually disappeared. The check instead groups by `findingId` and counts only findings where **no** row is live, which reads ~1% on healthy data; the incident above still shows as a ~24% one-month spike.
-- **Rolling window, fixed threshold.** The one-year window averages across seasonal/fiscal swings, but it is compared against a *fixed absolute* threshold, not a learned baseline. Learned-baseline anomaly detection is deferred (see Future work).
+- **Aggregate to `findingId`, not row.** A `findingId` can span several rows (~2 on prod): routine churn in the upstream data sometimes leads the import to represent an updated finding as a new record — source-deleting the old row and inserting a fresh one under the same `findingId`. Counting source-deleted _rows_ therefore measures that churn (~30–50% on healthy data), not findings that actually disappeared. The check instead groups by `findingId` and counts only findings where **no** row is live, which reads ~1% on healthy data; the incident above still shows as a ~24% one-month spike.
+- **Rolling window, fixed threshold.** The one-year window averages across seasonal/fiscal swings, but it is compared against a _fixed absolute_ threshold, not a learned baseline. Learned-baseline anomaly detection is deferred (see Future work).
 
 `open_ar_findings_gone` is the highest-stakes check because those findings are cited on in-progress user work; open reports are inherently timely, so it uses no recency window.
 
@@ -113,23 +111,23 @@ Two subtleties in `findings_mass_source_deletion`:
 
 A raised alert reaches people through one chain, and the decision to block the fact-table refresh is a separate, caller-side step.
 
-**The reporting chain.** Durable diagnostics ride the runner's single greppable `console.info` line — `Monitoring Gate: {…}` or `Monitoring Validation Alerts: {…}`, carrying the run's counts and alert rows as JSON — **not** the alert table. (Riding the log line is deliberate: a future in-transaction gate can throw and roll back, losing its alert rows, yet still explain *why* it blocked.) From there: CI captures each phase's output to a per-phase log → `.circleci/scripts/build_import_summary.sh` parses those lines into a goal-creation body and a validation/gate body, combines them into the base channel's summary, and (for `run_import_job`) separately decides what the OHS channel gets → `notify_slack` posts each resulting file to its channel (see Channels, below, for which file goes where and when).
+**The reporting chain.** Durable diagnostics ride the runner's single greppable `console.info` line — `Monitoring Gate: {…}` or `Monitoring Validation Alerts: {…}`, carrying the run's counts and alert rows as JSON — **not** the alert table. (Riding the log line is deliberate: a future in-transaction gate can throw and roll back, losing its alert rows, yet still explain _why_ it blocked.) From there: CI captures each phase's output to a per-phase log → `.circleci/scripts/build_import_summary.sh` parses those lines into a goal-creation body and a validation/gate body, combines them into the base channel's summary, and (for `run_import_job`) separately decides what the OHS channel gets → `notify_slack` posts each resulting file to its channel (see Channels, below, for which file goes where and when).
 
-**Acting on the result.** `severity` is what separates a condition that merely needs attention from one that should block the fact-table refresh. The runner only *counts* criticals; each caller decides what to do with the count:
+**Acting on the result.** `severity` is what separates a condition that merely needs attention from one that should block the fact-table refresh. The runner only _counts_ criticals; each caller decides what to do with the count:
 
-| Caller | On `criticalCount > 0` |
-|---|---|
-| `validateMonitoringDataCLI` | Nothing — post-refresh, non-blocking, exits 0 |
+| Caller                      | On `criticalCount > 0`                                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `validateMonitoringDataCLI` | Nothing — post-refresh, non-blocking, exits 0                                                                                                                                                                             |
 | `validateMonitoringGateCLI` | Exits nonzero **for criticals the halt policy has opted in** (see Enforcement controls), and for execution errors while enforcing → the phase loop breaks before `update_fact_tables`, leaving the prior fact tables live |
-| Future in-refresh check | Would `throw` inside `updateMonitoringFactTables`' transaction → rollback for free |
+| Future in-refresh check     | Would `throw` inside `updateMonitoringFactTables`' transaction → rollback for free                                                                                                                                        |
 
 **Enforcement controls.** The gate defaults to **report-only**: a critical is recorded and logged, but the fact-table refresh still proceeds, so the checks can be validated against real production data before they are trusted to block anything. Which criticals actually block is a caller-side policy in `resolveGateHalt` (`src/tools/validation/gateHaltPolicy.ts`), driven by the `MONITORING_GATE_HALT_CHECKS` env var read by `validateMonitoringGateCLI`:
 
-| `MONITORING_GATE_HALT_CHECKS` | Effect |
-|---|---|
-| unset / empty / `none` | Report-only (the default) — no critical blocks the refresh |
-| `all` | Every critical blocks (also if `all` appears anywhere in a list) |
-| `check_a,check_b` | Only those `check_name`s block — lets the gate be switched on one check at a time |
+| `MONITORING_GATE_HALT_CHECKS` | Effect                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| unset / empty / `none`        | Report-only (the default) — no critical blocks the refresh                        |
+| `all`                         | Every critical blocks (also if `all` appears anywhere in a list)                  |
+| `check_a,check_b`             | Only those `check_name`s block — lets the gate be switched on one check at a time |
 
 A gate **execution error** (DB blip, bad SQL, timeout) is not a detected critical, so it follows the same policy: it fails closed (exits nonzero, halting the import before `update_fact_tables`) only when enforcement is configured; in report-only mode the CLI exits 0, so a transient gate error can't halt the pipeline while the gate is still being trialed against real data, before its checks are trusted to block.
 
@@ -139,29 +137,29 @@ Because report-only is the default, enabling enforcement needs no code change. L
 
 Message bodies, in the order they're built:
 
-| File | Content |
-|---|---|
-| `GOAL_FILE` | Goal-creation content from `create_monitoring_goals`/`report_updates`. |
-| `ALERTS_FILE` | `alert`/`critical` severity findings from validation and the gate, plus the generic failure message on a pipeline failure (see "On a pipeline failure" below). |
-| `TEAM_NOTIFICATIONS_FILE` | `team_notification` severity findings only. Often empty. |
-| `SUMMARY_FILE` (`monitoring-updates.txt`) | `GOAL_FILE` + `ALERTS_FILE`. |
-| `OHS_FILE` (`monitoring-ohs-updates.txt`) | `GOAL_FILE` alone, or `GOAL_FILE` + `ALERTS_FILE` when `OHS_MONITORING_ALERTS_ENABLED` is truthy. |
-| `ALERT_ONLY_FILE` (`monitoring-alert-only.txt`) | A copy of `SUMMARY_FILE` when `HAS_ALERT` is true — a real `alert`/`critical` finding, a validation/gate execution error, or the import itself failing — otherwise empty. |
-| `TEAM_COMPREHENSIVE_FILE` (`monitoring-team-comprehensive.txt`) | `SUMMARY_FILE` plus `TEAM_NOTIFICATIONS_FILE` (when non-empty). |
+| File                                                            | Content                                                                                                                                                                   |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GOAL_FILE`                                                     | Goal-creation content from `create_monitoring_goals`/`report_updates`.                                                                                                    |
+| `ALERTS_FILE`                                                   | `alert`/`critical` severity findings from validation and the gate, plus the generic failure message on a pipeline failure (see "On a pipeline failure" below).            |
+| `TEAM_NOTIFICATIONS_FILE`                                       | `team_notification` severity findings only. Often empty.                                                                                                                  |
+| `SUMMARY_FILE` (`monitoring-updates.txt`)                       | `GOAL_FILE` + `ALERTS_FILE`.                                                                                                                                              |
+| `OHS_FILE` (`monitoring-ohs-updates.txt`)                       | `GOAL_FILE` alone, or `GOAL_FILE` + `ALERTS_FILE` when `OHS_MONITORING_ALERTS_ENABLED` is truthy.                                                                         |
+| `ALERT_ONLY_FILE` (`monitoring-alert-only.txt`)                 | A copy of `SUMMARY_FILE` when `HAS_ALERT` is true — a real `alert`/`critical` finding, a validation/gate execution error, or the import itself failing — otherwise empty. |
+| `TEAM_COMPREHENSIVE_FILE` (`monitoring-team-comprehensive.txt`) | `SUMMARY_FILE` plus `TEAM_NOTIFICATIONS_FILE` (when non-empty).                                                                                                           |
 
 Channel routing (`run_import_job` CircleCI parameters; `notify_slack` no-ops whenever its channel or its message is empty):
 
-| Parameter | Prod channel | File posted | Cadence |
-|---|---|---|---|
-| `slack_channel` | `acf-head-start-alerts` | `ALERT_ONLY_FILE` when `base_channel_alert_only` is true | Only on a real alert/critical/failure. |
-| `ohs_channel` | `acf-ohs-ttahub--contractor-customer-team` | `OHS_FILE` | Every run (`best_effort`). |
-| `team_notification_channel` | `acf-head-start-alerts-lower` | `TEAM_COMPREHENSIVE_FILE` | Every run (`best_effort`). |
+| Parameter                   | Prod channel                               | File posted                                              | Cadence                                |
+| --------------------------- | ------------------------------------------ | -------------------------------------------------------- | -------------------------------------- |
+| `slack_channel`             | `acf-head-start-alerts`                    | `ALERT_ONLY_FILE` when `base_channel_alert_only` is true | Only on a real alert/critical/failure. |
+| `ohs_channel`               | `acf-ohs-ttahub--contractor-customer-team` | `OHS_FILE`                                               | Every run (`best_effort`).             |
+| `team_notification_channel` | `acf-head-start-alerts-lower`              | `TEAM_COMPREHENSIVE_FILE`                                | Every run (`best_effort`).             |
 
 `base_channel_alert_only` is `true` only on the prod `import_data_cron` invocation. The manual/staging-dev invocation leaves it `false` (`slack_channel` then gets `SUMMARY_FILE` instead, posted every run) and passes neither `ohs_channel` nor `team_notification_channel`, so it has one channel total (defaulting to `acf-head-start-alerts-lower`) and needs to always confirm the run happened; `ohs_channel`/`team_notification_channel` being empty there is the same no-op `notify_slack` uses throughout.
 
 `run_validation_watchdog` is wired separately — see "Watchdog channel split" below — and never reaches the OHS channel: its "did validation run" check is operational, not goal-creation content, so there's nothing for `OHS_MONITORING_ALERTS_ENABLED` to gate.
 
-`OHS_MONITORING_ALERTS_ENABLED` (off by default) is the switch between `GOAL_FILE` alone and `GOAL_FILE` + `ALERTS_FILE` for `OHS_FILE`. It pairs with `MONITORING_GATE_HALT_CHECKS` (which governs whether a critical blocks the refresh) — two independent switches: one controls *what blocks*, the other controls *who is told about alerts*. `team_notification` content never reaches OHS, switch on or off — it isn't part of `GOAL_FILE` or `ALERTS_FILE` at all.
+`OHS_MONITORING_ALERTS_ENABLED` (off by default) is the switch between `GOAL_FILE` alone and `GOAL_FILE` + `ALERTS_FILE` for `OHS_FILE`. It pairs with `MONITORING_GATE_HALT_CHECKS` (which governs whether a critical blocks the refresh) — two independent switches: one controls _what blocks_, the other controls _who is told about alerts_. `team_notification` content never reaches OHS, switch on or off — it isn't part of `GOAL_FILE` or `ALERTS_FILE` at all.
 
 On a pipeline **failure**, `write_goal_summary` runs first, unconditionally: if `report_updates` already produced its log line - true whenever `create_monitoring_goals` and `report_updates` both completed, regardless of what failed afterward - `GOAL_FILE` holds the real goal-creation content, not a generic failure message. The failure message itself then goes into `ALERTS_FILE` instead of `GOAL_FILE` whenever `GOAL_FILE` already holds real content, or the failed phase is `validate_monitoring_gate`/`validate_monitoring_data` (a gate execution error, or the post-refresh validation itself erroring, is just as much alert content as a threshold check firing). Only a failure that happens before `report_updates` has run (`download`, `process`, `validate_monitoring_gate`, `update_fact_tables`, or `create_monitoring_goals` itself) - where there is no real goal-creation content to report yet - puts the generic failure message into `GOAL_FILE`. `SUMMARY_FILE` sees the failure either way, and so do `ALERT_ONLY_FILE`/`TEAM_COMPREHENSIVE_FILE` (both derived from it, and a failure always sets `HAS_ALERT`); only the OHS routing differs.
 
@@ -179,19 +177,19 @@ All four tables are created by migration `20260909150000-create_validation_table
 
 One row per run of a process.
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | INTEGER | Primary key |
-| `process_name` | TEXT | The process (`monitoring_post_refresh`, `monitoring_gate`) |
-| `status` | TEXT | `started` → `success` \| `failure` (see `VALIDATION_RUN_STATUS`) |
-| `started_at` | TIMESTAMPTZ | When the run began (row committed before work starts) |
-| `import_id` | INTEGER | The [cycle](#architecture)'s import: a soft reference (non-unique, no FK) to the `ImportFiles` row this run validated. Runs of one cycle share it; NULL when not tied to an import (e.g. future application-data validation) |
-| `source_updated_at` | TIMESTAMPTZ | The cycle's source data date (`ImportFiles.ftpFileInfo.date`, the value the import writes to the raw rows' `sourceUpdatedAt`) |
-| `completed_at` | TIMESTAMPTZ | When the run finished; NULL while `started` |
-| `stats_upserted` | INTEGER | Rows upserted by steps that report a count (time series) |
-| `observation_count` | INTEGER | `ValidationRecords` rows written by this run |
-| `alert_count` | INTEGER | `ValidationAlerts` rows written by this run |
-| `error` | TEXT | Truncated error message on failure |
+| Column              | Type        | Description                                                                                                                                                                                                                  |
+| ------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                | INTEGER     | Primary key                                                                                                                                                                                                                  |
+| `process_name`      | TEXT        | The process (`monitoring_post_refresh`, `monitoring_gate`)                                                                                                                                                                   |
+| `status`            | TEXT        | `started` → `success` \| `failure` (see `VALIDATION_RUN_STATUS`)                                                                                                                                                             |
+| `started_at`        | TIMESTAMPTZ | When the run began (row committed before work starts)                                                                                                                                                                        |
+| `import_id`         | INTEGER     | The [cycle](#architecture)'s import: a soft reference (non-unique, no FK) to the `ImportFiles` row this run validated. Runs of one cycle share it; NULL when not tied to an import (e.g. future application-data validation) |
+| `source_updated_at` | TIMESTAMPTZ | The cycle's source data date (`ImportFiles.ftpFileInfo.date`, the value the import writes to the raw rows' `sourceUpdatedAt`)                                                                                                |
+| `completed_at`      | TIMESTAMPTZ | When the run finished; NULL while `started`                                                                                                                                                                                  |
+| `stats_upserted`    | INTEGER     | Rows upserted by steps that report a count (time series)                                                                                                                                                                     |
+| `observation_count` | INTEGER     | `ValidationRecords` rows written by this run                                                                                                                                                                                 |
+| `alert_count`       | INTEGER     | `ValidationAlerts` rows written by this run                                                                                                                                                                                  |
+| `error`             | TEXT        | Truncated error message on failure                                                                                                                                                                                           |
 
 Indexes on `(process_name, started_at)` and `(import_id)` (non-unique — runs of one cycle share a value, so any integer id can be stored).
 
@@ -199,16 +197,16 @@ Indexes on `(process_name, started_at)` and `(import_id)` (non-unique — runs o
 
 Long/narrow aggregated statistics, progressively upserted across runs (not tied to a single run).
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | INTEGER | Primary key |
-| `feature_set` | TEXT | Group of related stats (e.g. `monitoring_reviews`) |
-| `period_type` | TEXT | `week` \| `month` |
-| `period_start` | DATE | Start of the bucket |
-| `region_id` | INTEGER | Region slice; `0` = not applicable/unknown |
-| `geo_id` | INTEGER | Geographic-region slice; `0` = not applicable/unknown |
-| `stat_name` | TEXT | The specific statistic (e.g. `reviews_created`) |
-| `value` | DECIMAL | The value |
+| Column         | Type    | Description                                           |
+| -------------- | ------- | ----------------------------------------------------- |
+| `id`           | INTEGER | Primary key                                           |
+| `feature_set`  | TEXT    | Group of related stats (e.g. `monitoring_reviews`)    |
+| `period_type`  | TEXT    | `week` \| `month`                                     |
+| `period_start` | DATE    | Start of the bucket                                   |
+| `region_id`    | INTEGER | Region slice; `0` = not applicable/unknown            |
+| `geo_id`       | INTEGER | Geographic-region slice; `0` = not applicable/unknown |
+| `stat_name`    | TEXT    | The specific statistic (e.g. `reviews_created`)       |
+| `value`        | DECIMAL | The value                                             |
 
 Unique index on `(feature_set, period_type, period_start, region_id, geo_id, stat_name)` — the upsert key. `region_id`/`geo_id` use `0` rather than NULL because NULLs don't compare equal in a unique constraint.
 
@@ -216,15 +214,15 @@ Unique index on `(feature_set, period_type, period_start, region_id, geo_id, sta
 
 Per-entity observations for a run.
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | INTEGER | Primary key |
-| `run_id` | INTEGER | FK to `ValidationRuns` |
-| `entity_type` | TEXT | Polymorphic entity table name (e.g. `MonitoringFindings`) |
-| `entity_id` | INTEGER | The entity's id |
-| `observation_name` | TEXT | What is being observed (e.g. `finding_count`) |
-| `scalar` | DECIMAL | Continuous measurement; NULL for categorical |
-| `category` | TEXT | Categorization; NULL for scalar |
+| Column             | Type    | Description                                               |
+| ------------------ | ------- | --------------------------------------------------------- |
+| `id`               | INTEGER | Primary key                                               |
+| `run_id`           | INTEGER | FK to `ValidationRuns`                                    |
+| `entity_type`      | TEXT    | Polymorphic entity table name (e.g. `MonitoringFindings`) |
+| `entity_id`        | INTEGER | The entity's id                                           |
+| `observation_name` | TEXT    | What is being observed (e.g. `finding_count`)             |
+| `scalar`           | DECIMAL | Continuous measurement; NULL for categorical              |
+| `category`         | TEXT    | Categorization; NULL for scalar                           |
 
 Indexes on `(entity_type, observation_name)` and `(run_id, observation_name)` — the latter for the `run_id`-first retention, count, and alert-generation filters (the FK is not auto-indexed).
 
@@ -232,14 +230,14 @@ Indexes on `(entity_type, observation_name)` and `(run_id, observation_name)` �
 
 Alerts raised by checks. Holds only the latest run per process.
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | INTEGER | Primary key |
-| `run_id` | INTEGER | FK to `ValidationRuns` |
-| `check_name` | TEXT | The check that fired (e.g. `open_ar_findings_gone`) |
-| `message` | TEXT | Human-readable summary (rendered into Slack) |
-| `severity` | TEXT | `alert` \| `critical` \| `team_notification` (default `alert`; see `VALIDATION_ALERT_SEVERITY`). `team_notification` is for a condition worth the team looking into but not urgent enough for the customer-visible OHS channel — see [Channels](#reporting-and-acting-on-results) for how that's enforced in Slack routing, not just message wording. |
-| `context` | JSONB | Generic per-check detail (thresholds, sample entity ids, previous values) |
+| Column       | Type    | Description                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | INTEGER | Primary key                                                                                                                                                                                                                                                                                                                                          |
+| `run_id`     | INTEGER | FK to `ValidationRuns`                                                                                                                                                                                                                                                                                                                               |
+| `check_name` | TEXT    | The check that fired (e.g. `open_ar_findings_gone`)                                                                                                                                                                                                                                                                                                  |
+| `message`    | TEXT    | Human-readable summary (rendered into Slack)                                                                                                                                                                                                                                                                                                         |
+| `severity`   | TEXT    | `alert` \| `critical` \| `team_notification` (default `alert`; see `VALIDATION_ALERT_SEVERITY`).`team_notification` is for a condition worth the team looking into but not urgent enough for the customer-visible OHS channel — see [Channels](#reporting-and-acting-on-results) for how that's enforced in Slack routing, not just message wording. |
+| `context`    | JSONB   | Generic per-check detail (thresholds, sample entity ids, previous values)                                                                                                                                                                                                                                                                            |
 
 Indexes on `(check_name)` and `(run_id, severity)`.
 
@@ -250,9 +248,10 @@ Indexes on `(check_name)` and `(run_id, severity)`.
 - **Run context via temp table**: steps read the current `run_id` and the severity constants (`critical` / `alert` / `team_notification`) from the `validation_run` temp table (`CROSS JOIN validation_run`) rather than interpolating them into every statement, which would complicate manual running during investigations.
 - **Source-truth deletes**: checks read `sourceDeletedAt` (the upstream signal) directly, not the local `deletedAt`, so they are correct regardless of whether the monitoring maintenance job (which propagates `sourceDeletedAt` into `deletedAt`) has run yet. Gate checks (pre-refresh, before that job runs) key liveness on `sourceDeletedAt` alone; post-refresh checks also require `deletedAt` NULL.
 - **Minimum-denominator guards**: every gate check requires a floor number of rows before it can fire, and compares fractions with multiplication (`gone > 0.5 * total`), never division, so the guard can never divide by zero.
-- **Cycle-aware retention**: a run deletes its process's prior alerts first, so `ValidationAlerts` holds only the latest run per process. `ValidationRecords` keeps the current run and the latest run of the previous *cycle* (a different `import_id` / data version), so comparison is always against a different version of the data rather than a re-run over the same data; re-running a process on the same cycle therefore replaces that cycle's prior records instead of accumulating, and older cycles roll off.
+- **Cycle-aware retention**: a run deletes its process's prior alerts first, so `ValidationAlerts` holds only the latest run per process. `ValidationRecords` keeps the current run and the latest run of the previous _cycle_ (a different `import_id` / data version), so comparison is always against a different version of the data rather than a re-run over the same data; re-running a process on the same cycle therefore replaces that cycle's prior records instead of accumulating, and older cycles roll off.
 - **Thresholds**: the numbers in the checks are a subject of ongoing development and tuning.
-- **Alert windows**: most post-refresh checks are gated so a persisting condition alerts once, then goes quiet, rather than re-firing every run. Three forms, used per check depending on what signal is available: `none` — no gate; the check re-evaluates fresh every run over its own rolling data window (all gate and threshold checks). `since previous cycle` — a generic edge-gate: an entity only alerts when its flagged `(observation_name, category)` wasn't already true as of the previous cycle's run (a `previously_flagged` temp table built once in `monitoringAlerts.ts`, anti-joined against). `N days` — an explicit freshness window keyed on when the underlying field was *learned*, via `ZAL<Table>.new_row_data ? 'fieldName'` (a partial diff, present on INSERT too, so it isolates real change events with no value-diffing needed) rather than `sourceUpdatedAt` (bulk-stamped identically on every import, so useless for this).
+- **Alert windows**: most post-refresh checks are gated so a persisting condition alerts once, then goes quiet, rather than re-firing every run. Three forms, used per check depending on what signal is available: `none` — no gate; the check re-evaluates fresh every run over its own rolling data window (all gate and threshold checks). `since previous cycle` — a generic edge-gate: an entity only alerts when its flagged `(observation_name, category)` wasn't already true as of the previous cycle's run (a `previously_flagged` temp table built once in `monitoringAlerts.ts`, anti-joined against). `N days` — an explicit freshness window keyed on when the underlying field was _learned_, via `ZAL<Table>.new_row_data ? 'fieldName'` (a partial diff, present on INSERT too, so it isolates real change events with no value-diffing needed) rather than `sourceUpdatedAt` (bulk-stamped identically on every import, so useless for this).
+- **Entity-identifying messages**: an entity-based check's `message` identifies one example entity that caused the alert (e.g. a citation code and MRID, a review name, a report id), then notes if there are more beyond that example. A `MonitoringFindings` entity is called "Citation" in this text, to match the more common term used within OHS; `MonitoringReviews` is called "Review".
 - **Reimport churn**: upstream source-delete and reinsert events can give a `MonitoringFindings` row a new `id` under the same `findingId`, with nothing about the finding itself changed (see `findings_mass_source_deletion`, above). Left as-is, this would defeat the `since previous cycle` gate for every finding-anchored check, since the entity's id just changed. `previously_flagged` accounts for it: for `MonitoringFindings` rows it translates the previous cycle's `entity_id` forward to the finding's current live id (via `finding_live_id`, a small `findingId -> id` lookup) before comparing, so the churn doesn't make an unchanged finding look newly flagged. This only covers `MonitoringFindings`; `MonitoringReviews` and the fact tables have no documented churn pattern today.
 
 ## Running manually
@@ -268,11 +267,10 @@ Because every step is plain SQL keyed off the `validation_run` temp table, an in
 ### Exercising the full pipeline on a lower environment (CircleCI)
 
 The import (which runs the validation) and the watchdog are both manual pipelines gated on `pipeline.trigger.type == "api"`, so they run from CircleCI's **Trigger Pipeline** button (which sets `trigger.type = api`). Run them in order — the watchdog only reports green once the validation has run for the current import cycle:
-
 1. **Import + validation.** Trigger Pipeline → set `action = import_data` and `target_env` to a lower env (`dev-blue`/`dev-green`/`dev-red`/`dev-gold`/`dev-pink` or `staging`). This runs `run_import_job` on that env: it downloads/refreshes the ITAMS monitoring data and runs `cli:validate-monitoring-gate` then `cli:validate-monitoring-data` (time series + observations + alerts) for the latest import cycle. Results post to `acf-head-start-alerts-lower`.
 2. **Watchdog.** Trigger Pipeline → set `action = validation_watchdog` and the **same** `target_env`. This runs `cli:check-monitoring-validation-ran` on that env and confirms a successful validation run exists for that import cycle. Result posts to `acf-head-start-alerts-lower`.
 
-Before step 1, that env has no run for the new cycle, so running the watchdog first correctly reports *"no validation run for the current import cycle."* Equivalently, either pipeline can be triggered through the CircleCI API v2 `pipeline` endpoint with the same `action`/`target_env` parameters.
+Before step 1, that env has no run for the new cycle, so running the watchdog first correctly reports _"no validation run for the current import cycle."_ Equivalently, either pipeline can be triggered through the CircleCI API v2 `pipeline` endpoint with the same `action`/`target_env` parameters.
 
 ## Extending
 
@@ -297,62 +295,62 @@ What `build_import_summary.sh` posts in the main scenarios (the ``` are literal 
 
 **Successful import** — new goals, an `alert`-severity finding, and a report-only critical that did not block:
 
-~~~
+````
 Monitoring Updates: ```
 New Goals: Example Recipient Alpha (Region 1)
 ```
-Monitoring Validation Alerts (as of 2026-08-29 06:00 EDT): ```
+Monitoring Validation Alerts (as of 2026-08-29 06:00 EDT, run 4821): ```
 Region 5 created no monitoring reviews in the last four complete weeks
 ```
-Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-table refresh: ```
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT, run 4820) - did not block the fact-table refresh: ```
 52.0% of monitoring findings from the last year have no live row (900 of 1730)
 ```
-~~~
+````
 
 **Team-notification channel** (`monitoring-validation-team-notifications.txt`, `acf-head-start-alerts-lower` in prod) for the same run, if it also produced a `team_notification` — a completely separate message, never mixed into the base channel's:
 
-~~~
-Monitoring Validation Team Notifications (as of 2026-08-29 06:00 EDT): ```
+````
+Monitoring Validation Team Notifications (as of 2026-08-29 06:00 EDT, run 4821): ```
 4 finding(s) on delivered reviews have no category
 ```
-~~~
+````
 
 **Gate block** — a halt-listed critical stopped the refresh; the condition is the headline, the block a clause:
 
-~~~
-Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - blocked the fact-table refresh: ```
+````
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT, run 4820) - blocked the fact-table refresh: ```
 52.0% of monitoring findings from the last year have no live row (900 of 1730)
 ```
-~~~
+````
 
 **Report-only critical, but a later phase failed** — the failure and the (non-blocking) critical are both surfaced:
 
-~~~
+````
 Monitoring job failure: ```
 Error: fact-table refresh failed
 ```
-Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-table refresh: ```
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT, run 4820) - did not block the fact-table refresh: ```
 52.0% of monitoring findings from the last year have no live row (900 of 1730)
 ```
-~~~
+````
 
 **Gate did not complete** — a gate check errored, so it validated nothing. In report-only mode this still exits 0 and the import succeeds, so it is surfaced either way rather than reported as "no critical findings":
 
-~~~
-Monitoring Gate: did not complete, data was not validated (as of 2026-08-29 06:00 EDT)
-~~~
+```
+Monitoring Gate: did not complete, data was not validated (as of 2026-08-29 06:00 EDT, run 4820)
+```
 
 **Failure unrelated to data** — no validation commentary, so nothing implies the failure was validation-related:
 
-~~~
+````
 Monitoring job failure: ```
 Error: downstream system unavailable
 ```
-~~~
+````
 
 **OHS channel** (`monitoring-ohs-updates.txt`) for the same successful-import scenario above — goal creation is always included; the `alert`/`critical` validation/gate section only appears while `OHS_MONITORING_ALERTS_ENABLED` is truthy. `team_notification` content is never part of this file:
 
-~~~
+````
 # OHS_MONITORING_ALERTS_ENABLED off (the default) - goal creation only:
 Monitoring Updates: ```
 New Goals: Example Recipient Alpha (Region 1)
@@ -362,13 +360,13 @@ New Goals: Example Recipient Alpha (Region 1)
 Monitoring Updates: ```
 New Goals: Example Recipient Alpha (Region 1)
 ```
-Monitoring Validation Alerts (as of 2026-08-29 06:00 EDT): ```
+Monitoring Validation Alerts (as of 2026-08-29 06:00 EDT, run 4821): ```
 Region 5 created no monitoring reviews in the last four complete weeks
 ```
-Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-table refresh: ```
+Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT, run 4820) - did not block the fact-table refresh: ```
 52.0% of monitoring findings from the last year have no live row (900 of 1730)
 ```
-~~~
+````
 
 ## Source Code
 
@@ -381,4 +379,4 @@ Monitoring Gate Criticals (as of 2026-08-29 06:00 EDT) - did not block the fact-
 - **Constants**: `VALIDATION_PROCESS`, `VALIDATION_RUN_STATUS`, `VALIDATION_ALERT_SEVERITY` in `src/constants.js`
 - **Migration**: `src/migrations/20260909150000-create_validation_tables.js`
 - **CI**: `.circleci/config.yml` (import phases), `.circleci/scripts/build_import_summary.sh` (Slack summary)
-</content>
+  </content>
