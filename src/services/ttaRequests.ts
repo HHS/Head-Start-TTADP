@@ -10,12 +10,14 @@ import type {
   TtaRequestPayload,
   TtaRequestReviewPayload,
 } from '@ttahub/common/src/ttaRequests';
+import moment from 'moment';
 import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
+import { getCitationsByGrantIds } from './citations';
 import { activeUsersWithScopesInRegion } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
@@ -455,7 +457,9 @@ async function syncReviewerApprover(ttaRequestId: number, reviewerId: number) {
  * Saves the request as it stands and submits it for review, the first time or after the
  * reviewer has asked for changes. The body has already been checked for the required
  * fields; what is left to check depends on the saved request: the reviewer must still be
- * one of the region's reviewers, and the monitoring goal needs citations.
+ * one of the region's reviewers, and the monitoring goal needs citations when its grants
+ * have any active today. Without the recipient's monitoring report there are none to choose,
+ * so the request goes ahead and citations are picked on later Activity Reports.
  *
  * The creator's notes are added to the request's history, and the field is cleared so
  * the next submission starts with a blank note.
@@ -472,7 +476,13 @@ export async function submitTtaRequest(
   }
 
   if (saved.goalTemplate?.standard === TTA_REQUEST_MONITORING_STANDARD && !saved.citations.length) {
-    throw dataError('A request for the monitoring goal needs at least one citation');
+    const grantIds = saved.grants.map((grant) => grant.id);
+    const activeCitations = grantIds.length
+      ? await getCitationsByGrantIds(grantIds, moment().format('YYYY-MM-DD'))
+      : [];
+    if (activeCitations.length) {
+      throw dataError('A request for the monitoring goal needs at least one citation');
+    }
   }
 
   await syncReviewerApprover(existing.id, saved.reviewerId);

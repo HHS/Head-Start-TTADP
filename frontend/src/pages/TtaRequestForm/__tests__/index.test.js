@@ -302,6 +302,28 @@ describe('TtaRequestForm', () => {
     });
   });
 
+  it('warns instead of asking for citations when the recipient has no monitoring report', async () => {
+    fetchMock.get('begin:/api/citations/region', [], { overwriteRoutes: true });
+    renderForm({ recipient: RECIPIENT, regionId: 14 });
+
+    expect(screen.getByText(/This goal will be added to the recipient's RTTAPA/)).toBeVisible();
+
+    await selectEvent.select(screen.getByLabelText(/select goal/i), MONITORING_GOAL.name);
+
+    expect(
+      await screen.findByText(/The TTA Hub doesn't have this recipient's monitoring report/)
+    ).toBeVisible();
+    expect(screen.queryByText(/This goal will be added to the recipient's RTTAPA/)).toBeNull();
+    expect(screen.queryByText('Citations being addressed')).toBeNull();
+
+    await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
+
+    expect(
+      await screen.findByText(/This goal will be added to the recipient's RTTAPA/)
+    ).toBeVisible();
+    expect(screen.queryByText(/monitoring report/)).toBeNull();
+  });
+
   it('drops a goal chosen for a grant that is no longer selected', async () => {
     renderForm({ recipient: MULTI_GRANT_RECIPIENT, regionId: 14 });
 

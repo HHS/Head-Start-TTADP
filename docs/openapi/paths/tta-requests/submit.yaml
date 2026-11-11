@@ -10,7 +10,10 @@ put:
     a creator submission and the field is cleared, and the reviewer is pending
     again. Every
     field the form requires must be present, the reviewer must be an approver
-    in the region, and the monitoring goal needs at least one citation.
+    in the region, and the monitoring goal needs at least one citation when
+    the request's grants have any active today. Without the recipient's
+    monitoring report there are none, and the request is submitted without
+    them.
   parameters:
     - name: ttaRequestId
       in: path
@@ -46,6 +49,7 @@ put:
         Malformed ID or body, a required field missing, grants and a recipient
         that do not belong together in the request's region, a reviewer who
         cannot approve in the region, or the monitoring goal without citations
+        when the grants have active ones
     '403':
       description: >-
         Not the creator, neither a draft nor sent back for changes, or no write

@@ -8,6 +8,7 @@ import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import filtersToScopes from '../scopes';
 import { createGoalTemplate, createGrant, createRecipient, createUser } from '../testUtils';
+import { getCitationsByGrantIds } from './citations';
 import {
   createTtaRequest,
   getTtaRequests,
@@ -18,6 +19,11 @@ import {
   ttaRequestReviewers,
   updateTtaRequest,
 } from './ttaRequests';
+
+jest.mock('./citations', () => ({
+  ...jest.requireActual('./citations'),
+  getCitationsByGrantIds: jest.fn(),
+}));
 
 const {
   Goal,
@@ -518,12 +524,33 @@ describe('ttaRequests service', () => {
       expect(stored.grants).toHaveLength(0);
     });
 
-    it('rejects the monitoring goal without citations', async () => {
+    it('rejects the monitoring goal without citations when the grants have some', async () => {
+      (getCitationsByGrantIds as jest.Mock).mockResolvedValueOnce([
+        { standardId: 1, citation: '1302.47(b)(5)(iv)', grants: [] },
+      ]);
       const draft = await createTtaRequest({ regionId: 1 }, creator.id);
 
       await expect(
         submitTtaRequest(draft, { ...complete, goalTemplateId: monitoringTemplate.id }, creator.id)
       ).rejects.toMatchObject({ statusCode: 400 });
+      expect(getCitationsByGrantIds).toHaveBeenCalledWith(
+        [grantOne.id],
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
+      );
+    });
+
+    it('submits the monitoring goal without citations when the grants have none', async () => {
+      (getCitationsByGrantIds as jest.Mock).mockResolvedValueOnce([]);
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+
+      const submitted = await submitTtaRequest(
+        draft,
+        { ...complete, goalTemplateId: monitoringTemplate.id },
+        creator.id
+      );
+
+      expect(submitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(submitted.citations).toEqual([]);
     });
 
     it('submits the monitoring goal with citations', async () => {
