@@ -457,32 +457,32 @@ jobs:
       - restore_cache:
           name: Restore tarball cache
           keys:
-            - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+            - yarn4-tarballs-{{ checksum "combined-yarnlock.txt" }}
       - restore_cache:
           name: Restore deps cache
           keys:
-            - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - yarn4-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - yarn-deps-
+            - yarn4-deps-
       - run:
           name: Install dependencies
           no_output_timeout: 20m
           command: |
-            # print the yarn cache dirs for debugging purposes
-            yarn cache dir
-            yarn --cwd frontend cache dir
+            # print the yarn version and cache dir for debugging purposes
+            yarn --version
+            yarn config get cacheFolder
             yarn deps
       - save_cache:
           name: Save tarball cache
           paths:
-            - /home/circleci/.cache/yarn
-          key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+            - /home/circleci/.yarn/berry/cache
+          key: yarn4-tarballs-{{ checksum "combined-yarnlock.txt" }}
       - save_cache:
           name: Save deps cache
           paths:
             - node_modules
             - frontend/node_modules
-          key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: yarn4-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Ensure directories exist
           command: mkdir -p reports frontend/reports frontend/lint-reports
@@ -1614,8 +1614,8 @@ jobs:
       - create_combined_yarnlock
       - restore_cache:
           keys:
-            - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-            - yarn-deps-
+            - yarn4-deps-{{ checksum "combined-yarnlock.txt" }}
+            - yarn4-deps-
       - run: |
           yarn deps
           yarn build
