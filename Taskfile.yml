@@ -43,7 +43,7 @@ tasks:
     cmds:
       - |
           set -e
-          yarn deps:install
+          yarn install && yarn --cwd frontend install
           echo "Starting stack..."
           docker compose -f {{.COMPOSE_FILE}} {{.STACK}} build
           docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
@@ -80,7 +80,7 @@ tasks:
   rebuild:
     desc: Rebuild frontend and backend code
     cmds:
-      - yarn deps:install
+      - yarn install && yarn --cwd frontend install
       - yarn build
       - docker compose -f {{.COMPOSE_FILE}} build --no-cache
 

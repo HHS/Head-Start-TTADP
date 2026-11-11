@@ -471,7 +471,10 @@ jobs:
             # print the yarn version and cache dir for debugging purposes
             yarn --version
             yarn config get cacheFolder
-            yarn deps
+            # Yarn 4 cannot run package scripts (e.g. `yarn deps`) before node_modules exists,
+            # so install directly.
+            yarn install --immutable
+            yarn --cwd frontend install --immutable
       - save_cache:
           name: Save tarball cache
           paths:
@@ -1617,7 +1620,8 @@ jobs:
             - yarn4-deps-{{ checksum "combined-yarnlock.txt" }}
             - yarn4-deps-
       - run: |
-          yarn deps
+          yarn install --immutable
+          yarn --cwd frontend install --immutable
           yarn build
       - cf_process:
           target_env: prod
