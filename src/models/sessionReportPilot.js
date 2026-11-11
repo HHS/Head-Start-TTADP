@@ -105,6 +105,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.JSONB,
         allowNull: false,
       },
+      // when the session was last submitted or resubmitted for approval
+      submittedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       submitted: {
         type: DataTypes.VIRTUAL,
         get() {
