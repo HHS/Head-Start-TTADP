@@ -12,6 +12,8 @@ import {
   lockTtaRequest,
   reviewTtaRequest as reviewTtaRequestService,
   submitTtaRequest as submitTtaRequestService,
+  ttaRequestApprovingCors,
+  ttaRequestAssignableStaff,
   ttaRequestById,
   ttaRequestReviewers,
   updateTtaRequest,
@@ -20,6 +22,8 @@ import { userById } from '../../services/users';
 import {
   createTtaRequest,
   getTtaRequest,
+  getTtaRequestApprovers,
+  getTtaRequestAssignableStaff,
   getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
@@ -34,6 +38,8 @@ jest.mock('../../services/ttaRequests', () => ({
   lockTtaRequest: jest.fn(),
   reviewTtaRequest: jest.fn(),
   submitTtaRequest: jest.fn(),
+  ttaRequestApprovingCors: jest.fn(),
+  ttaRequestAssignableStaff: jest.fn(),
   ttaRequestById: jest.fn(),
   ttaRequestReviewers: jest.fn(),
   updateTtaRequest: jest.fn(),
@@ -189,6 +195,45 @@ describe('TTA request handlers', () => {
     });
   });
 
+  describe.each([
+    {
+      name: 'getTtaRequestAssignableStaff',
+      handler: getTtaRequestAssignableStaff,
+      service: ttaRequestAssignableStaff,
+      users: [{ id: 5, name: 'Monica Geller', fullName: 'Monica Geller, TTAC' }],
+    },
+    {
+      name: 'getTtaRequestApprovers',
+      handler: getTtaRequestApprovers,
+      service: ttaRequestApprovingCors,
+      users: [{ id: 6, name: 'Chandler Bing', isBackup: true }],
+    },
+  ])('$name', ({ handler, service, users }) => {
+    beforeEach(() => {
+      req.params = { regionId: '1' };
+    });
+
+    it("lists the region's users", async () => {
+      (service as jest.Mock).mockResolvedValue(users);
+      await handler(req as Request, res as Response);
+      expect(service).toHaveBeenCalledWith(1);
+      expect(json).toHaveBeenCalledWith(users);
+    });
+
+    it('returns 403 without read permission in the region', async () => {
+      (userById as jest.Mock).mockResolvedValue(stranger);
+      await handler(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(service).not.toHaveBeenCalled();
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (service as jest.Mock).mockRejectedValue(new Error('boom'));
+      await handler(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+  });
+
   describe('getTtaRequest', () => {
     beforeEach(() => {
       req.params = { ttaRequestId: '1' };
@@ -317,6 +362,26 @@ describe('TTA request handlers', () => {
       expect(updateTtaRequest).not.toHaveBeenCalled();
     });
 
+    it("lets the reviewer save the request's details, but not its reviewer or creator notes", async () => {
+      const reviewer = {
+        id: 789,
+        permissions: [{ scopeId: SCOPES.REVIEW_TTA_REQUESTS, regionId: 1 }],
+      };
+      const existing = mockRequestModel({
+        ...draft,
+        reviewerId: reviewer.id,
+        status: TTA_REQUEST_STATUSES.SUBMITTED,
+      });
+      (currentUserId as jest.Mock).mockResolvedValue(reviewer.id);
+      (userById as jest.Mock).mockResolvedValue(reviewer);
+      (ttaRequestById as jest.Mock).mockResolvedValue(existing);
+      req.body = { recipientId: 4, reviewerId: 12, creatorNotes: 'mine' };
+
+      await saveTtaRequest(req as Request, res as Response);
+
+      expect(updateTtaRequest).toHaveBeenCalledWith(existing, { recipientId: 4 }, reviewer.id);
+    });
+
     it('returns 400 when the service rejects the data', async () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(draft));
       (updateTtaRequest as jest.Mock).mockRejectedValue(badGrants());
@@ -378,6 +443,25 @@ describe('TTA request handlers', () => {
     it('returns 403 once the request is already submitted', async () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(
         mockRequestModel({ ...draft, status: TTA_REQUEST_STATUSES.SUBMITTED })
+      );
+      await submitTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(submitTtaRequestService).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 for the reviewer, who can save but not submit the request', async () => {
+      const reviewer = {
+        id: 789,
+        permissions: [{ scopeId: SCOPES.REVIEW_TTA_REQUESTS, regionId: 1 }],
+      };
+      (currentUserId as jest.Mock).mockResolvedValue(reviewer.id);
+      (userById as jest.Mock).mockResolvedValue(reviewer);
+      (ttaRequestById as jest.Mock).mockResolvedValue(
+        mockRequestModel({
+          ...draft,
+          reviewerId: reviewer.id,
+          status: TTA_REQUEST_STATUSES.SUBMITTED,
+        })
       );
       await submitTtaRequest(req as Request, res as Response);
       expect(sendStatus).toHaveBeenCalledWith(403);

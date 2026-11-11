@@ -4,6 +4,7 @@ import {
   canCreateCommunicationLog,
   canCreateTtaRequest,
   canEditTtaRequest,
+  canReviewerEditTtaRequest,
   hasTtaRequestReadWrite,
 } from './permissions';
 
@@ -337,13 +338,65 @@ describe('canEditTtaRequest', () => {
   );
 
   it('is false once the request has been submitted', () => {
+    expect(canEditTtaRequest(creator, { ...request, status: TTA_REQUEST_STATUSES.SUBMITTED })).toBe(
+      false
+    );
+  });
+
+  it('is true for the reviewer while the request is submitted to them', () => {
+    const reviewer = {
+      id: 5,
+      permissions: [{ scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 3 }],
+    };
     expect(
-      canEditTtaRequest(creator, { ...request, status: TTA_REQUEST_STATUSES.SUBMITTED })
-    ).toBe(false);
+      canEditTtaRequest(reviewer, {
+        ...request,
+        reviewer: { id: 5 },
+        status: TTA_REQUEST_STATUSES.SUBMITTED,
+      })
+    ).toBe(true);
   });
 
   it('is false without a user or request', () => {
     expect(canEditTtaRequest(undefined, request)).toBe(false);
     expect(canEditTtaRequest(creator, null)).toBe(false);
+  });
+});
+
+describe('canReviewerEditTtaRequest', () => {
+  const reviewer = {
+    id: 5,
+    permissions: [{ scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 3 }],
+  };
+  const request = {
+    creator: { id: 1 },
+    reviewer: { id: 5 },
+    regionId: 3,
+    status: TTA_REQUEST_STATUSES.SUBMITTED,
+  };
+
+  it('is true for the reviewer who can review in its region while it is submitted', () => {
+    expect(canReviewerEditTtaRequest(reviewer, request)).toBe(true);
+  });
+
+  it('is false for anyone but the reviewer', () => {
+    expect(canReviewerEditTtaRequest({ ...reviewer, id: 6 }, request)).toBe(false);
+  });
+
+  it.each([
+    TTA_REQUEST_STATUSES.DRAFT,
+    TTA_REQUEST_STATUSES.NEEDS_ACTION,
+    TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+  ])('is false while the request is %s', (status) => {
+    expect(canReviewerEditTtaRequest(reviewer, { ...request, status })).toBe(false);
+  });
+
+  it('is false without the review permission in its region', () => {
+    expect(canReviewerEditTtaRequest(reviewer, { ...request, regionId: 4 })).toBe(false);
+  });
+
+  it('is false without a user or request', () => {
+    expect(canReviewerEditTtaRequest(null, request)).toBe(false);
+    expect(canReviewerEditTtaRequest(reviewer, null)).toBe(false);
   });
 });

@@ -42,6 +42,24 @@ const NOTES = [
 
 describe('TTA request notes', () => {
   describe('toNotesSummary', () => {
+    it('shows the reviewer sending the request to the COR for approval', () => {
+      const [entry] = toNotesSummary([
+        {
+          id: 4,
+          step: 'reviewer',
+          action: 'sent_for_approval',
+          note: 'Over to you',
+          createdAt: '2026-06-24T10:05:00.000Z',
+          user: MONICA,
+        },
+      ]);
+      expect(entry).toMatchObject({
+        phase: 'TTA Request review - sent to COR for approval',
+        role: 'Reviewer',
+        note: 'Over to you',
+      });
+    });
+
     it('shows each entry under the phase it was left in, by whom, in order', () => {
       expect(toNotesSummary(NOTES)).toEqual([
         {

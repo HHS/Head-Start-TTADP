@@ -1,4 +1,8 @@
-import { APPROVER_STATUSES, TTA_REQUEST_ORIGINATORS } from '@ttahub/common';
+import {
+  APPROVER_STATUSES,
+  TTA_REQUEST_MAX_ASSIGNED_STAFF,
+  TTA_REQUEST_ORIGINATORS,
+} from '@ttahub/common';
 import type { NextFunction, Request, Response } from 'express';
 import { convert } from 'html-to-text';
 import httpCodes from 'http-codes';
@@ -81,11 +85,23 @@ export const submitTtaRequestBodySchema = updateTtaRequestBodySchema.keys({
 });
 
 /**
- * The reviewer can only send a request back for changes so far, with an optional note
+ * The reviewer assigns staff, then sends the request back for changes or on to an approving
+ * COR, with an optional note. The approving COR is only sent with the request.
  */
 export const reviewTtaRequestBodySchema = Joi.object({
-  status: Joi.string().valid(APPROVER_STATUSES.NEEDS_ACTION).required(),
+  status: Joi.string().valid(APPROVER_STATUSES.NEEDS_ACTION, APPROVER_STATUSES.APPROVED).required(),
   note: looseString,
+  assignedStaffIds: Joi.array()
+    .items(Joi.number().integer().positive())
+    .unique()
+    .min(1)
+    .max(TTA_REQUEST_MAX_ASSIGNED_STAFF)
+    .required(),
+  approverId: Joi.when('status', {
+    is: APPROVER_STATUSES.APPROVED,
+    then: requiredId,
+    otherwise: Joi.forbidden(),
+  }),
 });
 
 export function checkCreateTtaRequestBody(req: Request, res: Response, next: NextFunction) {

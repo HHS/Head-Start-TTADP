@@ -101,6 +101,12 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'userId',
         as: 'ttaRequestNotes',
       });
+      User.belongsToMany(models.TtaRequest, {
+        through: models.TtaRequestAssignedStaff,
+        foreignKey: 'userId',
+        otherKey: 'ttaRequestId',
+        as: 'assignedTtaRequests',
+      });
     }
   }
   User.init(

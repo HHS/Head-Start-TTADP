@@ -37,6 +37,14 @@ describe('TtaRequestSubmittedAlert', () => {
     );
   });
 
+  it('says the request was sent to the COR for approval after a review', () => {
+    renderAlert({ message: { ...MESSAGE, status: 'awaiting_approval' } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'You sent request R14-REQ-14322 to the COR for approval on 06/23/2026 at 11:00 am EDT.'
+    );
+  });
+
   it('says the request was sent back to its creator after a review', () => {
     renderAlert({ message: { ...MESSAGE, status: 'needs_action' } });
 

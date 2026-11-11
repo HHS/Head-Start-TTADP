@@ -12,6 +12,8 @@ import {
   lockTtaRequest,
   reviewTtaRequest as reviewTtaRequestService,
   submitTtaRequest as submitTtaRequestService,
+  ttaRequestApprovingCors,
+  ttaRequestAssignableStaff,
   ttaRequestById,
   ttaRequestReviewers,
   updateTtaRequest,
@@ -92,6 +94,44 @@ export async function getTtaRequestReviewers(req: Request, res: Response) {
   }
 }
 
+export async function getTtaRequestAssignableStaff(req: Request, res: Response) {
+  try {
+    const { regionId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, Number(regionId));
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const staff = await ttaRequestAssignableStaff(Number(regionId));
+    res.json(staff);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getTtaRequestApprovers(req: Request, res: Response) {
+  try {
+    const { regionId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, Number(regionId));
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const approvers = await ttaRequestApprovingCors(Number(regionId));
+    res.json(approvers);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
 export async function getTtaRequest(req: Request, res: Response) {
   try {
     const { ttaRequestId } = req.params;
@@ -160,7 +200,11 @@ export async function saveTtaRequest(req: Request, res: Response) {
       return;
     }
 
-    const ttaRequest = await updateTtaRequest(existing, req.body, userId);
+    // the reviewer edits the request's details, but not who reviews it or the creator's notes
+    const { reviewerId: _reviewerId, creatorNotes: _creatorNotes, ...details } = req.body;
+    const data = authorization.canReviewerEdit() ? details : req.body;
+
+    const ttaRequest = await updateTtaRequest(existing, data, userId);
     respondOnceCommitted(req, () => res.json(ttaRequest));
   } catch (error) {
     if (respondWithServiceError(res, error)) {
@@ -185,8 +229,8 @@ export async function submitTtaRequest(req: Request, res: Response) {
     const user = await userById(userId);
     const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
 
-    // only the creator's draft can be submitted, as only it can be saved
-    if (!authorization.canUpdate()) {
+    // only the creator's draft, or a request sent back to them, can be submitted
+    if (!authorization.canSubmit()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }

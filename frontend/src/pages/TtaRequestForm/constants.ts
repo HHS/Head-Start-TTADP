@@ -59,6 +59,9 @@ export const ttaRequestViewPath = (ttaRequestId: number, requestRoot = '/tta-req
 
 export const SAVE_ERROR = 'There was an error saving the TTA request. Please try again later.';
 
+export const REVIEWER_SAVE_ERROR =
+  'There was an error saving your changes to the TTA request. Please try again later.';
+
 export const NO_REGION_ERROR = 'Select a recipient grant before saving a draft.';
 
 export const LOAD_ERROR = 'Unable to load the TTA request.';

@@ -527,6 +527,7 @@ components:
             - draft
             - submitted
             - needs_action
+            - awaiting_approval
         userId:
           type: integer
         lastUpdatedById:
@@ -673,6 +674,7 @@ components:
                 enum:
                   - submitted
                   - needs_action
+                  - sent_for_approval
               note:
                 type: string
                 nullable: true
@@ -681,6 +683,11 @@ components:
                 format: date-time
               user:
                 $ref: '#/components/schemas/ttaRequestUser'
+        assignedStaff:
+          type: array
+          description: The staff the reviewer assigned to the request
+          items:
+            $ref: '#/components/schemas/ttaRequestUser'
     ttaRequestUser:
       type: object
       properties:

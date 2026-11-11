@@ -253,6 +253,19 @@ describe('ActiveTtaRequestsTable', () => {
     expect(within(firstRow).queryByRole('link', { name: 'Submitted' })).toBeNull();
   });
 
+  it('shows a request awaiting approval, linked to its read-only view', async () => {
+    renderTable([apiRequest(1, { status: 'awaiting_approval' })]);
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByText('Awaiting approval')).toBeVisible();
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+  });
+
   it('links a request sent back for changes into the form for its creator', async () => {
     renderTable([apiRequest(1, { status: 'needs_action' })]);
     await waitForRows();

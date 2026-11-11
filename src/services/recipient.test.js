@@ -1340,6 +1340,17 @@ describe('Recipient DB service', () => {
       expect(foundRecipients[0].grants[0].regionId).toBe(readOnlyRegion.id);
     });
 
+    it('finds recipients in the regions the user reviews TTA requests in', async () => {
+      await Permission.create({
+        userId: readOnlyUser.id,
+        regionId: readOnlyRegion.id,
+        scopeId: SCOPES.REVIEW_TTA_REQUESTS,
+      });
+
+      const foundRecipients = await recipientsByTtaRequestUserId(readOnlyUser.id);
+      expect(foundRecipients.map((r) => r.id)).toEqual([readOnlyRecipient.id]);
+    });
+
     it('returns an empty array if the user has no write regions', async () => {
       const foundRecipients = await recipientsByUserId(readOnlyUser.id);
       expect(foundRecipients.length).toBe(0);

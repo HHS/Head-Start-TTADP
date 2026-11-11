@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -11,9 +13,50 @@ import ViewTtaRequest from '..';
 
 const URL = '/api/tta-requests/14322';
 const REVIEW_URL = '/api/tta-requests/14322/review';
+const STAFF_URL = '/api/tta-requests/region/14/assignable-staff';
+const APPROVERS_URL = '/api/tta-requests/region/14/approvers';
 
-const CREATOR = { id: 1, name: 'Avery Example', fullName: 'Avery Example, GS' };
-const REVIEWER = { id: 2, name: 'Jordan Sample', fullName: 'Jordan Sample, TTAC' };
+const CREATOR = {
+  id: 1,
+  name: 'Avery Example',
+  fullName: 'Avery Example, GS',
+  roles: [{ name: 'GS' }],
+};
+const REVIEWER = {
+  id: 2,
+  name: 'Jordan Sample',
+  fullName: 'Jordan Sample, TTAC',
+  permissions: [{ regionId: 14, scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS }],
+};
+
+const STAFF = [
+  { id: 2, name: 'Jordan Sample', fullName: 'Jordan Sample, TTAC' },
+  { id: 7, name: 'Monica Geller', fullName: 'Monica Geller, ECS' },
+  { id: 8, name: 'Phoebe Buffay', fullName: 'Phoebe Buffay, HS' },
+  { id: 9, name: 'Joey Tribbiani', fullName: 'Joey Tribbiani, FES' },
+  { id: 10, name: 'Ross Geller', fullName: 'Ross Geller, GS' },
+  { id: 11, name: 'Gunther Central', fullName: 'Gunther Central, SS' },
+];
+
+const APPROVERS = [
+  { id: 20, name: 'Rachel Green', isBackup: false },
+  { id: 21, name: 'Chandler Bing', isBackup: true },
+];
+
+// the reviewer's form loads who they can assign and send the request to
+const mockReviewerFetches = (request = SUBMITTED_REQUEST) => {
+  fetchMock.get(URL, request);
+  fetchMock.get(STAFF_URL, STAFF);
+  fetchMock.get(APPROVERS_URL, APPROVERS);
+};
+
+const assignStaff = async (...names) => {
+  // eslint-disable-next-line no-restricted-syntax
+  for (const name of names) {
+    // eslint-disable-next-line no-await-in-loop
+    await selectEvent.select(await screen.findByLabelText(/assign staff/i), name);
+  }
+};
 
 const creatorSubmission = (id, note, createdAt = '2026-06-23T17:00:00.000Z') => ({
   id,
@@ -210,8 +253,42 @@ describe('ViewTtaRequest', () => {
     ]);
   });
 
-  it('lets the reviewer send a submitted request back for changes', async () => {
-    fetchMock.get(URL, SUBMITTED_REQUEST);
+  it('shows the reviewer the summary heading and who is asking for the review', async () => {
+    mockReviewerFetches();
+    renderView({}, REVIEWER);
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'TTA Request summary' })
+    ).toBeVisible();
+    expect(screen.getByText(/indicates required field/i)).toBeVisible();
+    expect(
+      screen.getByText(/Avery Example \(GS\) is asking for a review of this TTA request/)
+    ).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Edit request' })).toHaveAttribute(
+      'href',
+      '/tta-requests/14322'
+    );
+  });
+
+  it('lays out the assignment above the review, with the notes between', async () => {
+    mockReviewerFetches();
+    renderView({}, REVIEWER);
+
+    const assignment = await screen.findByRole('heading', { name: 'TTA assignment' });
+    const review = screen.getByRole('heading', { name: 'Review and submit' });
+    const notes = screen.getByRole('heading', { name: 'Notes summary' });
+    const status = screen.getByLabelText(/choose review status/i);
+    const following = (a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
+
+    expect(following(assignment, review)).toBeTruthy();
+    expect(following(review, screen.getByText('Date submitted'))).toBeTruthy();
+    expect(following(screen.getByText('Date submitted'), notes)).toBeTruthy();
+    expect(following(notes, status)).toBeTruthy();
+    expect(following(status, screen.getByLabelText(/add ttac or manager notes/i))).toBeTruthy();
+  });
+
+  it('lets the reviewer assign staff and send a submitted request back for changes', async () => {
+    mockReviewerFetches();
     fetchMock.put(REVIEW_URL, { ...SUBMITTED_REQUEST, status: 'needs_action' });
     const history = renderView({}, REVIEWER);
 
@@ -221,9 +298,12 @@ describe('ViewTtaRequest', () => {
       within(status)
         .getAllByRole('option')
         .map((option) => option.textContent)
-    ).toEqual(['- Select -', 'Needs action']);
+    ).toEqual(['- Select -', 'Needs action', 'Send to COR for approval']);
 
+    // the reviewer can assign themselves
+    await assignStaff('Jordan Sample, TTAC', 'Monica Geller, ECS');
     userEvent.selectOptions(status, 'needs_action');
+    expect(screen.queryByLabelText(/approving cor/i)).toBeNull();
     userEvent.type(screen.getByLabelText(/add ttac or manager notes/i), 'Add the agenda');
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
@@ -231,6 +311,7 @@ describe('ViewTtaRequest', () => {
     expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body)).toEqual({
       status: 'needs_action',
       note: 'Add the agenda',
+      assignedStaffIds: [2, 7],
     });
     expect(history.location.state.message).toMatchObject({
       reportId: 14322,
@@ -239,38 +320,127 @@ describe('ViewTtaRequest', () => {
     });
   });
 
-  it('requires a review status', async () => {
-    fetchMock.get(URL, SUBMITTED_REQUEST);
+  it('lets the reviewer send the request to an approving COR', async () => {
+    mockReviewerFetches();
+    fetchMock.put(REVIEW_URL, { ...SUBMITTED_REQUEST, status: 'awaiting_approval' });
+    const history = renderView({}, REVIEWER);
+
+    await assignStaff('Monica Geller, ECS');
+    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
+
+    const approver = await screen.findByLabelText(/approving cor/i);
+    selectEvent.openMenu(approver);
+    // the primary COR comes first, and the backups say so
+    expect(screen.getByText('Rachel Green')).toBeVisible();
+    expect(screen.getByText('Chandler Bing (backup)')).toBeVisible();
+    await selectEvent.select(approver, 'Chandler Bing (backup)');
+    userEvent.type(
+      screen.getByLabelText(/add ttac or manager notes/i),
+      'Adding Chandler because you are out'
+    );
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(history.location.pathname).toBe('/tta-requests'));
+    expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body)).toEqual({
+      status: 'approved',
+      note: 'Adding Chandler because you are out',
+      assignedStaffIds: [7],
+      approverId: 21,
+    });
+    expect(history.location.state.message).toMatchObject({ status: 'awaiting_approval' });
+  });
+
+  it('requires an approving COR when sending the request to one', async () => {
+    mockReviewerFetches();
+    fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);
+    renderView({}, REVIEWER);
+
+    await assignStaff('Monica Geller, ECS');
+    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText('Select an approving COR')).toBeVisible();
+    expect(fetchMock.called(REVIEW_URL)).toBe(false);
+  });
+
+  it('requires a review status and assigned staff', async () => {
+    mockReviewerFetches();
     fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);
     renderView({}, REVIEWER);
 
     userEvent.click(await screen.findByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Choose a review status')).toBeVisible();
+    expect(await screen.findByText('Select at least one staff member')).toBeVisible();
+    expect(screen.getByText('Choose a review status')).toBeVisible();
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
   });
 
+  it('allows no more than five assigned staff', async () => {
+    mockReviewerFetches();
+    fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);
+    renderView({}, REVIEWER);
+
+    await screen.findByRole('heading', { name: 'TTA assignment' });
+    await assignStaff(...STAFF.map(({ fullName }) => fullName));
+    userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText('Select 5 or fewer staff members')).toBeVisible();
+    expect(fetchMock.called(REVIEW_URL)).toBe(false);
+  });
+
+  it('starts with the staff assigned on an earlier review', async () => {
+    mockReviewerFetches({ ...SUBMITTED_REQUEST, assignedStaff: [STAFF[1]] });
+    fetchMock.put(REVIEW_URL, { ...SUBMITTED_REQUEST, status: 'needs_action' });
+    renderView({}, REVIEWER);
+
+    expect(await screen.findByText('Monica Geller, ECS')).toBeVisible();
+    userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(fetchMock.called(REVIEW_URL)).toBe(true));
+    expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body).assignedStaffIds).toEqual([7]);
+  });
+
   it('says so when the review cannot be saved', async () => {
-    fetchMock.get(URL, SUBMITTED_REQUEST);
+    mockReviewerFetches();
     fetchMock.put(REVIEW_URL, 500);
     renderView({}, REVIEWER);
 
-    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'needs_action');
+    await screen.findByRole('heading', { name: 'TTA assignment' });
+    await assignStaff('Monica Geller, ECS');
+    userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     expect(await screen.findByText(/error submitting your review/i)).toBeVisible();
   });
 
   it('says why the server rejected the review', async () => {
-    fetchMock.get(URL, SUBMITTED_REQUEST);
+    mockReviewerFetches();
     fetchMock.put(REVIEW_URL, { status: 400, body: { error: 'Only the reviewer can review it' } });
     renderView({}, REVIEWER);
 
-    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'needs_action');
+    await screen.findByRole('heading', { name: 'TTA assignment' });
+    await assignStaff('Monica Geller, ECS');
+    userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     expect(await screen.findByText('Only the reviewer can review it')).toBeVisible();
     expect(screen.queryByText(/error submitting your review/i)).toBeNull();
+  });
+
+  it('shows the assigned staff once the request has been reviewed', async () => {
+    fetchMock.get(URL, {
+      ...SUBMITTED_REQUEST,
+      status: 'awaiting_approval',
+      assignedStaff: [STAFF[1], STAFF[2]],
+    });
+    renderView({}, CREATOR);
+
+    expect(await screen.findByRole('heading', { name: 'TTA assignment' })).toBeVisible();
+    expect(screen.getByText('Monica Geller, ECS')).toBeVisible();
+    expect(screen.getByText('Phoebe Buffay, HS')).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Edit request' })).toBeNull();
   });
 
   it('does not offer a review to anyone but the reviewer', async () => {
@@ -279,7 +449,9 @@ describe('ViewTtaRequest', () => {
 
     await screen.findByRole('heading', { name: 'Notes summary' });
     expect(screen.queryByRole('heading', { name: 'Review and submit' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'TTA assignment' })).toBeNull();
     expect(screen.queryByLabelText(/choose review status/i)).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Edit request' })).toBeNull();
   });
 
   it('does not offer a review once the request has been sent back', async () => {

@@ -7,7 +7,13 @@ import {
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import filtersToScopes from '../scopes';
-import { createGoalTemplate, createGrant, createRecipient, createUser } from '../testUtils';
+import {
+  createGoalTemplate,
+  createGrant,
+  createRecipient,
+  createRegion,
+  createUser,
+} from '../testUtils';
 import { getCitationsByGrantIds } from './citations';
 import {
   createTtaRequest,
@@ -15,6 +21,8 @@ import {
   lockTtaRequest,
   reviewTtaRequest,
   submitTtaRequest,
+  ttaRequestApprovingCors,
+  ttaRequestAssignableStaff,
   ttaRequestById,
   ttaRequestReviewers,
   updateTtaRequest,
@@ -31,9 +39,11 @@ const {
   GoalTemplate,
   Permission,
   Recipient,
+  Region,
   Role,
   TtaRequest,
   TtaRequestApprover,
+  TtaRequestAssignedStaff,
   TtaRequestCitation,
   User,
   UserRole,
@@ -49,15 +59,24 @@ describe('ttaRequests service', () => {
   let otherRegionGrant;
   let otherRecipientGrant;
   let goalTemplate;
+  // a TTAC in region 1, whom the reviewer can assign, and a backup COR there
+  let staffMember;
+  let backupCor;
+  let assigned;
 
   beforeAll(async () => {
-    [creator, reviewer, recipient, otherRecipient, goalTemplate] = await Promise.all([
-      createUser({}),
-      createUser({}),
-      createRecipient({}),
-      createRecipient({}),
-      createGoalTemplate(),
-    ]);
+    [creator, reviewer, recipient, otherRecipient, goalTemplate, staffMember, backupCor] =
+      await Promise.all([
+        createUser({}),
+        createUser({}),
+        createRecipient({}),
+        createRecipient({}),
+        createGoalTemplate(),
+        createUser({ homeRegionId: 1 }),
+        createUser({ homeRegionId: 1 }),
+      ]);
+    assigned = { assignedStaffIds: [staffMember.id] };
+    const ttac = await Role.findOne({ where: { name: 'TTAC' } });
 
     [grantOne, grantTwo, otherRegionGrant, otherRecipientGrant] = await Promise.all([
       createGrant({ recipientId: recipient.id, regionId: 1 }),
@@ -67,6 +86,14 @@ describe('ttaRequests service', () => {
       // the reviewer is active and can review in region 1, where these requests are
       Permission.create({ userId: reviewer.id, regionId: 1, scopeId: SCOPES.REVIEW_TTA_REQUESTS }),
       Permission.create({ userId: reviewer.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
+      Permission.create({ userId: staffMember.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
+      UserRole.create({ userId: staffMember.id, roleId: ttac.id }),
+      Permission.create({ userId: backupCor.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
+      Permission.create({
+        userId: backupCor.id,
+        regionId: 1,
+        scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+      }),
     ]);
   });
 
@@ -80,9 +107,10 @@ describe('ttaRequests service', () => {
     });
     await Recipient.destroy({ where: { id: [recipient.id, otherRecipient.id] }, force: true });
     await GoalTemplate.destroy({ where: { id: goalTemplate.id } });
-    await Permission.destroy({ where: { userId: [creator.id, reviewer.id] } });
-    await UserRole.destroy({ where: { userId: [creator.id, reviewer.id] } });
-    await User.destroy({ where: { id: [creator.id, reviewer.id] } });
+    const userIds = [creator.id, reviewer.id, staffMember.id, backupCor.id];
+    await Permission.destroy({ where: { userId: userIds } });
+    await UserRole.destroy({ where: { userId: userIds } });
+    await User.destroy({ where: { id: userIds } });
     await db.sequelize.close();
   });
 
@@ -356,6 +384,113 @@ describe('ttaRequests service', () => {
     it('drops a saved reviewer who can only write in the region', async () => {
       const saved = await createTtaRequest({ regionId: 1, reviewerId: writeOnly.id }, creator.id);
       expect(saved.reviewerId).toBeNull();
+    });
+  });
+
+  describe('ttaRequestAssignableStaff', () => {
+    let assistant;
+    let programSpecialist;
+    let otherRegionTtac;
+    let inactiveTtac;
+
+    beforeAll(async () => {
+      [assistant, programSpecialist, otherRegionTtac, inactiveTtac] = await Promise.all([
+        createUser({ homeRegionId: 1 }),
+        createUser({ homeRegionId: 1 }),
+        createUser({ homeRegionId: 2 }),
+        createUser({ homeRegionId: 1 }),
+      ]);
+      const roles = await Role.findAll({ where: { name: ['AA', 'PS', 'TTAC'] } });
+      const roleId = (name: string) => roles.find((role) => role.name === name).id;
+
+      await Promise.all([
+        ...[assistant, programSpecialist, otherRegionTtac].map((user) =>
+          Permission.create({ userId: user.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS })
+        ),
+        UserRole.create({ userId: assistant.id, roleId: roleId('AA') }),
+        UserRole.create({ userId: programSpecialist.id, roleId: roleId('PS') }),
+        UserRole.create({ userId: otherRegionTtac.id, roleId: roleId('TTAC') }),
+        UserRole.create({ userId: inactiveTtac.id, roleId: roleId('TTAC') }),
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = [assistant, programSpecialist, otherRegionTtac, inactiveTtac].map((u) => u.id);
+      await Permission.destroy({ where: { userId: ids } });
+      await UserRole.destroy({ where: { userId: ids } });
+      await User.destroy({ where: { id: ids } });
+    });
+
+    it('lists the active specialists, managers and TTACs in the region', async () => {
+      const staff = await ttaRequestAssignableStaff(1);
+
+      expect(staff).toEqual(
+        expect.arrayContaining([
+          { id: staffMember.id, name: staffMember.name, fullName: `${staffMember.name}, TTAC` },
+        ])
+      );
+    });
+
+    it('leaves out admin assistants, program specialists, other regions and inactive users', async () => {
+      const ids = (await ttaRequestAssignableStaff(1)).map(({ id }) => id);
+
+      [assistant, programSpecialist, otherRegionTtac, inactiveTtac, creator].forEach((user) => {
+        expect(ids).not.toContain(user.id);
+      });
+    });
+  });
+
+  describe('ttaRequestApprovingCors', () => {
+    let region;
+    let primary;
+    let backupB;
+    let backupA;
+
+    beforeAll(async () => {
+      region = await createRegion({});
+      [primary, backupB, backupA] = await Promise.all([
+        createUser({ name: 'Primary COR' }),
+        createUser({ name: 'B backup' }),
+        createUser({ name: 'A backup' }),
+      ]);
+      await Promise.all([
+        ...[primary, backupB, backupA].map((user) =>
+          Permission.create({ userId: user.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS })
+        ),
+        Permission.create({
+          userId: primary.id,
+          regionId: region.id,
+          scopeId: SCOPES.APPROVE_TTA_REQUESTS,
+        }),
+        // the primary COR is also a backup, and is still listed once
+        Permission.create({
+          userId: primary.id,
+          regionId: region.id,
+          scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+        }),
+        ...[backupB, backupA].map((user) =>
+          Permission.create({
+            userId: user.id,
+            regionId: region.id,
+            scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+          })
+        ),
+      ]);
+    });
+
+    afterAll(async () => {
+      const ids = [primary, backupB, backupA].map((u) => u.id);
+      await Permission.destroy({ where: { userId: ids } });
+      await User.destroy({ where: { id: ids } });
+      await Region.destroy({ where: { id: region.id } });
+    });
+
+    it('lists the primary COR first, then the backups by name, each once', async () => {
+      expect(await ttaRequestApprovingCors(region.id)).toEqual([
+        { id: primary.id, name: 'Primary COR', isBackup: false },
+        { id: backupA.id, name: 'A backup', isBackup: true },
+        { id: backupB.id, name: 'B backup', isBackup: true },
+      ]);
     });
   });
 
@@ -661,7 +796,7 @@ describe('ttaRequests service', () => {
 
       const reviewed = await reviewTtaRequest(
         submitted,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Add the agenda' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Add the agenda' },
         reviewer.id
       );
 
@@ -689,7 +824,7 @@ describe('ttaRequests service', () => {
 
       const reviewed = await reviewTtaRequest(
         submitted,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: '' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: '' },
         reviewer.id
       );
 
@@ -704,7 +839,11 @@ describe('ttaRequests service', () => {
       const submitted = await submittedRequest();
 
       await expect(
-        reviewTtaRequest(submitted, { status: APPROVER_STATUSES.NEEDS_ACTION }, otherReviewer.id)
+        reviewTtaRequest(
+          submitted,
+          { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION },
+          otherReviewer.id
+        )
       ).rejects.toMatchObject({ statusCode: 400 });
 
       const stored = await ttaRequestById(submitted.id);
@@ -716,13 +855,13 @@ describe('ttaRequests service', () => {
       let request = await submittedRequest('Round one');
       request = await reviewTtaRequest(
         request,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix one' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix one' },
         reviewer.id
       );
       request = await resubmit(request, { creatorNotes: 'Round two' });
       request = await reviewTtaRequest(
         request,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix two' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix two' },
         reviewer.id
       );
       request = await resubmit(request, { creatorNotes: 'Round three' });
@@ -741,7 +880,7 @@ describe('ttaRequests service', () => {
       const submitted = await submittedRequest();
       const reviewed = await reviewTtaRequest(
         submitted,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix it' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Fix it' },
         reviewer.id
       );
 
@@ -757,7 +896,7 @@ describe('ttaRequests service', () => {
       const submitted = await submittedRequest();
       const reviewed = await reviewTtaRequest(
         submitted,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Ask someone else' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Ask someone else' },
         reviewer.id
       );
 
@@ -791,13 +930,13 @@ describe('ttaRequests service', () => {
       const submitted = await submittedRequest();
       let request = await reviewTtaRequest(
         submitted,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Ask someone else' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Ask someone else' },
         reviewer.id
       );
       request = await resubmit(request, { reviewerId: otherReviewer.id });
       request = await reviewTtaRequest(
         request,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Back to the first reviewer' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Back to the first reviewer' },
         otherReviewer.id
       );
 
@@ -819,7 +958,7 @@ describe('ttaRequests service', () => {
       const submitted = await submittedRequest();
       const reviewed = await reviewTtaRequest(
         submitted,
-        { status: APPROVER_STATUSES.NEEDS_ACTION },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION },
         reviewer.id
       );
 
@@ -832,7 +971,7 @@ describe('ttaRequests service', () => {
       const submitted = await submittedRequest('First');
       await reviewTtaRequest(
         submitted,
-        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Second' },
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Second' },
         reviewer.id
       );
 
@@ -851,9 +990,149 @@ describe('ttaRequests service', () => {
       ]);
     });
 
+    it('saves the assigned staff with the review', async () => {
+      const submitted = await submittedRequest();
+
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION },
+        reviewer.id
+      );
+
+      expect(reviewed.assignedStaff.map(({ id }) => id)).toEqual([staffMember.id]);
+      expect(reviewed.assignedStaff[0].fullName).toBe(`${staffMember.name}, TTAC`);
+    });
+
+    it('replaces the assigned staff when the request is reviewed again', async () => {
+      let request = await submittedRequest();
+      request = await reviewTtaRequest(
+        request,
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION },
+        reviewer.id
+      );
+      request = await resubmit(request);
+
+      // the reviewer can assign themselves when their role is assignable
+      const ttac = await Role.findOne({ where: { name: 'TTAC' } });
+      await Promise.all([
+        UserRole.create({ userId: reviewer.id, roleId: ttac.id }),
+        User.update({ homeRegionId: 1 }, { where: { id: reviewer.id } }),
+      ]);
+
+      try {
+        request = await reviewTtaRequest(
+          request,
+          { assignedStaffIds: [reviewer.id], status: APPROVER_STATUSES.NEEDS_ACTION },
+          reviewer.id
+        );
+        expect(request.assignedStaff.map(({ id }) => id)).toEqual([reviewer.id]);
+      } finally {
+        await Promise.all([
+          UserRole.destroy({ where: { userId: reviewer.id, roleId: ttac.id } }),
+          User.update({ homeRegionId: reviewer.homeRegionId }, { where: { id: reviewer.id } }),
+        ]);
+      }
+    });
+
+    it('sends the request on to the approving COR', async () => {
+      const submitted = await submittedRequest();
+
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        {
+          ...assigned,
+          status: APPROVER_STATUSES.APPROVED,
+          approverId: backupCor.id,
+          note: 'Over to you',
+        },
+        reviewer.id
+      );
+
+      expect(reviewed.status).toBe(TTA_REQUEST_STATUSES.AWAITING_APPROVAL);
+      expect(
+        reviewed.approvers.map(({ userId, step, status }) => ({ userId, step, status }))
+      ).toEqual(
+        expect.arrayContaining([
+          {
+            userId: reviewer.id,
+            step: TTA_REQUEST_STEPS.REVIEWER,
+            status: APPROVER_STATUSES.APPROVED,
+          },
+          { userId: backupCor.id, step: TTA_REQUEST_STEPS.APPROVER, status: null },
+        ])
+      );
+      expect(reviewed.notes[1]).toMatchObject({
+        step: TTA_REQUEST_STEPS.REVIEWER,
+        action: TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL,
+        note: 'Over to you',
+      });
+      expect(reviewed.assignedStaff.map(({ id }) => id)).toEqual([staffMember.id]);
+    });
+
+    it('rejects staff who cannot be assigned, without writing anything', async () => {
+      const submitted = await submittedRequest();
+
+      // the creator has no assignable role in the region
+      await expect(
+        reviewTtaRequest(
+          submitted,
+          { assignedStaffIds: [creator.id], status: APPROVER_STATUSES.NEEDS_ACTION },
+          reviewer.id
+        )
+      ).rejects.toMatchObject({ statusCode: 400 });
+
+      const stored = await ttaRequestById(submitted.id);
+      expect(stored.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(stored.notes).toHaveLength(1);
+      expect(stored.approvers[0].status).toBeNull();
+      expect(await TtaRequestAssignedStaff.count({ where: { ttaRequestId: submitted.id } })).toBe(
+        0
+      );
+    });
+
+    it('rejects an approving COR who cannot approve in the region, without writing anything', async () => {
+      const submitted = await submittedRequest();
+
+      await expect(
+        reviewTtaRequest(
+          submitted,
+          { ...assigned, status: APPROVER_STATUSES.APPROVED, approverId: staffMember.id },
+          reviewer.id
+        )
+      ).rejects.toMatchObject({ statusCode: 400 });
+
+      const stored = await ttaRequestById(submitted.id);
+      expect(stored.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(stored.approvers).toHaveLength(1);
+      expect(stored.assignedStaff).toEqual([]);
+    });
+
+    it('lists requests awaiting approval', async () => {
+      const submitted = await submittedRequest();
+      await reviewTtaRequest(
+        submitted,
+        { ...assigned, status: APPROVER_STATUSES.APPROVED, approverId: backupCor.id },
+        reviewer.id
+      );
+
+      const { ttaRequest: scopes } = await filtersToScopes(
+        { 'region.in': ['1'] },
+        { userId: reviewer.id }
+      );
+      const { rows } = await getTtaRequests(scopes, reviewer.id);
+
+      expect(rows.find((row) => row.id === submitted.id)?.status).toBe(
+        TTA_REQUEST_STATUSES.AWAITING_APPROVAL
+      );
+    });
+
     it('lists requests sent back for changes', async () => {
       const submitted = await submittedRequest();
-      await reviewTtaRequest(submitted, { status: APPROVER_STATUSES.NEEDS_ACTION }, reviewer.id);
+      await reviewTtaRequest(
+        submitted,
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION },
+        reviewer.id
+      );
 
       const { ttaRequest: scopes } = await filtersToScopes(
         { 'region.in': ['1'] },

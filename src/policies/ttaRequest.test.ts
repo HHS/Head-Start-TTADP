@@ -175,6 +175,53 @@ describe('TtaRequest policy', () => {
       const policy = new TtaRequest(createUser({ write: true }), 1);
       expect(policy.canUpdate()).toBe(false);
     });
+
+    describe('for the reviewer', () => {
+      const REVIEWER_ID = 2;
+      const submitted = {
+        ...draft,
+        reviewerId: REVIEWER_ID,
+        status: TTA_REQUEST_STATUSES.SUBMITTED,
+      };
+      const reviewer = () =>
+        createUser({ id: REVIEWER_ID, scopeIds: [SCOPES.REVIEW_TTA_REQUESTS] });
+
+      it('is true while the request is submitted to them', () => {
+        const policy = new TtaRequest(reviewer(), 1, submitted);
+        expect(policy.canUpdate()).toBe(true);
+        expect(policy.canReviewerEdit()).toBe(true);
+      });
+
+      it.each([
+        TTA_REQUEST_STATUSES.DRAFT,
+        TTA_REQUEST_STATUSES.NEEDS_ACTION,
+        TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+      ])('is false while the request is %s', (status) => {
+        const policy = new TtaRequest(reviewer(), 1, { ...submitted, status });
+        expect(policy.canUpdate()).toBe(false);
+      });
+
+      it('is false when they have lost the review permission in the region', () => {
+        const policy = new TtaRequest(createUser({ id: REVIEWER_ID, read: true }), 1, submitted);
+        expect(policy.canUpdate()).toBe(false);
+      });
+    });
+  });
+
+  describe('canSubmit', () => {
+    it('is true for the creator of a draft with write permission', () => {
+      const policy = new TtaRequest(createUser({ write: true }), 1, draft);
+      expect(policy.canSubmit()).toBe(true);
+    });
+
+    it('is false for the reviewer, who can only save the request submitted to them', () => {
+      const policy = new TtaRequest(
+        createUser({ id: 2, scopeIds: [SCOPES.REVIEW_TTA_REQUESTS] }),
+        1,
+        { ...draft, reviewerId: 2, status: TTA_REQUEST_STATUSES.SUBMITTED }
+      );
+      expect(policy.canSubmit()).toBe(false);
+    });
   });
 
   describe('canReview', () => {

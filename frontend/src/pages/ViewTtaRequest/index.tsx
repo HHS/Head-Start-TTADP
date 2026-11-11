@@ -2,16 +2,19 @@ import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import React, { useCallback, useContext } from 'react';
 import { Helmet } from 'react-helmet';
-import { Redirect, useParams } from 'react-router-dom';
+import { Alert } from '@trussworks/react-uswds';
+import { Link, Redirect, useParams } from 'react-router-dom';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
+import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
 import TtaRequestNotesSummary from '../../components/TtaRequestNotesSummary';
-import { toNotesSummary } from '../../components/TtaRequestNotesSummary/notes';
+import { nameWithRole, toNotesSummary } from '../../components/TtaRequestNotesSummary/notes';
 import { getTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
+import { canReviewerEditTtaRequest } from '../../permissions';
 import UserContext from '../../UserContext';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
 import TtaRequestReview from './TtaRequestReview';
@@ -36,8 +39,9 @@ interface ViewTtaRequestProps {
 
 /**
  * A submitted TTA request, read only, with every note left on it. The reviewer reviews it
- * here once it has been submitted to them. The approver, assigned staff and goals only exist
- * once a request has been approved, so they aren't shown yet.
+ * here once it has been submitted to them: they can edit its details on the form, assign staff
+ * to it, and send it back to its creator or on to a COR for approval. Goals only exist once a
+ * request has been approved, so they aren't shown yet.
  */
 export default function ViewTtaRequest({
   backLinkTo = '/tta-requests',
@@ -73,6 +77,7 @@ export default function ViewTtaRequest({
     ttaRequest.status === TTA_REQUEST_STATUSES.SUBMITTED &&
     !!user &&
     ttaRequest.reviewer?.id === user.id;
+  const notesSummary = <TtaRequestNotesSummary notes={toNotesSummary(ttaRequest.notes)} />;
 
   return (
     <div className="maxw-widescreen">
@@ -84,32 +89,55 @@ export default function ViewTtaRequest({
         <ApprovedReportSpecialButtons />
       </div>
       <Container className="width-tablet margin-top-2" paddingX={3} paddingY={3}>
-        <h1 className="font-serif-2xl margin-top-0 margin-bottom-4">TTA Request {displayId}</h1>
-        <dl className="margin-top-0 margin-bottom-4">
-          <div className="display-flex margin-bottom-1">
-            <dt className="text-bold margin-right-1">Creator:</dt>
-            <dd className="margin-0">{ttaRequest.creator?.fullName ?? ttaRequest.creator?.name}</dd>
-          </div>
-          <div className="display-flex margin-bottom-1">
-            <dt className="text-bold margin-right-1">Reviewer:</dt>
-            <dd className="margin-0">
-              {ttaRequest.reviewer?.fullName ?? ttaRequest.reviewer?.name}
-            </dd>
-          </div>
-          <div className="display-flex margin-bottom-1">
-            <dt className="text-bold margin-right-1">Date Created:</dt>
-            <dd className="margin-0">{formatDate(ttaRequest.createdAt)}</dd>
-          </div>
-          {ttaRequest.submittedAt && (
-            <div className="display-flex margin-bottom-1">
-              <dt className="text-bold margin-right-1">Date submitted:</dt>
-              <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>
-            </div>
-          )}
-        </dl>
+        {canReview ? (
+          <>
+            <h1 className="font-serif-2xl margin-top-0 margin-bottom-1">TTA Request summary</h1>
+            <IndicatesRequiredField />
+            <Alert type="info" headingLevel="h4" slim className="margin-bottom-4">
+              {nameWithRole(ttaRequest.creator)} is asking for a review of this TTA request. Please
+              view all information, then assign a specialist and select a review status.
+            </Alert>
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif-2xl margin-top-0 margin-bottom-4">TTA Request {displayId}</h1>
+            <dl className="margin-top-0 margin-bottom-4">
+              <div className="display-flex margin-bottom-1">
+                <dt className="text-bold margin-right-1">Creator:</dt>
+                <dd className="margin-0">
+                  {ttaRequest.creator?.fullName ?? ttaRequest.creator?.name}
+                </dd>
+              </div>
+              <div className="display-flex margin-bottom-1">
+                <dt className="text-bold margin-right-1">Reviewer:</dt>
+                <dd className="margin-0">
+                  {ttaRequest.reviewer?.fullName ?? ttaRequest.reviewer?.name}
+                </dd>
+              </div>
+              <div className="display-flex margin-bottom-1">
+                <dt className="text-bold margin-right-1">Date Created:</dt>
+                <dd className="margin-0">{formatDate(ttaRequest.createdAt)}</dd>
+              </div>
+              {ttaRequest.submittedAt && (
+                <div className="display-flex margin-bottom-1">
+                  <dt className="text-bold margin-right-1">Date submitted:</dt>
+                  <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>
+                </div>
+              )}
+            </dl>
+          </>
+        )}
         <ReadOnlyContent
           title="Who is the request for?"
           spacing={{ section: 0, row: 3 }}
+          titleAction={
+            canReviewerEditTtaRequest(user, ttaRequest) ? (
+              // the recipient can change too, so the request opens where any can be chosen
+              <Link to={`/tta-requests/${ttaRequest.id}`} className="usa-link">
+                Edit request
+              </Link>
+            ) : null
+          }
           sections={[
             {
               data: {
@@ -153,17 +181,32 @@ export default function ViewTtaRequest({
             },
           ]}
         />
-        {canReview && (
-          <>
-            <h2 className="font-serif-lg margin-top-4 margin-bottom-3">Review and submit</h2>
-            <dl className="margin-top-0 margin-bottom-3">
-              <dt className="text-bold">Date submitted</dt>
-              <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>
-            </dl>
-          </>
+        {!canReview && !!ttaRequest.assignedStaff?.length && (
+          <ReadOnlyContent
+            title="TTA assignment"
+            spacing={{ title: 2, section: 1 }}
+            sections={[
+              {
+                data: {
+                  'Assigned staff': (
+                    <>
+                      {ttaRequest.assignedStaff.map((staff) => (
+                        <div key={staff.id}>{staff.fullName ?? staff.name}</div>
+                      ))}
+                    </>
+                  ),
+                },
+              },
+            ]}
+          />
         )}
-        <TtaRequestNotesSummary notes={toNotesSummary(ttaRequest.notes)} />
-        {canReview && <TtaRequestReview ttaRequest={ttaRequest} backLinkTo={backLinkTo} />}
+        {canReview ? (
+          <TtaRequestReview ttaRequest={ttaRequest} backLinkTo={backLinkTo}>
+            {notesSummary}
+          </TtaRequestReview>
+        ) : (
+          notesSummary
+        )}
       </Container>
     </div>
   );

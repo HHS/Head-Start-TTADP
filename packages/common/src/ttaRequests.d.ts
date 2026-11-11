@@ -27,10 +27,24 @@ export interface TtaRequestGrant {
   name: string;
 }
 
-/** what the reviewer sends back; needs action is the only review there is so far */
+/**
+ * what the reviewer sends back: the staff they assign, and either needs action, which returns
+ * the request to its creator, or approved, which sends it on to the approving COR
+ */
 export interface TtaRequestReviewPayload {
-  status: 'needs_action';
+  status: 'needs_action' | 'approved';
   note?: string | null;
+  assignedStaffIds: number[];
+  /** the approving COR, only when the status is approved */
+  approverId?: number;
+}
+
+/** a COR who can approve requests in a region; the primary COR has no backup flag */
+export interface TtaRequestApprovingCor {
+  id: number;
+  name: string;
+  fullName?: string;
+  isBackup: boolean;
 }
 
 /** a user as they appear on a request's notes and approvers */
@@ -46,7 +60,7 @@ export interface TtaRequestUser {
 export interface TtaRequestNoteData {
   id: number;
   step: 'creator' | 'reviewer' | 'approver';
-  action: 'submitted' | 'needs_action';
+  action: 'submitted' | 'needs_action' | 'sent_for_approval';
   note: string | null;
   createdAt: string;
   user: TtaRequestUser | null;
@@ -83,4 +97,6 @@ export interface TtaRequestResponse {
   /** the request's history, oldest first */
   notes?: TtaRequestNoteData[];
   approvers?: TtaRequestApproverData[];
+  /** the staff the reviewer assigned */
+  assignedStaff?: TtaRequestUser[];
 }

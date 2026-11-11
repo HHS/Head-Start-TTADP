@@ -182,6 +182,7 @@ const TTA_REQUEST_STATUSES = {
   DRAFT: 'draft',
   SUBMITTED: 'submitted',
   NEEDS_ACTION: 'needs_action',
+  AWAITING_APPROVAL: 'awaiting_approval',
 };
 
 exports.TTA_REQUEST_STATUSES = TTA_REQUEST_STATUSES;
@@ -199,9 +200,21 @@ exports.TTA_REQUEST_STEPS = TTA_REQUEST_STEPS;
 const TTA_REQUEST_NOTE_ACTIONS = {
   SUBMITTED: 'submitted',
   NEEDS_ACTION: 'needs_action',
+  SENT_FOR_APPROVAL: 'sent_for_approval',
 };
 
 exports.TTA_REQUEST_NOTE_ACTIONS = TTA_REQUEST_NOTE_ACTIONS;
+
+// the most staff the reviewer can assign to a request
+const TTA_REQUEST_MAX_ASSIGNED_STAFF = 5;
+
+exports.TTA_REQUEST_MAX_ASSIGNED_STAFF = TTA_REQUEST_MAX_ASSIGNED_STAFF;
+
+// the roles of the regional team members the reviewer can assign: specialists, managers and
+// TTACs, but not admin assistants or program specialists
+const TTA_REQUEST_ASSIGNABLE_ROLES = ['HS', 'SS', 'ECS', 'GS', 'FES', 'TTAC', 'ECM', 'GSM'];
+
+exports.TTA_REQUEST_ASSIGNABLE_ROLES = TTA_REQUEST_ASSIGNABLE_ROLES;
 
 const TTA_REQUEST_ORIGINATORS = ['Central Office', 'Recipient', 'Regional Office', 'TTA Staff'];
 

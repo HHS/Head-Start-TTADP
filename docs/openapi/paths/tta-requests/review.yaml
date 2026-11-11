@@ -4,9 +4,11 @@ put:
   summary: Review a submitted TTA request
   description: >-
     Available only to the request's reviewer, while it is submitted and they can
-    review in its region. Needs action is the only review so far: it sends the
-    request back to its creator, sets the status to needs_action, and adds the
-    review and its note to the request's notes.
+    review in its region. The reviewer assigns one to five regional team members.
+    Needs action sends the request back to its creator and sets the status to
+    needs_action. Approved sends it on to the approving COR, who must be a primary
+    or backup COR in the region, and sets the status to awaiting_approval. Either
+    way the review and its note are added to the request's notes.
   parameters:
     - name: ttaRequestId
       in: path
@@ -22,11 +24,24 @@ put:
           type: object
           required:
             - status
+            - assignedStaffIds
           properties:
             status:
               type: string
               enum:
                 - needs_action
+                - approved
+            assignedStaffIds:
+              type: array
+              minItems: 1
+              maxItems: 5
+              uniqueItems: true
+              items:
+                type: integer
+              description: The regional team members assigned to the request
+            approverId:
+              type: integer
+              description: The approving COR; required when the status is approved, and not allowed otherwise
             note:
               type: string
               nullable: true
@@ -39,7 +54,9 @@ put:
           schema:
             $ref: '../../index.yaml#/components/schemas/ttaRequest'
     '400':
-      description: Malformed ID or body, or the user is not the request's reviewer
+      description: >-
+        Malformed ID or body, the user is not the request's reviewer, or the
+        assigned staff or approving COR cannot be picked in the request's region
     '403':
       description: Not the reviewer, not submitted, or no review permission in the region
     '404':

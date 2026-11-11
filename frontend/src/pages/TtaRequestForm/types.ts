@@ -1,6 +1,7 @@
 import type { TtaRequestGrant } from '@ttahub/common/src/ttaRequests';
 
 export type {
+  TtaRequestApprovingCor,
   TtaRequestGrant,
   TtaRequestNoteData,
   TtaRequestPayload,

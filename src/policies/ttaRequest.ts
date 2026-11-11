@@ -64,11 +64,23 @@ export default class TtaRequest {
   }
 
   /**
-   * Only the creator saves a draft, or a request sent back to them for changes, and only
-   * while they can still write in its region. An admin can also save a request sent back
-   * for changes, e.g. when its creator is unavailable.
+   * The creator saves their request while they can submit it. The reviewer can also save
+   * changes to it while it is with them, before they review it.
    */
   canUpdate() {
+    if (this.canReviewerEdit()) {
+      return true;
+    }
+
+    return this.canSubmit();
+  }
+
+  /**
+   * Only the creator submits a draft, or a request sent back to them for changes, and only
+   * while they can still write in its region. An admin can also submit a request sent back
+   * for changes, e.g. when its creator is unavailable.
+   */
+  canSubmit() {
     if (this.isAdmin() && this.ttaRequest?.status === TTA_REQUEST_STATUSES.NEEDS_ACTION) {
       return true;
     }
@@ -89,6 +101,18 @@ export default class TtaRequest {
     }
 
     return true;
+  }
+
+  /**
+   * The reviewer can change any of the request's details, the recipient included, while it is
+   * submitted to them and they can review in its region
+   */
+  canReviewerEdit() {
+    return (
+      this.isReviewer() &&
+      this.ttaRequest?.status === TTA_REQUEST_STATUSES.SUBMITTED &&
+      this.canReviewInRegion()
+    );
   }
 
   /**

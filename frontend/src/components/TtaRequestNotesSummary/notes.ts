@@ -6,13 +6,14 @@ const noteKey = (step: string, action: string) => `${step}:${action}`;
 
 /**
  * The phase each entry in a request's history is shown under, by the step it was left at and
- * what was done there. Later steps add their own, e.g. the reviewer sending it to the COR for
- * approval, or the approver approving it.
+ * what was done there. Later steps add their own, e.g. the approver approving it.
  */
 const NOTE_PHASES: Record<string, string> = {
   [noteKey(TTA_REQUEST_STEPS.CREATOR, TTA_REQUEST_NOTE_ACTIONS.SUBMITTED)]: 'Draft TTA Request',
   [noteKey(TTA_REQUEST_STEPS.REVIEWER, TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION)]:
     'TTA Request review - needs action',
+  [noteKey(TTA_REQUEST_STEPS.REVIEWER, TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL)]:
+    'TTA Request review - sent to COR for approval',
 };
 
 const STEP_ROLES: Record<TtaRequestNoteData['step'], TtaRequestNote['role']> = {

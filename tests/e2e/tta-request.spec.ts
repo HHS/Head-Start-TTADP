@@ -2,13 +2,16 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { query } from '../utils/common';
 
 // Seeded users (see src/seeders/20201124160449-users.js): the creator writes TTA requests in
-// region 1, and the reviewer reviews them there. Neither has these TTA request permissions in
-// the seed data, so the spec grants them and takes back only what it granted.
+// region 1, the reviewer reviews them there, and a backup COR approves them there. None has
+// these TTA request permissions in the seed data, so the spec grants them and takes back only
+// what it granted. The reviewer is a GS whose home region is 1, so they can assign themselves.
 const CREATOR = { id: 5, name: 'Cucumber User', fullName: 'Cucumber User, GS' };
 const REVIEWER = { id: 10, name: 'adam', fullName: 'adam, GS', withRole: 'adam (GS)' };
+const BACKUP_COR = { id: 1, name: 'Hermione Granger' };
 const REGION_ID = 1;
 const READ_WRITE_TTA_REQUESTS = 10;
 const REVIEW_TTA_REQUESTS = 11;
+const BACKUP_APPROVE_TTA_REQUESTS = 13;
 const FEATURE_FLAG = 'recipient_tta_request';
 
 const RECIPIENT = 'Agency 2 in region 1, Inc.';
@@ -20,6 +23,7 @@ type Grant = { userId: number; scopeId: number };
 const PERMISSIONS: Grant[] = [
   { userId: CREATOR.id, scopeId: READ_WRITE_TTA_REQUESTS },
   { userId: REVIEWER.id, scopeId: REVIEW_TTA_REQUESTS },
+  { userId: BACKUP_COR.id, scopeId: BACKUP_APPROVE_TTA_REQUESTS },
 ];
 
 // what this spec added, so cleanup leaves anything that was already there
@@ -39,6 +43,12 @@ const actAs = (page: Page, userId: number) =>
 async function chooseOption(page: Page, inputId: string, option: string | RegExp) {
   await page.locator(`#${inputId}`).click();
   await page.getByRole('option', { name: option }).first().click();
+}
+
+/** assigns the staff member to the request on the reviewer's form */
+async function assignStaff(page: Page, name: string) {
+  await page.getByLabel('Assign staff').click();
+  await page.getByRole('option', { name }).first().click();
 }
 
 /** the entries in the Notes summary, oldest first */
@@ -102,7 +112,7 @@ test.describe('TTA request review', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    // its grants, citations, approvers and notes cascade with it
+    // its grants, citations, approvers, notes and assigned staff cascade with it
     if (ttaRequestId) {
       await query(request, `DELETE FROM "TtaRequests" WHERE id = ${ttaRequestId};`);
     }
@@ -174,6 +184,8 @@ test.describe('TTA request review', () => {
         note: 'Initial request notes',
       });
 
+      await expect(page.getByRole('heading', { name: 'TTA assignment' })).toBeVisible();
+      await assignStaff(page, REVIEWER.fullName);
       await page.getByLabel('Choose review status').selectOption('needs_action');
       await page.getByLabel('Add TTAC or Manager notes').fill('Please add the agenda');
       await page.getByRole('button', { name: 'Submit', exact: true }).click();
@@ -259,6 +271,21 @@ test.describe('TTA request review', () => {
       // the request is back with the reviewer, so they can review it again
       await expect(page.getByRole('heading', { name: 'Review and submit' })).toBeVisible();
       await expect(page.getByText('The agenda is attached.', { exact: false })).toBeVisible();
+    });
+
+    await test.step('the reviewer sends it to the COR for approval', async () => {
+      // the staff assigned on the first review are still assigned
+      await expect(page.getByText(REVIEWER.fullName, { exact: true }).first()).toBeVisible();
+
+      await page.getByLabel('Choose review status').selectOption('approved');
+      await chooseOption(page, 'approver', `${BACKUP_COR.name} (backup)`);
+      await page.getByLabel('Add TTAC or Manager notes').fill('Over to you');
+      await page.getByRole('button', { name: 'Submit', exact: true }).click();
+
+      await expect(page.getByRole('alert')).toContainText(
+        `You sent request ${displayId} to the COR for approval on`
+      );
+      await expect(requestRow(page, displayId)).toContainText('Awaiting approval');
     });
   });
 });

@@ -300,16 +300,44 @@ const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, reg
  */
 
 /**
- * Check if user can edit a saved TTA request, as the API's TTA request policy allows: only its
- * creator, while it is a draft or sent back to them for changes, and only while they can still
- * write in its region. An admin can also edit a request sent back for changes.
+ * Check if user can change a submitted TTA request's details as its reviewer, as the API's TTA
+ * request policy allows: while it is submitted to them and they can still review in its region
  * @param {object} user - user object
- * @param {object} ttaRequest - the saved request, with its creator, status and region
+ * @param {object} ttaRequest - the saved request, with its reviewer, status and region
+ * @returns {boolean} - True if the user can edit the request as its reviewer
+ */
+const canReviewerEditTtaRequest = (user, ttaRequest) => {
+  if (!user || !ttaRequest) {
+    return false;
+  }
+
+  const { permissions } = user;
+  return (
+    ttaRequest.reviewer?.id === user.id &&
+    ttaRequest.status === TTA_REQUEST_STATUSES.SUBMITTED &&
+    !!permissions &&
+    permissions.some(
+      (p) => p.scopeId === SCOPE_IDS.REVIEW_TTA_REQUESTS && p.regionId === ttaRequest.regionId
+    )
+  );
+};
+
+/**
+ * Check if user can edit a saved TTA request, as the API's TTA request policy allows: its
+ * creator, while it is a draft or sent back to them for changes, and only while they can still
+ * write in its region. An admin can also edit a request sent back for changes, and its reviewer
+ * can edit it while it is submitted to them.
+ * @param {object} user - user object
+ * @param {object} ttaRequest - the saved request, with its creator, reviewer, status and region
  * @returns {boolean} - True if the user can edit the request
  */
 const canEditTtaRequest = (user, ttaRequest) => {
   if (!user || !ttaRequest) {
     return false;
+  }
+
+  if (canReviewerEditTtaRequest(user, ttaRequest)) {
+    return true;
   }
 
   if (isAdmin(user) && ttaRequest.status === TTA_REQUEST_STATUSES.NEEDS_ACTION) {
@@ -323,8 +351,7 @@ const canEditTtaRequest = (user, ttaRequest) => {
     editable.includes(ttaRequest.status) &&
     !!permissions &&
     permissions.some(
-      (p) =>
-        p.scopeId === SCOPE_IDS.READ_WRITE_TTA_REQUESTS && p.regionId === ttaRequest.regionId
+      (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TTA_REQUESTS && p.regionId === ttaRequest.regionId
     )
   );
 };
@@ -343,6 +370,7 @@ export {
   canCreateTtaRequest,
   canEditOrCreateGoals,
   canEditTtaRequest,
+  canReviewerEditTtaRequest,
   canEditOrCreateSessionReports,
   canSeeBehindFeatureFlag,
   getRegionWithReadWrite,

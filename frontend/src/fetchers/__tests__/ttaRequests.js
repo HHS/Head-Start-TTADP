@@ -1,6 +1,8 @@
 import fetchMock from 'fetch-mock';
 import {
   getTtaRequest,
+  getTtaRequestApprovers,
+  getTtaRequestAssignableStaff,
   getTtaRequestReviewers,
   getTtaRequestsByRecipient,
   reviewTtaRequest,
@@ -19,6 +21,16 @@ describe('TTA requests fetcher', () => {
   it("fetches a region's reviewers", async () => {
     fetchMock.get('/api/tta-requests/region/14/reviewers', [{ id: 6 }]);
     expect(await getTtaRequestReviewers(14)).toEqual([{ id: 6 }]);
+  });
+
+  it("fetches the region's assignable staff", async () => {
+    fetchMock.get('/api/tta-requests/region/14/assignable-staff', [{ id: 7 }]);
+    expect(await getTtaRequestAssignableStaff(14)).toEqual([{ id: 7 }]);
+  });
+
+  it("fetches the region's approving CORs", async () => {
+    fetchMock.get('/api/tta-requests/region/14/approvers', [{ id: 8, isBackup: true }]);
+    expect(await getTtaRequestApprovers(14)).toEqual([{ id: 8, isBackup: true }]);
   });
 
   it("fetches a recipient's requests in a region", async () => {

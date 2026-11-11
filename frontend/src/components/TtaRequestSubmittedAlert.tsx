@@ -23,7 +23,8 @@ interface TtaRequestSubmittedAlertProps {
 }
 
 /**
- * Says a TTA request was submitted, or sent back to its creator for changes, on the page the
+ * Says a TTA request was submitted, sent back to its creator for changes, or sent on to the
+ * approving COR, on the page the
  * form or review returned the user to. They put the message in the location's state; it is
  * taken from there once, so it doesn't show again on a refresh or on coming back to the page.
  */
@@ -52,11 +53,17 @@ export default function TtaRequestSubmittedAlert({
 
   return (
     <Alert type="success" headingLevel="h2" slim role="alert" className="margin-bottom-3">
-      {message.status === TTA_REQUEST_STATUSES.NEEDS_ACTION ? (
+      {message.status === TTA_REQUEST_STATUSES.NEEDS_ACTION && (
         <>
           You sent request {link} back to its creator for changes on {message.time}.
         </>
-      ) : (
+      )}
+      {message.status === TTA_REQUEST_STATUSES.AWAITING_APPROVAL && (
+        <>
+          You sent request {link} to the COR for approval on {message.time}.
+        </>
+      )}
+      {message.status === TTA_REQUEST_STATUSES.SUBMITTED && (
         <>
           You submitted request {link} on {message.time}.
         </>

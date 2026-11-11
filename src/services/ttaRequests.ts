@@ -1,11 +1,13 @@
 import {
   APPROVER_STATUSES,
+  TTA_REQUEST_ASSIGNABLE_ROLES,
   TTA_REQUEST_MONITORING_STANDARD,
   TTA_REQUEST_NOTE_ACTIONS,
   TTA_REQUEST_STATUSES,
   TTA_REQUEST_STEPS,
 } from '@ttahub/common';
 import type {
+  TtaRequestApprovingCor,
   TtaRequestCitationData,
   TtaRequestPayload,
   TtaRequestReviewPayload,
@@ -18,7 +20,7 @@ import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { getCitationsByGrantIds } from './citations';
-import { activeUsersWithScopesInRegion } from './users';
+import { activeUsersWithScopesInRegion, usersByRoles } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
 
@@ -27,6 +29,7 @@ const {
   TtaRequestGrant,
   TtaRequestCitation,
   TtaRequestApprover,
+  TtaRequestAssignedStaff,
   TtaRequestNote,
   Grant,
   Program,
@@ -138,6 +141,13 @@ export async function ttaRequestById(id: number) {
         include: [userWithRoles('user')],
       },
       {
+        model: User,
+        as: 'assignedStaff',
+        attributes: ['id', 'name', 'fullName'],
+        through: { attributes: [] },
+        include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
+      },
+      {
         model: TtaRequestNote,
         as: 'notes',
         attributes: ['id', 'step', 'action', 'note', 'createdAt'],
@@ -177,7 +187,11 @@ export async function getTtaRequests(
           [Op.or]: [
             { userId, status: TTA_REQUEST_STATUSES.DRAFT },
             {
-              status: [TTA_REQUEST_STATUSES.SUBMITTED, TTA_REQUEST_STATUSES.NEEDS_ACTION],
+              status: [
+                TTA_REQUEST_STATUSES.SUBMITTED,
+                TTA_REQUEST_STATUSES.NEEDS_ACTION,
+                TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+              ],
             },
           ],
         },
@@ -268,6 +282,35 @@ async function checkRecipientAndGrants(
 export async function ttaRequestReviewers(regionId: number) {
   const reviewers = await activeUsersWithScopesInRegion(TTA_REQUEST_REVIEWER_SCOPES, regionId);
   return reviewers.map(({ id, name }) => ({ id, name }));
+}
+
+/**
+ * The regional team members the reviewer can assign to a request, ordered by name: the
+ * specialists, managers and TTACs whose home region is the request's. The reviewer is one of
+ * them when their role is, so they can assign themselves.
+ */
+export async function ttaRequestAssignableStaff(regionId: number) {
+  const staff = await usersByRoles([...TTA_REQUEST_ASSIGNABLE_ROLES], regionId);
+  return staff.map(({ id, name, fullName }) => ({ id, name, fullName }));
+}
+
+/**
+ * The CORs who can approve a request in the region: the primary COR first, then the backups,
+ * ordered by name. Someone who is both is listed once, as the primary.
+ */
+export async function ttaRequestApprovingCors(regionId: number): Promise<TtaRequestApprovingCor[]> {
+  const [primaries, backups] = await Promise.all([
+    activeUsersWithScopesInRegion([SCOPES.APPROVE_TTA_REQUESTS], regionId),
+    activeUsersWithScopesInRegion([SCOPES.BACKUP_APPROVE_TTA_REQUESTS], regionId),
+  ]);
+  const primaryIds = primaries.map(({ id }) => id);
+
+  return [
+    ...primaries.map(({ id, name }) => ({ id, name, isBackup: false })),
+    ...backups
+      .filter(({ id }) => !primaryIds.includes(id))
+      .map(({ id, name }) => ({ id, name, isBackup: true })),
+  ];
 }
 
 /**
@@ -419,29 +462,30 @@ export async function updateTtaRequest(
 }
 
 /**
- * The request's reviewer is the one picked on the form. A replaced reviewer who had reviewed
- * it is soft deleted, so what they did stays on record; one who never reviewed it has nothing
- * to show, so is removed, as collaboration report approvers are. The current one is pending again.
+ * Who is on a step of the request. For the reviewer, it is the one picked on the form; for the
+ * approver, the COR the reviewer sent it to. A replaced user who had acted on the step is soft
+ * deleted, so what they did stays on record; one who never acted on it has nothing to show, so
+ * is removed, as collaboration report approvers are. The current one is pending again.
  */
-async function syncReviewerApprover(ttaRequestId: number, reviewerId: number) {
+async function syncStepApprover(ttaRequestId: number, step: string, userId: number) {
   const replaced = {
     ttaRequestId,
-    step: TTA_REQUEST_STEPS.REVIEWER,
-    userId: { [Op.ne]: reviewerId },
+    step,
+    userId: { [Op.ne]: userId },
   };
   await TtaRequestApprover.destroy({ where: { ...replaced, status: null }, force: true });
   await TtaRequestApprover.destroy({ where: replaced });
 
   const existing = await TtaRequestApprover.findOne({
-    where: { ttaRequestId, userId: reviewerId, step: TTA_REQUEST_STEPS.REVIEWER },
+    where: { ttaRequestId, userId, step },
     paranoid: false,
   });
 
   if (!existing) {
     await TtaRequestApprover.create({
       ttaRequestId,
-      userId: reviewerId,
-      step: TTA_REQUEST_STEPS.REVIEWER,
+      userId,
+      step,
       status: null,
     });
     return;
@@ -485,7 +529,7 @@ export async function submitTtaRequest(
     }
   }
 
-  await syncReviewerApprover(existing.id, saved.reviewerId);
+  await syncStepApprover(existing.id, TTA_REQUEST_STEPS.REVIEWER, saved.reviewerId);
 
   await TtaRequestNote.create({
     ttaRequestId: existing.id,
@@ -509,34 +553,68 @@ export async function submitTtaRequest(
 }
 
 /**
- * The reviewer sends the request back to its creator for changes. Their decision and note
- * are added to the request's history; the creator sees both when they edit the request.
+ * The reviewer assigns staff to the request, then either sends it back to its creator for
+ * changes or sends it on to the approving COR. Their decision and note are added to the
+ * request's history. Everything is checked before anything is written.
  */
 export async function reviewTtaRequest(
-  existing: { id: number },
-  { note }: TtaRequestReviewPayload,
+  existing: { id: number; regionId: number },
+  { status, note, assignedStaffIds, approverId }: TtaRequestReviewPayload,
   userId: number
 ) {
-  // the body is checked by checkReviewTtaRequestBody, so the status can only be needs action
-  const [updated] = await TtaRequestApprover.update(
-    { status: APPROVER_STATUSES.NEEDS_ACTION },
-    { where: { ttaRequestId: existing.id, userId, step: TTA_REQUEST_STEPS.REVIEWER } }
+  // the body is checked by checkReviewTtaRequestBody, so the status is needs action or
+  // approved, and approved comes with an approving COR
+  const sentForApproval = status === APPROVER_STATUSES.APPROVED;
+
+  const reviewer = await TtaRequestApprover.findOne({
+    where: { ttaRequestId: existing.id, userId, step: TTA_REQUEST_STEPS.REVIEWER },
+  });
+
+  if (!reviewer) {
+    throw dataError('Only the reviewer on the request can review it');
+  }
+
+  const assignableIds = (await ttaRequestAssignableStaff(existing.regionId)).map(({ id }) => id);
+  if (!assignedStaffIds.every((id) => assignableIds.includes(id))) {
+    throw dataError("The assigned staff must be regional team members in the request's region");
+  }
+
+  if (sentForApproval) {
+    const cors = await ttaRequestApprovingCors(existing.regionId);
+    if (!cors.some(({ id }) => id === approverId)) {
+      throw dataError("The approving COR must be able to approve in the request's region");
+    }
+  }
+
+  await reviewer.update({ status });
+
+  await syncJoinRows(
+    TtaRequestAssignedStaff,
+    { ttaRequestId: existing.id },
+    'userId',
+    assignedStaffIds
   );
 
-  if (!updated) {
-    throw dataError('Only the reviewer on the request can review it');
+  if (sentForApproval) {
+    await syncStepApprover(existing.id, TTA_REQUEST_STEPS.APPROVER, approverId);
   }
 
   await TtaRequestNote.create({
     ttaRequestId: existing.id,
     userId,
     step: TTA_REQUEST_STEPS.REVIEWER,
-    action: TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
+    action: sentForApproval
+      ? TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL
+      : TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
     note: note || null,
   });
 
   await TtaRequest.update(
-    { status: TTA_REQUEST_STATUSES.NEEDS_ACTION },
+    {
+      status: sentForApproval
+        ? TTA_REQUEST_STATUSES.AWAITING_APPROVAL
+        : TTA_REQUEST_STATUSES.NEEDS_ACTION,
+    },
     { where: { id: existing.id } }
   );
 

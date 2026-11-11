@@ -1365,6 +1365,14 @@ class TtaRequestApprovers{
  status : enum
 }
 
+class TtaRequestAssignedStaff{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class TtaRequestCitations{
  * id : integer : <generated>
  * ttaRequestId : integer : REFERENCES "TtaRequests".id
@@ -3073,6 +3081,20 @@ class ZALTtaRequestApprovers{
  session_sig : text
 }
 
+class ZALTtaRequestAssignedStaff{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALTtaRequestCitations{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3247,7 +3269,11 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+!issue='associations need to be defined both directions'
+TtaRequests "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestAssignedStaff : ttaRequest
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestAssignedStaff : user
 Users "1" --[#black,plain,thickness=2]-- "1" TtaRequests : creator, lastUpdatedBy, reviewer
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
@@ -3473,5 +3499,6 @@ Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 SessionReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Users : trainers, sessionReports
+TtaRequests "n" }--[#black,dotted,thickness=2]--{ "n" Users : assignedStaff, assignedTtaRequests
 
 @enduml
