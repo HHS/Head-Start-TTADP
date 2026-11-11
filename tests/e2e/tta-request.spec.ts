@@ -16,8 +16,14 @@ const FEATURE_FLAG = 'recipient_tta_request';
 
 const RECIPIENT = 'Agency 2 in region 1, Inc.';
 const GRANT = '09HP01111';
+// the monitoring goal is only offered for a grant that already has one, and this grant has no
+// monitoring report, so it has no citations to choose
+const MONITORING_TEMPLATE_STANDARD = 'Monitoring';
 
 const NOTE_DATE = /\w+ \d{1,2}, \d{4} • \d{1,2}:\d{2} UTC/;
+
+const RTTAPA_ALERT = "This goal will be added to the recipient's RTTAPA.";
+const NO_MONITORING_REPORT_ALERT = "The TTA Hub doesn't have this recipient's monitoring report";
 
 type Grant = { userId: number; scopeId: number };
 const PERMISSIONS: Grant[] = [
@@ -29,6 +35,7 @@ const PERMISSIONS: Grant[] = [
 // what this spec added, so cleanup leaves anything that was already there
 const granted: Grant[] = [];
 let addedFlag = false;
+let monitoringGoalId: number | null = null;
 let ttaRequestId: number | null = null;
 
 const rowsOf = async (response: Awaited<ReturnType<typeof query>>) => {
@@ -109,6 +116,29 @@ test.describe('TTA request review', () => {
       );
       addedFlag = true;
     }
+
+    const monitoringGoals = await rowsOf(
+      await query(
+        request,
+        `SELECT 1 FROM "Goals" g
+         JOIN "Grants" gr ON gr.id = g."grantId"
+         JOIN "GoalTemplates" gt ON gt.id = g."goalTemplateId"
+         WHERE gr.number = '${GRANT}' AND gt.standard = '${MONITORING_TEMPLATE_STANDARD}';`
+      )
+    );
+    if (!monitoringGoals.length) {
+      const [goal] = await rowsOf(
+        await query(
+          request,
+          `INSERT INTO "Goals" ("name", "status", "grantId", "goalTemplateId", "createdAt", "updatedAt")
+           SELECT gt."templateName", 'Not Started', gr.id, gt.id, NOW(), NOW()
+           FROM "Grants" gr, "GoalTemplates" gt
+           WHERE gr.number = '${GRANT}' AND gt.standard = '${MONITORING_TEMPLATE_STANDARD}'
+           RETURNING id;`
+        )
+      );
+      monitoringGoalId = Number(goal.id);
+    }
   });
 
   test.afterAll(async ({ request }) => {
@@ -130,6 +160,9 @@ test.describe('TTA request review', () => {
         `UPDATE "Users" SET flags = array_remove(flags, '${FEATURE_FLAG}') WHERE id = ${CREATOR.id};`
       );
     }
+    if (monitoringGoalId) {
+      await query(request, `DELETE FROM "Goals" WHERE id = ${monitoringGoalId};`);
+    }
   });
 
   test.setTimeout(120000);
@@ -150,7 +183,15 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('checkbox', { name: new RegExp(GRANT) })).toBeChecked();
       await page.locator('label[for="recipient-aware-yes"]').click();
       await chooseOption(page, 'originator', 'Recipient');
+
+      // the grant has no monitoring report, so the monitoring goal has no citations to choose
+      await chooseOption(page, 'goal', /\(Monitoring\)/);
+      await expect(page.getByText(NO_MONITORING_REPORT_ALERT)).toBeVisible();
+      await expect(page.getByText('Citations being addressed')).toHaveCount(0);
+
       await chooseOption(page, 'goal', /\(FEI\)/);
+      await expect(page.getByText(RTTAPA_ALERT)).toBeVisible();
+      await expect(page.getByText(NO_MONITORING_REPORT_ALERT)).toHaveCount(0);
 
       await page
         .getByRole('textbox', { name: 'Provide background or context for this request' })
@@ -194,6 +235,10 @@ test.describe('TTA request review', () => {
         `You sent request ${displayId} back to its creator for changes on`
       );
       await expect(requestRow(page, displayId)).toContainText('Needs action');
+      // the reviewer is an admin, and an admin can also edit a request sent back for changes
+      await expect(
+        requestRow(page, displayId).getByRole('link', { name: 'Needs action' })
+      ).toBeVisible();
     });
 
     await test.step('the creator sees who asked for changes and why', async () => {
@@ -273,6 +318,32 @@ test.describe('TTA request review', () => {
       await expect(page.getByText('The agenda is attached.', { exact: false })).toBeVisible();
     });
 
+    await test.step('the reviewer edits the request before reviewing it', async () => {
+      await page.getByRole('link', { name: 'Edit request' }).click();
+      await expect(page).toHaveURL(new RegExp(`/tta-requests/${ttaRequestId}$`));
+
+      // who reviews it and the creator's notes stay the creator's
+      await expect(page.getByLabel('Add creator notes')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Save draft' })).toHaveCount(0);
+
+      await page
+        .getByRole('textbox', { name: 'Provide background or context for this request' })
+        .click();
+      await page.keyboard.press('End');
+      await page.keyboard.type(' Reviewer clarified scope.');
+      await page.getByRole('button', { name: 'Save and return to review' }).click();
+
+      await expect(page).toHaveURL(new RegExp(`/tta-requests/view/${ttaRequestId}`));
+      await expect(page.getByRole('heading', { name: 'Review and submit' })).toBeVisible();
+      await expect(page.getByText('Reviewer clarified scope.', { exact: false })).toBeVisible();
+
+      // saving it leaves it submitted
+      await page.goto('/tta-requests');
+      await expect(requestRow(page, displayId)).toContainText('Submitted');
+      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+      await expect(page.getByRole('heading', { name: 'Review and submit' })).toBeVisible();
+    });
+
     await test.step('the reviewer sends it to the COR for approval', async () => {
       // the staff assigned on the first review are still assigned
       await expect(page.getByText(REVIEWER.fullName, { exact: true }).first()).toBeVisible();
@@ -286,6 +357,23 @@ test.describe('TTA request review', () => {
         `You sent request ${displayId} to the COR for approval on`
       );
       await expect(requestRow(page, displayId)).toContainText('Awaiting approval');
+    });
+
+    await test.step('the creator sees the request read only while it awaits approval', async () => {
+      await actAs(page, CREATOR.id);
+      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+
+      // each section is the list right after its heading, as the reviewer laid it out
+      const assignment = page.locator('h2:text-is("TTA assignment") + dl');
+      await expect(assignment.locator('dt')).toHaveText('Assigned specialist');
+      await expect(assignment.locator('dd')).toHaveText(REVIEWER.fullName);
+
+      const review = page.locator('h2:text-is("Review and submit") + dl');
+      await expect(review.locator('dt')).toHaveText('Date submitted');
+      await expect(review.locator('dd')).toHaveText(/^\d{2}\/\d{2}\/\d{4}$/);
+
+      await expect(page.getByLabel('Choose review status')).toHaveCount(0);
+      await expect(page.getByRole('link', { name: 'Edit request' })).toHaveCount(0);
     });
   });
 });

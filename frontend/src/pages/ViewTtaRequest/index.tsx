@@ -181,24 +181,28 @@ export default function ViewTtaRequest({
             },
           ]}
         />
+        {/* laid out as the reviewer saw it, see TtaRequestReview */}
         {!canReview && !!ttaRequest.assignedStaff?.length && (
-          <ReadOnlyContent
-            title="TTA assignment"
-            spacing={{ title: 2, section: 1 }}
-            sections={[
-              {
-                data: {
-                  'Assigned staff': (
-                    <>
-                      {ttaRequest.assignedStaff.map((staff) => (
-                        <div key={staff.id}>{staff.fullName ?? staff.name}</div>
-                      ))}
-                    </>
-                  ),
-                },
-              },
-            ]}
-          />
+          <>
+            <h2 className="font-serif-lg margin-top-4 margin-bottom-3">TTA assignment</h2>
+            <dl className="margin-top-0 margin-bottom-3">
+              <dt className="text-bold">Assigned specialist</dt>
+              {ttaRequest.assignedStaff.map((staff) => (
+                <dd key={staff.id} className="margin-0">
+                  {staff.fullName ?? staff.name}
+                </dd>
+              ))}
+            </dl>
+          </>
+        )}
+        {!canReview && ttaRequest.status === TTA_REQUEST_STATUSES.AWAITING_APPROVAL && (
+          <>
+            <h2 className="font-serif-lg margin-top-4 margin-bottom-3">Review and submit</h2>
+            <dl className="margin-top-0 margin-bottom-3">
+              <dt className="text-bold">Date submitted</dt>
+              <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>
+            </dl>
+          </>
         )}
         {canReview ? (
           <TtaRequestReview ttaRequest={ttaRequest} backLinkTo={backLinkTo}>

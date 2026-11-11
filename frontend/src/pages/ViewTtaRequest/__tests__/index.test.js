@@ -437,10 +437,38 @@ describe('ViewTtaRequest', () => {
     });
     renderView({}, CREATOR);
 
-    expect(await screen.findByRole('heading', { name: 'TTA assignment' })).toBeVisible();
+    const assignment = await screen.findByRole('heading', { name: 'TTA assignment' });
+    const specialist = screen.getByText('Assigned specialist');
+    expect(specialist).toBeVisible();
     expect(screen.getByText('Monica Geller, ECS')).toBeVisible();
     expect(screen.getByText('Phoebe Buffay, HS')).toBeVisible();
+
+    const review = screen.getByRole('heading', { name: 'Review and submit' });
+    const dateSubmitted = screen.getByText('Date submitted');
+    expect(dateSubmitted.nextElementSibling).toHaveTextContent('06/23/2026');
+
+    const notes = screen.getByRole('heading', { name: 'Notes summary' });
+    const following = (a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(following(assignment, specialist)).toBeTruthy();
+    expect(following(specialist, review)).toBeTruthy();
+    expect(following(review, dateSubmitted)).toBeTruthy();
+    expect(following(dateSubmitted, notes)).toBeTruthy();
+
+    expect(screen.queryByLabelText(/choose review status/i)).toBeNull();
     expect(screen.queryByRole('link', { name: 'Edit request' })).toBeNull();
+  });
+
+  it('shows the assigned staff but not the review once the request has been sent back', async () => {
+    fetchMock.get(URL, {
+      ...SUBMITTED_REQUEST,
+      status: 'needs_action',
+      assignedStaff: [STAFF[1]],
+    });
+    renderView({}, CREATOR);
+
+    expect(await screen.findByRole('heading', { name: 'TTA assignment' })).toBeVisible();
+    expect(screen.getByText('Monica Geller, ECS')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Review and submit' })).toBeNull();
   });
 
   it('does not offer a review to anyone but the reviewer', async () => {
