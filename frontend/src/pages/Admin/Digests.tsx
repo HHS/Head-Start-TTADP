@@ -45,8 +45,8 @@ export default function Digests() {
     <div>
       <h2>Email digests</h2>
       <p className="usa-prose">
-        Runs the email digest cron job on demand. For testing purposes only. Not
-        available in production.
+        Runs the email digest cron job on demand. For testing purposes only. Not available in
+        production.
       </p>
       <div className="display-flex flex-gap-1 margin-bottom-2">
         {FREQUENCIES.map(({ key, label }) => (
@@ -60,11 +60,14 @@ export default function Digests() {
           </Button>
         ))}
       </div>
-      {status && (
-        <Alert type={status.type} headingLevel="h3" slim>
-          {status.message}
-        </Alert>
-      )}
+      {/* kept mounted so screen readers announce the result when it appears */}
+      <div role="status" aria-live="polite" aria-atomic="true">
+        {status && (
+          <Alert type={status.type} headingLevel="h3" slim>
+            {status.message}
+          </Alert>
+        )}
+      </div>
     </div>
   );
 }

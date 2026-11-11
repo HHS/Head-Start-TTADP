@@ -25,9 +25,14 @@ describe('Digests', () => {
     fetchMock.post(digestUrl('weekly'), { frequency: 'WEEKLY', queued: 4 });
     render(<Digests />);
 
+    // the live region exists before the run so the result is announced
+    const statusRegion = screen.getByRole('status');
+    expect(statusRegion).toBeEmptyDOMElement();
+
     await userEvent.click(screen.getByRole('button', { name: 'Run weekly digests' }));
 
     expect(await screen.findByText('Queued 4 weekly digest emails.')).toBeInTheDocument();
+    expect(statusRegion).toHaveTextContent('Queued 4 weekly digest emails.');
     expect(fetchMock.called(digestUrl('weekly'))).toBe(true);
   });
 
@@ -48,6 +53,7 @@ describe('Digests', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Run monthly digests' }));
 
     expect(await screen.findByText('Error running monthly digests.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Error running monthly digests.');
   });
 
   it('explains when the run is blocked in production', async () => {
