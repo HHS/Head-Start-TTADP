@@ -415,6 +415,53 @@ export const notifyCollaboratorReportSubmittedForReview = (job, transport = defa
   });
 };
 
+/**
+ * Process function for monitoringDetailsAdded jobs added to the notification queue.
+ * Emails a TTAC/ECM/GSM user that a monitoring report for a recipient in their home region
+ * is available (TTAHUB-6004). One job per user per recipient/report.
+ */
+export const notifyMonitoringDetailsAdded = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { user, recipientName, recipientId, regionId } = job.data;
+  logger.debug(
+    `MAILER: Attempting to notify user ${user.id} of a monitoring report for recipient ${recipientId}`
+  );
+
+  const monitoringPath = `${process.env.TTA_SMART_HUB_URI}/recipient-tta-records/${recipientId}/region/${regionId}/monitoring`;
+  return sendIfEnabled([user.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying user ${user.id} of a monitoring report for recipient ${recipientId}`
+    );
+    return createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'monitoring_details_added'),
+      message: { to: toEmails },
+      locals: { recipientName, monitoringPath },
+    });
+  });
+};
+
+/**
+ * Enqueues one monitoringDetailsAdded email per user for a newly delivered monitoring report.
+ * Callers filter users to those whose setting is "immediately".
+ * @param {{ deliveredReviewId: number, recipientId: number, recipientName: string,
+ *   regionId: number }} delivery
+ * @param {{ id: number, name: string, email: string }[]} users
+ */
+export const monitoringDetailsAddedNotification = (delivery, users) => {
+  const { deliveredReviewId, recipientId, recipientName, regionId } = delivery;
+  users.forEach(({ id, name, email }) => {
+    enqueueNotification(EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, {
+      // `report` is what the queue's completed/failed logging reads
+      report: { id: deliveredReviewId, displayId: `monitoring report for ${recipientName}` },
+      user: { id, name, email },
+      recipientId,
+      recipientName,
+      regionId,
+    });
+  });
+};
+
 export const collaboratorReportSubmittedForReviewNotification = (
   report,
   collaborators,
@@ -1453,6 +1500,7 @@ export const processNotificationQueue = () => {
       notifyCollaboratorReportSubmittedForReview,
     ],
     [EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, notifyCreatorReportSubmittedForReview],
+    [EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, notifyMonitoringDetailsAdded],
   ];
   instantProcessors.forEach(([action, handler]) => {
     notificationQueue.process(action, transactionQueueWrapper(handler, action));

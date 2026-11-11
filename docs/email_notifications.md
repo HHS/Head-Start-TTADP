@@ -140,6 +140,7 @@ Triggered synchronously by an application event, processed once per job.
 | `RECIPIENT_REPORT_APPROVED` | `programSpecialistRecipientReportApprovedNotification` | `notifyRecipientReportApproved` | `recipient_report_approved` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `creatorReportSubmittedForReviewNotification` | `notifyCreatorReportSubmittedForReview` | `creator_report_submitted_for_review` (uses "Revised Activity Report ..." wording when resubmitted from `needs_action`) |
+| `MONITORING_DETAILS_ADDED` | `monitoringDetailsAddedNotification` | `notifyMonitoringDetailsAdded` | `monitoring_details_added` (one email per user per recipient/monitoring report; sent to TTAC/ECM/GSM users whose home region matches, after the monitoring fact table refresh — see `src/services/monitoringDeliveryNotifications.ts`) |
 
 All instant handlers share the same shape:
 

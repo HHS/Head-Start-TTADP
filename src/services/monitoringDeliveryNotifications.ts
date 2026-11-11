@@ -1,5 +1,6 @@
 import type { NotificationMetadata } from '@ttahub/common/src/notifications';
-import { NOTIFICATION_TYPES } from '../constants';
+import { EMAIL_ACTIONS, NOTIFICATION_TYPES, USER_SETTINGS } from '../constants';
+import { monitoringDetailsAddedNotification } from '../lib/mailer';
 import { auditLogger, logger } from '../logger';
 import db from '../models';
 import {
@@ -9,6 +10,7 @@ import {
   type NewMonitoringDelivery,
 } from './monitoringDeliveries';
 import { createNotification } from './notifications';
+import { userSettingOverridesById } from './userSettings';
 
 const { MonitoringReportDelivery } = db;
 
@@ -23,6 +25,7 @@ export type MonitoringDeliveryNotificationSummary = {
   detected: number;
   recorded: number;
   inApp: number;
+  emails: number;
 };
 
 /**
@@ -86,9 +89,22 @@ export async function createMonitoringDataReceivedNotifications(
 }
 
 /**
+ * Returns the users whose monitoring email setting is "immediately". The default is "never",
+ * so users without an override are left out.
+ */
+export async function usersWantingImmediateMonitoringEmail(
+  users: MonitoringNotificationUser[]
+): Promise<MonitoringNotificationUser[]> {
+  const settings = await Promise.all(
+    users.map((user) => userSettingOverridesById(user.id, EMAIL_ACTIONS.MONITORING_DETAILS_ADDED))
+  );
+  return users.filter((_user, i) => settings[i]?.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY);
+}
+
+/**
  * Notifies TTAC/ECM/GSM users in the home region of every monitoring report delivered by the
- * latest refresh. Run after `updateMonitoringFactTables()` has committed, passing the
- * snapshot taken before it started.
+ * latest refresh, in-app and by immediate email. Run after `updateMonitoringFactTables()` has
+ * committed, passing the snapshot taken before it started.
  *
  * An empty snapshot means DeliveredReviews was empty before the refresh (a fresh or rebuilt
  * database), so every review would look new. In that case nothing is recorded or sent.
@@ -98,7 +114,12 @@ export async function createMonitoringDataReceivedNotifications(
 export async function notifyNewMonitoringDeliveries(
   previouslyDeliveredMrids: Set<number>
 ): Promise<MonitoringDeliveryNotificationSummary> {
-  const summary: MonitoringDeliveryNotificationSummary = { detected: 0, recorded: 0, inApp: 0 };
+  const summary: MonitoringDeliveryNotificationSummary = {
+    detected: 0,
+    recorded: 0,
+    inApp: 0,
+    emails: 0,
+  };
 
   if (!previouslyDeliveredMrids.size) {
     logger.info(
@@ -118,9 +139,19 @@ export async function notifyNewMonitoringDeliveries(
       ACTIONABLE_NOTIFICATIONS_FLAG
     );
 
+    // users are the same for every delivery in a region, so look up email settings once each
+    const emailUsersByRegion = new Map<number, MonitoringNotificationUser[]>();
+    for (const [regionId, users] of usersByRegion) {
+      emailUsersByRegion.set(regionId, await usersWantingImmediateMonitoringEmail(users));
+    }
+
     for (const delivery of recorded) {
       const users = usersByRegion.get(delivery.regionId) ?? [];
       summary.inApp += await createMonitoringDataReceivedNotifications(delivery, users);
+
+      const emailUsers = emailUsersByRegion.get(delivery.regionId) ?? [];
+      monitoringDetailsAddedNotification(delivery, emailUsers);
+      summary.emails += emailUsers.length;
     }
   }
 

@@ -110,7 +110,7 @@ describe('monitoring delivery notifications (database)', () => {
     await GrantDeliveredReview.create({ grantId: grant.id, deliveredReviewId: newReview.id });
 
     const first = await notifyNewMonitoringDeliveries(snapshot);
-    expect(first).toEqual({ detected: 1, recorded: 1, inApp: 3 });
+    expect(first).toEqual({ detected: 1, recorded: 1, inApp: 3, emails: 0 });
 
     const notifications = await Notification.findAll({
       where: { entityId: newReview.id, type: NOTIFICATION_TYPES.MONITORING_DATA_RECEIVED },
@@ -125,7 +125,7 @@ describe('monitoring delivery notifications (database)', () => {
 
     // a second run against the same snapshot records and notifies nothing new
     const second = await notifyNewMonitoringDeliveries(snapshot);
-    expect(second).toEqual({ detected: 1, recorded: 0, inApp: 0 });
+    expect(second).toEqual({ detected: 1, recorded: 0, inApp: 0, emails: 0 });
     expect(
       await Notification.count({
         where: { entityId: newReview.id, type: NOTIFICATION_TYPES.MONITORING_DATA_RECEIVED },

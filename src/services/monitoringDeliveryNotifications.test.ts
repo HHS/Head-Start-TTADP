@@ -1,4 +1,10 @@
-import { NOTIFICATION_CONFIGURATION, NOTIFICATION_TYPES } from '../constants';
+import {
+  EMAIL_ACTIONS,
+  NOTIFICATION_CONFIGURATION,
+  NOTIFICATION_TYPES,
+  USER_SETTINGS,
+} from '../constants';
+import { monitoringDetailsAddedNotification } from '../lib/mailer';
 import db from '../models';
 import {
   findMonitoringNotificationUsersByRegion,
@@ -9,8 +15,10 @@ import {
   createMonitoringDataReceivedNotifications,
   notifyNewMonitoringDeliveries,
   recordMonitoringDeliveries,
+  usersWantingImmediateMonitoringEmail,
 } from './monitoringDeliveryNotifications';
 import { createNotification } from './notifications';
+import { userSettingOverridesById } from './userSettings';
 
 jest.mock('./monitoringDeliveries', () => ({
   findNewlyDeliveredReviews: jest.fn(),
@@ -20,6 +28,22 @@ jest.mock('./monitoringDeliveries', () => ({
 jest.mock('./notifications', () => ({
   createNotification: jest.fn(),
 }));
+
+jest.mock('../lib/mailer', () => ({
+  monitoringDetailsAddedNotification: jest.fn(),
+}));
+
+jest.mock('./userSettings', () => ({
+  userSettingOverridesById: jest.fn(),
+}));
+
+const mockEmailTrigger = monitoringDetailsAddedNotification as jest.MockedFunction<
+  typeof monitoringDetailsAddedNotification
+>;
+const mockSetting = userSettingOverridesById as jest.MockedFunction<
+  typeof userSettingOverridesById
+>;
+const { IMMEDIATELY, DAILY_DIGEST } = USER_SETTINGS.EMAIL.VALUES;
 
 const mockFindNew = findNewlyDeliveredReviews as jest.MockedFunction<
   typeof findNewlyDeliveredReviews
@@ -53,6 +77,8 @@ describe('monitoringDeliveryNotifications', () => {
       .spyOn(db.MonitoringReportDelivery, 'findOrCreate')
       .mockResolvedValue([{}, true]);
     mockCreateNotification.mockResolvedValue({ id: 1 } as never);
+    // default: nobody has opted into email (the setting default is "never")
+    mockSetting.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -121,7 +147,7 @@ describe('monitoringDeliveryNotifications', () => {
     it('skips everything when the pre-refresh snapshot is empty', async () => {
       const summary = await notifyNewMonitoringDeliveries(new Set());
 
-      expect(summary).toEqual({ detected: 0, recorded: 0, inApp: 0 });
+      expect(summary).toEqual({ detected: 0, recorded: 0, inApp: 0, emails: 0 });
       expect(mockFindNew).not.toHaveBeenCalled();
       expect(findOrCreateSpy).not.toHaveBeenCalled();
     });
@@ -148,7 +174,7 @@ describe('monitoringDeliveryNotifications', () => {
         [12, 1, 'Recipient A'],
         [13, 1, 'Recipient B'],
       ]);
-      expect(summary).toEqual({ detected: 2, recorded: 2, inApp: 3 });
+      expect(summary).toEqual({ detected: 2, recorded: 2, inApp: 3, emails: 0 });
     });
 
     it('does not notify about deliveries that were already recorded', async () => {
@@ -157,9 +183,55 @@ describe('monitoringDeliveryNotifications', () => {
 
       const summary = await notifyNewMonitoringDeliveries(new Set([99]));
 
-      expect(summary).toEqual({ detected: 1, recorded: 0, inApp: 0 });
+      expect(summary).toEqual({ detected: 1, recorded: 0, inApp: 0, emails: 0 });
       expect(mockFindUsers).not.toHaveBeenCalled();
       expect(mockCreateNotification).not.toHaveBeenCalled();
+      expect(mockEmailTrigger).not.toHaveBeenCalled();
+    });
+
+    it('emails only users set to "immediately", once per recipient/report', async () => {
+      const deliveryA2 = { ...deliveryA, deliveredReviewId: 2, mrid: 200 };
+      mockFindNew.mockResolvedValue([deliveryA, deliveryA2, deliveryB]);
+      mockFindUsers.mockResolvedValue(
+        new Map([
+          [1, [user1, user2]],
+          [2, [user3]],
+        ])
+      );
+      mockSetting.mockImplementation(async (userId) => {
+        if (userId === user1.id)
+          return { key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, value: IMMEDIATELY };
+        if (userId === user3.id)
+          return { key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, value: DAILY_DIGEST };
+        return undefined;
+      });
+
+      const summary = await notifyNewMonitoringDeliveries(new Set([99]));
+
+      expect(mockEmailTrigger).toHaveBeenCalledTimes(3);
+      expect(mockEmailTrigger).toHaveBeenNthCalledWith(1, deliveryA, [user1]);
+      expect(mockEmailTrigger).toHaveBeenNthCalledWith(2, deliveryA2, [user1]);
+      expect(mockEmailTrigger).toHaveBeenNthCalledWith(3, deliveryB, []);
+      expect(summary.emails).toBe(2);
+      // settings are looked up once per user, not once per delivery
+      expect(mockSetting).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('usersWantingImmediateMonitoringEmail', () => {
+    it('keeps only users whose monitoring email setting is "immediately"', async () => {
+      mockSetting
+        .mockResolvedValueOnce({ key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, value: IMMEDIATELY })
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce({
+          key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED,
+          value: DAILY_DIGEST,
+        });
+
+      const result = await usersWantingImmediateMonitoringEmail([user1, user2, user3]);
+
+      expect(result).toEqual([user1]);
+      expect(mockSetting).toHaveBeenCalledWith(user1.id, 'emailWhenMonitoringDetailsAdded');
     });
   });
 });
