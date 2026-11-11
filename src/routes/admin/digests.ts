@@ -3,6 +3,7 @@ import { isNonProductionEnvironment } from '../../envParser';
 import { handleError } from '../../lib/apiErrorHandler';
 import { sendEmailDigests } from '../../lib/cron';
 import { auditLogger } from '../../logger';
+import { currentUserId } from '../../services/currentUser';
 import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'ADMIN:DIGESTS:RUN';
@@ -30,7 +31,8 @@ export async function runDigests(req: Request, res: Response) {
       return;
     }
 
-    auditLogger.info(`User ${req.session.userId} manually ran ${freqKey} email digests`);
+    const userId = await currentUserId(req, res);
+    auditLogger.info(`User ${userId} manually ran ${freqKey} email digests`);
     const queued = await sendEmailDigests(freqKey, {
       includeTrainingReport: freqKey === 'DAILY',
     });
