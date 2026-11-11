@@ -14,6 +14,7 @@ import {
   getMonitoringDiagnostic,
   getMonitoringDiagnostics,
 } from './monitoringHandlers';
+import monitoringNotificationsRouter from './monitoringNotifications';
 import nationalCenterRouter from './nationalCenter';
 import recipientRouter from './recipient';
 import redisRouter from './redis';
@@ -41,6 +42,7 @@ router.use('/roles', roleRouter);
 router.use('/alerts', siteAlertRouter);
 router.use('/redis', redisRouter);
 router.use('/digests', digestsRouter);
+router.use('/monitoring-notifications', monitoringNotificationsRouter);
 router.use('/national-center', nationalCenterRouter);
 router.use('/training-reports', trainingReportRouter);
 router.use('/legacy-reports', legacyReportRouter);

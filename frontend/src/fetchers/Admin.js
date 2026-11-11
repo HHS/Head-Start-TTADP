@@ -79,6 +79,11 @@ export const runEmailDigests = async (frequency) => {
   return result.json();
 };
 
+export const sendTestMonitoringEmails = async (data) => {
+  const result = await post(join('/', 'api', 'admin', 'monitoring-notifications', 'test'), data);
+  return result.json();
+};
+
 export const deleteNationalCenter = async (id) => {
   const result = await destroy(join('/', 'api', 'admin', 'national-center', String(id)));
   return result.json();

@@ -9,6 +9,7 @@ import Diag from './diag';
 import FeedPreview from './FeedPreview';
 import Flags from './Flags';
 import Goals from './Goals';
+import MonitoringEmails from './MonitoringEmails';
 import NationalCenters from './NationalCenters';
 import Redis from './Redis';
 import SiteAlerts from './SiteAlerts';
@@ -30,6 +31,13 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/digests">
           Email digests
+        </NavLink>
+        <NavLink
+          activeClassName="usa-button--active"
+          className="usa-button"
+          to="/admin/monitoring-emails"
+        >
+          Monitoring emails
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/goals">
           Goals
@@ -83,6 +91,7 @@ function Admin() {
         <Route path="/admin/ss/" render={({ match }) => <SS match={match} />} />
         <Route path="/admin/diag/" render={({ match }) => <Diag match={match} />} />
         <Route path="/admin/digests/" render={() => <Digests />} />
+        <Route path="/admin/monitoring-emails/" render={() => <MonitoringEmails />} />
         <Route path="/admin/flags/" render={({ match }) => <Flags match={match} />} />
         <Route path="/admin/site-alerts/" render={({ match }) => <SiteAlerts match={match} />} />
         <Route path="/admin/redis/" render={({ match }) => <Redis match={match} />} />

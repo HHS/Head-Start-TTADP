@@ -566,11 +566,14 @@ To configure your local docker environment for testing emails:
 - Verify your email, assign yourself a role that displays the email prefs in account management (TTAC, ECM, etc), or use impersonation
 - Test via mailpit at `http://localhost:8025/`
 - You can modify the cron frequency in `src/lib/cron.js`
+
 ### Sending the monitoring emails on demand (dev and staging only)
+
+Admins can use **Admin → Monitoring emails** (`/admin/monitoring-emails`, backed by `POST /api/admin/monitoring-notifications/test`). It emails the signed-in admin unless user IDs are entered, and lists each email it sent. The CLI below does the same from a cloud.gov task.
 
 `yarn cli:send-test-monitoring-notifications` sends the monitoring report emails (TTAHUB-6004 immediate, TTAHUB-6062 digest) straight to the users you name, without the queue and regardless of their settings, role or home region. It uses a real delivered review (the most recent one by default) and, for the digest, the user's real digest data when there is any, falling back to that review's recipients.
 
-It refuses to run unless `TTA_SMART_HUB_URI` is a dev (`tta-smarthub-dev-*`) or staging cloud.gov host, or localhost outside cloud.gov, so it cannot send from production.
+Both refuse to run unless `TTA_SMART_HUB_URI` is a dev (`tta-smarthub-dev-*`) or staging cloud.gov host, or localhost outside cloud.gov, so it cannot send from production.
 
 ```bash
 cf run-task tta-smarthub-staging --name monitoring-email-test \
