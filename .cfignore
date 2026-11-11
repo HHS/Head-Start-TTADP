@@ -29,6 +29,9 @@ build/temp/
 .idea/
 *.log
 *.lock
+# The buildpack only installs with Yarn (Yarn 4 via .yarnrc.yml) when yarn.lock is present;
+# without it, it falls back to npm, which ignores the lockfile and package.json resolutions.
+!yarn.lock
 .env*
 .eslintrc*
 .prettier*

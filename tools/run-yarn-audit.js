@@ -1,102 +1,120 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const { exit } = require('node:process');
-const fs = require('fs');
-const { validate } = require('uuid');
-const path = require('path');
+// Fails when `yarn npm audit` reports an advisory that is not listed in the package's
+// `yarn-audit-known-issues` file. Run from the package root (repository root or `frontend/`).
+
+const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const {
+  YARN_NPM_AUDIT_ARGS,
+  YARN_NPM_AUDIT_COMMAND,
+  advisoryKey,
+  parseYarnNpmAudit,
+} = require('./security-findings/yarn-npm-audit');
 
 /* eslint-disable no-console */
 
 const ISSUES_FILE = 'yarn-audit-known-issues';
-const AUDIT_CMD = 'yarn audit --level low --json --groups dependencies';
 
-function parseResult(rawData) {
+// Map of advisoryKey -> { advisory, version }, one entry per advisory and installed version.
+function indexAdvisories(advisories) {
   const findings = new Map();
-  rawData.split(/\r?\n/).forEach((line) => {
-    if (line) {
-      try {
-        const result = JSON.parse(line);
-        if (result.type !== 'auditAdvisory') {
-          return;
-        }
-        const module = result.data.advisory.module_name;
-        const { version } = result.data.advisory.findings[0];
-        const key = `${module}@${version}`;
-        if (findings.has(key)) {
-          return;
-        }
-        findings.set(key, result);
-      } catch (err) {
-        console.error(err);
+  advisories.forEach((advisory) => {
+    advisory.versions.forEach((version) => {
+      const key = advisoryKey(advisory, version);
+      if (!findings.has(key)) {
+        findings.set(key, { advisory, version });
       }
-    }
+    });
   });
   return findings;
 }
 
-function validateKnownIssuesFile() {
-  if (!fs.existsSync(ISSUES_FILE)) {
-    fs.writeFileSync(ISSUES_FILE, '');
-    return;
+function readKnownIssues(issuesFile = ISSUES_FILE) {
+  if (!fs.existsSync(issuesFile)) {
+    fs.writeFileSync(issuesFile, '');
   }
+  return indexAdvisories(parseYarnNpmAudit(fs.readFileSync(issuesFile, 'utf8')));
 }
 
-function getKnownIssues() {
-  const fileData = fs.readFileSync(ISSUES_FILE, 'utf8');
-  return parseResult(fileData);
-}
-
-function getNewIssues() {
-  let stdout = '';
-  try {
-    stdout = execSync(AUDIT_CMD).toString();
-  } catch (err) {
-    // yarn returns non-zero exit code on findings
-    stdout = err.stdout.toString();
-  }
-  return parseResult(stdout);
-}
-
-function compareIssues(knownIssues, newIssues) {
-  const issues = [];
-  newIssues.forEach((value, key) => {
-    if (!knownIssues.has(key)) {
-      issues.push(value);
-    }
+// Yarn exits 1 both when it finds advisories and when the audit itself fails (registry outage,
+// auth error). Only trust a non-zero exit when the output contains advisory rows.
+function runAudit(spawn = spawnSync) {
+  const result = spawn('yarn', YARN_NPM_AUDIT_ARGS, {
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
   });
-  return issues;
+  if (result.error) {
+    throw new Error(`Unable to run "${YARN_NPM_AUDIT_COMMAND}": ${result.error.message}`);
+  }
+
+  let advisories;
+  try {
+    advisories = parseYarnNpmAudit(result.stdout);
+  } catch (error) {
+    throw new Error(`${error.message}\n${result.stdout || ''}${result.stderr || ''}`);
+  }
+
+  if (result.status !== 0 && advisories.length === 0) {
+    throw new Error(
+      `"${YARN_NPM_AUDIT_COMMAND}" exited with status ${result.status} without reporting advisories:\n${result.stdout || ''}${result.stderr || ''}`
+    );
+  }
+
+  return indexAdvisories(advisories);
 }
 
-function main() {
+function findUnknownIssues(knownIssues, currentIssues) {
+  return [...currentIssues.entries()]
+    .filter(([key]) => !knownIssues.has(key))
+    .map(([, finding]) => finding);
+}
+
+function formatIssue({ advisory, version }) {
+  const id = advisory.ghsa || advisory.advisoryId;
+  const subject = `${advisory.module}@${version} (${advisory.severity}) ${id}`.padEnd(60, ' ');
+  const via = advisory.dependents.length ? ` via ${advisory.dependents.join(', ')}` : '';
+  return `${subject} vulnerable: ${advisory.vulnerableVersions}${via}\n    ${advisory.title} ${advisory.url || ''}`.trimEnd();
+}
+
+function main({ spawn = spawnSync, issuesFile = ISSUES_FILE } = {}) {
   console.log(`Checking for issues in "${path.basename(process.cwd())}/"`);
-  validateKnownIssuesFile();
-  const newIssues = getNewIssues();
-  const knownIssues = getKnownIssues();
-  if (newIssues.size === 0) {
-    console.info(`No issues found.`);
-    exit(0);
+  const currentIssues = runAudit(spawn);
+  const knownIssues = readKnownIssues(issuesFile);
+
+  if (currentIssues.size === 0) {
+    console.info('No issues found.');
+    return 0;
   }
-  console.log(`Found ${newIssues.size} current issues.`);
-  console.info(`Skipping ${knownIssues.size} known issues (${[...knownIssues.keys()]})`);
-  const unsolvedIssues = compareIssues(knownIssues, newIssues);
-  console.info(`To update the ignore list, run '${AUDIT_CMD} > ${ISSUES_FILE}'`);
+
+  console.log(`Found ${currentIssues.size} current issues.`);
+  console.info(`Skipping ${knownIssues.size} known issues (${[...knownIssues.keys()].join(', ')})`);
+  const unknownIssues = findUnknownIssues(knownIssues, currentIssues);
+  console.info(`To update the ignore list, run '${YARN_NPM_AUDIT_COMMAND} > ${issuesFile}'`);
   console.info('---------------------');
-  console.error(`Found ${unsolvedIssues.length} issues\n`);
-  if (unsolvedIssues.length !== 0) {
-    unsolvedIssues.forEach((issue) => {
-      const chunkOne =
-        `${issue.data.advisory.module_name}@${issue.data.advisory.findings[0].version} to ${issue.data.advisory.patched_versions}`.padEnd(
-          50,
-          ' '
-        );
-      const chunkTwo = `(${issue.data.advisory.severity}) ${JSON.stringify(issue.data.advisory.findings)}`;
-      console.info(`${chunkOne} ${chunkTwo}`);
-    });
-    exit(1);
-  }
+  console.error(`Found ${unknownIssues.length} issues\n`);
+  unknownIssues.forEach((issue) => {
+    console.info(formatIssue(issue));
+  });
+  return unknownIssues.length === 0 ? 0 : 1;
 }
 
 if (require.main === module) {
-  main();
+  try {
+    process.exitCode = main();
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
 }
+
+module.exports = {
+  ISSUES_FILE,
+  findUnknownIssues,
+  formatIssue,
+  indexAdvisories,
+  main,
+  readKnownIssues,
+  runAudit,
+};

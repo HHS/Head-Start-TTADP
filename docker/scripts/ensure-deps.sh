@@ -83,7 +83,7 @@ validate_positive_integer "$max_install_attempts" "DEPS_INSTALL_MAX_ATTEMPTS"
 validate_positive_integer "$retry_backoff_seconds" "DEPS_INSTALL_RETRY_BACKOFF_SECONDS"
 
 install_deps() {
-  yarn install --frozen-lockfile --non-interactive --prefer-offline
+  yarn install --immutable
 }
 
 retry_install_after_cleanup() {
@@ -91,7 +91,7 @@ retry_install_after_cleanup() {
   local sleep_seconds=$((retry_backoff_seconds * attempt))
   echo "yarn install failed for $mode (attempt ${attempt}/${max_install_attempts}); cleaning cache and retrying in ${sleep_seconds}s..."
   yarn cache clean --all >/dev/null 2>&1 || true
-  rm -rf /yarn-cache/v6 /yarn-cache/.tmp /yarn-cache/.tmp-* 2>/dev/null || true
+  find /yarn-cache -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
   mkdir -p /yarn-cache
   if [ -d node_modules ]; then
     find node_modules -mindepth 1 -maxdepth 1 -exec rm -rf {} +
