@@ -239,21 +239,22 @@ describe('monitoringDeliveries', () => {
     };
     const delivery = (id: number, name: string) => ({ recipient: { id, name } });
 
-    it('returns unique recipient names delivered in the home region, sorted', async () => {
+    it('returns each recipient delivered in the home region once, sorted by name', async () => {
       jest.spyOn(db.User, 'findByPk').mockResolvedValue(qualifyingUser);
       const findAllSpy = jest.spyOn(db.MonitoringReportDelivery, 'findAll').mockResolvedValue([
         delivery(2, 'Zeta Start'),
         delivery(1, 'Alpha Start'),
         delivery(1, 'Alpha Start'),
-        // a different recipient that shares a name is listed once
+        // a different recipient that shares a name gets its own entry and link
         delivery(3, 'Zeta Start'),
       ]);
 
       const result = await monitoringReportsDeliveredInRegionByDate(5, DAY);
 
       expect(result).toEqual([
-        { id: 1, displayId: 'Alpha Start' },
-        { id: 2, displayId: 'Zeta Start' },
+        { id: 1, displayId: 'Alpha Start', regionId: 3 },
+        { id: 2, displayId: 'Zeta Start', regionId: 3 },
+        { id: 3, displayId: 'Zeta Start', regionId: 3 },
       ]);
       const { where } = findAllSpy.mock.calls[0][0] as {
         where: { regionId: number; createdAt: { [Op.gte]: { val: string } } };

@@ -166,17 +166,18 @@ export async function findMonitoringNotificationUsersByRegion(
 export type MonitoringDigestRecipient = {
   id: number;
   displayId: string;
+  regionId: number;
 };
 
 /**
  * Digest fetcher for the monitoring digest (Misc-6a). Returns the recipients with monitoring
- * reports the Hub detected in the user's home region since `date`, one entry per recipient
- * name, sorted by name. Returns an empty list for users who would not get the in-app or
+ * reports the Hub detected in the user's home region since `date`, one entry per recipient,
+ * sorted by name. Returns an empty list for users who would not get the in-app or
  * immediate notification: no TTAC/ECM/GSM role, no home region, or no
  * actionable_notifications feature flag.
  * @param {number} userId The digest recipient.
  * @param {string} date SQL interval expression from `frequencyToInterval()`.
- * @returns {Promise<MonitoringDigestRecipient[]>} `displayId` is the recipient name.
+ * @returns {Promise<MonitoringDigestRecipient[]>} `id` is the recipient id and `displayId` its name.
  */
 export async function monitoringReportsDeliveredInRegionByDate(
   userId: number,
@@ -211,12 +212,16 @@ export async function monitoringReportsDeliveredInRegionByDate(
     include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'] }],
   });
 
-  const byName = new Map<string, MonitoringDigestRecipient>();
+  const byId = new Map<number, MonitoringDigestRecipient>();
   deliveries.forEach(({ recipient }) => {
-    if (recipient?.name && !byName.has(recipient.name)) {
-      byName.set(recipient.name, { id: recipient.id, displayId: recipient.name });
+    if (recipient && !byId.has(recipient.id)) {
+      byId.set(recipient.id, {
+        id: recipient.id,
+        displayId: recipient.name,
+        regionId: user.homeRegionId,
+      });
     }
   });
 
-  return [...byName.values()].sort((a, b) => a.displayId.localeCompare(b.displayId));
+  return [...byId.values()].sort((a, b) => a.displayId.localeCompare(b.displayId));
 }

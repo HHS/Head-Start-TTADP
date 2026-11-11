@@ -13,12 +13,13 @@ import { parse } from 'csv-parse/sync';
 import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
-import { trEventComplete } from '../lib/mailer';
+import { trEventComplete, trPocAdded } from '../lib/mailer';
 import runInSavepoint from '../lib/runInSavepoint';
 import { parseStoredDate } from '../lib/utils';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
+import { getNewPocIds } from './eventFlow';
 import {
   archiveSessionNeedsActionNotifications,
   createNotificationForNewPocs,
@@ -112,7 +113,39 @@ const injectSessionColumnDates = (session) => {
  *
  * @throws {Error} If any required fields are missing in the request data.
  */
-export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
+/**
+ * Defers best-effort side effects (emails) until the request's transaction commits, so their
+ * queries can't abort it and nothing is queued for a change that doesn't persist. Route handlers
+ * pass onTransactionCommitted; the default runs the work immediately.
+ */
+type RunAfterCommit = (work: () => Promise<void>) => void | Promise<void>;
+
+const runNow: RunAfterCommit = (work) => work();
+
+/**
+ * Notifies the users newly added as Regional points of contact: in-app (TR-1a) and by email
+ * (TR-1b). A notification failure must never fail the save.
+ */
+async function notifyNewPocs(
+  event: { id: number; eventId: string; ownerId: number; data: { eventOrganizer?: string } },
+  previousPocIds: number[] | null | undefined,
+  currentPocIds: number[] | null | undefined,
+  runAfterCommit: RunAfterCommit
+): Promise<void> {
+  await runInSavepoint(
+    () => createNotificationForNewPocs(event, previousPocIds, currentPocIds),
+    `Error creating POC added notifications for event ${event.id}:`
+  );
+  // TR-1b: the mailer catches its own errors, but a failed query would still abort the request
+  // transaction (CLS) without rolling back the savepoint, so send only after the commit
+  const newPocIds = getNewPocIds(event, previousPocIds, currentPocIds);
+  await runAfterCommit(() => trPocAdded(event, newPocIds));
+}
+
+export async function createEvent(
+  request: CreateEventRequest,
+  runAfterCommit: RunAfterCommit = runNow
+): Promise<EventShape> {
   validateFields(request, ['ownerId', 'regionId', 'data']);
 
   const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
@@ -135,11 +168,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
 
-  // a notification failure must never fail the save
-  await runInSavepoint(
-    () => createNotificationForNewPocs(created, [], pocIds),
-    `Error creating POC added notifications for event ${created.id}:`
-  );
+  await notifyNewPocs(created, [], pocIds, runAfterCommit);
 
   return created;
 }
@@ -440,13 +469,17 @@ export async function findEventHelperBlob({
  * @returns A Promise that resolves to the updated event.
  * @throws {Error} If the specified event does not exist and cannot be created.
  */
-export async function updateEvent(id: number, request: UpdateEventRequest): Promise<EventShape> {
+export async function updateEvent(
+  id: number,
+  request: UpdateEventRequest,
+  runAfterCommit: RunAfterCommit = runNow
+): Promise<EventShape> {
   const event = await EventReportPilot.findOne({
     where: { id },
   });
 
   if (!event) {
-    return createEvent(request);
+    return createEvent(request, runAfterCommit);
   }
 
   validateFields(request, ['ownerId', 'regionId', 'data']);
@@ -526,15 +559,11 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     { where: { id }, individualHooks: true }
   );
 
-  // a notification failure must never fail the save
-  await runInSavepoint(
-    () =>
-      createNotificationForNewPocs(
-        { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
-        previousPocIds,
-        pocIds
-      ),
-    `Error creating POC added notifications for event ${evt.id}:`
+  await notifyNewPocs(
+    { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
+    previousPocIds,
+    pocIds,
+    runAfterCommit
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
@@ -1243,11 +1272,7 @@ export async function csvImport(buffer: Buffer) {
         version: EVENT_REPORT_PILOT_VERSION,
       });
 
-      // a notification failure must never fail the import
-      await runInSavepoint(
-        () => createNotificationForNewPocs(created, [], pocs),
-        `Error creating POC added notifications for event ${created.id}:`
-      );
+      await notifyNewPocs(created, [], pocs, runNow);
 
       return true;
     } catch (error) {

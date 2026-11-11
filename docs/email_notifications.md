@@ -155,10 +155,10 @@ export const notifyXxx = (job, transport = defaultTransport) => {
 
 ### Digest notifications
 
-Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. All digest jobs are processed by the single `notifyDigest` handler using the shared `digest` / `digest_empty` templates, unless the `DIGEST_CONFIG` entry sets its own `template`.
+Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. All digest jobs are processed by the single `notifyDigest` handler using the shared `digest` / `digest_empty` templates. Each digest type adds a `when` case with its intro line to `digest/html.pug` and its subject to `digest/subject.pug` (and to `digest_empty` unless it sets `skipEmpty`).
 
 Optional `DIGEST_CONFIG` fields:
-- `template` — email template folder to use instead of `digest` / `digest_empty`.
+- `reportLink` — `(report) => path` for each listed item's link; defaults to `/activity-reports/:id`.
 - `skipEmpty` — when `true`, users whose fetcher returns nothing are not enqueued (no `digest_empty` email).
 
 **Standard digests** (auto-discovered by cron via `DIGEST_CONFIG`):
@@ -171,7 +171,10 @@ Optional `DIGEST_CONFIG` fields:
 | `APPROVAL` | `APPROVED_DIGEST` | `emailWhenReportApproval` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCollaboratorReportSubmittedForReview` |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCreatorReportSubmittedForReview` |
-| `MONITORING_DETAILS_ADDED` | `MONITORING_DETAILS_ADDED_DIGEST` | `emailWhenMonitoringDetailsAdded` (lists recipients with monitoring reports the Hub detected in the user's home region, from `MonitoringReportDeliveries`; TTAC/ECM/GSM users only; `monitoring_details_added_digest` template; `skipEmpty`) |
+| `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
+| `MONITORING_DETAILS_ADDED` | `MONITORING_DETAILS_ADDED_DIGEST` | `emailWhenMonitoringDetailsAdded` (lists recipients with monitoring reports the Hub detected in the user's home region, from `MonitoringReportDeliveries`; TTAC/ECM/GSM users only; `skipEmpty`) |
+
+Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts` and read the `ZALEventReportPilots` audit log. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
 
@@ -185,7 +188,7 @@ Optional `DIGEST_CONFIG` fields:
 
 ### Training report notifications
 
-Queued by TR-lifecycle functions (`trCollaboratorAdded`, `trOwnerAdded`, `trSessionCreated`, `trEventComplete`) and by the `trainingReportTaskDueNotifications` digest function. All are processed by `sendTrainingReportNotification` which uses `SEND_NOTIFICATIONS === 'true' && !CI` as its guard.
+Queued by TR-lifecycle functions (`trCollaboratorAdded`, `trOwnerAdded`, `trPocAdded`, `trSessionCreated`, `trEventComplete`) and by the `trainingReportTaskDueNotifications` digest function. All are processed by `sendTrainingReportNotification` which uses `SEND_NOTIFICATIONS === 'true' && !CI` as its guard.
 
 **Alert-type reminders** are driven by `TR_NOTIFICATION_CONFIG_DICT`:
 

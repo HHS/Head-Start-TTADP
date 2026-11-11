@@ -17,6 +17,20 @@ const ALLOWED_HOSTS = [
 ];
 const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
 
+/**
+ * A request the tool refuses: 403 outside a lower environment, 400 for bad input. The
+ * admin route returns these messages to the caller; other errors are unexpected.
+ */
+export class TestNotificationRequestError extends Error {
+  status: 400 | 403;
+
+  constructor(message: string, status: 400 | 403 = 400) {
+    super(message);
+    this.name = 'TestNotificationRequestError';
+    this.status = status;
+  }
+}
+
 export type DigestFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
 export type SendTestMonitoringNotificationsOptions = {
@@ -41,7 +55,10 @@ export type SentEmail = {
 export function assertLowerEnvironment(env: NodeJS.ProcessEnv = process.env): void {
   const space = env.SPACE ?? '';
   if (space.toLowerCase().includes('prod')) {
-    throw new Error(`Refusing to send test monitoring notifications in space "${space}".`);
+    throw new TestNotificationRequestError(
+      `Refusing to send test monitoring notifications in space "${space}".`,
+      403
+    );
   }
 
   let host = '';
@@ -53,8 +70,9 @@ export function assertLowerEnvironment(env: NodeJS.ProcessEnv = process.env): vo
 
   const isLocal = LOCAL_HOSTS.includes(host) && !env.VCAP_APPLICATION;
   if (!isLocal && !ALLOWED_HOSTS.some((pattern) => pattern.test(host))) {
-    throw new Error(
-      `Refusing to send test monitoring notifications: TTA_SMART_HUB_URI host "${host}" is not a dev or staging environment.`
+    throw new TestNotificationRequestError(
+      `Refusing to send test monitoring notifications: TTA_SMART_HUB_URI host "${host}" is not a dev or staging environment.`,
+      403
     );
   }
 }
@@ -89,7 +107,7 @@ async function loadReview(deliveredReviewId?: number) {
   });
 
   if (!review) {
-    throw new Error(
+    throw new TestNotificationRequestError(
       deliveredReviewId
         ? `Delivered review ${deliveredReviewId} not found, not delivered, or has no grants.`
         : 'No delivered review with grants found.'
@@ -126,10 +144,10 @@ export async function sendTestMonitoringNotifications({
   assertLowerEnvironment();
 
   if (!userIds.length) {
-    throw new Error('At least one --userId is required.');
+    throw new TestNotificationRequestError('At least one user ID is required.');
   }
   if (process.env.SEND_NOTIFICATIONS !== 'true') {
-    throw new Error(
+    throw new TestNotificationRequestError(
       'SEND_NOTIFICATIONS is not "true" in this environment, so no email would be sent.'
     );
   }
@@ -137,7 +155,7 @@ export async function sendTestMonitoringNotifications({
   const users = await User.findAll({ attributes: ['id', 'name', 'email'], where: { id: userIds } });
   const missing = userIds.filter((id) => !users.some((u) => u.id === id));
   if (missing.length) {
-    throw new Error(`Users not found: ${missing.join(', ')}`);
+    throw new TestNotificationRequestError(`Users not found: ${missing.join(', ')}`);
   }
 
   const { review, recipients } = await loadReview(deliveredReviewId);
@@ -177,7 +195,11 @@ export async function sendTestMonitoringNotifications({
       let source = 'the user’s digest data';
       if (!reports.length) {
         reports = recipients
-          .map(({ recipientId, recipientName }) => ({ id: recipientId, displayId: recipientName }))
+          .map(({ recipientId, recipientName, regionId }) => ({
+            id: recipientId,
+            displayId: recipientName,
+            regionId,
+          }))
           .sort((a, b) => a.displayId.localeCompare(b.displayId));
         source = `review ${review.id}'s recipients (the user had no digest data)`;
       }

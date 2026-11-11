@@ -157,14 +157,14 @@ describe('monitoring delivery notifications (database)', () => {
       users.ttac.id,
       "NOW() - INTERVAL '1 DAY'"
     );
-    expect(daily).toEqual([{ id: recipient.id, displayId: recipient.name }]);
+    expect(daily).toEqual([{ id: recipient.id, displayId: recipient.name, regionId: region.id }]);
 
     // both deliveries are in the monthly window but the recipient is listed once
     const monthly = await monitoringReportsDeliveredInRegionByDate(
       users.ttac.id,
       "NOW() - INTERVAL '1 MONTH'"
     );
-    expect(monthly).toEqual([{ id: recipient.id, displayId: recipient.name }]);
+    expect(monthly).toEqual([{ id: recipient.id, displayId: recipient.name, regionId: region.id }]);
 
     for (const excluded of [users.gs, users.otherRegionTtac, users.noFlagTtac]) {
       expect(

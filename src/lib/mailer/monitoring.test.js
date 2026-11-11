@@ -136,21 +136,21 @@ describe('monitoring details added email (TTAHUB-6004)', () => {
   describe('monitoring digest (TTAHUB-6062)', () => {
     const config = DIGEST_CONFIG[EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST];
     const recipients = [
-      { id: 1, displayId: 'Alpha Start' },
-      { id: 2, displayId: 'Zeta Start' },
+      { id: 1, displayId: 'Alpha Start', regionId: 3 },
+      { id: 2, displayId: 'Zeta Start', regionId: 3 },
     ];
     const digestUser = { id: 9, name: 'TTAC', email: 'ttac@test.gov' };
 
-    it('is registered for the monitoring email setting with its own template', () => {
+    it('is registered for the monitoring email setting and links to the monitoring tab', () => {
       expect(config).toEqual(
         expect.objectContaining({
           settingKey: 'emailWhenMonitoringDetailsAdded',
           reportFetcher: monitoringReportsDeliveredInRegionByDate,
           actionType: 'monitoringDetailsAddedDigest',
-          template: 'monitoring_details_added_digest',
           skipEmpty: true,
         })
       );
+      expect(config.reportLink(recipients[0])).toBe('/recipient-tta-records/1/region/3/monitoring');
     });
 
     it('enqueues digests only for users with recipients in the window', async () => {
@@ -203,13 +203,18 @@ describe('monitoring details added email (TTAHUB-6004)', () => {
       const message = JSON.parse(email.message);
       expect(email.envelope.to).toStrictEqual([digestUser.email]);
       expect(message.subject).toBe(`TTA Hub ${subjectFreq} digest: new monitoring reports`);
-      expect(message.text).toContain(`Below are your monitoring notifications for ${freq}.`);
+      expect(message.text).toContain(`Below are your report notifications for ${freq}.`);
       expect(message.text).toContain(
-        'New monitoring reports were added in your region for the following recipients:'
+        'New monitoring reports were added in your region for these recipients:'
+      );
+      expect(message.html).toContain(
+        `href="${process.env.TTA_SMART_HUB_URI}/recipient-tta-records/1/region/3/monitoring"`
+      );
+      expect(message.html).toContain(
+        `href="${process.env.TTA_SMART_HUB_URI}/recipient-tta-records/2/region/3/monitoring"`
       );
       expect(message.text).toContain('Alpha Start');
       expect(message.text).toContain('Zeta Start');
-      expect(message.text).toContain('The TTA Hub team');
       expect(message.text).not.toContain('activity-reports');
     });
 

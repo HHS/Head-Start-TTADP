@@ -148,8 +148,8 @@ describe('sendTestMonitoringNotifications', () => {
       data: {
         user,
         reports: [
-          { id: 600, displayId: 'Alpha Start' },
-          { id: 500, displayId: 'Zeta Start' },
+          { id: 600, displayId: 'Alpha Start', regionId: 3 },
+          { id: 500, displayId: 'Zeta Start', regionId: 3 },
         ],
         type: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
         freq: 'this week',

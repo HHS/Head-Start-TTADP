@@ -19,6 +19,7 @@ import {
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
 import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
+import { trainingReportsWherePocByDate } from '../../services/trainingReportDigests';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
 import referenceData from '../../workers/referenceData';
@@ -876,6 +877,58 @@ export const trCollaboratorAdded = async (report, newCollaboratorId) => {
 };
 
 /**
+ * Notifies each newly added Regional point of contact on a TR (TR-1b), provided they have
+ * opted in to receiving this email immediately. Callers pass only the new POCs (see
+ * `getNewPocIds`).
+ *
+ * @param {{ id: number, eventId: string }} event
+ * @param {number[]} newPocIds
+ */
+export const trPocAdded = async (event, newPocIds) => {
+  if (process.env.CI) return;
+  try {
+    const { eventId } = event;
+
+    await Promise.all(
+      newPocIds.map(async (pocId) => {
+        const setting = await userSettingOverridesById(
+          pocId,
+          EMAIL_ACTIONS.ADDED_AS_POC_TRAINING_REPORT
+        );
+        if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return null;
+
+        const poc = await userById(pocId, true);
+        if (!poc) return null;
+
+        const emailTo = filterAndDeduplicateEmails([poc.email]);
+        if (emailTo.length === 0) {
+          logger.info(
+            `Did not send tr poc added notification for ${eventId} preferences are not set or marked as "no-send"`
+          );
+          return null;
+        }
+
+        const data = {
+          displayId: eventId,
+          reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId}`,
+          emailTo,
+          debugMessage: `MAILER: Notifying ${poc.email} that they were added as a POC to TR ${event.id}`,
+          templatePath: 'tr_poc_added',
+          report: {
+            displayId: eventId,
+          },
+          ...referenceData(),
+        };
+
+        return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
+      })
+    );
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
  *
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
@@ -978,6 +1031,12 @@ export const changesRequestedNotification = (
   });
 };
 
+// Digest reports link to the AR by id unless the DIGEST_CONFIG entry gives a reportLink
+const activityReportDigestLink = (report) => `/activity-reports/${report.id}`;
+const trainingReportDigestLink = (report) => `/training-report/view/${report.displayId}`;
+const monitoringDigestLink = (report) =>
+  `/recipient-tta-records/${report.id}/region/${report.regionId}/monitoring`;
+
 // Registry: add one entry per digest type. The cron layer iterates this.
 export const DIGEST_CONFIG = {
   [EMAIL_ACTIONS.COLLABORATOR_DIGEST]: {
@@ -1016,14 +1075,21 @@ export const DIGEST_CONFIG = {
     actionType: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
     logKey: 'CreatorReportSubmittedForReviewDigest',
   },
+  [EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.ADDED_AS_POC_TRAINING_REPORT,
+    reportFetcher: trainingReportsWherePocByDate,
+    actionType: EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED_DIGEST,
+    logKey: 'TrainingReportPocAddedDigest',
+    reportLink: trainingReportDigestLink,
+  },
   // Misc-6a (TTAHUB-6062): `reports` are recipients with new monitoring reports in the
-  // user's home region. Uses its own template and is not sent when the list is empty.
+  // user's home region, each linking to the recipient's monitoring tab. Not sent when empty.
   [EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST]: {
     settingKey: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED,
     reportFetcher: monitoringReportsDeliveredInRegionByDate,
     actionType: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
     logKey: 'MonitoringDetailsAddedDigest',
-    template: 'monitoring_details_added_digest',
+    reportLink: monitoringDigestLink,
     skipEmpty: true,
   },
 };
@@ -1459,10 +1525,13 @@ export const notifyDigest = (job, transport = defaultTransport) => {
 
   return sendIfEnabled([user.email], (toEmails) => {
     logger.debug(`MAILER: Creating ${user.email}'s ${type} digest for ${freq}`);
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/`;
+    const reportLink = DIGEST_CONFIG[type]?.reportLink ?? activityReportDigestLink;
+    const reportsWithLinks = (reports ?? []).map((report) => ({
+      ...report,
+      link: `${process.env.TTA_SMART_HUB_URI}${reportLink(report)}`,
+    }));
 
-    const defaultTemplate = reports && reports.length > 0 ? 'digest' : 'digest_empty';
-    const templateType = DIGEST_CONFIG[type]?.template ?? defaultTemplate;
+    const templateType = reports && reports.length > 0 ? 'digest' : 'digest_empty';
 
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, templateType),
@@ -1471,8 +1540,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
       },
       locals: {
         user,
-        reports,
-        reportPath,
+        reports: reportsWithLinks,
         type,
         freq,
         subjectFreq,
@@ -1490,6 +1558,7 @@ const TR_EMAIL_ACTIONS = [
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
   EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
   EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
+  EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
 ];
 
 // All digest actions use notifyDigest; derive from DIGEST_CONFIG so new entries auto-register

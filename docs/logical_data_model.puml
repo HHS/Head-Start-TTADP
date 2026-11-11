@@ -1337,6 +1337,7 @@ class SessionReportPilots{
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  endDate : date
  startDate : date
+ submittedAt : timestamp with time zone
 }
 
 class SiteAlerts{

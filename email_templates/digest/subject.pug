@@ -13,6 +13,10 @@ case type
         = `TTA Hub ${subjectFreq} digest: Activity Reports submitted for approval`
     when 'creatorReportSubmittedForReviewDigest'
         = `TTA Hub ${subjectFreq} digest: Activity Reports submitted for approval`
+    when 'trainingReportPocAddedDigest'
+        = `TTA Hub ${subjectFreq} digest: added as a regional point of contact`
+    when 'monitoringDetailsAddedDigest'
+        = `TTA Hub ${subjectFreq} digest: new monitoring reports`
     default
         = `TTA Hub digest: ${type}`
 
