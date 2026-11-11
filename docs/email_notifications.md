@@ -155,7 +155,11 @@ export const notifyXxx = (job, transport = defaultTransport) => {
 
 ### Digest notifications
 
-Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. All digest jobs are processed by the single `notifyDigest` handler using the shared `digest` / `digest_empty` templates.
+Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. All digest jobs are processed by the single `notifyDigest` handler using the shared `digest` / `digest_empty` templates, unless the `DIGEST_CONFIG` entry sets its own `template`.
+
+Optional `DIGEST_CONFIG` fields:
+- `template` — email template folder to use instead of `digest` / `digest_empty`.
+- `skipEmpty` — when `true`, users whose fetcher returns nothing are not enqueued (no `digest_empty` email).
 
 **Standard digests** (auto-discovered by cron via `DIGEST_CONFIG`):
 
@@ -167,6 +171,7 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | `APPROVAL` | `APPROVED_DIGEST` | `emailWhenReportApproval` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCollaboratorReportSubmittedForReview` |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCreatorReportSubmittedForReview` |
+| `MONITORING_DETAILS_ADDED` | `MONITORING_DETAILS_ADDED_DIGEST` | `emailWhenMonitoringDetailsAdded` (lists recipients with monitoring reports the Hub detected in the user's home region, from `MonitoringReportDeliveries`; TTAC/ECM/GSM users only; `monitoring_details_added_digest` template; `skipEmpty`) |
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
 

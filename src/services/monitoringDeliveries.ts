@@ -2,7 +2,18 @@ import { Op } from 'sequelize';
 import db from '../models';
 import Users from '../policies/user';
 
-const { DeliveredReview, Grant, Permission, Recipient, Role, User } = db;
+const { DeliveredReview, Grant, MonitoringReportDelivery, Permission, Recipient, Role, User } = db;
+
+// rollout gate for the in-app, immediate email and digest monitoring notifications
+export const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
+
+// The digest window comes from frequencyToInterval() as a SQL expression. Only these values
+// are accepted, since the expression is used as a literal.
+const DIGEST_WINDOWS = [
+  "NOW() - INTERVAL '1 DAY'",
+  "NOW() - INTERVAL '1 WEEK'",
+  "NOW() - INTERVAL '1 MONTH'",
+];
 
 // Users with any of these roles, whose home region matches a newly delivered monitoring
 // report's grant region, are notified of the report (Misc-1a / Misc-6a).
@@ -150,4 +161,62 @@ export async function findMonitoringNotificationUsersByRegion(
   });
 
   return byRegion;
+}
+
+export type MonitoringDigestRecipient = {
+  id: number;
+  displayId: string;
+};
+
+/**
+ * Digest fetcher for the monitoring digest (Misc-6a). Returns the recipients with monitoring
+ * reports the Hub detected in the user's home region since `date`, one entry per recipient
+ * name, sorted by name. Returns an empty list for users who would not get the in-app or
+ * immediate notification: no TTAC/ECM/GSM role, no home region, or no
+ * actionable_notifications feature flag.
+ * @param {number} userId The digest recipient.
+ * @param {string} date SQL interval expression from `frequencyToInterval()`.
+ * @returns {Promise<MonitoringDigestRecipient[]>} `displayId` is the recipient name.
+ */
+export async function monitoringReportsDeliveredInRegionByDate(
+  userId: number,
+  date: string
+): Promise<MonitoringDigestRecipient[]> {
+  if (!DIGEST_WINDOWS.includes(date)) {
+    throw new Error(`Invalid monitoring digest window: ${date}`);
+  }
+
+  const user = await User.findByPk(userId, {
+    attributes: ['id', 'homeRegionId', 'flags'],
+    include: [
+      { model: Permission, as: 'permissions', attributes: ['scopeId', 'regionId'] },
+      { model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } },
+    ],
+  });
+
+  const qualifies =
+    user?.homeRegionId &&
+    user.roles.some(({ name }) => MONITORING_NOTIFICATION_ROLES.includes(name)) &&
+    new Users(user).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG);
+  if (!qualifies) {
+    return [];
+  }
+
+  const deliveries = await MonitoringReportDelivery.findAll({
+    attributes: ['recipientId'],
+    where: {
+      regionId: user.homeRegionId,
+      createdAt: { [Op.gte]: db.sequelize.literal(date) },
+    },
+    include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'] }],
+  });
+
+  const byName = new Map<string, MonitoringDigestRecipient>();
+  deliveries.forEach(({ recipient }) => {
+    if (recipient?.name && !byName.has(recipient.name)) {
+      byName.set(recipient.name, { id: recipient.id, displayId: recipient.name });
+    }
+  });
+
+  return [...byName.values()].sort((a, b) => a.displayId.localeCompare(b.displayId));
 }

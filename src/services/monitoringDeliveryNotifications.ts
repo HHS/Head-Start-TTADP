@@ -4,6 +4,7 @@ import { monitoringDetailsAddedNotification } from '../lib/mailer';
 import { auditLogger, logger } from '../logger';
 import db from '../models';
 import {
+  ACTIONABLE_NOTIFICATIONS_FLAG,
   findMonitoringNotificationUsersByRegion,
   findNewlyDeliveredReviews,
   type MonitoringNotificationUser,
@@ -14,7 +15,7 @@ import { userSettingOverridesById } from './userSettings';
 
 const { MonitoringReportDelivery } = db;
 
-export const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
+export { ACTIONABLE_NOTIFICATIONS_FLAG };
 
 type MonitoringDataReceivedMetadata = NotificationMetadata & {
   recipientId: number;

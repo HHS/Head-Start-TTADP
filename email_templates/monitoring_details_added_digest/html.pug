@@ -1,0 +1,11 @@
+style
+  include ../email.css
+p Hello,
+p Below are your monitoring notifications for #{freq}.
+p New monitoring reports were added in your region for the following recipients:
+ul
+  for recipient in reports
+    li= recipient.displayId
+p Best wishes,
+  br
+  | The TTA Hub team

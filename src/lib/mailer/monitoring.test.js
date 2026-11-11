@@ -1,17 +1,29 @@
 import { createTransport } from 'nodemailer';
-import { EMAIL_ACTIONS } from '../../constants';
+import { DIGEST_SUBJECT_FREQ, EMAIL_ACTIONS, EMAIL_DIGEST_FREQ } from '../../constants';
 import { createMailerLog } from '../../services/mailerLog';
+import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
+import { usersWithSetting } from '../../services/userSettings';
 import {
+  DIGEST_CONFIG,
+  digestForSetting,
   monitoringDetailsAddedNotification,
   notificationQueue,
+  notifyDigest,
   notifyMonitoringDetailsAdded,
 } from '.';
-import logEmailNotification from './logNotifications';
+import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
 
 jest.mock('bull');
 jest.mock('../../logger');
 jest.mock('../../services/mailerLog', () => ({
   createMailerLog: jest.fn().mockResolvedValue({ id: 1 }),
+}));
+jest.mock('../../services/monitoringDeliveries', () => ({
+  monitoringReportsDeliveredInRegionByDate: jest.fn(),
+}));
+jest.mock('../../services/userSettings', () => ({
+  usersWithSetting: jest.fn(),
+  userSettingOverridesById: jest.fn(),
 }));
 
 const jsonTransport = createTransport({ jsonTransport: true });
@@ -115,6 +127,108 @@ describe('monitoring details added email (TTAHUB-6004)', () => {
           emailTo: [userA.email],
           action: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED,
           subject: 'A new monitoring report is available for recipients in your region.',
+          activityReports: [],
+        })
+      );
+    });
+  });
+
+  describe('monitoring digest (TTAHUB-6062)', () => {
+    const config = DIGEST_CONFIG[EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST];
+    const recipients = [
+      { id: 1, displayId: 'Alpha Start' },
+      { id: 2, displayId: 'Zeta Start' },
+    ];
+    const digestUser = { id: 9, name: 'TTAC', email: 'ttac@test.gov' };
+
+    it('is registered for the monitoring email setting with its own template', () => {
+      expect(config).toEqual(
+        expect.objectContaining({
+          settingKey: 'emailWhenMonitoringDetailsAdded',
+          reportFetcher: monitoringReportsDeliveredInRegionByDate,
+          actionType: 'monitoringDetailsAddedDigest',
+          template: 'monitoring_details_added_digest',
+          skipEmpty: true,
+        })
+      );
+    });
+
+    it('enqueues digests only for users with recipients in the window', async () => {
+      const addSpy = jest.spyOn(notificationQueue, 'add').mockClear();
+      usersWithSetting.mockResolvedValue([digestUser, { id: 10, email: 'empty@test.gov' }]);
+      monitoringReportsDeliveredInRegionByDate.mockImplementation(async (userId) =>
+        userId === digestUser.id ? recipients : []
+      );
+
+      const result = await digestForSetting({
+        ...config,
+        freq: EMAIL_DIGEST_FREQ.WEEKLY,
+        subjectFreq: DIGEST_SUBJECT_FREQ.WEEKLY,
+      });
+
+      expect(usersWithSetting).toHaveBeenCalledWith('emailWhenMonitoringDetailsAdded', [
+        EMAIL_DIGEST_FREQ.WEEKLY,
+      ]);
+      expect(monitoringReportsDeliveredInRegionByDate).toHaveBeenCalledWith(
+        digestUser.id,
+        "NOW() - INTERVAL '1 WEEK'"
+      );
+      expect(addSpy).toHaveBeenCalledTimes(1);
+      expect(addSpy).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
+        expect.objectContaining({ user: digestUser, reports: recipients })
+      );
+      expect(result).toHaveLength(1);
+    });
+
+    it.each([
+      ['DAILY', 'daily', 'today'],
+      ['WEEKLY', 'weekly', 'this week'],
+      ['MONTHLY', 'monthly', 'this month'],
+    ])('renders the %s digest subject and recipient list', async (key, subjectFreq, freq) => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            user: digestUser,
+            reports: recipients,
+            type: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ[key],
+            subjectFreq: DIGEST_SUBJECT_FREQ[key],
+          },
+        },
+        jsonTransport
+      );
+
+      const message = JSON.parse(email.message);
+      expect(email.envelope.to).toStrictEqual([digestUser.email]);
+      expect(message.subject).toBe(`TTA Hub ${subjectFreq} digest: new monitoring reports`);
+      expect(message.text).toContain(`Below are your monitoring notifications for ${freq}.`);
+      expect(message.text).toContain(
+        'New monitoring reports were added in your region for the following recipients:'
+      );
+      expect(message.text).toContain('Alpha Start');
+      expect(message.text).toContain('Zeta Start');
+      expect(message.text).toContain('The TTA Hub team');
+      expect(message.text).not.toContain('activity-reports');
+    });
+
+    it('logs the monitoring digest subject without Activity Report ids', async () => {
+      createMailerLog.mockClear();
+      await logDigestEmailNotification(
+        {
+          id: 8,
+          name: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
+          data: { user: digestUser, reports: recipients, subjectFreq: 'daily' },
+        },
+        true,
+        {}
+      );
+
+      expect(createMailerLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          emailTo: [digestUser.email],
+          subject: 'TTA Hub daily digest: new monitoring reports',
           activityReports: [],
         })
       );

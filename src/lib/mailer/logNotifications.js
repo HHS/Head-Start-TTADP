@@ -117,7 +117,13 @@ export async function logDigestEmailNotification(job, success, result) {
   let subject;
   const { data } = job;
   const { user, reports, subjectFreq } = data;
-  const template = path.resolve(emailTemplatePath, 'digest', 'subject.pug');
+  // the monitoring digest lists recipients, not Activity Reports, and has its own subject
+  const isMonitoringDigest = job.name === EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST;
+  const template = path.resolve(
+    emailTemplatePath,
+    isMonitoringDigest ? 'monitoring_details_added_digest' : 'digest',
+    'subject.pug'
+  );
   const emailTo = user ? [user.email] : [''];
 
   try {
@@ -127,7 +133,7 @@ export async function logDigestEmailNotification(job, success, result) {
       emailTo,
       action: job.name,
       subject,
-      activityReports: reports.map((r) => r.id),
+      activityReports: isMonitoringDigest ? [] : reports.map((r) => r.id),
       success,
       result,
     });

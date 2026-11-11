@@ -21,6 +21,7 @@ import { createNotification } from './notifications';
 import { userSettingOverridesById } from './userSettings';
 
 jest.mock('./monitoringDeliveries', () => ({
+  ACTIONABLE_NOTIFICATIONS_FLAG: 'actionable_notifications',
   findNewlyDeliveredReviews: jest.fn(),
   findMonitoringNotificationUsersByRegion: jest.fn(),
 }));

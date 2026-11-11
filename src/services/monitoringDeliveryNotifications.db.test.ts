@@ -3,6 +3,7 @@ import db from '../models';
 import { createGrant, createRegion, createUser, getUniqueId } from '../testUtils';
 import {
   findMonitoringNotificationUsersByRegion,
+  monitoringReportsDeliveredInRegionByDate,
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
 import {
@@ -138,5 +139,37 @@ describe('monitoring delivery notifications (database)', () => {
     expect(recorded.map((r) => [r.deliveredReviewId, r.recipientId, r.regionId])).toEqual([
       [newReview.id, grant.recipientId, region.id],
     ]);
+  });
+
+  it('lists recipients detected in the digest window for qualifying users only', async () => {
+    // runs after the previous test recorded newReview; push oldReview's delivery outside the window
+    const old = await MonitoringReportDelivery.create({
+      deliveredReviewId: oldReview.id,
+      recipientId: grant.recipientId,
+      regionId: region.id,
+    });
+    await db.sequelize.query(
+      `UPDATE "MonitoringReportDeliveries" SET "createdAt" = NOW() - INTERVAL '10 DAYS' WHERE id = ${old.id}`
+    );
+    const recipient = await Recipient.findByPk(grant.recipientId);
+
+    const daily = await monitoringReportsDeliveredInRegionByDate(
+      users.ttac.id,
+      "NOW() - INTERVAL '1 DAY'"
+    );
+    expect(daily).toEqual([{ id: recipient.id, displayId: recipient.name }]);
+
+    // both deliveries are in the monthly window but the recipient is listed once
+    const monthly = await monitoringReportsDeliveredInRegionByDate(
+      users.ttac.id,
+      "NOW() - INTERVAL '1 MONTH'"
+    );
+    expect(monthly).toEqual([{ id: recipient.id, displayId: recipient.name }]);
+
+    for (const excluded of [users.gs, users.otherRegionTtac, users.noFlagTtac]) {
+      expect(
+        await monitoringReportsDeliveredInRegionByDate(excluded.id, "NOW() - INTERVAL '1 MONTH'")
+      ).toEqual([]);
+    }
   });
 });

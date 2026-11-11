@@ -5,6 +5,7 @@ import {
   findMonitoringNotificationUsersByRegion,
   findNewlyDeliveredReviews,
   MONITORING_NOTIFICATION_ROLES,
+  monitoringReportsDeliveredInRegionByDate,
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
 
@@ -224,6 +225,64 @@ describe('monitoringDeliveries', () => {
       const result = await findMonitoringNotificationUsersByRegion([]);
       expect(result.size).toBe(0);
       expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('monitoringReportsDeliveredInRegionByDate', () => {
+    const DAY = "NOW() - INTERVAL '1 DAY'";
+    const qualifyingUser = {
+      id: 5,
+      homeRegionId: 3,
+      flags: ['actionable_notifications'],
+      permissions: [],
+      roles: [{ name: 'GS' }, { name: 'ECM' }],
+    };
+    const delivery = (id: number, name: string) => ({ recipient: { id, name } });
+
+    it('returns unique recipient names delivered in the home region, sorted', async () => {
+      jest.spyOn(db.User, 'findByPk').mockResolvedValue(qualifyingUser);
+      const findAllSpy = jest.spyOn(db.MonitoringReportDelivery, 'findAll').mockResolvedValue([
+        delivery(2, 'Zeta Start'),
+        delivery(1, 'Alpha Start'),
+        delivery(1, 'Alpha Start'),
+        // a different recipient that shares a name is listed once
+        delivery(3, 'Zeta Start'),
+      ]);
+
+      const result = await monitoringReportsDeliveredInRegionByDate(5, DAY);
+
+      expect(result).toEqual([
+        { id: 1, displayId: 'Alpha Start' },
+        { id: 2, displayId: 'Zeta Start' },
+      ]);
+      const { where } = findAllSpy.mock.calls[0][0] as {
+        where: { regionId: number; createdAt: { [Op.gte]: { val: string } } };
+      };
+      expect(where.regionId).toBe(3);
+      expect(where.createdAt[Op.gte].val).toBe(DAY);
+    });
+
+    it.each([
+      ['has no qualifying role', { roles: [{ name: 'GS' }] }],
+      ['has no home region', { homeRegionId: null }],
+      ['cannot see the feature flag', { flags: [] }],
+    ])('returns nothing when the user %s', async (_label, overrides) => {
+      jest.spyOn(db.User, 'findByPk').mockResolvedValue({ ...qualifyingUser, ...overrides });
+      const findAllSpy = jest.spyOn(db.MonitoringReportDelivery, 'findAll');
+
+      expect(await monitoringReportsDeliveredInRegionByDate(5, DAY)).toEqual([]);
+      expect(findAllSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns nothing when the user does not exist', async () => {
+      jest.spyOn(db.User, 'findByPk').mockResolvedValue(null);
+      expect(await monitoringReportsDeliveredInRegionByDate(5, DAY)).toEqual([]);
+    });
+
+    it('rejects a window that is not one of the digest intervals', async () => {
+      await expect(
+        monitoringReportsDeliveredInRegionByDate(5, '1=1; DROP TABLE x')
+      ).rejects.toThrow('Invalid monitoring digest window');
     });
   });
 });

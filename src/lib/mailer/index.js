@@ -18,6 +18,7 @@ import {
   activityReportsSubmittedWhereCreatorByDate,
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
+import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
 import referenceData from '../../workers/referenceData';
@@ -1015,6 +1016,16 @@ export const DIGEST_CONFIG = {
     actionType: EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
     logKey: 'CreatorReportSubmittedForReviewDigest',
   },
+  // Misc-6a (TTAHUB-6062): `reports` are recipients with new monitoring reports in the
+  // user's home region. Uses its own template and is not sent when the list is empty.
+  [EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED,
+    reportFetcher: monitoringReportsDeliveredInRegionByDate,
+    actionType: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
+    logKey: 'MonitoringDetailsAddedDigest',
+    template: 'monitoring_details_added_digest',
+    skipEmpty: true,
+  },
 };
 
 export async function digestForSetting({
@@ -1024,6 +1035,7 @@ export async function digestForSetting({
   logKey,
   freq,
   subjectFreq,
+  skipEmpty = false,
 }) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ${logKey} with freq ${freq}`);
@@ -1034,6 +1046,9 @@ export async function digestForSetting({
     const users = await usersWithSetting(settingKey, [freq]);
     const records = users.map(async (user) => {
       const reports = await reportFetcher(user.id, date);
+      if (skipEmpty && !reports.length) {
+        return null;
+      }
       const data = {
         user,
         reports,
@@ -1045,7 +1060,7 @@ export async function digestForSetting({
       notificationQueue.add(actionType, data);
       return data;
     });
-    return Promise.all(records);
+    return (await Promise.all(records)).filter(Boolean);
   } catch (err) {
     logger.info(`MAILER: ${logKey} with key ${settingKey} freq ${freq} error ${err}`);
     throw err;
@@ -1446,7 +1461,8 @@ export const notifyDigest = (job, transport = defaultTransport) => {
     logger.debug(`MAILER: Creating ${user.email}'s ${type} digest for ${freq}`);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/`;
 
-    const templateType = reports && reports.length > 0 ? 'digest' : 'digest_empty';
+    const defaultTemplate = reports && reports.length > 0 ? 'digest' : 'digest_empty';
+    const templateType = DIGEST_CONFIG[type]?.template ?? defaultTemplate;
 
     return createEmailSender(transport).send({
       template: path.resolve(emailTemplatePath, templateType),

@@ -414,6 +414,7 @@ const EMAIL_ACTIONS = {
   PLANNED_OUTAGE: 'emailWhenPlannedOutage',
   UNPLANNED_OUTAGE: 'emailWhenUnplannedOutage',
   MONITORING_DETAILS_ADDED: 'emailWhenMonitoringDetailsAdded',
+  MONITORING_DETAILS_ADDED_DIGEST: 'monitoringDetailsAddedDigest',
   ADDED_AS_CO_OWNER: 'emailWhenAddedAsCoOwner',
   SHARED_MY_GROUP: 'emailWhenSharedMyGroup',
 };
