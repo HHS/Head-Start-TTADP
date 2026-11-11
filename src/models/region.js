@@ -10,6 +10,10 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Region.hasMany(models.Grant, { foreignKey: 'regionId', as: 'grants' });
+      Region.hasMany(models.MonitoringReportDelivery, {
+        foreignKey: 'regionId',
+        as: 'monitoringReportDeliveries',
+      });
       Region.hasMany(models.User, {
         foreignKey: 'homeRegionId',
         as: 'users',

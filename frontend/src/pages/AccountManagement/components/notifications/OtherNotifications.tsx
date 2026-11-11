@@ -1,7 +1,16 @@
 import React from 'react';
+import RolesOnly from '../../../../components/RolesOnly';
 import NotificationsSection from './NotificationsSection';
+
+// Monitoring report notifications only go to TTACs and managers (TTAHUB-6003)
+export const MONITORING_NOTIFICATION_ROLES = ['TTAC', 'ECM', 'GSM'];
+
+function MonitoringRolesOnly({ children }: { children: React.ReactNode }) {
+  return <RolesOnly roles={MONITORING_NOTIFICATION_ROLES}>{children}</RolesOnly>;
+}
 /**
- * Note that none of these are implemented yet here and mocked out only for UI verification
+ * The monitoring row is only shown to TTACs and managers. The group rows are not wired up
+ * yet and are shown only for UI verification.
  * @returns
  */
 export default function OtherNotifications({
@@ -22,7 +31,8 @@ export default function OtherNotifications({
         {
           id: 'WhenMonitoringDetailsAdded',
           label:
-            "New monitoring details are added for recipients in my region where I'm the TTAC or Manager.",
+            "A new monitoring report is added for recipients in my region where I'm the TTAC or Manager.",
+          wrapper: MonitoringRolesOnly,
         },
         {
           id: 'WhenAddedAsCoOwner',

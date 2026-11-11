@@ -946,6 +946,15 @@ class MonitoringGranteeLinks{
  deletedAt : timestamp with time zone
 }
 
+class MonitoringReportDeliveries{
+ * id : integer : <generated>
+ * deliveredReviewId : integer : REFERENCES "DeliveredReviews".id
+ * recipientId : integer : REFERENCES "Recipients".id
+ * regionId : integer : REFERENCES "Regions".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class MonitoringReviewGrantees{
  * id : integer : <generated>
  * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
@@ -2545,6 +2554,20 @@ class ZALMonitoringGranteeLinks{
  session_sig : text
 }
 
+class ZALMonitoringReportDeliveries{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALMonitoringReviewGrantees{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3238,6 +3261,7 @@ Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
 DeliveredReviews "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReview, deliveredReviewCitations
 DeliveredReviews "1" --[#black,dashed,thickness=2]--{  "n" GrantDeliveredReviews : grantDeliveredReviews, deliveredReview
+DeliveredReviews "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReportDeliveries : monitoringReportDeliveries, deliveredReview
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : event, eventReportPilotNationalCenterUsers
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
@@ -3318,11 +3342,13 @@ ProgramPersonnel "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : ma
 Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, programPersonnel
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogRecipients : recipient, communicationLogRecipients
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReportDeliveries : recipient, monitoringReportDeliveries
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" TtaRequests : ttaRequests, recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" CollabReports : region, collabReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
+Regions "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReportDeliveries : region, monitoringReportDeliveries
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, objectiveTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Permissions : region, permissions
 Regions "1" --[#black,dashed,thickness=2]--{  "n" TtaRequests : ttaRequests, region

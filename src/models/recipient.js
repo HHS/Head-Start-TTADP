@@ -10,6 +10,10 @@ export default (sequelize, DataTypes) => {
   class Recipient extends Model {
     static associate(models) {
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
+      Recipient.hasMany(models.MonitoringReportDelivery, {
+        as: 'monitoringReportDeliveries',
+        foreignKey: 'recipientId',
+      });
       Recipient.hasMany(models.TtaRequest, { as: 'ttaRequests', foreignKey: 'recipientId' });
       Recipient.hasMany(models.CommunicationLogRecipient, {
         foreignKey: 'recipientId',
