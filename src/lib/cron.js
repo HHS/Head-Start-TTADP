@@ -56,6 +56,31 @@ const runUpdateJob = async () => {
   return false;
 };
 
+/**
+ * Queues every digest email for the given frequency. Throws on failure.
+ * Used by the scheduled cron jobs and by the admin "run digests" endpoint.
+ *
+ * @param {'DAILY'|'WEEKLY'|'MONTHLY'} freqKey
+ * @param {{ includeTrainingReport?: boolean }} options
+ * @returns {Promise<number>} the number of digest emails queued
+ */
+export const sendEmailDigests = async (freqKey, { includeTrainingReport = false } = {}) => {
+  const freq = EMAIL_DIGEST_FREQ[freqKey];
+  const subjectFreq = DIGEST_SUBJECT_FREQ[freqKey];
+  let queued = 0;
+  for (const config of Object.values(DIGEST_CONFIG)) {
+    // eslint-disable-next-line no-await-in-loop
+    const records = await digestForSetting({ ...config, freq, subjectFreq });
+    queued += records?.length ?? 0;
+  }
+  const recipientRecords = await recipientApprovedDigest(freq, subjectFreq);
+  queued += recipientRecords?.length ?? 0;
+  if (includeTrainingReport && process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true') {
+    await trainingReportTaskDueNotifications(freq);
+  }
+  return queued;
+};
+
 const runDigestJob =
   (freqKey, { checkLastDay = false, includeTrainingReport = false } = {}) =>
   () =>
@@ -66,21 +91,7 @@ const runDigestJob =
         return;
       }
       try {
-        for (const config of Object.values(DIGEST_CONFIG)) {
-          // eslint-disable-next-line no-await-in-loop
-          await digestForSetting({
-            ...config,
-            freq: EMAIL_DIGEST_FREQ[freqKey],
-            subjectFreq: DIGEST_SUBJECT_FREQ[freqKey],
-          });
-        }
-        await recipientApprovedDigest(EMAIL_DIGEST_FREQ[freqKey], DIGEST_SUBJECT_FREQ[freqKey]);
-        if (
-          includeTrainingReport &&
-          process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true'
-        ) {
-          await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ[freqKey]);
-        }
+        await sendEmailDigests(freqKey, { includeTrainingReport });
         logger.info(`Completed ${label} digests`);
       } catch (error) {
         logCronError(
