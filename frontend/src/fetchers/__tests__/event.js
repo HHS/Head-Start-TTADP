@@ -41,6 +41,18 @@ describe('eventById', () => {
     expect(fetchMock.lastUrl()).toBe('/api/events/id/1?readOnly=true');
     expect(event).toEqual({ id: 1, name: 'test event' });
   });
+
+  it('can opt out of loading sessions', async () => {
+    fetchMock.get('/api/events/id/1?includeSessions=false', { id: 1 });
+    await eventById(1, false, { includeSessions: false });
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1?includeSessions=false');
+  });
+
+  it('combines readOnly and includeSessions query params', async () => {
+    fetchMock.get('/api/events/id/1?readOnly=true&includeSessions=false', { id: 1 });
+    await eventById(1, true, { includeSessions: false });
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1?readOnly=true&includeSessions=false');
+  });
 });
 
 describe('updateEvent', () => {

@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants';
 import Container from '../Container';
+import PaginationCard from '../PaginationCard';
 import TableHeader from '../TableHeader';
+import ExportMenu from './ExportMenu';
 import ReportRow from './ReportRow';
 import './ReportsTable.css';
 
@@ -20,7 +22,9 @@ export default function ReportsTable({
   activePage,
   handleDownloadAllReports,
   handleDownloadClick,
+  onExport,
 }) {
+  const [exportScope, setExportScope] = useState(null);
   const [reportCheckboxes, setReportCheckboxes] = useState({});
   const [allReportsChecked, setAllReportsChecked] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -34,6 +38,7 @@ export default function ReportsTable({
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
     setReportCheckboxes(makeReportCheckboxes(reports, false));
+    setExportScope(null);
   }, [reports]);
 
   useEffect(() => {
@@ -137,7 +142,7 @@ export default function ReportsTable({
 
   return (
     <Container
-      className="landing inline-size-auto maxw-full position-relative"
+      className={`landing inline-size-auto maxw-full position-relative ${onExport ? 'ttahub-ar-table' : ''}`}
       paddingX={0}
       paddingY={0}
       loading={loading}
@@ -146,6 +151,8 @@ export default function ReportsTable({
       <TableHeader
         title={tableCaption}
         numberOfSelected={numberOfSelectedReports}
+        showSelectedCount={!onExport}
+        showPagination={!onExport}
         toggleSelectAll={toggleSelectAll}
         handleDownloadAll={async () =>
           handleDownloadAllReports(setIsDownloading, setDownloadError, downloadAllButtonRef)
@@ -169,6 +176,20 @@ export default function ReportsTable({
         downloadAllButtonRef={downloadAllButtonRef}
         downloadSelectedButtonRef={downloadSelectedButtonRef}
         exportIdPrefix={exportIdPrefix}
+        exportMenu={
+          onExport ? (
+            <ExportMenu
+              count={reportsCount}
+              selectedIds={Object.entries(reportCheckboxes)
+                .filter(([, checked]) => checked)
+                .map(([id]) => Number(id))}
+              exportIdPrefix={exportIdPrefix}
+              scope={exportScope}
+              setScope={setExportScope}
+              onExport={onExport}
+            />
+          ) : null
+        }
       />
       <div className="usa-table-container--scrollable">
         <Table fullWidth striped stackedStyle="default">
@@ -208,12 +229,25 @@ export default function ReportsTable({
                 isChecked={reportCheckboxes[report.id] || false}
                 openMenuUp={index > displayReports.length - 5}
                 numberOfSelectedReports={numberOfSelectedReports}
-                exportSelected={handleDownloadClick}
+                exportSelected={onExport ? () => setExportScope('selected') : handleDownloadClick}
               />
             ))}
           </tbody>
         </Table>
       </div>
+      {onExport && (
+        <div className="padding-3 border-top border-base-lighter">
+          <PaginationCard
+            currentPage={activePage}
+            totalCount={reportsCount}
+            offset={offset}
+            perPage={REPORTS_PER_PAGE}
+            handlePageChange={handlePageChange}
+            accessibleLandmarkName="Pagination, bottom"
+            paginationClassName="margin-0"
+          />
+        </div>
+      )}
     </Container>
   );
 }
@@ -241,7 +275,14 @@ ReportsTable.propTypes = {
   tableCaption: PropTypes.string.isRequired,
   exportIdPrefix: PropTypes.string.isRequired,
   reportsCount: PropTypes.number.isRequired,
-  handleDownloadAllReports: PropTypes.func.isRequired,
-  handleDownloadClick: PropTypes.func.isRequired,
+  handleDownloadAllReports: PropTypes.func,
+  handleDownloadClick: PropTypes.func,
+  onExport: PropTypes.func,
   activePage: PropTypes.number.isRequired,
+};
+
+ReportsTable.defaultProps = {
+  handleDownloadAllReports: null,
+  handleDownloadClick: null,
+  onExport: null,
 };

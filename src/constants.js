@@ -374,6 +374,10 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
+  TRAINING_REPORT_POC_ADDED: 'trainingReportPocAdded',
+  TRAINING_REPORT_POC_ADDED_DIGEST: 'trainingReportPocAddedDigest',
+  TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST: 'trainingReportCollaboratorAddedDigest',
+  TRAINING_REPORT_SESSION_SUBMITTED_DIGEST: 'trainingReportSessionSubmittedDigest',
   COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaboratorReportSubmittedForReview',
   COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'collaboratorReportSubmittedForReviewDigest',
   CREATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCreatorReportSubmittedForReview',
@@ -532,9 +536,7 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
-  'monitoring-regional-dashboard',
   'actionable_notifications',
-  'compliant_follow_up_reviews_tta_support',
   'tta_timeline',
   'recipient_tta_request',
 ];

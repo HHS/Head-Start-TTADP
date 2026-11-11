@@ -8,7 +8,7 @@ function EventCards({ events, onRemoveSession, onDeleteEvent, removeEventFromDis
   const { message } = alerts;
 
   return (
-    <div className="padding-x-3 padding-y-2 position-relative z-0">
+    <div className="padding-x-3 padding-top-2 position-relative z-0">
       {message && (
         <Alert className="margin-y-1" type={message.type}>
           {message.text}

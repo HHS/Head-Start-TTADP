@@ -4,6 +4,7 @@ import httpCodes from 'http-codes';
 import db from '../../models';
 import EventReport from '../../policies/event';
 import {
+  countEventHelperBlob,
   createEvent,
   findEventBySmartsheetId,
   findEventHelperBlob,
@@ -34,6 +35,7 @@ jest.mock('../../services/event', () => ({
   findEventsByPocId: jest.fn(),
   findEventsByRegionId: jest.fn(),
   findEventHelperBlob: jest.fn(),
+  countEventHelperBlob: jest.fn(),
   updateEvent: jest.fn(),
   destroyEvent: jest.fn(),
   getTrainingReportAlertsForUser: jest.fn(),
@@ -86,6 +88,27 @@ describe('event handlers', () => {
         { params: { eventId: 99_999 }, query: {}, session: { userId: 1 } },
         mockResponse
       );
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('omits sessions when includeSessions=false', async () => {
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      EventReport.mockImplementation(() => ({
+        canRead: () => true,
+        isPoc: () => false,
+        isAdmin: () => false,
+      }));
+      await getHandler(
+        {
+          params: { eventId: 99_999 },
+          query: { includeSessions: 'false' },
+          session: { userId: 1 },
+        },
+        mockResponse
+      );
+      expect(findEventBySmartsheetId).toHaveBeenCalledWith(99_999, expect.anything(), {
+        includeSessions: false,
+      });
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -705,6 +728,9 @@ describe('event handlers', () => {
         readableRegions: [99_999],
       }));
       findEventHelperBlob.mockResolvedValue([mockEvent]);
+      countEventHelperBlob.mockResolvedValue(1);
+      const send = jest.fn();
+      mockResponse.status.mockReturnValueOnce({ send });
       await getByStatus(
         {
           session: { userId: 1 },
@@ -714,6 +740,53 @@ describe('event handlers', () => {
         mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(send).toHaveBeenCalledWith({ count: 1, rows: [mockEvent] });
+      expect(findEventHelperBlob).toHaveBeenLastCalledWith(
+        expect.objectContaining({ limit: undefined, offset: undefined })
+      );
+    });
+
+    it('passes valid limit and offset through', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        readableRegions: [99_999],
+      }));
+      findEventHelperBlob.mockResolvedValue([mockEvent]);
+      countEventHelperBlob.mockResolvedValue(11);
+      await getByStatus(
+        {
+          session: { userId: 1 },
+          params: { status: 'not-started' },
+          query: { regionId: 99_999, limit: '10', offset: '10' },
+        },
+        mockResponse
+      );
+      expect(findEventHelperBlob).toHaveBeenLastCalledWith(
+        expect.objectContaining({ limit: 10, offset: 10 })
+      );
+      expect(countEventHelperBlob).toHaveBeenLastCalledWith(
+        expect.not.objectContaining({ limit: expect.anything() })
+      );
+    });
+
+    it('ignores invalid limit and offset', async () => {
+      EventReport.mockImplementation(() => ({
+        isAdmin: () => false,
+        readableRegions: [99_999],
+      }));
+      findEventHelperBlob.mockResolvedValue([mockEvent]);
+      countEventHelperBlob.mockResolvedValue(1);
+      await getByStatus(
+        {
+          session: { userId: 1 },
+          params: { status: 'not-started' },
+          query: { regionId: 99_999, limit: '1; DROP TABLE', offset: '-5' },
+        },
+        mockResponse
+      );
+      expect(findEventHelperBlob).toHaveBeenLastCalledWith(
+        expect.objectContaining({ limit: undefined, offset: undefined })
+      );
     });
     it('handles errors', async () => {
       EventReport.mockImplementation(() => ({

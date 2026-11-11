@@ -20,6 +20,7 @@ import {
   RECIPIENT_TIMELINE_SOURCES,
   type TimelineEventSource,
   type TimelineSourceBindings,
+  TTA_REQUEST_TIMELINE_SOURCE,
 } from './recipientTimelineSources';
 
 const { Goal, GoalStatusChange, GoalTemplate, Grant, sequelize } = db;
@@ -122,6 +123,14 @@ export async function getTimelineGoalCategories(
       mapsToParentGoalId: null,
       [Op.and]: [
         { [Op.or]: [{ status: null }, { status: { [Op.ne]: 'Draft' } }] },
+        // Match the RTTAPA tab: goals created on an activity report count once it is approved.
+        {
+          [Op.or]: [
+            { createdVia: null },
+            { createdVia: { [Op.ne]: 'activityReport' } },
+            { onApprovedAR: true },
+          ],
+        },
         // Current standard goals do not set the legacy isRttapa flag.
         {
           [Op.or]: [
@@ -303,6 +312,13 @@ const validateFilters = (
 
     if (topic === 'eventType' && query.some((eventType) => !isValidTimelineEventType(eventType))) {
       throw badTimelineRequest('Timeline eventType filter contains an unsupported event type');
+    }
+
+    if (
+      topic === 'standard' &&
+      query.some((standard) => typeof standard !== 'string' || !standard.trim())
+    ) {
+      throw badTimelineRequest('Timeline standard filter contains an invalid value');
     }
 
     if (
@@ -765,14 +781,17 @@ export async function populateTimelineEventIndex(
  */
 export async function getRecipientTimeline(
   params: RecipientTimelineRequestParams,
-  { canReadCommunicationLogs = false }: { canReadCommunicationLogs?: boolean } = {}
+  {
+    canReadCommunicationLogs = false,
+    canReadTtaRequests = false,
+  }: { canReadCommunicationLogs?: boolean; canReadTtaRequests?: boolean } = {}
 ): Promise<RecipientTimelineResponse> {
-  // Authorize sources before indexing so counts, pagination, and attachments cannot leak logs.
-  const sources = canReadCommunicationLogs
-    ? RECIPIENT_TIMELINE_SOURCES
-    : RECIPIENT_TIMELINE_SOURCES.filter(
-        ({ name }) => name !== COMMUNICATION_LOG_TIMELINE_SOURCE.name
-      );
+  // Authorize before indexing so counts, pagination, and population cannot leak events.
+  const sources = RECIPIENT_TIMELINE_SOURCES.filter(
+    ({ name }) =>
+      (canReadCommunicationLogs || name !== COMMUNICATION_LOG_TIMELINE_SOURCE.name) &&
+      (canReadTtaRequests || name !== TTA_REQUEST_TIMELINE_SOURCE.name)
+  );
   // Validate before querying category metadata, including for direct service callers.
   validateQueryOptions({ ...params, sources });
   if (

@@ -149,29 +149,31 @@ append_validation_summary() {
   local alerts
   local team_notifications
   local as_of
+  local run_id
 
   if [[ -f "$validation_log" ]]; then
     results=$(grep -o "Monitoring Validation Alerts: .*" "$validation_log" | tail -n 1 || true)
     if [[ -n "$results" ]]; then
       json_data=${results#*: }
       as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
+      run_id=$(echo "$json_data" | jq -r '.runId // empty' 2>/dev/null || true)
       alerts=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity != "team_notification") | .message, "\n"' 2>/dev/null || true)
       team_notifications=$(echo "$json_data" | jq -jr '.alerts[]? | select(.severity == "team_notification") | .message, "\n"' 2>/dev/null || true)
 
       if [[ -n "$alerts" ]]; then
         {
-          printf 'Monitoring Validation Alerts (as of %s): ```\n' "${as_of:-unknown}"
+          printf 'Monitoring Validation Alerts (as of %s, run %s): ```\n' "${as_of:-unknown}" "${run_id:-unknown}"
           printf '%s\n' "$alerts"
           printf '```\n'
         } >> "$ALERTS_FILE"
         HAS_ALERT=true
       else
-        printf 'Monitoring Validation (as of %s): no alerts\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
+        printf 'Monitoring Validation (as of %s, run %s): no alerts\n' "${as_of:-unknown}" "${run_id:-unknown}" >> "$ALERTS_FILE"
       fi
 
       if [[ -n "$team_notifications" ]]; then
         {
-          printf 'Monitoring Validation Team Notifications (as of %s): ```\n' "${as_of:-unknown}"
+          printf 'Monitoring Validation Team Notifications (as of %s, run %s): ```\n' "${as_of:-unknown}" "${run_id:-unknown}"
           printf '%s\n' "$team_notifications"
           printf '```\n'
         } >> "$TEAM_NOTIFICATIONS_FILE"
@@ -201,6 +203,7 @@ append_gate_summary() {
   local critical_count
   local critical
   local as_of
+  local run_id
   local status
   local refresh_clause
 
@@ -209,6 +212,7 @@ append_gate_summary() {
     if [[ -n "$results" ]]; then
       json_data=${results#*: }
       as_of=$(echo "$json_data" | jq -r '.asOf // empty' 2>/dev/null || true)
+      run_id=$(echo "$json_data" | jq -r '.runId // empty' 2>/dev/null || true)
       critical_count=$(echo "$json_data" | jq -r '.criticalCount // 0' 2>/dev/null || echo 0)
       status=$(echo "$json_data" | jq -r '.status // empty' 2>/dev/null || true)
 
@@ -223,7 +227,7 @@ append_gate_summary() {
         # in a newline.
         [[ -s "$ALERTS_FILE" && -n "$(tail -c1 "$ALERTS_FILE")" ]] && printf '\n' >> "$ALERTS_FILE"
         {
-          printf 'Monitoring Gate Criticals (as of %s) - %s: ```\n' "${as_of:-unknown}" "$refresh_clause"
+          printf 'Monitoring Gate Criticals (as of %s, run %s) - %s: ```\n' "${as_of:-unknown}" "${run_id:-unknown}" "$refresh_clause"
           printf '%s\n' "$critical"
           printf '```\n'
         } >> "$ALERTS_FILE"
@@ -236,14 +240,14 @@ append_gate_summary() {
       # this still exits 0 and the import can SUCCEED, so surface it either way.
       if [[ -n "$status" && "$status" != "success" ]]; then
         [[ -s "$ALERTS_FILE" && -n "$(tail -c1 "$ALERTS_FILE")" ]] && printf '\n' >> "$ALERTS_FILE"
-        printf 'Monitoring Gate: did not complete, data was not validated (as of %s)\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
+        printf 'Monitoring Gate: did not complete, data was not validated (as of %s, run %s)\n' "${as_of:-unknown}" "${run_id:-unknown}" >> "$ALERTS_FILE"
         HAS_ALERT=true
         return
       fi
 
       # No criticals: confirm only on success.
       [[ "$overall_status" == "SUCCEEDED" ]] || return 0
-      printf 'Monitoring Gate: no critical findings (as of %s)\n' "${as_of:-unknown}" >> "$ALERTS_FILE"
+      printf 'Monitoring Gate: no critical findings (as of %s, run %s)\n' "${as_of:-unknown}" "${run_id:-unknown}" >> "$ALERTS_FILE"
       return
     fi
   fi

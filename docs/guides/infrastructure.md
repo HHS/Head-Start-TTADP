@@ -519,6 +519,74 @@ We can quickly take a production backup via the CircleCI web interface. To do so
 
 In order to keep the non-production environments as close to production as possible we developed a way to transform a restored version of the production database locally if using local database. This process is run automatically every night, so all non-prod envs will have a fresh, anonymized database each morning.
 
+### The nightly refresh (`restore_db_cron`)
+
+The `restore_db_cron` CircleCI workflow runs at 04:00 UTC on `main`. Its jobs share the `tta-automation-lock` serial
+group and run through the `tta-automation` cloud.gov app in the prod space:
+
+1. `backup_prod_db` backs up `ttahub-prod` to S3 under the `production` prefix.
+2. `restore_prod_to_temp` drops and recreates the `ttahub-process` database, then restores the `production` backup into it.
+   From here until step 3 succeeds, `ttahub-process` holds **unanonymized production data**.
+3. `process_temp_db` runs `src/tools/processDataCLI.js`. `processData` anonymizes the data in a single transaction, and
+   `verifyProcessedData` runs at the end of that transaction, before it commits. It checks, using counts only, that no
+   user email was left unreplaced, no audit (`ZAL`) table still has rows, and `RequestErrors` is empty; any non-zero
+   count fails the job. Any failure, including a failed verification, rolls back to the raw restored data rather than
+   leaving it half processed, so the second attempt starts from the same data. Processing is attempted twice before the
+   job fails.
+4. `backup_temp_db` backs up `ttahub-process` under the `processed` prefix. `processed-latest-backup.txt` is only updated
+   after the upload succeeds.
+5. `restore (<env>)` restores the latest `processed` backup into each lower environment and waits for `yarn db:migrate:prod`.
+
+Lower environments only ever restore from the `processed` prefix, and `backup_temp_db` `requires` `process_temp_db`, so
+an unprocessed copy cannot reach them: if processing fails, nothing downstream runs and the lower environments keep the
+previous night's anonymized data.
+
+`backup_prod_manual` (`action=backup_prod`) runs steps 1-4, with the same alerts and cleanup.
+
+#### Alerts
+
+Every job in the workflow posts to `#acf-head-start-alerts` when it fails, with the job name, a job link, and a workflow
+link. Cancelling a single job does not send this alert, but the clear job below still runs and posts what it did.
+
+#### Cleanup when restoring or processing fails
+
+If `restore_prod_to_temp` or `process_temp_db` fails or is cancelled, a `clear ttahub-process (...)` job runs
+`automation/db-backup/scripts/db_clear.sh`, which drops and recreates the `ttahub-process` database (it refuses any other
+service) and prints `Verification counts: tables=0 rows=0` to the job output. It posts to `#acf-head-start-alerts` when it
+clears the database, and alerts again if it cannot. The clear job does not run if the whole workflow is cancelled.
+
+Cancelling a CircleCI job does not stop the cloud.gov task it started, so before clearing, the clear job terminates any
+restore or processing task (matched by name pattern, so every retry attempt is included) that is still pending, running
+or cancelling, and waits for it to end. The drop uses `WITH (FORCE)`, so a client that reconnects in the meantime cannot
+block it. Likewise, when a task outlives its job's
+timeout, `cf_lambda.sh` terminates it by its task ID before failing the job.
+
+#### Database state after each failure
+
+| Failed job | `ttahub-process` after cleanup | Lower environments | Operator action |
+|------------|--------------------------------|--------------------|-----------------|
+| `backup_prod_db` | Previous night's anonymized data | Unchanged | Rerun the workflow once the cause is fixed |
+| `restore_prod_to_temp` | Empty (cleared) | Unchanged | Fix the cause, rerun |
+| `process_temp_db` | Empty (cleared) | Unchanged | Fix the cause, rerun |
+| `backup_temp_db` | Anonymized data | Unchanged | Rerun, or let the next night's run replace it |
+| `restore (<env>)` | Anonymized data | That environment may be empty, partially restored, or not migrated | Rerun the restore for that environment (below) |
+| `clear ttahub-process (...)` | **May hold unanonymized production data** | Unchanged | Clear it manually (below) today |
+
+#### Operator actions
+
+- **Rerun the refresh:** trigger a pipeline on `main` with `action=backup_prod`, then `action=restore_db` with
+  `target_env` for each lower environment, or wait for the next night's run. Avoid 04:00 UTC: the jobs share a lock.
+- **Restore one lower environment:** trigger `action=restore_db` with `target_env`. It restores the latest `processed`
+  backup and does not touch production.
+- **Clear `ttahub-process` manually** if the clear job failed or the whole workflow was cancelled: rerun the failed
+  `clear ttahub-process (...)` job from the CircleCI UI, or connect with `cf connect-to-service tta-smarthub-prod ttahub-process`
+  in the prod space, switch to the `postgres` database (`\c postgres`), and run the same terminate, `DROP DATABASE`, and
+  `CREATE DATABASE` statements as `db_clear.sh`.
+- **Verify a cleared or processed database with counts only.** Use the counts in the job output
+  (`Verification counts: ...` or `verifyProcessedData counts: ...`), or run count queries such as
+  `SELECT COUNT(*) FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema');`.
+  Never record row values or personal data in tickets or Slack.
+
 ### Running a db refresh manually
 
 While process does run every night automatically, it can also be run on-demand via CircleCI or by executing the script directly.

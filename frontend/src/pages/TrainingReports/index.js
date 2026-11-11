@@ -16,9 +16,11 @@ import StaffProvider from '../../components/StaffProvider';
 import Tabs from '../../components/Tabs';
 import TrainingReportAlerts from '../../components/TrainingReportAlerts';
 import WidgetContainer from '../../components/WidgetContainer';
+import FilterContext from '../../FilterContext';
 import { deleteEvent, getEventsByStatus } from '../../fetchers/event';
 import { deleteSession } from '../../fetchers/session';
 import useFilters from '../../hooks/useFilters';
+import useSessionSort from '../../hooks/useSessionSort';
 import UserContext from '../../UserContext';
 import { expandFilters, filtersToQueryString } from '../../utils';
 import { showFilterWithMyRegions } from '../regionHelpers';
@@ -26,6 +28,7 @@ import EventCards from './components/EventCards';
 import { TRAINING_REPORT_FILTER_CONFIG } from './constants';
 
 const FILTER_KEY = 'training-report-filters';
+export const EVENTS_PER_PAGE = 10;
 
 const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) => ({
   key: TRAINING_REPORT_STATUSES_URL_PARAMS[status],
@@ -61,7 +64,7 @@ const MESSAGE_TEMPLATES = {
 
 export const evaluateMessageFromHistory = (history) => {
   const { state } = history.location;
-  if (state && state.message) {
+  if (state?.message) {
     const { message } = state;
 
     if (!message.eventId) {
@@ -85,7 +88,7 @@ export const evaluateMessageFromHistory = (history) => {
   return null;
 };
 
-export default function TrainingReports({ match }) {
+function TrainingReportsContent({ match }) {
   const {
     params: { status },
   } = match;
@@ -93,6 +96,9 @@ export default function TrainingReports({ match }) {
   const [error, updateError] = useState();
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [displayEvents, setDisplayEvents] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  // bumped to refetch the current page after an event leaves it
+  const [refetchKey, setRefetchKey] = useState(0);
   const [cardsInternalMessage, setCardsInternalMessage] = useState();
   const history = useHistory();
   // eslint-disable-next-line max-len
@@ -116,16 +122,65 @@ export default function TrainingReports({ match }) {
     TRAINING_REPORT_FILTER_CONFIG
   );
 
+  // kept in session storage so returning from an event (e.g. "Edit event") keeps the page
+  const [sortConfig, setSortConfig] = useSessionSort(
+    { sortBy: 'eventId', direction: 'asc', activePage: 1, perPage: EVENTS_PER_PAGE },
+    'trainingReportsEvents'
+  );
+  const { activePage, perPage: pageSize } = sortConfig;
+  const showAll = pageSize === 'all';
+  // with "all" there's a single page as long as the whole list
+  const perPage = showAll ? Math.max(totalCount, 1) : pageSize;
+  const offset = showAll ? 0 : (activePage - 1) * pageSize;
+
+  const handlePageChange = (pageNumber) => {
+    setSortConfig((prev) => ({ ...prev, activePage: pageNumber }));
+  };
+
+  const perPageChange = (e) => {
+    const { value } = e.target;
+    const newPageSize = value === 'all' ? 'all' : Number(value);
+    setSortConfig((prev) => ({ ...prev, perPage: newPageSize, activePage: 1 }));
+  };
+
+  // switching tabs or changing filters starts back on page 1. This adjusts state during
+  // render (not in an effect) so the events fetch never runs with the previous page.
+  const [pageScope, setPageScope] = useState({ status, filters });
+  if (pageScope.status !== status || pageScope.filters !== filters) {
+    setPageScope({ status, filters });
+    if (activePage !== 1) {
+      handlePageChange(1);
+    }
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refetchKey isn't read here, bumping it refetches the current page after an event leaves it
   useEffect(() => {
+    let ignore = false;
     async function fetchEvents() {
       setAppLoadingText('Fetching events...');
       setIsAppLoading(true);
       const filterQuery = filtersToQueryString(expandFilters(filters));
+      // the API returns every event when there's no limit
+      const pageQuery = showAll ? '' : `limit=${pageSize}&offset=${offset}`;
+      const query = [filterQuery, pageQuery].filter(Boolean).join('&');
       try {
-        const events = await getEventsByStatus(status, filterQuery);
-        setDisplayEvents(events);
+        const { count, rows } = await getEventsByStatus(status, query);
+        if (ignore) {
+          return;
+        }
+        // a remembered page can be past the end if events were removed since
+        if (rows.length === 0 && offset > 0) {
+          const lastPage = Math.max(1, Math.ceil(count / pageSize));
+          setSortConfig((prev) => ({ ...prev, activePage: lastPage }));
+          return;
+        }
+        setDisplayEvents(rows);
+        setTotalCount(count);
         updateError('');
       } catch (e) {
+        if (ignore) {
+          return;
+        }
         // eslint-disable-next-line no-console
         console.log(e);
         updateError('Unable to fetch events');
@@ -134,7 +189,20 @@ export default function TrainingReports({ match }) {
       }
     }
     fetchEvents();
-  }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters]);
+    return () => {
+      ignore = true;
+    };
+  }, [
+    status,
+    setAppLoadingText,
+    setIsAppLoading,
+    filters,
+    offset,
+    pageSize,
+    showAll,
+    setSortConfig,
+    refetchKey,
+  ]);
 
   const regionLabel = () => {
     if (defaultRegion === 14 || hasMultipleRegions) {
@@ -167,11 +235,10 @@ export default function TrainingReports({ match }) {
   };
 
   const removeEventFromDisplay = (id) => {
-    // update the UI, exclude the deleted event.
-    const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
-
-    // update the events state.
-    setDisplayEvents(events);
+    // hide the card right away, then refetch so the page backfills from the next one and
+    // the count stays accurate (an emptied page falls back to the last page in the fetch)
+    setDisplayEvents((events) => events.filter((e) => e.id !== id));
+    setRefetchKey((key) => key + 1);
   };
 
   /**
@@ -207,98 +274,110 @@ export default function TrainingReports({ match }) {
         <Helmet>
           <title>{titleCaseStatus} - Training Reports</title>
         </Helmet>
-        <>
-          <RegionPermissionModal
-            filters={filters}
-            user={user}
-            showFilterWithMyRegions={() =>
-              showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
-            }
-          />
-          {msg && (
-            <Alert
-              type="success"
-              role="alert"
-              className="margin-bottom-2"
-              cta={
-                <Button
-                  role="button"
-                  unstyled
-                  aria-label="dismiss alert"
-                  onClick={() => setMsg(null)}
-                >
-                  <span className="fa-sm margin-right-2">
-                    <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
-                  </span>
-                </Button>
-              }
-            >
-              {msg}
-            </Alert>
-          )}
-          <Grid>
-            <Grid row gap>
-              <Grid>
-                <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
-              </Grid>
-            </Grid>
-            <Grid row>
-              {error && (
-                <Alert className="margin-bottom-2" type="error" role="alert">
-                  {error}
-                </Alert>
-              )}
-            </Grid>
-            <Grid
-              col={12}
-              className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
-            >
-              <FilterPanel
-                applyButtonAria="apply filters for training reports"
-                filters={filters}
-                onApplyFilters={onApplyFilters}
-                onRemoveFilter={onRemoveFilter}
-                filterConfig={filterConfig}
-                allUserRegions={regions}
-              />
-            </Grid>
 
-            <TrainingReportAlerts />
-
-            <Grid row>
-              <WidgetContainer
-                title="Events"
-                loading={false}
-                loadingLabel="Training events loading"
-                showPaging={false}
-                showHeaderBorder={false}
+        <RegionPermissionModal
+          filters={filters}
+          user={user}
+          showFilterWithMyRegions={() =>
+            showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          }
+        />
+        {msg && (
+          <Alert
+            type="success"
+            role="alert"
+            className="margin-bottom-2"
+            cta={
+              <Button
+                role="button"
+                unstyled
+                aria-label="dismiss alert"
+                onClick={() => setMsg(null)}
               >
-                <Tabs tabs={tabValues} ariaLabel="Training events" />
-                <EventCards
-                  events={displayEvents}
-                  eventType={status}
-                  onRemoveSession={onRemoveSession}
-                  onDeleteEvent={onDeleteEvent}
-                  removeEventFromDisplay={removeEventFromDisplay}
-                  alerts={{
-                    message: cardsInternalMessage,
-                    setMessage: setCardsInternalMessage,
-                    setParentMessage: (updatedMessage) => {
-                      setCardsInternalMessage(null);
-                      setMsg(updatedMessage);
-                    },
-                  }}
-                />
-              </WidgetContainer>
+                <span className="fa-sm margin-right-2">
+                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
+                </span>
+              </Button>
+            }
+          >
+            {msg}
+          </Alert>
+        )}
+        <Grid>
+          <Grid row gap>
+            <Grid>
+              <h1 className="landing margin-top-0 margin-bottom-3">{`Training reports - ${regionLabel()}`}</h1>
             </Grid>
           </Grid>
-        </>
+          <Grid row>
+            {error && (
+              <Alert className="margin-bottom-2" type="error" role="alert">
+                {error}
+              </Alert>
+            )}
+          </Grid>
+          <Grid
+            col={12}
+            className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
+          >
+            <FilterPanel
+              applyButtonAria="apply filters for training reports"
+              filters={filters}
+              onApplyFilters={onApplyFilters}
+              onRemoveFilter={onRemoveFilter}
+              filterConfig={filterConfig}
+              allUserRegions={regions}
+            />
+          </Grid>
+
+          <TrainingReportAlerts />
+
+          <Grid row>
+            <WidgetContainer
+              title="Events"
+              loading={false}
+              loadingLabel="Training events loading"
+              showHeaderBorder={false}
+              showPagingTop={totalCount > 0}
+              showPagingBottom={totalCount > 0}
+              currentPage={activePage}
+              totalCount={totalCount}
+              offset={offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+              paginationCardTopProps={{
+                perPageChange,
+                noXofX: true,
+                perPageSelectValue: pageSize,
+                allOptionValue: 'all',
+                hidePagination: true,
+              }}
+            >
+              <Tabs tabs={tabValues} ariaLabel="Training events" />
+              <EventCards
+                events={displayEvents}
+                eventType={status}
+                onRemoveSession={onRemoveSession}
+                onDeleteEvent={onDeleteEvent}
+                removeEventFromDisplay={removeEventFromDisplay}
+                alerts={{
+                  message: cardsInternalMessage,
+                  setMessage: setCardsInternalMessage,
+                  setParentMessage: (updatedMessage) => {
+                    setCardsInternalMessage(null);
+                    setMsg(updatedMessage);
+                  },
+                }}
+              />
+            </WidgetContainer>
+          </Grid>
+        </Grid>
       </div>
     </StaffProvider>
   );
 }
 
-TrainingReports.propTypes = {
+const trainingReportsPropTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
@@ -315,6 +394,20 @@ TrainingReports.propTypes = {
   }),
 };
 
-TrainingReports.defaultProps = {
+const trainingReportsDefaultProps = {
   user: null,
 };
+
+TrainingReportsContent.propTypes = trainingReportsPropTypes;
+TrainingReportsContent.defaultProps = trainingReportsDefaultProps;
+
+export default function TrainingReports(props) {
+  return (
+    <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+      <TrainingReportsContent {...props} />
+    </FilterContext.Provider>
+  );
+}
+
+TrainingReports.propTypes = trainingReportsPropTypes;
+TrainingReports.defaultProps = trainingReportsDefaultProps;
