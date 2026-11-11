@@ -35,11 +35,11 @@ describe('training report digests', () => {
 
   // a digest window that starts now, so audit rows written before this call fall outside it
   const windowStartingNow = async () => {
-    const [[{ now }]] = (await sequelize.query('SELECT clock_timestamp() AS now')) as [
-      [{ now: Date }],
+    const [[{ now }]] = (await sequelize.query('SELECT clock_timestamp()::text AS now')) as [
+      [{ now: string }],
       unknown,
     ];
-    return `'${now.toISOString()}'::timestamptz`;
+    return `'${now}'::timestamptz`;
   };
 
   beforeAll(async () => {
