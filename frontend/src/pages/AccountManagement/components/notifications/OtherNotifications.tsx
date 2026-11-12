@@ -1,19 +1,15 @@
 import React from 'react';
-import RolesOnly from '../../../../components/RolesOnly';
-import NotificationsSection from './NotificationsSection';
 import FeatureFlag from '../../../../components/FeatureFlag';
-
-// Monitoring report notifications only go to TTACs and managers (TTAHUB-6003)
-export const MONITORING_NOTIFICATION_ROLES = ['TTAC', 'ECM', 'GSM'];
+import RolesOnly from '../../../../components/RolesOnly';
+import { MONITORING_NOTIFICATION_ROLES } from './constants';
+import NotificationsSection from './NotificationsSection';
 
 function MonitoringRolesOnly({ children }: { children: React.ReactNode }) {
   return <RolesOnly roles={MONITORING_NOTIFICATION_ROLES}>{children}</RolesOnly>;
 }
 
 function ActionableNotificationsFeatureFlagOnly({ children }: { children: React.ReactElement }) {
-  return (
-    <FeatureFlag flag="actionable_notifications">{children}</FeatureFlag>
-  );
+  return <FeatureFlag flag="actionable_notifications">{children}</FeatureFlag>;
 }
 
 /**
