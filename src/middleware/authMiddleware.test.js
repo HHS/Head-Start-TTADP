@@ -2,7 +2,7 @@ import {} from 'dotenv/config';
 import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
 import { auditLogger, hashForLogging } from '../logger';
 import db, { Permission, User } from '../models';
-import { getAccessToken, getUserInfo, logoutOidc } from './authMiddleware';
+import { getAccessToken, getMissingLoginState, getUserInfo, logoutOidc } from './authMiddleware';
 import SCOPES from './scopeConstants';
 
 jest.mock('openid-client', () => {
@@ -333,6 +333,61 @@ describe('authMiddleware', () => {
     expect(loggedValues.join('\n')).not.toMatch(/leaked-secret-detail|"cause"|"response"/);
 
     errorSpy.mockRestore();
+  });
+
+  describe('missing login state', () => {
+    const fullPkce = { codeVerifier: 'verifier', state: 'state', nonce: 'nonce' };
+    const callbackReq = (session) => ({
+      originalUrl: '/oauth2-client/login/oauth2/code/?code=abc&state=state',
+      protocol: 'http',
+      get: () => 'localhost:3000',
+      session,
+    });
+
+    it.each([
+      ['no session', undefined, 'missing_session'],
+      ['no pkce', {}, 'missing_pkce'],
+      ['no codeVerifier', { pkce: { state: 'state', nonce: 'nonce' } }, 'missing_code_verifier'],
+      ['no state', { pkce: { codeVerifier: 'verifier', nonce: 'nonce' } }, 'missing_state'],
+      ['no nonce', { pkce: { codeVerifier: 'verifier', state: 'state' } }, 'missing_nonce'],
+    ])('getMissingLoginState: reports %s', (_name, session, reason) => {
+      expect(getMissingLoginState({ session })).toBe(reason);
+    });
+
+    it('getMissingLoginState: returns undefined when all login state is present', () => {
+      expect(getMissingLoginState({ session: { pkce: fullPkce } })).toBeUndefined();
+    });
+
+    it.each([
+      ['no session', undefined, 'missing_session'],
+      ['no pkce', {}, 'missing_pkce'],
+      ['no codeVerifier', { pkce: { state: 'state', nonce: 'nonce' } }, 'missing_code_verifier'],
+      ['no state', { pkce: { codeVerifier: 'verifier', nonce: 'nonce' } }, 'missing_state'],
+      ['no nonce', { pkce: { codeVerifier: 'verifier', state: 'state' } }, 'missing_nonce'],
+    ])(
+      'getAccessToken: guards before reading pkce and logs the reason (%s)',
+      async (_name, session, reason) => {
+        const errorSpy = jest.spyOn(auditLogger, 'error');
+        const oc = require('openid-client');
+
+        const token = await getAccessToken(callbackReq(session));
+
+        expect(token).toBeUndefined();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        // The guard's own log line, not the catch block's "Failed to get access token", which
+        // is what the pre-fix code logged after throwing a TypeError on the pkce read.
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('missing login state'), {
+          reason,
+        });
+        expect(errorSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('Failed to get access token'),
+          expect.anything()
+        );
+        expect(oc.authorizationCodeGrant).not.toHaveBeenCalled();
+
+        errorSpy.mockRestore();
+      }
+    );
   });
 
   it('getAccessToken: returns undefined on error', async () => {
