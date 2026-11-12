@@ -35,7 +35,7 @@ import {
   TTA_REQUEST_FIELDS,
   ttaRequestViewPath,
 } from './constants';
-import { toApiPayload, toFormValues } from './formData';
+import { grantIdsKey, toApiPayload, toFormValues } from './formData';
 import GoalAndContext from './GoalAndContext';
 import SubmitForReview from './SubmitForReview';
 import TtaRequestFormHeading from './TtaRequestFormHeading';
@@ -57,8 +57,6 @@ interface TtaRequestFormProps {
   /** where the back link and a finished request return the user to */
   backLinkTo: string;
 }
-
-const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.id).join(',');
 
 /**
  * The TTA request form. Both entry points - a recipient's TTA records and the TTA requests

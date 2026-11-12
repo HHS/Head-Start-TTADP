@@ -24,13 +24,12 @@ import useFetch from '../../hooks/useFetch';
 import { canReviewerEditTtaRequest } from '../../permissions';
 import UserContext from '../../UserContext';
 import { SELECT_PLACEHOLDER, TTA_REQUEST_FIELDS } from '../TtaRequestForm/constants';
-import { toApiPayload, toFormValues } from '../TtaRequestForm/formData';
+import { grantIdsKey, toApiPayload, toFormValues } from '../TtaRequestForm/formData';
 import GoalAndContext from '../TtaRequestForm/GoalAndContext';
 import type {
   SelectOption,
   TtaRequestApprovingCor,
   TtaRequestFormValues,
-  TtaRequestGrant,
   TtaRequestRecipient,
   TtaRequestResponse,
   TtaRequestUser,
@@ -51,8 +50,6 @@ const REVIEW_STATUSES = [
 
 const NO_STAFF: TtaRequestUser[] = [];
 const NO_APPROVERS: TtaRequestApprovingCor[] = [];
-
-const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.id).join(',');
 
 const staffOption = ({ id, name, fullName }: TtaRequestUser): SelectOption => ({
   value: id,
