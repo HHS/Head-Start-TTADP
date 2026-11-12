@@ -268,37 +268,19 @@ describe('monitoringDeliveries', () => {
       expect(result.get(1)?.map((u) => u.id)).toEqual([1, 3]);
     });
 
-    it('filters out users whose Hub access (SITE_ACCESS) was revoked', async () => {
-      jest.spyOn(db.User, 'findAll').mockResolvedValue([
-        {
-          id: 1,
-          name: 'Active',
-          email: 'a@example.com',
-          homeRegionId: 1,
-          flags: ['flag'],
-          permissions: [siteAccess, { scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
-        },
-        {
-          id: 2,
-          name: 'Revoked',
-          email: 'b@example.com',
-          homeRegionId: 1,
-          flags: ['flag'],
-          permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
-        },
-        {
-          id: 3,
-          name: 'Revoked admin',
-          email: 'c@example.com',
-          homeRegionId: 1,
-          flags: [],
-          permissions: [{ scopeId: SCOPES.ADMIN, regionId: 14 }],
-        },
-      ]);
+    it('requires Hub access (SITE_ACCESS) in the query, returning ADMIN for the flag check', async () => {
+      const spy = jest.spyOn(db.User, 'findAll').mockResolvedValue([]);
 
-      const result = await findMonitoringNotificationUsersByRegion([1], 'flag');
+      await findMonitoringNotificationUsersByRegion([1], 'flag');
 
-      expect(result.get(1)?.map((u) => u.id)).toEqual([1]);
+      expect(callOptions(spy).include.find((i) => i.as === 'permissions')).toEqual(
+        expect.objectContaining({
+          as: 'permissions',
+          attributes: ['scopeId'],
+          required: true,
+          where: { scopeId: [SCOPES.SITE_ACCESS, SCOPES.ADMIN] },
+        })
+      );
     });
 
     it('does not query when no valid regions are given', async () => {

@@ -149,6 +149,30 @@ describe('monitoring delivery notifications (database)', () => {
     expect(byRegion.has(otherRegion.id)).toBe(false);
   });
 
+  it('targets admins with Hub access even without the feature flag', async () => {
+    const admin = await createUser({ homeRegionId: region.id, flags: [] });
+    try {
+      await Permission.bulkCreate([
+        { userId: admin.id, scopeId: SCOPES.SITE_ACCESS, regionId: region.id },
+        { userId: admin.id, scopeId: SCOPES.ADMIN, regionId: region.id },
+      ]);
+      await addRole(admin.id, 'TTAC');
+
+      const byRegion = await findMonitoringNotificationUsersByRegion(
+        [region.id],
+        ACTIONABLE_NOTIFICATIONS_FLAG
+      );
+      const ids = (byRegion.get(region.id) ?? []).map(({ id }) => id);
+
+      expect(ids).toContain(admin.id);
+      expect(ids).not.toContain(users.noFlagTtac.id);
+    } finally {
+      await UserRole.destroy({ where: { userId: admin.id } });
+      await Permission.destroy({ where: { userId: admin.id } });
+      await User.destroy({ where: { id: admin.id } });
+    }
+  });
+
   it('notifies about a newly delivered review once, ignoring already-delivered ones', async () => {
     const snapshot = await snapshotDeliveredReviewMrids();
     expect(snapshot.has(oldReview.mrid)).toBe(true);

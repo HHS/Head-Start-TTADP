@@ -84,7 +84,9 @@ export async function snapshotDeliveredReviewMrids(deliveredBefore?: string): Pr
     },
     paranoid: false,
     raw: true,
-  });
+  }) as {
+    mrid: number;
+  }[];
   return new Set(rows.map(({ mrid }) => Number(mrid)));
 }
 
@@ -118,7 +120,20 @@ export async function findNewlyDeliveredReviews(
         include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'] }],
       },
     ],
-  });
+  }) as {
+    id: number;
+    mrid: number;
+    report_delivery_date: string;
+    grants: {
+      id: number;
+      regionId: number;
+      recipientId: number;
+      recipient: {
+        id: number;
+        name: string;
+      }
+    }[]
+  }[];
 
   const deliveries = new Map<string, NewMonitoringDelivery>();
   reviews.forEach((review) => {
@@ -170,8 +185,16 @@ export async function findMonitoringNotificationUsersByRegion(
     attributes: ['id', 'name', 'email', 'homeRegionId', 'flags'],
     where: { homeRegionId: uniqueRegionIds },
     include: [
-      // all permissions, not only SITE_ACCESS: the feature flag check lets admins through
-      { model: Permission, as: 'permissions', attributes: ['scopeId', 'regionId'] },
+      // Users whose Hub access was revoked keep their role and home region, so require
+      // SITE_ACCESS. ADMIN is also returned so the feature flag check can let admins through;
+      // every admin also has SITE_ACCESS.
+      {
+        model: Permission,
+        as: 'permissions',
+        attributes: ['scopeId'],
+        where: { scopeId: [SCOPES.SITE_ACCESS, SCOPES.ADMIN] },
+        required: true,
+      },
       {
         model: Role,
         as: 'roles',
@@ -181,13 +204,15 @@ export async function findMonitoringNotificationUsersByRegion(
         required: true,
       },
     ],
-  });
+  }) as {
+    id: number;
+    name: string;
+    email: string;
+    homeRegionId: number;
+    flags: string[],
+  }[];
 
   users.forEach((user) => {
-    // users whose Hub access was revoked keep their role and home region
-    if (!user.permissions.some(({ scopeId }) => scopeId === SCOPES.SITE_ACCESS)) {
-      return;
-    }
     if (featureFlag && !new Users(user).canSeeBehindFeatureFlag(featureFlag)) {
       return;
     }
@@ -221,7 +246,16 @@ export async function findPendingMonitoringDeliveries(
     },
     include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'] }],
     order: [['id', 'ASC']],
-  });
+  }) as {
+    id: number;
+    deliveredReviewId: number;
+    recipientId: number;
+    regionId: number;
+    recipient: {
+      id: number;
+      name: string;
+    }
+  }[];
 
   return rows.map((row) => ({
     monitoringDeliveryId: row.id,
@@ -284,7 +318,13 @@ export async function monitoringReportsDeliveredInRegionByDate(
       { model: Permission, as: 'permissions', attributes: ['scopeId', 'regionId'] },
       { model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } },
     ],
-  });
+  }) as {
+    id: number;
+    email: string;
+    homeRegionId: number;
+    flags: string[];
+    roles: { name: string }[];
+  };
 
   const qualifies =
     user?.homeRegionId &&
@@ -316,7 +356,13 @@ export async function monitoringReportsDeliveredInRegionByDate(
       createdAt: { [Op.gte]: since },
     },
     include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'] }],
-  });
+  }) as {
+    recipientId: number;
+    recipient: {
+      id: number;
+      name: string;
+    }
+  }[];
 
   const byId = new Map<number, MonitoringDigestRecipient>();
   deliveries.forEach(({ recipient }) => {
