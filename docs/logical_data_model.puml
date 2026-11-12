@@ -953,6 +953,7 @@ class MonitoringReportDeliveries{
  * regionId : integer : REFERENCES "Regions".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ notifiedAt : timestamp with time zone
 }
 
 class MonitoringReviewGrantees{
