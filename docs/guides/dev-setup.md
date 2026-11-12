@@ -6,10 +6,11 @@
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
 2. Install Node using the version in `.nvmrc` (`24.22.1`).
-3. Install Yarn 1.x for that Node version to match the pinned `packageManager` (`yarn@1.22.22`): `npm install -g yarn@1.22.22`.
+3. Install a global `yarn` command for that Node version: `npm install -g yarn@1.22.22`. The repository pins Yarn 4 (`packageManager: yarn@4.18.1`) and commits that release under `.yarn/releases/`; `yarnPath` in `.yarnrc.yml` makes the global `yarn` hand off to it, so `yarn --version` in the repository prints `4.18.1`.
 4. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
 5. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
-6. Confirm the tools are available (`task`, `node`, `yarn`, `docker`).
+6. Set `FONTAWESOME_NPM_AUTH_TOKEN` in your shell before installing frontend dependencies. `.yarnrc.yml` reads it to authenticate to the FontAwesome Pro registry; without it, the frontend install fails with `YN0041: Invalid authentication`.
+7. Confirm the tools are available (`task`, `node`, `yarn`, `docker`).
 
 > **nvm gotcha:** Global packages (including Yarn) are installed per Node version and do not carry over when you switch versions. If `yarn` reports "command not found" after switching Node versions, reinstall it for the active version with `npm install -g yarn@1.22.22`, or copy globals when installing a new version via `nvm install <version> --reinstall-packages-from=current`.
 
@@ -81,7 +82,9 @@ Dependabot checks the root and frontend packages each Monday. Production and dev
 
 When a vulnerability can be resolved with a minor or patch update, review the Dependabot pull request and verify the normal CI suite. If remediation requires a major update, create planned engineering work, review the migration guidance, and run tests for the affected behavior before merging. Continue tracking the finding through the GitHub alert and Slack digest until it is resolved.
 
-If a production finding cannot be fixed immediately, assess whether it is reachable and document the temporary exception in the applicable `yarn-audit-known-issues` file. Do not baseline a finding solely to make CI pass; remove the exception after remediation.
+`yarn deps:audit` runs `tools/run-yarn-audit.js` in the repository root and in `frontend/`. The script runs `yarn npm audit --recursive --environment production --no-deprecations --severity low --json` and fails on any advisory that is not listed in that package's `yarn-audit-known-issues` file. Entries are matched by advisory (GHSA ID), package, and installed version, so a new advisory for an already-listed package version still fails. The script also fails when the audit itself fails (for example, a registry or network error) instead of treating empty output as a clean result.
+
+If a production finding cannot be fixed immediately, assess whether it is reachable and document the temporary exception in the applicable `yarn-audit-known-issues` file by adding that advisory's line from the `yarn npm audit` output above. Then run `yarn security:sca:baseline` and `yarn security:sca:pending` so the SCA baselines and `security/dependencies/pending-observations.json` record it (see [security/README.md](../../security/README.md)). Do not baseline a finding solely to make CI pass; remove the exception after remediation.
 
 ## Precommit hooks
 

@@ -18,7 +18,9 @@ This document defines the operating specification for the security findings regi
 
 `zap.conf` is scanner configuration, not a findings baseline. Its `FAIL`, `WARN`, `IGNORE`, and `OUTOFSCOPE` values define scan behavior. Only alerts emitted by an actual ZAP scan are finding candidates.
 
-SCA is handled slightly differently from SAST and DAST. The SCA register represents the current active exception set, while live `yarn audit` output is the authoritative source for whether an advisory is still present.
+SCA is handled slightly differently from SAST and DAST. The SCA register represents the current active exception set, while live `yarn npm audit` output (Yarn 4) is the authoritative source for whether an advisory is still present.
+
+The audit command is `yarn npm audit --recursive --environment production --no-deprecations --severity low --json`, which `tools/run-yarn-audit.js` runs and the `yarn-audit-known-issues` files store verbatim. It emits one JSON object per line for each advisory, with the advisory ID, GHSA URL, severity, vulnerable range, installed versions, and the packages that depend on the vulnerable one. Unlike Yarn 1's `yarn audit`, it does not report CVE IDs, CWE IDs, CVSS scores, patched versions, or full dependency ancestry, so those baseline fields are empty or null. The scanner name remains `yarn-audit` so existing register identities do not change.
 
 ## Proposed repository structure
 
@@ -119,7 +121,7 @@ Every scanner finding must include:
 
 For SCA entries, `firstDetected` is the first repository observation date, not the advisory publication date from GitHub. Advisory publication metadata may be retained under source fields specific to the scanner, but it must not backdate the register finding age.
 
-SCA entries retain `source.paths` as a sorted, unique list of dependency ancestry chains reported by Yarn Audit. These paths identify which direct or transitive dependency introduced each affected module and version, which is useful for remediation and for distinguishing multiple installed versions. The paths are dependency metadata already represented in the lock files; they must not contain credentials, tokens, or runtime request data.
+SCA entries retain `source.paths` as a sorted, unique list of the packages that Yarn Audit reports as depending on the affected module (for example `query-string@7.1.3`). These paths identify which direct or transitive dependency introduced each affected module and version; use `yarn why <module>` for the full ancestry, which is useful for remediation and for distinguishing multiple installed versions. The paths are dependency metadata already represented in the lock files; they must not contain credentials, tokens, or runtime request data.
 
 Fields by disposition:
 
@@ -236,7 +238,7 @@ For ongoing SCA operations, newly observed advisories do not require an immediat
 
 ## CI enforcement
 
-The validator separates documentation enforcement from deployment policy based on severity and treats SCA differently from SAST and DAST. The implemented `security:validate` command validates the current committed artifacts in their present state. The `security:validate:live` command first refreshes backend and frontend `yarn audit` artifacts, updates `security/dependencies/pending-observations.json` using the prior commit (`HEAD~1`) as the preferred trusted `firstSeen` source, and then validates the refreshed artifacts. If that prior ref is unavailable, the live path bootstraps from the current committed pending store instead of failing. The current implementation reconciles the common register against:
+The validator separates documentation enforcement from deployment policy based on severity and treats SCA differently from SAST and DAST. The implemented `security:validate` command validates the current committed artifacts in their present state. The `security:validate:live` command first refreshes backend and frontend `yarn npm audit` artifacts, updates `security/dependencies/pending-observations.json` using the prior commit (`HEAD~1`) as the preferred trusted `firstSeen` source, and then validates the refreshed artifacts. If that prior ref is unavailable, the live path bootstraps from the current committed pending store instead of failing. The current implementation reconciles the common register against:
 
 - `security/sast/baseline.json`
 - `security/sast/scan-config.json`
@@ -267,7 +269,7 @@ A finding with a valid `accepted` or `deferred` disposition does not fail solely
 
 SCA CI policy:
 
-- pull requests that change dependencies may compare live backend and frontend `yarn audit` output to the active SCA register, but live enforcement must refresh the audit files first rather than relying on stale committed artifacts
+- pull requests that change dependencies may compare live backend and frontend `yarn npm audit` output to the active SCA register, but live enforcement must refresh the audit files first rather than relying on stale committed artifacts
 - pull requests that change dependencies must not fail solely because a newly published advisory has not yet been dispositioned
 - dependency remediation pull requests should be allowed to merge automatically when a previously tracked advisory disappears from live audit output
 - the scheduled SCA workflow on the default branch will run `security:validate:live` or an equivalent sequence that refreshes live audit output, updates `security/dependencies/pending-observations.json`, and compares `firstSeen` against a trusted prior snapshot before enforcing the SLA
