@@ -3291,11 +3291,7 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
-!issue='associations need to be defined both directions'
-TtaRequests "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestAssignedStaff : ttaRequest
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
-!issue='associations need to be defined both directions'
-Users "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestAssignedStaff : user
 Users "1" --[#black,plain,thickness=2]-- "1" TtaRequests : creator, lastUpdatedBy, reviewer
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
@@ -3447,6 +3443,7 @@ Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics :
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : ttaRequest, approvers
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestAssignedStaff : ttaRequest, assignedStaffLinks
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestCitations : ttaRequest, citations
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequest, requestGrants
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : ttaRequest, notes
@@ -3472,6 +3469,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : tra
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, submitter, sessionReportsAsApprover
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
 Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : user, ttaRequestApprovers
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestAssignedStaff : user, ttaRequestAssignedStaff
 Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : user, ttaRequestNotes
 Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestReviewers : user, ttaRequestReviewers
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
