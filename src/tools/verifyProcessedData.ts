@@ -35,10 +35,13 @@ const countUnanonymizedUsers = async (): Promise<number> => {
   return count;
 };
 
-const countNonEmptyAuditTables = async (): Promise<number> => {
-  const tables = await sequelize.query<{ table_name: string }>(
+export const countNonEmptyAuditTables = async (): Promise<number> => {
+  // Alias the column: Sequelize's Postgres dialect special-cases any SQL that starts with
+  // "SELECT table_name FROM information_schema.tables" and returns each row as an array of values,
+  // ignoring the query type, which would leave tableName undefined below
+  const tables = await sequelize.query<{ tableName: string }>(
     /* sql */ `
-    SELECT table_name FROM information_schema.tables
+    SELECT table_name AS "tableName" FROM information_schema.tables
     WHERE
       table_name like 'ZAL%' AND
       table_name not in (:keptAuditTables)
@@ -47,7 +50,7 @@ const countNonEmptyAuditTables = async (): Promise<number> => {
   );
 
   let nonEmpty = 0;
-  for (const { table_name: tableName } of tables) {
+  for (const { tableName } of tables) {
     const [{ hasRows }] = await sequelize.query<{ hasRows: boolean }>(
       `SELECT EXISTS (SELECT 1 FROM "${tableName.replace(/"/g, '""')}") AS "hasRows"`,
       { type: QueryTypes.SELECT }
