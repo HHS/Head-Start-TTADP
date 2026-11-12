@@ -57,7 +57,7 @@ export default function EmailTesting() {
       <h2>Email testing</h2>
       <p className="usa-prose">
         Runs scheduled email jobs on demand. Emails go to the users who would normally get them,
-        based on their email settings. For testing purposes only. Not available in production.
+        based on their email settings. For testing purposes only. Do not run in production.
       </p>
       <h3>Digests</h3>
       <p className="usa-prose">Includes the monitoring report digest.</p>
@@ -75,10 +75,8 @@ export default function EmailTesting() {
       </div>
       <h3>Monitoring deliveries</h3>
       <p className="usa-prose">
-        Sends the new monitoring report notifications for reports delivered yesterday or today, as
-        the daily monitoring data import does. Emails are sent again each time this runs, so several
-        people can test on the same day. In-app notifications are not duplicated.
-      </p>
+        Runs the monitoring notification pipeline. This will duplicate emails each time. In-app notifications are not duplicated. For testing purposes only.  Do not run in production.
+      </p> 
       <Button
         type="button"
         className="margin-bottom-2"

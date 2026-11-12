@@ -10,10 +10,9 @@ function MonitoringRolesOnly({ children }: { children: React.ReactNode }) {
   return <RolesOnly roles={MONITORING_NOTIFICATION_ROLES}>{children}</RolesOnly>;
 }
 
-function ActionableNotificationsFeatureFlagOnly({ children }: { children: React.ReactNode }) {
-  // FeatureFlag is untyped JS whose propTypes infer non-null children
+function ActionableNotificationsFeatureFlagOnly({ children }: { children: React.ReactElement }) {
   return (
-    <FeatureFlag flag="actionable_notifications">{children as React.ReactElement}</FeatureFlag>
+    <FeatureFlag flag="actionable_notifications">{children}</FeatureFlag>
   );
 }
 
