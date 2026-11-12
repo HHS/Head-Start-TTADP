@@ -161,6 +161,7 @@ export default function ManageNotifications({
           expanded: true,
           headingLevel: 'h2',
         },
+
         ...(hasNotificationsFeatureFlag
           ? [
               {
@@ -218,21 +219,21 @@ export default function ManageNotifications({
                 expanded: true,
                 headingLevel: 'h2',
               },
-              {
-                title: 'Other',
-                content: (
-                  <OtherNotifications
-                    emailVerified={emailValidated}
-                    sendVerificationEmail={sendVerificationEmail}
-                    emailVerificationSent={emailVerificationSent}
-                  />
-                ),
-                id: 'other-notifications',
-                expanded: true,
-                headingLevel: 'h2',
-              },
             ]
           : []),
+        {
+          title: 'Other',
+          content: (
+            <OtherNotifications
+              emailVerified={emailValidated}
+              sendVerificationEmail={sendVerificationEmail}
+              emailVerificationSent={emailVerificationSent}
+            />
+          ),
+          id: 'other-notifications',
+          expanded: true,
+          headingLevel: 'h2',
+        },
       ] as AccordionItemProps[],
     [
       emailValidated,

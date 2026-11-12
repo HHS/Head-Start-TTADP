@@ -285,7 +285,7 @@ describe('ManageNotifications', () => {
     });
   });
 
-  it('only renders the Activity Reports section without the actionable_notifications flag', async () => {
+  it('only renders the Activity Reports and Other sections without the actionable_notifications flag', async () => {
     fetchMock.get('/api/settings', settings);
 
     renderManageNotifications({ user: { ...validatedUser, flags: [] } });
@@ -293,16 +293,13 @@ describe('ManageNotifications', () => {
     await waitFor(() => {
       expect(screen.getByText('Activity Reports')).toBeInTheDocument();
     });
+    expect(screen.getByText('Other')).toBeInTheDocument();
 
-    [
-      'Collaboration Reports',
-      'Communication Logs',
-      'Training Reports',
-      'System Related',
-      'Other',
-    ].forEach((section) => {
-      expect(screen.queryByText(section)).not.toBeInTheDocument();
-    });
+    ['Collaboration Reports', 'Communication Logs', 'Training Reports', 'System Related'].forEach(
+      (section) => {
+        expect(screen.queryByText(section)).not.toBeInTheDocument();
+      }
+    );
   });
 
   it('loads settings on mount and seeds form values from the response', async () => {
