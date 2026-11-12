@@ -1,11 +1,13 @@
 import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import moment from 'moment';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { getTtaRequests, getTtaRequestsByRecipient } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import type { WidgetSortConfig } from '../../hooks/useWidgetSorting';
 import { ttaRequestViewPath } from '../../pages/TtaRequestForm/constants';
+import isAdmin from '../../permissions';
+import UserContext from '../../UserContext';
 import AddTtaRequestButton from '../AddTtaRequestButton';
 import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
 
@@ -35,6 +37,8 @@ const NO_REQUESTS: ActiveTtaRequestsResponse = { count: 0, rows: [] };
 const STATUS_LABELS: Record<string, string> = {
   [TTA_REQUEST_STATUSES.DRAFT]: 'Draft',
   [TTA_REQUEST_STATUSES.SUBMITTED]: 'Submitted',
+  [TTA_REQUEST_STATUSES.NEEDS_ACTION]: 'Needs action',
+  [TTA_REQUEST_STATUSES.AWAITING_APPROVAL]: 'Awaiting approval',
 };
 
 // a value a request doesn't have (yet) is left blank, which the table shows as a dash
@@ -144,18 +148,24 @@ const stateCodes = (request: ActiveTtaRequest) =>
   [...new Set(request.grants.map((grant) => grant.stateCode).filter(Boolean))].join(', ');
 
 /*
-  The request id and the draft status open the draft in its form; a submitted request's id
-  opens it read only. The recipient name opens that recipient's record. Approver and assigned
+  The request id and the status open a request the user can edit - their draft, or one sent
+  back for changes to them as its creator, or to any admin - in its form; any other request's id opens it read only, which
+  is where its reviewer reviews it. The recipient name opens that recipient's record. Approver and assigned
   staff only exist once a request has been approved, so until then they are blank.
 */
 const toTableRow = (
   request: ActiveTtaRequest,
   requestUrl: (requestId: number) => string,
   viewUrl: (requestId: number) => string,
-  showRecipientColumns: boolean
+  showRecipientColumns: boolean,
+  userId: number | null,
+  userIsAdmin: boolean
 ): TtaRequestsTableRow => {
   const status = STATUS_LABELS[request.status] ?? request.status;
-  const isDraft = request.status === TTA_REQUEST_STATUSES.DRAFT;
+  const isEditable =
+    request.status === TTA_REQUEST_STATUSES.DRAFT ||
+    (request.status === TTA_REQUEST_STATUSES.NEEDS_ACTION &&
+      (request.creator.id === userId || userIsAdmin));
 
   return {
     id: request.id,
@@ -163,7 +173,7 @@ const toTableRow = (
     sortKey: request.displayId,
     isUrl: true,
     isInternalLink: true,
-    link: isDraft ? requestUrl(request.id) : viewUrl(request.id),
+    link: isEditable ? requestUrl(request.id) : viewUrl(request.id),
     data: [
       ...(showRecipientColumns
         ? [recipientCell(request), { title: COLUMNS.REGION, value: String(request.regionId) }]
@@ -179,8 +189,8 @@ const toTableRow = (
       { title: COLUMNS.REVIEWER, value: request.reviewer?.name ?? BLANK },
       { title: COLUMNS.APPROVER, value: BLANK },
       { title: COLUMNS.ASSIGNED_STAFF, value: BLANK },
-      // only drafts are clickable, they take the creator back into the request
-      isDraft
+      // only what the user can edit is clickable, it takes them back into the request
+      isEditable
         ? {
             title: COLUMNS.STATUS,
             value: status,
@@ -214,6 +224,12 @@ export default function ActiveTtaRequestsTable({
   filters = NO_FILTERS,
   canCreate,
 }: ActiveTtaRequestsTableProps): React.ReactElement {
+  // the table is also shown outside of a signed-in user's pages, so there may be no user
+  const { user } = (useContext(UserContext) || {}) as {
+    user?: { id: number; permissions?: { scopeId: number; regionId: number }[] };
+  };
+  const userId: number | null = user?.id ?? null;
+  const userIsAdmin = !!isAdmin(user);
   // where a request lives depends on whether this table spans regions or one recipient
   const requestRoot = showRecipientColumns
     ? '/tta-requests'
@@ -246,9 +262,9 @@ export default function ActiveTtaRequestsTable({
   const rows = useMemo(
     () =>
       (data || NO_REQUESTS).rows.map((request) =>
-        toTableRow(request, requestUrl, viewUrl, showRecipientColumns)
+        toTableRow(request, requestUrl, viewUrl, showRecipientColumns, userId, userIsAdmin)
       ),
-    [data, requestUrl, viewUrl, showRecipientColumns]
+    [data, requestUrl, viewUrl, showRecipientColumns, userId, userIsAdmin]
   );
 
   return (

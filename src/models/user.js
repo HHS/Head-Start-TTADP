@@ -92,6 +92,29 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'approverId',
         as: 'sessionReportsAsApprover',
       });
+      // TTA Request reviewers, approvers and notes.
+      User.hasMany(models.TtaRequestReviewer, {
+        foreignKey: 'userId',
+        as: 'ttaRequestReviewers',
+      });
+      User.hasMany(models.TtaRequestApprover, {
+        foreignKey: 'userId',
+        as: 'ttaRequestApprovers',
+      });
+      User.hasMany(models.TtaRequestNote, {
+        foreignKey: 'userId',
+        as: 'ttaRequestNotes',
+      });
+      User.hasMany(models.TtaRequestAssignedStaff, {
+        foreignKey: 'userId',
+        as: 'ttaRequestAssignedStaff',
+      });
+      User.belongsToMany(models.TtaRequest, {
+        through: models.TtaRequestAssignedStaff,
+        foreignKey: 'userId',
+        otherKey: 'ttaRequestId',
+        as: 'assignedTtaRequests',
+      });
     }
   }
   User.init(

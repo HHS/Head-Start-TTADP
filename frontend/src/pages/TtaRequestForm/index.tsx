@@ -1,9 +1,9 @@
 import { Alert, Button } from '@trussworks/react-uswds';
-import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import useInterval from '@use-it/interval';
 import { isEqual } from 'lodash';
 import moment from 'moment-timezone';
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
@@ -11,6 +11,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
+import { nameWithRole, toNotesSummary } from '../../components/TtaRequestNotesSummary/notes';
 import { HTTPError } from '../../fetchers';
 import {
   createTtaRequest,
@@ -19,7 +20,10 @@ import {
   submitTtaRequest,
 } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
+import { canEditTtaRequest } from '../../permissions';
+import UserContext from '../../UserContext';
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
+import ApproverStatusList from '../ActivityReport/Pages/components/ApproverStatusList';
 import {
   AUTOSAVE_INTERVAL,
   DATE_DISPLAY_SAVED_FORMAT,
@@ -31,7 +35,7 @@ import {
   TTA_REQUEST_FIELDS,
   ttaRequestViewPath,
 } from './constants';
-import { toApiPayload, toFormValues } from './formData';
+import { grantIdsKey, toApiPayload, toFormValues } from './formData';
 import GoalAndContext from './GoalAndContext';
 import SubmitForReview from './SubmitForReview';
 import TtaRequestFormHeading from './TtaRequestFormHeading';
@@ -54,8 +58,6 @@ interface TtaRequestFormProps {
   backLinkTo: string;
 }
 
-const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.id).join(',');
-
 /**
  * The TTA request form. Both entry points - a recipient's TTA records and the TTA requests
  * page - render this, differing only in whether the recipient arrives fixed or is chosen here.
@@ -65,6 +67,8 @@ const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.i
  *
  * Submitting saves the request as it stands and submits it for review, then returns the user
  * to where they came from with a message saying so.
+ *
+ * The reviewer changes a request submitted to them on the review itself, not here.
  */
 export default function TtaRequestForm(props: TtaRequestFormProps): React.ReactElement {
   const { ttaRequestId } = useParams<{ ttaRequestId?: string }>();
@@ -89,6 +93,7 @@ function TtaRequestFormBody({
   const [saveError, setSaveError] = useState<string | null>(null);
   // this is used to disable the save button (we don't use the overlay on auto save)
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
+  const { user } = useContext(UserContext);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext) as {
     isAppLoading: boolean;
     setIsAppLoading: (isLoading: boolean) => void;
@@ -301,6 +306,18 @@ function TtaRequestFormBody({
   // nothing to show until the draft in the route has been fetched, as the other forms wait for
   // their report; the form's defaults would otherwise be saved over it. An id that can't be a
   // request's has nothing to fetch.
+  const notes = useMemo(() => toNotesSummary(savedRequest?.notes), [savedRequest]);
+  // the reviewer whose review the request is waiting on, and where they stand, named with
+  // their role as the banner names them
+  const reviewers = useMemo(
+    () =>
+      (savedRequest?.reviewers ?? []).map((reviewer) => ({
+        ...reviewer,
+        user: reviewer.user && { ...reviewer.user, fullName: nameWithRole(reviewer.user) },
+      })),
+    [savedRequest]
+  );
+
   if (!isNewRequest && !savedRequest) {
     const error = routeId === null ? LOAD_ERROR : loadError;
     return error ? (
@@ -310,11 +327,19 @@ function TtaRequestFormBody({
     ) : null;
   }
 
-  // only a draft can be edited; a submitted request is shown read-only, as collaboration
-  // reports do
-  if (savedRequest && savedRequest.status !== TTA_REQUEST_STATUSES.DRAFT) {
+  // only the creator edits a draft, or a request sent back to them for changes, and only while
+  // they can write in its region. Anyone else - the reviewer included, who edits on the review -
+  // or a request at any other step, is shown read-only, as
+  // collaboration reports do, rather than a form whose every save would be refused
+  if (savedRequest && !canEditTtaRequest(user, savedRequest)) {
     return <Redirect to={ttaRequestViewPath(savedRequest.id, backLinkTo)} />;
   }
+
+  // who sent the request back, so the creator knows who is waiting on the changes
+  const needsAction = savedRequest?.status === TTA_REQUEST_STATUSES.NEEDS_ACTION;
+  const changesRequestedBy = needsAction
+    ? nameWithRole(reviewers.find(({ status }) => status === APPROVER_STATUSES.NEEDS_ACTION)?.user)
+    : '';
 
   return (
     <div className="maxw-widescreen">
@@ -325,12 +350,26 @@ function TtaRequestFormBody({
       {/* eslint-disable-next-line react/jsx-props-no-spreading */}
       <FormProvider {...hookForm}>
         <Container paddingX={4} paddingY={4} className="width-tablet">
+          {needsAction && (
+            <Alert type="error" headingLevel="h4" slim noIcon className="margin-bottom-3">
+              <span className="text-bold">
+                {changesRequestedBy} is asking for changes to this TTA request.
+              </span>{' '}
+              Please review any notes below and resubmit for review.
+            </Alert>
+          )}
           <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
           <IndicatesRequiredField />
           <form onSubmit={hookForm.handleSubmit(onSubmit)}>
             <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />
             <GoalAndContext regionId={effectiveRegionId} />
-            <SubmitForReview regionId={effectiveRegionId} />
+            <SubmitForReview regionId={effectiveRegionId} notes={notes} />
+            {needsAction && (
+              <div className="margin-top-4">
+                <p className="text-bold margin-top-0 margin-bottom-1">Review status</p>
+                <ApproverStatusList approverStatus={reviewers} />
+              </div>
+            )}
             {saveError && (
               <Alert
                 type="error"
@@ -359,7 +398,7 @@ function TtaRequestFormBody({
             )}
             <div className="display-flex margin-top-4">
               <Button type="submit" className="margin-right-1" disabled={weAreAutoSaving}>
-                Submit
+                {needsAction ? 'Update request' : 'Submit'}
               </Button>
               <Button
                 type="button"

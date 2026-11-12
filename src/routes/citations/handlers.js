@@ -4,6 +4,7 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
 import parsePositiveInteger from '../../lib/parsePositiveInteger';
+import TtaRequest from '../../policies/ttaRequest';
 import User from '../../policies/user';
 import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 import { currentUserId } from '../../services/currentUser';
@@ -51,7 +52,14 @@ export const getCitationsByGrants = async (req, res) => {
     const user = await userById(userId);
     const authorization = new User(user);
     const regionNumber = parseInt(regionId, DECIMAL_BASE);
-    if (!authorization.canWriteInRegion(regionNumber)) {
+    // citations are chosen on Activity Reports and on TTA requests, by their creators and
+    // by the reviewers who can edit them
+    const ttaRequestAuthorization = new TtaRequest(user, regionNumber);
+    if (
+      !authorization.canWriteInRegion(regionNumber) &&
+      !ttaRequestAuthorization.canWriteInRegion() &&
+      !ttaRequestAuthorization.canReviewInRegion()
+    ) {
       res.sendStatus(403);
       return;
     }

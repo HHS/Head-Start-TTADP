@@ -1,0 +1,34 @@
+get:
+  tags:
+    - tta request
+  summary: List the regional team members a reviewer can assign to TTA requests
+  description: >-
+    The active specialists, managers and TTACs whose home region is the region.
+    Admin assistants and program specialists are not listed.
+  parameters:
+    - name: regionId
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: The region's assignable staff, ordered by name
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                fullName:
+                  type: string
+                  description: The name with the user's roles, e.g. "Tom Geller, TTAC"
+    '400':
+      description: The region ID is not an integer
+    '403':
+      description: No read permission in the region

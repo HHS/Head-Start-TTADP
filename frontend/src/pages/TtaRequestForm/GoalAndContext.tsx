@@ -12,6 +12,7 @@ import selectOptionsReset from '../../components/selectOptionsReset';
 import useGoalTemplates from '../../hooks/useGoalTemplates';
 import {
   MONITORING_STANDARD,
+  NO_MONITORING_REPORT_ALERT,
   RTTAPA_ALERT,
   SELECT_PLACEHOLDER,
   TTA_REQUEST_FIELDS,
@@ -44,20 +45,34 @@ export default function GoalAndContext({ regionId }: GoalAndContextProps): React
   const isMonitoringGoal = selectedGoal?.standard === MONITORING_STANDARD;
 
   const grantIds = useMemo(() => selectedGrants.map((grant) => grant.id), [selectedGrants]);
-  const { citationOptions } = useTtaRequestCitations(regionId, grantIds, isMonitoringGoal);
+  const { citationOptions, loading: citationsLoading } = useTtaRequestCitations(
+    regionId,
+    grantIds,
+    isMonitoringGoal
+  );
 
-  // citations belong to the monitoring goal, so they cannot outlive a switch away from it
+  // without the recipient's monitoring report there are no citations to choose; they are
+  // picked on later Activity Reports instead
+  const hasNoCitations = isMonitoringGoal && !citationsLoading && citationOptions.length === 0;
+
+  // citations belong to the monitoring goal, so they cannot outlive a switch away from it,
+  // nor a draft whose citations are no longer active
   useEffect(() => {
-    if (!isMonitoringGoal) {
+    if (!isMonitoringGoal || hasNoCitations) {
       setValue(TTA_REQUEST_FIELDS.CITATIONS, []);
     }
-  }, [isMonitoringGoal, setValue]);
+  }, [isMonitoringGoal, hasNoCitations, setValue]);
 
   return (
     <>
       <h3 className="margin-top-4 margin-bottom-2">Goal and context</h3>
-      <Alert type="info" headingLevel="h4" slim className="margin-bottom-3 maxw-mobile-lg">
-        {RTTAPA_ALERT}
+      <Alert
+        type={hasNoCitations ? 'warning' : 'info'}
+        headingLevel="h4"
+        slim
+        className="margin-bottom-3 maxw-mobile-lg"
+      >
+        {hasNoCitations ? NO_MONITORING_REPORT_ALERT : RTTAPA_ALERT}
       </Alert>
       <Drawer triggerRef={goalDrawerTriggerRef} stickyHeader stickyFooter title="Goal guidance">
         <ContentFromFeedByTag tagName="ttahub-ohs-standard-goals" />
@@ -92,7 +107,7 @@ export default function GoalAndContext({ regionId }: GoalAndContextProps): React
           )}
         />
       </FormItemWithDrawerTriggerLabel>
-      {isMonitoringGoal && (
+      {isMonitoringGoal && !hasNoCitations && (
         <>
           <Drawer
             triggerRef={citationDrawerTriggerRef}

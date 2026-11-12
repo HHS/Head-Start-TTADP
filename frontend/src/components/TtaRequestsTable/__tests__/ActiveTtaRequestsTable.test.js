@@ -1,9 +1,11 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import UserContext from '../../../UserContext';
 import { blobToCsvDownload } from '../../../utils';
 import ActiveTtaRequestsTable from '../ActiveTtaRequestsTable';
 
@@ -52,16 +54,21 @@ const NEWEST = TWELVE_REQUESTS[11];
 
 const listOf = (rows) => ({ count: rows.length, rows });
 
-const renderTable = (rows = TWELVE_REQUESTS, canCreate = true) => {
+// the creator of the requests apiRequest makes
+const CREATOR = { id: 1 };
+
+const renderTable = (rows = TWELVE_REQUESTS, canCreate = true, user = CREATOR) => {
   fetchMock.get(RECIPIENT_URL, listOf(rows));
   render(
-    <MemoryRouter>
-      <ActiveTtaRequestsTable
-        recipientId={RECIPIENT_ID}
-        regionId={REGION_ID}
-        canCreate={canCreate}
-      />
-    </MemoryRouter>
+    <UserContext.Provider value={{ user }}>
+      <MemoryRouter>
+        <ActiveTtaRequestsTable
+          recipientId={RECIPIENT_ID}
+          regionId={REGION_ID}
+          canCreate={canCreate}
+        />
+      </MemoryRouter>
+    </UserContext.Provider>
   );
 };
 
@@ -244,6 +251,80 @@ describe('ActiveTtaRequestsTable', () => {
     );
     expect(within(firstRow).getByText('Submitted')).toBeVisible();
     expect(within(firstRow).queryByRole('link', { name: 'Submitted' })).toBeNull();
+  });
+
+  it('shows a request awaiting approval, linked to its read-only view', async () => {
+    renderTable([apiRequest(1, { status: 'awaiting_approval' })]);
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByText('Awaiting approval')).toBeVisible();
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+  });
+
+  it('links a request sent back for changes into the form for its creator', async () => {
+    renderTable([apiRequest(1, { status: 'needs_action' })]);
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/101`
+    );
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/101`
+    );
+  });
+
+  it('links a request sent back for changes to its read-only view for anyone else', async () => {
+    renderTable([apiRequest(1, { status: 'needs_action' })], true, { id: 2 });
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+    expect(within(firstRow).getByText('Needs action')).toBeVisible();
+    expect(within(firstRow).queryByRole('link', { name: 'Needs action' })).toBeNull();
+  });
+
+  it('links a request sent back for changes into the form for an admin', async () => {
+    renderTable([apiRequest(1, { status: 'needs_action' })], true, {
+      id: 2,
+      permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }],
+    });
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/101`
+    );
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/101`
+    );
+  });
+
+  it('links a request sent back for changes to its read-only view without a user', async () => {
+    renderTable([apiRequest(1, { status: 'needs_action' })], true, null);
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
   });
 
   it('freezes the status column to the right of the table', async () => {

@@ -1355,6 +1355,24 @@ class Topics{
  mapsTo : integer
 }
 
+class TtaRequestApprovers{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ status : enum
+}
+
+class TtaRequestAssignedStaff{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class TtaRequestCitations{
  * id : integer : <generated>
  * ttaRequestId : integer : REFERENCES "TtaRequests".id
@@ -1370,6 +1388,27 @@ class TtaRequestGrants{
  * ttaRequestId : integer : REFERENCES "TtaRequests".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+}
+
+class TtaRequestNotes{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * action : enum
+ * createdAt : timestamp with time zone
+ * step : enum
+ * updatedAt : timestamp with time zone
+ note : text
+}
+
+class TtaRequestReviewers{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ status : enum
 }
 
 class TtaRequests{
@@ -3036,6 +3075,34 @@ class ZALTopics{
  session_sig : text
 }
 
+class ZALTtaRequestApprovers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALTtaRequestAssignedStaff{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALTtaRequestCitations{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3051,6 +3118,34 @@ class ZALTtaRequestCitations{
 }
 
 class ZALTtaRequestGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALTtaRequestNotes{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALTtaRequestReviewers{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -3347,8 +3442,12 @@ SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilot
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromTopics
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : ttaRequest, approvers
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestAssignedStaff : ttaRequest, assignedStaffLinks
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestCitations : ttaRequest, citations
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequest, requestGrants
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : ttaRequest, notes
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestReviewers : ttaRequest, reviewers
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
@@ -3369,6 +3468,10 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : trainer, sessionTrainers
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, submitter, sessionReportsAsApprover
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : user, ttaRequestApprovers
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestAssignedStaff : user, ttaRequestAssignedStaff
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : user, ttaRequestNotes
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestReviewers : user, ttaRequestReviewers
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : user, validationStatus
@@ -3418,5 +3521,6 @@ Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 SessionReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Users : trainers, sessionReports
+TtaRequests "n" }--[#black,dotted,thickness=2]--{ "n" Users : assignedStaff, assignedTtaRequests
 
 @enduml

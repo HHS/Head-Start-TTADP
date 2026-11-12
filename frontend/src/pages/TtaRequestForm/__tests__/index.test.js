@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
@@ -7,6 +8,7 @@ import React from 'react';
 import { Route, Router } from 'react-router-dom';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
 import { AUTOSAVE_INTERVAL, NO_REGION_ERROR, SAVE_ERROR, SUBMIT_ERROR } from '../constants';
 import TtaRequestForm from '../index';
@@ -102,17 +104,26 @@ const BACK_LINK = '/recipient-tta-records/10/region/14/tta-request';
 const mockSetIsAppLoading = jest.fn();
 const mockSetAppLoadingText = jest.fn();
 
-const renderWithAppLoading = (ui) =>
+// the saved requests below are this user's, in a region they can write in
+const CREATOR = {
+  id: 1,
+  name: 'Rachel Green',
+  permissions: [{ regionId: 14, scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS }],
+};
+
+const renderWithAppLoading = (ui, user = CREATOR) =>
   render(
-    <AppLoadingContext.Provider
-      value={{
-        isAppLoading: false,
-        setIsAppLoading: mockSetIsAppLoading,
-        setAppLoadingText: mockSetAppLoadingText,
-      }}
-    >
-      {ui}
-    </AppLoadingContext.Provider>
+    <UserContext.Provider value={{ user }}>
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: false,
+          setIsAppLoading: mockSetIsAppLoading,
+          setAppLoadingText: mockSetAppLoadingText,
+        }}
+      >
+        {ui}
+      </AppLoadingContext.Provider>
+    </UserContext.Provider>
   );
 
 const renderForm = (props = {}, history = createMemoryHistory()) =>
@@ -123,14 +134,15 @@ const renderForm = (props = {}, history = createMemoryHistory()) =>
   );
 
 // rendered the way the routes do, so the form can read the request id
-const renderFormAt = (path, props = {}) => {
+const renderFormAt = (path, props = {}, user = CREATOR) => {
   const history = createMemoryHistory({ initialEntries: [path] });
   renderWithAppLoading(
     <Router history={history}>
       <Route path="/tta-requests/:ttaRequestId(new|[0-9]*)">
         <TtaRequestForm backLinkTo="/tta-requests" {...props} />
       </Route>
-    </Router>
+    </Router>,
+    user
   );
   return history;
 };
@@ -140,6 +152,7 @@ const SAVED_REQUEST = {
   displayId: 'R14-REQ-42',
   regionId: 14,
   status: 'draft',
+  creator: { id: CREATOR.id, name: CREATOR.name },
   recipientAware: false,
   originator: 'Regional Office',
   context: '<p>Saved context</p>',
@@ -289,6 +302,28 @@ describe('TtaRequestForm', () => {
     });
   });
 
+  it('warns instead of asking for citations when the recipient has no monitoring report', async () => {
+    fetchMock.get('begin:/api/citations/region', [], { overwriteRoutes: true });
+    renderForm({ recipient: RECIPIENT, regionId: 14 });
+
+    expect(screen.getByText(/This goal will be added to the recipient's RTTAPA/)).toBeVisible();
+
+    await selectEvent.select(screen.getByLabelText(/select goal/i), MONITORING_GOAL.name);
+
+    expect(
+      await screen.findByText(/The TTA Hub doesn't have this recipient's monitoring report/)
+    ).toBeVisible();
+    expect(screen.queryByText(/This goal will be added to the recipient's RTTAPA/)).toBeNull();
+    expect(screen.queryByText('Citations being addressed')).toBeNull();
+
+    await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
+
+    expect(
+      await screen.findByText(/This goal will be added to the recipient's RTTAPA/)
+    ).toBeVisible();
+    expect(screen.queryByText(/monitoring report/)).toBeNull();
+  });
+
   it('drops a goal chosen for a grant that is no longer selected', async () => {
     renderForm({ recipient: MULTI_GRANT_RECIPIENT, regionId: 14 });
 
@@ -387,6 +422,140 @@ describe('TtaRequestForm', () => {
     expect(screen.getByText('Regional Office')).toBeVisible();
     expect(screen.getByText(OTHER_GOAL.name)).toBeVisible();
     expect(screen.getByText('Ross Geller')).toBeVisible();
+  });
+
+  describe('sent back for changes', () => {
+    const NEEDS_ACTION_REQUEST = {
+      ...SAVED_REQUEST,
+      status: 'needs_action',
+      // the creator's last notes are in the history, so the field starts blank
+      creatorNotes: null,
+      notes: [
+        {
+          id: 1,
+          step: 'creator',
+          action: 'submitted',
+          note: 'Request is for monitoring citations.',
+          createdAt: '2026-06-23T09:32:00.000Z',
+          user: { id: 1, name: 'Rachel Green', fullName: 'Rachel Green, ECS' },
+        },
+        {
+          id: 2,
+          step: 'reviewer',
+          action: 'needs_action',
+          note: 'Please add the agenda details we discussed.',
+          createdAt: '2026-06-23T10:05:00.000Z',
+          user: {
+            id: 6,
+            name: 'Ross Geller',
+            fullName: 'Ross Geller, TTAC',
+            roles: [{ name: 'TTAC' }],
+          },
+        },
+      ],
+      reviewers: [
+        {
+          id: 1,
+          userId: 6,
+          status: 'needs_action',
+          user: {
+            id: 6,
+            name: 'Ross Geller',
+            fullName: 'Ross Geller, TTAC',
+            roles: [{ name: 'TTAC' }],
+          },
+        },
+      ],
+    };
+
+    const renderNeedsAction = (user = CREATOR) => {
+      fetchMock.get('/api/tta-requests/42', NEEDS_ACTION_REQUEST);
+      return renderFormAt(
+        '/tta-requests/42',
+        {
+          recipient: RECIPIENT,
+          recipientOptions: [RECIPIENT],
+          regionId: 14,
+        },
+        user
+      );
+    };
+
+    it("sends anyone but its creator to the request's read-only view", async () => {
+      const history = renderNeedsAction({ ...CREATOR, id: 2 });
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
+    });
+
+    it('sends a creator who can no longer write in its region to the read-only view', async () => {
+      const history = renderNeedsAction({ ...CREATOR, permissions: [] });
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
+    });
+
+    it('says who asked for changes, with the notes so far, for the creator to edit', async () => {
+      const history = renderNeedsAction();
+
+      expect(
+        await screen.findByText('Ross Geller (TTAC) is asking for changes to this TTA request.')
+      ).toBeVisible();
+      expect(
+        screen.getByText(/please review any notes below and resubmit for review/i)
+      ).toBeVisible();
+      // the creator stays on the form rather than going to the read-only view
+      expect(history.location.pathname).toBe('/tta-requests/42');
+
+      const summary = screen.getByRole('heading', { name: 'Notes summary' }).closest('section');
+      const entries = within(summary).getAllByRole('listitem');
+      expect(entries).toHaveLength(2);
+      expect(entries[0]).toHaveTextContent('Draft TTA Request');
+      expect(entries[0]).toHaveTextContent('Request is for monitoring citations.');
+      expect(entries[1]).toHaveTextContent('TTA Request review - needs action');
+      expect(entries[1]).toHaveTextContent('Please add the agenda details we discussed.');
+
+      expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('');
+      expect(screen.getByText('Needs action').closest('li')).toHaveTextContent(
+        'Needs action from Ross Geller (TTAC)'
+      );
+      expect(screen.getByRole('button', { name: 'Update request' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull();
+    });
+
+    it('resubmits the request for review', async () => {
+      fetchMock.put('/api/tta-requests/42/submit', { ...SAVED_REQUEST, status: 'submitted' });
+      const history = renderNeedsAction();
+
+      userEvent.type(await screen.findByLabelText(/add creator notes/i), 'Agenda details added.');
+      userEvent.click(screen.getByRole('button', { name: 'Update request' }));
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests'));
+      expect(JSON.parse(fetchMock.lastOptions('/api/tta-requests/42/submit').body)).toMatchObject({
+        creatorNotes: 'Agenda details added.',
+        reviewerId: 6,
+      });
+    });
+
+    it('shows neither the banner nor the review status on a draft', async () => {
+      fetchMock.get('/api/tta-requests/42', SAVED_REQUEST);
+      renderFormAt('/tta-requests/42', { recipientOptions: [RECIPIENT] });
+
+      await screen.findByRole('button', { name: 'Submit' });
+      expect(screen.queryByText(/is asking for changes/i)).toBeNull();
+      expect(screen.queryByRole('heading', { name: 'Notes summary' })).toBeNull();
+      expect(screen.queryByText('Review status')).toBeNull();
+    });
+  });
+
+  it('sends the reviewer of a submitted request to the review, where they edit it', async () => {
+    const reviewer = {
+      id: 6,
+      name: 'Ross Geller',
+      permissions: [{ regionId: 14, scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS }],
+    };
+    fetchMock.get('/api/tta-requests/42', { ...SAVED_REQUEST, status: 'submitted' });
+    const history = renderFormAt('/tta-requests/42', { recipientOptions: [RECIPIENT] }, reviewer);
+
+    await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
   });
 
   it('sends a submitted request to its read-only view', async () => {

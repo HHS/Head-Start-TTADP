@@ -9,14 +9,18 @@ import transactionWrapper from '../transactionWrapper';
 import {
   createTtaRequest,
   getTtaRequest,
+  getTtaRequestApprovers,
+  getTtaRequestAssignableStaff,
   getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
+  reviewTtaRequest,
   saveTtaRequest,
   submitTtaRequest,
 } from './handlers';
 import {
   checkCreateTtaRequestBody,
+  checkReviewTtaRequestBody,
   checkSubmitTtaRequestBody,
   checkUpdateTtaRequestBody,
 } from './middleware';
@@ -46,6 +50,20 @@ router.get(
   transactionWrapper(getTtaRequestReviewers)
 );
 
+// getTtaRequestAssignableStaff
+router.get(
+  '/region/:regionId/assignable-staff',
+  checkRegionIdParam,
+  transactionWrapper(getTtaRequestAssignableStaff)
+);
+
+// getTtaRequestApprovers
+router.get(
+  '/region/:regionId/approvers',
+  checkRegionIdParam,
+  transactionWrapper(getTtaRequestApprovers)
+);
+
 // createTtaRequest
 router.post('/', checkCreateTtaRequestBody, transactionWrapper(createTtaRequest));
 
@@ -63,6 +81,14 @@ router.put(
   checkTtaRequestIdParam,
   checkSubmitTtaRequestBody,
   transactionWrapper(submitTtaRequest)
+);
+
+// reviewTtaRequest
+router.put(
+  '/:ttaRequestId/review',
+  checkTtaRequestIdParam,
+  checkReviewTtaRequestBody,
+  transactionWrapper(reviewTtaRequest)
 );
 
 // saveTtaRequest

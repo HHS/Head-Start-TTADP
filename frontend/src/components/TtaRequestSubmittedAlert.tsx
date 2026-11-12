@@ -1,4 +1,5 @@
 import { Alert } from '@trussworks/react-uswds';
+import { TTA_REQUEST_STATUSES } from '@ttahub/common';
 import React, { useEffect, useState } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { ttaRequestViewPath } from '../pages/TtaRequestForm/constants';
@@ -22,9 +23,10 @@ interface TtaRequestSubmittedAlertProps {
 }
 
 /**
- * Says a TTA request was submitted, on the page the form returned the user to. The form puts
- * the message in the location's state; it is taken from there once, so it doesn't show again
- * on a refresh or on coming back to the page.
+ * Says a TTA request was submitted, sent back to its creator for changes, or sent on to the
+ * approving COR, on the page the
+ * form or review returned the user to. They put the message in the location's state; it is
+ * taken from there once, so it doesn't show again on a refresh or on coming back to the page.
  */
 export default function TtaRequestSubmittedAlert({
   requestRoot,
@@ -45,11 +47,27 @@ export default function TtaRequestSubmittedAlert({
     return null;
   }
 
+  const link = (
+    <Link to={ttaRequestViewPath(message.reportId, requestRoot)}>{message.displayId}</Link>
+  );
+
   return (
     <Alert type="success" headingLevel="h2" slim role="alert" className="margin-bottom-3">
-      You submitted request{' '}
-      <Link to={ttaRequestViewPath(message.reportId, requestRoot)}>{message.displayId}</Link> on{' '}
-      {message.time}.
+      {message.status === TTA_REQUEST_STATUSES.NEEDS_ACTION && (
+        <>
+          You sent request {link} back to its creator for changes on {message.time}.
+        </>
+      )}
+      {message.status === TTA_REQUEST_STATUSES.AWAITING_APPROVAL && (
+        <>
+          You sent request {link} to the COR for approval on {message.time}.
+        </>
+      )}
+      {message.status === TTA_REQUEST_STATUSES.SUBMITTED && (
+        <>
+          You submitted request {link} on {message.time}.
+        </>
+      )}
     </Alert>
   );
 }

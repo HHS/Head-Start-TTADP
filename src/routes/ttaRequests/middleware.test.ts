@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { auditLogger } from '../../logger';
 import {
   checkCreateTtaRequestBody,
+  checkReviewTtaRequestBody,
   checkSubmitTtaRequestBody,
   checkUpdateTtaRequestBody,
 } from './middleware';
@@ -163,6 +164,70 @@ describe('TTA request body middleware', () => {
       const context = '<p><strong>Background</strong></p>\n';
       const { req } = run(checkSubmitTtaRequestBody, { ...fullBody, context });
       expect(req.body.context).toBe(context);
+    });
+  });
+
+  describe('checkReviewTtaRequestBody', () => {
+    const needsAction = { status: 'needs_action', assignedStaffIds: [7, 8] };
+    const sentForApproval = { status: 'approved', assignedStaffIds: [7], approverId: 9 };
+
+    it('accepts needs action with the assigned staff and a note', () => {
+      const { req, next } = run(checkReviewTtaRequestBody, {
+        ...needsAction,
+        note: 'Add the agenda',
+      });
+      expect(next).toHaveBeenCalled();
+      expect(req.body).toEqual({ ...needsAction, note: 'Add the agenda' });
+    });
+
+    it.each(['', null])('accepts needs action with a note of %j', (note) => {
+      const { next } = run(checkReviewTtaRequestBody, { ...needsAction, note });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('accepts sending the request to an approving COR', () => {
+      const { req, next } = run(checkReviewTtaRequestBody, sentForApproval);
+      expect(next).toHaveBeenCalled();
+      expect(req.body).toEqual(sentForApproval);
+    });
+
+    it('accepts needs action without assigned staff, defaulting to none', () => {
+      const { req, next } = run(checkReviewTtaRequestBody, { status: 'needs_action' });
+      expect(next).toHaveBeenCalled();
+      expect(req.body.assignedStaffIds).toEqual([]);
+    });
+
+    it('accepts needs action with an empty list of assigned staff', () => {
+      const { next } = run(checkReviewTtaRequestBody, { ...needsAction, assignedStaffIds: [] });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('accepts five assigned staff', () => {
+      const { next } = run(checkReviewTtaRequestBody, {
+        ...needsAction,
+        assignedStaffIds: [1, 2, 3, 4, 5],
+      });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it.each([
+      {},
+      { ...needsAction, status: 'rejected' },
+      { ...needsAction, note: 5 },
+      { ...needsAction, assignedStaffIds: [1, 2, 3, 4, 5, 6] },
+      { ...sentForApproval, assignedStaffIds: [] },
+      { ...sentForApproval, assignedStaffIds: undefined },
+      { ...sentForApproval, assignedStaffIds: [1, 2, 3, 4, 5, 6] },
+      { ...needsAction, assignedStaffIds: [7, 7] },
+      { ...needsAction, assignedStaffIds: ['7'] },
+      { ...needsAction, approverId: 9 },
+      { ...sentForApproval, approverId: undefined },
+      { ...sentForApproval, approverId: '9' },
+    ])('rejects %j', (body) => {
+      const { status, next } = run(checkReviewTtaRequestBody, body);
+      expect(status).toHaveBeenCalledWith(400);
+      expect(next).not.toHaveBeenCalled();
+      expect(auditLogger.error).toHaveBeenCalled();
     });
   });
 });

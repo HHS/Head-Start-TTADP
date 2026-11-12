@@ -1,4 +1,5 @@
 import handleErrors from '../../lib/apiErrorHandler';
+import SCOPES from '../../middleware/scopeConstants';
 import User from '../../policies/user';
 import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 import { currentUserId } from '../../services/currentUser';
@@ -235,6 +236,63 @@ describe('Citation handlers', () => {
       expect(handleErrors).not.toHaveBeenCalled();
     });
 
+    describe('without activity report write permission in the region', () => {
+      const req = {
+        query: { grantIds: ['1'], reportStartDate: '2024-10-01' },
+        params: { regionId: '1' },
+      };
+      let res;
+
+      beforeEach(() => {
+        res = {
+          sendStatus: jest.fn(),
+          status: jest.fn().mockReturnThis(),
+          send: jest.fn(),
+        };
+        User.mockImplementation(() => ({
+          canWriteInRegion: () => false,
+        }));
+        currentUserId.mockResolvedValue(1);
+        getCitationsByGrantIds.mockResolvedValue([]);
+      });
+
+      it.each([
+        ['write TTA requests', SCOPES.READ_WRITE_TTA_REQUESTS],
+        ['review TTA requests', SCOPES.REVIEW_TTA_REQUESTS],
+      ])('returns citations to a user who can %s in the region', async (_description, scopeId) => {
+        userById.mockResolvedValue({ id: 1, permissions: [{ regionId: 1, scopeId }] });
+
+        await getCitationsByGrants(req, res);
+
+        expect(getCitationsByGrantIds).toHaveBeenCalledWith([1], '2024-10-01');
+        expect(res.status).toHaveBeenCalledWith(200);
+      });
+
+      it('returns a 403 to a user who can only review TTA requests in another region', async () => {
+        userById.mockResolvedValue({
+          id: 1,
+          permissions: [{ regionId: 2, scopeId: SCOPES.REVIEW_TTA_REQUESTS }],
+        });
+
+        await getCitationsByGrants(req, res);
+
+        expect(res.sendStatus).toHaveBeenCalledWith(403);
+        expect(getCitationsByGrantIds).not.toHaveBeenCalled();
+      });
+
+      it('returns a 403 to a user who can only read reports in the region', async () => {
+        userById.mockResolvedValue({
+          id: 1,
+          permissions: [{ regionId: 1, scopeId: SCOPES.READ_REPORTS }],
+        });
+
+        await getCitationsByGrants(req, res);
+
+        expect(res.sendStatus).toHaveBeenCalledWith(403);
+        expect(getCitationsByGrantIds).not.toHaveBeenCalled();
+      });
+    });
+
     it('should pass parsed grantIds from a single query string value', async () => {
       const req = {
         query: { grantIds: '12', reportStartDate: '2024-10-01' },
@@ -281,6 +339,7 @@ describe('Citation handlers', () => {
       // Mock the user.
       const user = {
         id: 1,
+        permissions: [],
       };
 
       // Mock the functions.

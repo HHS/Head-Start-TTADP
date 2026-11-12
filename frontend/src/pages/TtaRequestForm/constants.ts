@@ -26,6 +26,10 @@ export const REQUEST_ORIGINATORS = TTA_REQUEST_ORIGINATORS.map((originator) => (
 export const RTTAPA_ALERT =
   "This goal will be added to the recipient's RTTAPA. If it's not already in use, its status will be set to Not started. If it's already on the RTTAPA, its current status won't change.";
 
+/** shown in place of the RTTAPA alert when the monitoring goal's grants have no active citations */
+export const NO_MONITORING_REPORT_ALERT =
+  "The TTA Hub doesn't have this recipient's monitoring report, so we can't add the goal to the RTTAPA. You can continue creating the TTA request and select citations on future Activity Reports.";
+
 /** how often the form saves itself, matching the navigator's interval */
 export const AUTOSAVE_INTERVAL = 1000 * 60 * 2;
 

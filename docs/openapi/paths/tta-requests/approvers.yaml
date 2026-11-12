@@ -1,0 +1,35 @@
+get:
+  tags:
+    - tta request
+  summary: List the CORs who can approve TTA requests in a region
+  description: >-
+    Active users with the APPROVE_TTA_REQUESTS (primary COR) or
+    BACKUP_APPROVE_TTA_REQUESTS (backup COR) permission in the region. The
+    primary COR comes first, then the backups by name; someone who is both is
+    listed once, as the primary.
+  parameters:
+    - name: regionId
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: The region's approving CORs
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                isBackup:
+                  type: boolean
+    '400':
+      description: The region ID is not an integer
+    '403':
+      description: No read permission in the region

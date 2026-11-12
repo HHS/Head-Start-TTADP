@@ -42,7 +42,14 @@ Status.propTypes = {
   statusKey: PropTypes.string.isRequired,
 };
 
-export default function ReadOnlyContent({ title, sections, className, displayStatus, spacing }) {
+export default function ReadOnlyContent({
+  title,
+  sections,
+  className,
+  displayStatus,
+  spacing,
+  titleAction,
+}) {
   const {
     title: titleSpacing,
     section: sectionSpacing,
@@ -51,9 +58,10 @@ export default function ReadOnlyContent({ title, sections, className, displaySta
 
   return (
     <div className={`ttahub-read-only-content-section-container ${className}`}>
-      <div className="display-flex">
+      <div className={`display-flex${titleAction ? ' flex-justify flex-align-baseline' : ''}`}>
         <h2 className={`font-serif-xl margin-bottom-${titleSpacing} margin-top-0`}>{title}</h2>
         {displayStatus && <Status statusKey={displayStatus} />}
+        {titleAction}
       </div>
       {sections.map((section) => {
         const subheadings = Object.keys(section.data);
@@ -123,6 +131,8 @@ ReadOnlyContent.propTypes = {
     })
   ).isRequired,
   displayStatus: PropTypes.string,
+  // shown at the end of the title's line, e.g. a link to edit what is shown
+  titleAction: PropTypes.node,
   // USWDS spacing units; any omitted key keeps its default
   spacing: PropTypes.shape({
     title: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -135,4 +145,5 @@ ReadOnlyContent.defaultProps = {
   className: '',
   displayStatus: '',
   spacing: {},
+  titleAction: null,
 };

@@ -1,12 +1,26 @@
-import { TTA_REQUEST_MONITORING_STANDARD, TTA_REQUEST_STATUSES } from '@ttahub/common';
-import type { TtaRequestCitationData, TtaRequestPayload } from '@ttahub/common/src/ttaRequests';
+import {
+  APPROVER_STATUSES,
+  TTA_REQUEST_ASSIGNABLE_ROLES,
+  TTA_REQUEST_MONITORING_STANDARD,
+  TTA_REQUEST_NOTE_ACTIONS,
+  TTA_REQUEST_STATUSES,
+  TTA_REQUEST_STEPS,
+} from '@ttahub/common';
+import type {
+  TtaRequestApprovingCor,
+  TtaRequestCitationData,
+  TtaRequestPayload,
+  TtaRequestReviewPayload,
+} from '@ttahub/common/src/ttaRequests';
+import moment from 'moment';
 import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
-import { activeUsersWithScopesInRegion } from './users';
+import { getCitationsByGrantIds } from './citations';
+import { activeUsersWithScopesInRegion, usersByRoles } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
 
@@ -14,6 +28,10 @@ const {
   TtaRequest,
   TtaRequestGrant,
   TtaRequestCitation,
+  TtaRequestReviewer,
+  TtaRequestApprover,
+  TtaRequestAssignedStaff,
+  TtaRequestNote,
   Grant,
   Program,
   Recipient,
@@ -51,6 +69,13 @@ export async function lockTtaRequest(id: number) {
     lock: Transaction.LOCK.NO_KEY_UPDATE,
   });
 }
+
+const userWithRoles = (as: string) => ({
+  model: User,
+  as,
+  attributes: ['id', 'name', 'fullName'],
+  include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
+});
 
 export async function ttaRequestById(id: number) {
   return TtaRequest.findOne({
@@ -110,6 +135,39 @@ export async function ttaRequestById(id: number) {
         as: 'citations',
         attributes: ['id', 'citation', 'findingType'],
       },
+      {
+        model: TtaRequestReviewer,
+        as: 'reviewers',
+        attributes: ['id', 'userId', 'status'],
+        include: [userWithRoles('user')],
+      },
+      {
+        model: TtaRequestApprover,
+        as: 'approvers',
+        attributes: ['id', 'userId', 'status'],
+        include: [userWithRoles('user')],
+      },
+      {
+        model: User,
+        as: 'assignedStaff',
+        attributes: ['id', 'name', 'fullName'],
+        through: { attributes: [] },
+        include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
+      },
+      {
+        model: TtaRequestNote,
+        as: 'notes',
+        attributes: ['id', 'step', 'action', 'note', 'createdAt'],
+        include: [userWithRoles('user')],
+        // the history grows with each review, so it is loaded in its own query rather than
+        // multiplying the rows of the grants and citations joined above
+        separate: true,
+        // the history reads in the order it happened
+        order: [
+          ['createdAt', 'ASC'],
+          ['id', 'ASC'],
+        ],
+      },
     ],
     order: [
       [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
@@ -121,7 +179,7 @@ export async function ttaRequestById(id: number) {
 /**
  * The requests the scopes allow, optionally for one recipient: the user's own drafts,
  * since drafts are private to their creator until they are submitted, and anyone's
- * submitted requests.
+ * requests that have been submitted, including those sent back for changes.
  */
 export async function getTtaRequests(
   scopes: WhereOptions[],
@@ -135,7 +193,13 @@ export async function getTtaRequests(
         {
           [Op.or]: [
             { userId, status: TTA_REQUEST_STATUSES.DRAFT },
-            { status: TTA_REQUEST_STATUSES.SUBMITTED },
+            {
+              status: [
+                TTA_REQUEST_STATUSES.SUBMITTED,
+                TTA_REQUEST_STATUSES.NEEDS_ACTION,
+                TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+              ],
+            },
           ],
         },
         ...(recipientId ? [{ recipientId }] : []),
@@ -225,6 +289,35 @@ async function checkRecipientAndGrants(
 export async function ttaRequestReviewers(regionId: number) {
   const reviewers = await activeUsersWithScopesInRegion(TTA_REQUEST_REVIEWER_SCOPES, regionId);
   return reviewers.map(({ id, name }) => ({ id, name }));
+}
+
+/**
+ * The regional team members the reviewer can assign to a request, ordered by name: the
+ * specialists, managers and TTACs whose home region is the request's. The reviewer is one of
+ * them when their role is, so they can assign themselves.
+ */
+export async function ttaRequestAssignableStaff(regionId: number) {
+  const staff = await usersByRoles([...TTA_REQUEST_ASSIGNABLE_ROLES], regionId);
+  return staff.map(({ id, name, fullName }) => ({ id, name, fullName }));
+}
+
+/**
+ * The CORs who can approve a request in the region: the primary COR first, then the backups,
+ * ordered by name. Someone who is both is listed once, as the primary.
+ */
+export async function ttaRequestApprovingCors(regionId: number): Promise<TtaRequestApprovingCor[]> {
+  const [primaries, backups] = await Promise.all([
+    activeUsersWithScopesInRegion([SCOPES.APPROVE_TTA_REQUESTS], regionId),
+    activeUsersWithScopesInRegion([SCOPES.BACKUP_APPROVE_TTA_REQUESTS], regionId),
+  ]);
+  const primaryIds = primaries.map(({ id }) => id);
+
+  return [
+    ...primaries.map(({ id, name }) => ({ id, name, isBackup: false })),
+    ...backups
+      .filter(({ id }) => !primaryIds.includes(id))
+      .map(({ id, name }) => ({ id, name, isBackup: true })),
+  ];
 }
 
 /**
@@ -376,10 +469,53 @@ export async function updateTtaRequest(
 }
 
 /**
- * Saves the request as it stands and submits it for review. The body has already been
- * checked for the required fields; what is left to check depends on the saved request:
- * the reviewer must still be one of the region's reviewers, and the monitoring goal
- * needs citations.
+ * Who is on a step of the request: its reviewer, the one picked on the form, or its approver,
+ * the COR the reviewer sent it to. A replaced user who had acted on the step is soft deleted,
+ * so what they did stays on record; one who never acted on it has nothing to show, so is
+ * removed, as collaboration report approvers are. The current one is pending again.
+ */
+async function syncStepUser(
+  model: typeof TtaRequestReviewer | typeof TtaRequestApprover,
+  ttaRequestId: number,
+  userId: number
+) {
+  const replaced = {
+    ttaRequestId,
+    userId: { [Op.ne]: userId },
+  };
+  await model.destroy({ where: { ...replaced, status: null }, force: true });
+  await model.destroy({ where: replaced });
+
+  const existing = await model.findOne({
+    where: { ttaRequestId, userId },
+    paranoid: false,
+  });
+
+  if (!existing) {
+    await model.create({
+      ttaRequestId,
+      userId,
+      status: null,
+    });
+    return;
+  }
+
+  if (existing.deletedAt) {
+    await existing.restore();
+  }
+  await existing.update({ status: null });
+}
+
+/**
+ * Saves the request as it stands and submits it for review, the first time or after the
+ * reviewer has asked for changes. The body has already been checked for the required
+ * fields; what is left to check depends on the saved request: the reviewer must still be
+ * one of the region's reviewers, and the monitoring goal needs citations when its grants
+ * have any active today. Without the recipient's monitoring report there are none to choose,
+ * so the request goes ahead and citations are picked on later Activity Reports.
+ *
+ * The creator's notes are added to the request's history, and the field is cleared so
+ * the next submission starts with a blank note.
  */
 export async function submitTtaRequest(
   existing: ExistingTtaRequest,
@@ -393,17 +529,104 @@ export async function submitTtaRequest(
   }
 
   if (saved.goalTemplate?.standard === TTA_REQUEST_MONITORING_STANDARD && !saved.citations.length) {
-    throw dataError('A request for the monitoring goal needs at least one citation');
+    const grantIds = saved.grants.map((grant) => grant.id);
+    const activeCitations = grantIds.length
+      ? await getCitationsByGrantIds(grantIds, moment().format('YYYY-MM-DD'))
+      : [];
+    if (activeCitations.length) {
+      throw dataError('A request for the monitoring goal needs at least one citation');
+    }
   }
+
+  await syncStepUser(TtaRequestReviewer, existing.id, saved.reviewerId);
+
+  await TtaRequestNote.create({
+    ttaRequestId: existing.id,
+    userId,
+    step: TTA_REQUEST_STEPS.CREATOR,
+    action: TTA_REQUEST_NOTE_ACTIONS.SUBMITTED,
+    note: saved.creatorNotes || null,
+  });
 
   await TtaRequest.update(
     {
       status: TTA_REQUEST_STATUSES.SUBMITTED,
       submittedAt: new Date(),
+      creatorNotes: null,
     },
     { where: { id: existing.id } }
   );
 
   const submitted = await ttaRequestById(existing.id);
   return submitted.toJSON();
+}
+
+/**
+ * The reviewer assigns staff to the request, then either sends it back to its creator for
+ * changes, where no staff need be assigned, or sends it on to the approving COR. Their decision and note are added to the
+ * request's history. Everything is checked before anything is written.
+ */
+export async function reviewTtaRequest(
+  existing: { id: number; regionId: number },
+  { status, note, assignedStaffIds, approverId }: TtaRequestReviewPayload,
+  userId: number
+) {
+  // the body is checked by checkReviewTtaRequestBody, so the status is needs action or
+  // approved, and approved comes with an approving COR
+  const sentForApproval = status === APPROVER_STATUSES.APPROVED;
+
+  const reviewer = await TtaRequestReviewer.findOne({
+    where: { ttaRequestId: existing.id, userId },
+  });
+
+  if (!reviewer) {
+    throw dataError('Only the reviewer on the request can review it');
+  }
+
+  const assignableIds = (await ttaRequestAssignableStaff(existing.regionId)).map(({ id }) => id);
+  if (!assignedStaffIds.every((id) => assignableIds.includes(id))) {
+    throw dataError("The assigned staff must be regional team members in the request's region");
+  }
+
+  if (sentForApproval) {
+    const cors = await ttaRequestApprovingCors(existing.regionId);
+    if (!cors.some(({ id }) => id === approverId)) {
+      throw dataError("The approving COR must be able to approve in the request's region");
+    }
+  }
+
+  await reviewer.update({ status });
+
+  await syncJoinRows(
+    TtaRequestAssignedStaff,
+    { ttaRequestId: existing.id },
+    'userId',
+    assignedStaffIds
+  );
+
+  if (sentForApproval) {
+    await syncStepUser(TtaRequestApprover, existing.id, approverId);
+  }
+
+  await TtaRequestNote.create({
+    ttaRequestId: existing.id,
+    userId,
+    step: TTA_REQUEST_STEPS.REVIEWER,
+    action: sentForApproval
+      ? TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL
+      : TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
+    note: note || null,
+  });
+
+  await TtaRequest.update(
+    {
+      status: sentForApproval
+        ? TTA_REQUEST_STATUSES.AWAITING_APPROVAL
+        : TTA_REQUEST_STATUSES.NEEDS_ACTION,
+    },
+    { where: { id: existing.id } }
+  );
+
+  const reviewed = await ttaRequestById(existing.id);
+  return reviewed.toJSON();
 }

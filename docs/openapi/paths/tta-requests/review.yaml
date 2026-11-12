@@ -1,0 +1,61 @@
+put:
+  tags:
+    - tta request
+  summary: Review a submitted TTA request
+  description: >-
+    Available only to the request's reviewer, while it is submitted and they can
+    review in its region. The reviewer assigns one to five regional team members.
+    Needs action sends the request back to its creator and sets the status to
+    needs_action. Approved sends it on to the approving COR, who must be a primary
+    or backup COR in the region, and sets the status to awaiting_approval. Either
+    way the review and its note are added to the request's notes.
+  parameters:
+    - name: ttaRequestId
+      in: path
+      description: ID of the TTA request
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              enum:
+                - needs_action
+                - approved
+            assignedStaffIds:
+              type: array
+              maxItems: 5
+              uniqueItems: true
+              items:
+                type: integer
+              description: The regional team members assigned to the request; at least one is required when the status is approved, and none are needed for needs_action (defaults to an empty list)
+            approverId:
+              type: integer
+              description: The approving COR; required when the status is approved, and not allowed otherwise
+            note:
+              type: string
+              nullable: true
+              description: The reviewer's notes for the creator
+  responses:
+    '200':
+      description: Reviewed TTA request
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/ttaRequest'
+    '400':
+      description: >-
+        Malformed ID or body, the user is not the request's reviewer, or the
+        assigned staff or approving COR cannot be picked in the request's region
+    '403':
+      description: Not the reviewer, not submitted, or no review permission in the region
+    '404':
+      description: TTA request not found

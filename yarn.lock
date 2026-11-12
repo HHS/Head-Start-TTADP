@@ -2672,10 +2672,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-3.0.1.tgz#d580decb59cb41a15856387a86800838102daf44"
   integrity sha512-VyMVKRrpHTT8PnotUeV8L/mDaMwD5DaAKCFLP73zAqAtvF0FCqky+Ki7BYbFCYQmqFyTe9316Ed5zS70QUR9eg==
 
-"@ttahub/common@2.4.25":
-  version "2.4.25"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.25.tgz#cdb4befd8f68e0db6670844b4b0d126384d96fd5"
-  integrity sha512-UZQeL999102xVNq7Jk8+GQEml4CqmnBdpN6EzcV+QUGVTi2Qr4jjXCsXPBMOLJSI/bYP3ImQTgpKjRuwE8mV5w==
+"@ttahub/common@2.4.27":
+  version "2.4.27"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.27.tgz#6081101312ee16e80872c1e4f876a378a0f6571b"
+  integrity sha512-REcp1va+/8JLSXy9yY5+mcOpoBjkWzwlKNoUvUffYpDjQr7hzpSYNFo/dxgZyG4x/xp4vjYmH724q2lbgREzCg==
 
 "@types/argparse@1.0.38":
   version "1.0.38"

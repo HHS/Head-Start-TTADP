@@ -7,12 +7,12 @@ import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
 import SubmitForReview, { INELIGIBLE_REVIEWER_ERROR } from '../SubmitForReview';
 
-function Wrapper({ regionId, reviewer = null }) {
+function Wrapper({ regionId, reviewer = null, notes = undefined }) {
   const hookForm = useForm({ mode: 'onBlur', defaultValues: { creatorNotes: '', reviewer } });
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
-      <SubmitForReview regionId={regionId} />
+      <SubmitForReview regionId={regionId} notes={notes} />
     </FormProvider>
   );
 }
@@ -20,6 +20,33 @@ function Wrapper({ regionId, reviewer = null }) {
 describe('SubmitForReview', () => {
   afterEach(() => {
     fetchMock.restore();
+  });
+
+  it('shows the notes left on the request so far', () => {
+    render(
+      <Wrapper
+        regionId={null}
+        notes={[
+          {
+            key: 'note-1',
+            phase: 'TTA Request review - needs action',
+            author: 'Ross Geller, TTAC',
+            role: 'Reviewer',
+            date: '2026-06-23T10:05:00.000Z',
+            note: 'Please add the agenda details we discussed.',
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'Notes summary' })).toBeVisible();
+    expect(screen.getByText('Please add the agenda details we discussed.')).toBeVisible();
+  });
+
+  it('leaves out the notes summary before the request has any notes', () => {
+    render(<Wrapper regionId={null} />);
+
+    expect(screen.queryByRole('heading', { name: 'Notes summary' })).toBeNull();
   });
 
   it('takes creator notes as plain text', () => {
