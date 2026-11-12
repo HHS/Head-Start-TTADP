@@ -264,10 +264,137 @@ describe('ViewTtaRequest', () => {
     expect(
       screen.getByText(/Avery Example \(GS\) is asking for a review of this TTA request/)
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Edit request' })).toHaveAttribute(
-      'href',
-      '/tta-requests/14322'
-    );
+    expect(screen.getByRole('button', { name: 'Edit request' })).toBeVisible();
+  });
+
+  it('leaves out the share and print buttons for the reviewer', async () => {
+    mockReviewerFetches();
+    renderView({}, REVIEWER);
+
+    await screen.findByRole('heading', { name: 'Review and submit' });
+    expect(screen.queryByRole('button', { name: 'Print to PDF' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Copy URL Link' })).toBeNull();
+  });
+
+  it('still offers printing to anyone else', async () => {
+    fetchMock.get(URL, SUBMITTED_REQUEST);
+    renderView({}, CREATOR);
+
+    expect(await screen.findByRole('button', { name: 'Print to PDF' })).toBeVisible();
+  });
+
+  describe('when the reviewer edits the request', () => {
+    const GRANT = { ...SUBMITTED_REQUEST.grants[0], status: 'Active' };
+    const OTHER_GRANT = {
+      id: 6,
+      regionId: 14,
+      status: 'Active',
+      numberWithProgramTypes: '14CH5678 - HS',
+      name: 'Sample Recipient Agency - 14CH5678 - HS',
+    };
+    // the request's recipient has another grant to choose; the other recipient isn't offered
+    const RECIPIENTS = [
+      { id: 3, name: 'Sample Recipient Agency', grants: [GRANT, OTHER_GRANT] },
+      { id: 30, name: 'Another Recipient', grants: [] },
+    ];
+    const OTHER_GOAL = { id: 9, name: 'The recipient will improve health services' };
+    // a request without citations to load
+    const REQUEST = {
+      ...SUBMITTED_REQUEST,
+      grants: [GRANT],
+      goalTemplate: { id: 9, templateName: OTHER_GOAL.name, standard: 'Health' },
+      citations: [],
+    };
+
+    const startEditing = async () => {
+      mockReviewerFetches(REQUEST);
+      fetchMock.get('/api/recipient/user/tta-requests', RECIPIENTS);
+      fetchMock.get('begin:/api/goal-templates', [OTHER_GOAL]);
+      fetchMock.get('begin:/api/feeds/item', '');
+      const history = renderView({}, REVIEWER);
+      userEvent.click(await screen.findByRole('button', { name: 'Edit request' }));
+      await screen.findByRole('checkbox', { name: `Select grant ${GRANT.name}` });
+      return history;
+    };
+
+    it("edits the details in place, offering the recipient's grants but not another recipient", async () => {
+      const history = await startEditing();
+
+      expect(history.location.pathname).toBe('/tta-requests/view/14322');
+      expect(screen.queryByRole('button', { name: 'Edit request' })).toBeNull();
+      expect(screen.queryByLabelText(/^recipient\s*\*?$/i)).toBeNull();
+      expect(screen.getByLabelText(/who originated this request/i)).toBeVisible();
+      expect(screen.getByLabelText('Yes')).toBeChecked();
+      expect(screen.queryByText('Another Recipient')).toBeNull();
+      expect(screen.getByRole('checkbox', { name: `Select grant ${GRANT.name}` })).toBeChecked();
+      expect(
+        screen.getByRole('checkbox', { name: `Select grant ${OTHER_GRANT.name}` })
+      ).not.toBeChecked();
+    });
+
+    it('clears the goal when the grants change', async () => {
+      await startEditing();
+      expect(await screen.findByText(OTHER_GOAL.name)).toBeVisible();
+
+      userEvent.click(screen.getByRole('checkbox', { name: `Select grant ${OTHER_GRANT.name}` }));
+
+      await waitFor(() => expect(screen.queryByText(OTHER_GOAL.name)).toBeNull());
+    });
+
+    it('keeps the review as it was filled in, then saves both together', async () => {
+      fetchMock.put(URL, REQUEST);
+      fetchMock.put(REVIEW_URL, { ...REQUEST, status: 'needs_action' });
+      mockReviewerFetches(REQUEST);
+      fetchMock.get('/api/recipient/user/tta-requests', RECIPIENTS);
+      fetchMock.get('begin:/api/goal-templates', [OTHER_GOAL]);
+      fetchMock.get('begin:/api/feeds/item', '');
+      const history = renderView({}, REVIEWER);
+
+      // the review first, then the details
+      await assignStaff('Monica Geller, ECS');
+      userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
+      userEvent.type(screen.getByLabelText(/add ttac or manager notes/i), 'Add the agenda');
+      userEvent.click(screen.getByRole('button', { name: 'Edit request' }));
+      userEvent.click(await screen.findByLabelText('No'));
+      // a second grant, which leaves the goal to be chosen again
+      userEvent.click(
+        await screen.findByRole('checkbox', { name: `Select grant ${OTHER_GRANT.name}` })
+      );
+      await selectEvent.select(screen.getByLabelText(/select goal/i), OTHER_GOAL.name);
+
+      expect(screen.getByText('Monica Geller, ECS')).toBeVisible();
+      expect(screen.getByLabelText(/choose review status/i)).toHaveValue('needs_action');
+      expect(screen.getByLabelText(/add ttac or manager notes/i)).toHaveValue('Add the agenda');
+
+      userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests'));
+      const details = JSON.parse(fetchMock.lastOptions(URL, { method: 'PUT' }).body);
+      expect(details).toMatchObject({ recipientAware: false, grantIds: [4, 6], goalTemplateId: 9 });
+      expect(details).not.toHaveProperty('recipientId');
+      expect(details).not.toHaveProperty('reviewerId');
+      expect(details).not.toHaveProperty('creatorNotes');
+      expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body)).toEqual({
+        status: 'needs_action',
+        note: 'Add the agenda',
+        assignedStaffIds: [7],
+      });
+    });
+
+    it('keeps everything filled in when the details cannot be saved', async () => {
+      fetchMock.put(URL, 500);
+      await startEditing();
+
+      await assignStaff('Monica Geller, ECS');
+      userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
+      userEvent.click(screen.getByLabelText('No'));
+      userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+      expect(await screen.findByText(/error submitting your review/i)).toBeVisible();
+      expect(fetchMock.called(REVIEW_URL)).toBe(false);
+      expect(screen.getByLabelText('No')).toBeChecked();
+      expect(screen.getByText('Monica Geller, ECS')).toBeVisible();
+    });
   });
 
   it('lays out the assignment above the review, with the notes between', async () => {
@@ -313,6 +440,8 @@ describe('ViewTtaRequest', () => {
       note: 'Add the agenda',
       assignedStaffIds: [2, 7],
     });
+    // nothing was edited, so only the review is saved
+    expect(fetchMock.called(URL, { method: 'PUT' })).toBe(false);
     expect(history.location.state.message).toMatchObject({
       reportId: 14322,
       displayId: 'R14-REQ-14322',
@@ -455,7 +584,7 @@ describe('ViewTtaRequest', () => {
     expect(following(dateSubmitted, notes)).toBeTruthy();
 
     expect(screen.queryByLabelText(/choose review status/i)).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Edit request' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit request' })).toBeNull();
   });
 
   it('shows the assigned staff but not the review once the request has been sent back', async () => {
@@ -479,7 +608,7 @@ describe('ViewTtaRequest', () => {
     expect(screen.queryByRole('heading', { name: 'Review and submit' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'TTA assignment' })).toBeNull();
     expect(screen.queryByLabelText(/choose review status/i)).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Edit request' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit request' })).toBeNull();
   });
 
   it('does not offer a review once the request has been sent back', async () => {

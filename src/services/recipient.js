@@ -134,7 +134,8 @@ export async function recipientsByUserId(userId) {
 
 /**
  * Recipients the user can pick on a TTA request: in the regions they create requests in, and
- * those they review them in, since the reviewer can change a submitted request's recipient
+ * those they review them in, since the reviewer can choose among a submitted request's
+ * recipient's grants
  */
 export async function recipientsByTtaRequestUserId(userId) {
   return recipientsByUserIdForScopes(userId, [

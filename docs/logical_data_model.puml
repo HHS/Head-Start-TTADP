@@ -1360,7 +1360,6 @@ class TtaRequestApprovers{
  * ttaRequestId : integer : REFERENCES "TtaRequests".id
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
- * step : enum
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  status : enum
@@ -1400,6 +1399,16 @@ class TtaRequestNotes{
  * step : enum
  * updatedAt : timestamp with time zone
  note : text
+}
+
+class TtaRequestReviewers{
+ * id : integer : <generated>
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ status : enum
 }
 
 class TtaRequests{
@@ -3136,6 +3145,20 @@ class ZALTtaRequestNotes{
  session_sig : text
 }
 
+class ZALTtaRequestReviewers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALTtaRequests{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3427,6 +3450,7 @@ TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : ttaR
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestCitations : ttaRequest, citations
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequest, requestGrants
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : ttaRequest, notes
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestReviewers : ttaRequest, reviewers
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
@@ -3449,6 +3473,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : approver, 
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
 Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : user, ttaRequestApprovers
 Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : user, ttaRequestNotes
+Users "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestReviewers : user, ttaRequestReviewers
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserValidationStatus : user, validationStatus

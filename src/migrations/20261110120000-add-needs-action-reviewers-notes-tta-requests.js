@@ -1,7 +1,6 @@
 const { prepMigration, removeTables } = require('../lib/migration');
 
-const APPROVER_STEPS = ['reviewer', 'approver'];
-const APPROVER_STATUSES = ['needs_action', 'approved'];
+const REVIEWER_STATUSES = ['needs_action', 'approved'];
 const NOTE_STEPS = ['creator', 'reviewer', 'approver'];
 const NOTE_ACTIONS = ['submitted', 'needs_action'];
 
@@ -17,9 +16,9 @@ module.exports = {
         { transaction }
       );
 
-      // who is on each step of a request, and where they stand; a null status is pending
+      // the reviewer a request was submitted to, and where they stand; a null status is pending
       await queryInterface.createTable(
-        'TtaRequestApprovers',
+        'TtaRequestReviewers',
         {
           id: {
             type: Sequelize.INTEGER,
@@ -38,12 +37,8 @@ module.exports = {
             allowNull: false,
             references: { model: { tableName: 'Users' }, key: 'id' },
           },
-          step: {
-            type: Sequelize.ENUM(APPROVER_STEPS),
-            allowNull: false,
-          },
           status: {
-            type: Sequelize.ENUM(APPROVER_STATUSES),
+            type: Sequelize.ENUM(REVIEWER_STATUSES),
             allowNull: true,
           },
           createdAt: {
@@ -62,8 +57,8 @@ module.exports = {
         { transaction }
       );
 
-      await queryInterface.addIndex('TtaRequestApprovers', ['ttaRequestId', 'userId', 'step'], {
-        name: 'tta_request_approvers_tta_request_id_user_id_step',
+      await queryInterface.addIndex('TtaRequestReviewers', ['ttaRequestId', 'userId'], {
+        name: 'tta_request_reviewers_tta_request_id_user_id',
         unique: true,
         transaction,
       });
@@ -120,8 +115,8 @@ module.exports = {
 
       // requests already submitted have a pending reviewer and the creator's submission
       const statements = [
-        `INSERT INTO "TtaRequestApprovers" ("ttaRequestId", "userId", "step", "status", "createdAt", "updatedAt")
-          SELECT "id", "reviewerId", 'reviewer', NULL, "submittedAt", "submittedAt"
+        `INSERT INTO "TtaRequestReviewers" ("ttaRequestId", "userId", "status", "createdAt", "updatedAt")
+          SELECT "id", "reviewerId", NULL, "submittedAt", "submittedAt"
           FROM "TtaRequests"
           WHERE "status" = 'submitted' AND "reviewerId" IS NOT NULL AND "deletedAt" IS NULL;`,
         `INSERT INTO "TtaRequestNotes" ("ttaRequestId", "userId", "step", "action", "note", "createdAt", "updatedAt")
@@ -162,12 +157,11 @@ module.exports = {
         await queryInterface.sequelize.query(statement, { transaction });
       }
 
-      await removeTables(queryInterface, transaction, ['TtaRequestApprovers', 'TtaRequestNotes']);
+      await removeTables(queryInterface, transaction, ['TtaRequestReviewers', 'TtaRequestNotes']);
 
       // Postgres can't drop an enum value, so rebuild the type without 'needs_action'.
       const enumStatements = [
-        `DROP TYPE IF EXISTS "enum_TtaRequestApprovers_step";`,
-        `DROP TYPE IF EXISTS "enum_TtaRequestApprovers_status";`,
+        `DROP TYPE IF EXISTS "enum_TtaRequestReviewers_status";`,
         `DROP TYPE IF EXISTS "enum_TtaRequestNotes_step";`,
         `DROP TYPE IF EXISTS "enum_TtaRequestNotes_action";`,
         `UPDATE "TtaRequests" SET "status" = 'submitted' WHERE "status" = 'needs_action';`,

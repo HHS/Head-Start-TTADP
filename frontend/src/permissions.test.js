@@ -343,7 +343,7 @@ describe('canEditTtaRequest', () => {
     );
   });
 
-  it('is true for the reviewer while the request is submitted to them', () => {
+  it('is false for the reviewer, who edits the request on the review', () => {
     const reviewer = {
       id: 5,
       permissions: [{ scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 3 }],
@@ -354,7 +354,7 @@ describe('canEditTtaRequest', () => {
         reviewer: { id: 5 },
         status: TTA_REQUEST_STATUSES.SUBMITTED,
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('is false without a user or request', () => {

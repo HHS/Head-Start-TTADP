@@ -453,11 +453,10 @@ describe('TtaRequestForm', () => {
           },
         },
       ],
-      approvers: [
+      reviewers: [
         {
           id: 1,
           userId: 6,
-          step: 'reviewer',
           status: 'needs_action',
           user: {
             id: 6,
@@ -547,58 +546,16 @@ describe('TtaRequestForm', () => {
     });
   });
 
-  describe('for the reviewer of a submitted request', () => {
-    const REVIEWER = {
+  it('sends the reviewer of a submitted request to the review, where they edit it', async () => {
+    const reviewer = {
       id: 6,
       name: 'Ross Geller',
       permissions: [{ regionId: 14, scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS }],
     };
-    const SUBMITTED = { ...SAVED_REQUEST, status: 'submitted' };
+    fetchMock.get('/api/tta-requests/42', { ...SAVED_REQUEST, status: 'submitted' });
+    const history = renderFormAt('/tta-requests/42', { recipientOptions: [RECIPIENT] }, reviewer);
 
-    const renderForReviewer = () => {
-      fetchMock.get('/api/tta-requests/42', SUBMITTED);
-      return renderFormAt('/tta-requests/42', { recipientOptions: [RECIPIENT] }, REVIEWER);
-    };
-
-    it('lets them edit the details, without the reviewer, creator notes or drafts', async () => {
-      const history = renderForReviewer();
-
-      expect(
-        await screen.findByRole('button', { name: 'Save and return to review' })
-      ).toBeVisible();
-      expect(history.location.pathname).toBe('/tta-requests/42');
-      expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
-      expect(screen.queryByRole('heading', { name: 'Submit for review' })).toBeNull();
-      expect(screen.queryByLabelText(/add creator notes/i)).toBeNull();
-      expect(screen.queryByLabelText(/reviewing ttac or manager/i)).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull();
-    });
-
-    it('saves their changes and returns them to the review', async () => {
-      fetchMock.put('/api/tta-requests/42', { ...SUBMITTED, recipientAware: true });
-      const history = renderForReviewer();
-
-      userEvent.click(await screen.findByLabelText('Yes'));
-      userEvent.click(screen.getByRole('button', { name: 'Save and return to review' }));
-
-      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
-      const body = JSON.parse(fetchMock.lastOptions('/api/tta-requests/42').body);
-      expect(body).toMatchObject({ recipientId: RECIPIENT.id, recipientAware: true });
-      expect(body).not.toHaveProperty('reviewerId');
-      expect(body).not.toHaveProperty('creatorNotes');
-      expect(fetchMock.called('/api/tta-requests/42/submit')).toBe(false);
-    });
-
-    it('says so when their changes cannot be saved', async () => {
-      fetchMock.put('/api/tta-requests/42', 500);
-      const history = renderForReviewer();
-
-      userEvent.click(await screen.findByRole('button', { name: 'Save and return to review' }));
-
-      expect(await screen.findByText(/error saving your changes/i)).toBeVisible();
-      expect(history.location.pathname).toBe('/tta-requests/42');
-    });
+    await waitFor(() => expect(history.location.pathname).toBe('/tta-requests/view/42'));
   });
 
   it('sends a submitted request to its read-only view', async () => {

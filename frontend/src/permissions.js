@@ -325,19 +325,15 @@ const canReviewerEditTtaRequest = (user, ttaRequest) => {
 /**
  * Check if user can edit a saved TTA request, as the API's TTA request policy allows: its
  * creator, while it is a draft or sent back to them for changes, and only while they can still
- * write in its region. An admin can also edit a request sent back for changes, and its reviewer
- * can edit it while it is submitted to them.
+ * write in its region. An admin can also edit a request sent back for changes. Its reviewer
+ * edits a request submitted to them on the review instead (see canReviewerEditTtaRequest).
  * @param {object} user - user object
- * @param {object} ttaRequest - the saved request, with its creator, reviewer, status and region
+ * @param {object} ttaRequest - the saved request, with its creator, status and region
  * @returns {boolean} - True if the user can edit the request
  */
 const canEditTtaRequest = (user, ttaRequest) => {
   if (!user || !ttaRequest) {
     return false;
-  }
-
-  if (canReviewerEditTtaRequest(user, ttaRequest)) {
-    return true;
   }
 
   if (isAdmin(user) && ttaRequest.status === TTA_REQUEST_STATUSES.NEEDS_ACTION) {

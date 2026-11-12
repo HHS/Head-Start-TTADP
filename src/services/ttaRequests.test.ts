@@ -43,6 +43,7 @@ const {
   Role,
   TtaRequest,
   TtaRequestApprover,
+  TtaRequestReviewer,
   TtaRequestAssignedStaff,
   TtaRequestCitation,
   User,
@@ -721,12 +722,9 @@ describe('ttaRequests service', () => {
         note: 'Please look at this',
       });
       expect(submitted.notes[0].user.id).toBe(creator.id);
-      expect(submitted.approvers).toHaveLength(1);
-      expect(submitted.approvers[0]).toMatchObject({
-        userId: reviewer.id,
-        step: TTA_REQUEST_STEPS.REVIEWER,
-        status: null,
-      });
+      expect(submitted.reviewers).toHaveLength(1);
+      expect(submitted.reviewers[0]).toMatchObject({ userId: reviewer.id, status: null });
+      expect(submitted.approvers).toEqual([]);
     });
   });
 
@@ -801,7 +799,8 @@ describe('ttaRequests service', () => {
       );
 
       expect(reviewed.status).toBe(TTA_REQUEST_STATUSES.NEEDS_ACTION);
-      expect(reviewed.approvers[0]).toMatchObject({
+      expect(reviewed.approvers).toEqual([]);
+      expect(reviewed.reviewers[0]).toMatchObject({
         userId: reviewer.id,
         status: APPROVER_STATUSES.NEEDS_ACTION,
       });
@@ -888,8 +887,8 @@ describe('ttaRequests service', () => {
 
       expect(resubmitted.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
       expect(resubmitted.creatorNotes).toBeNull();
-      expect(resubmitted.approvers).toHaveLength(1);
-      expect(resubmitted.approvers[0]).toMatchObject({ userId: reviewer.id, status: null });
+      expect(resubmitted.reviewers).toHaveLength(1);
+      expect(resubmitted.reviewers[0]).toMatchObject({ userId: reviewer.id, status: null });
     });
 
     it('replaces the reviewer when the creator picks another one on resubmission', async () => {
@@ -902,11 +901,11 @@ describe('ttaRequests service', () => {
 
       const resubmitted = await resubmit(reviewed, { reviewerId: otherReviewer.id });
 
-      expect(resubmitted.approvers).toHaveLength(1);
-      expect(resubmitted.approvers[0]).toMatchObject({ userId: otherReviewer.id, status: null });
+      expect(resubmitted.reviewers).toHaveLength(1);
+      expect(resubmitted.reviewers[0]).toMatchObject({ userId: otherReviewer.id, status: null });
 
       // the replaced reviewer's review stays on record
-      const replaced = await TtaRequestApprover.findOne({
+      const replaced = await TtaRequestReviewer.findOne({
         where: { ttaRequestId: submitted.id, userId: reviewer.id },
         paranoid: false,
       });
@@ -919,7 +918,7 @@ describe('ttaRequests service', () => {
 
       await resubmit(submitted, { reviewerId: otherReviewer.id });
 
-      const replaced = await TtaRequestApprover.findOne({
+      const replaced = await TtaRequestReviewer.findOne({
         where: { ttaRequestId: submitted.id, userId: reviewer.id },
         paranoid: false,
       });
@@ -942,9 +941,9 @@ describe('ttaRequests service', () => {
 
       const resubmitted = await resubmit(request, { reviewerId: reviewer.id });
 
-      expect(resubmitted.approvers).toHaveLength(1);
-      expect(resubmitted.approvers[0]).toMatchObject({ userId: reviewer.id, status: null });
-      const rows = await TtaRequestApprover.findAll({
+      expect(resubmitted.reviewers).toHaveLength(1);
+      expect(resubmitted.reviewers[0]).toMatchObject({ userId: reviewer.id, status: null });
+      const rows = await TtaRequestReviewer.findAll({
         where: { ttaRequestId: submitted.id },
         paranoid: false,
       });
@@ -967,7 +966,7 @@ describe('ttaRequests service', () => {
       });
     });
 
-    it('returns the history oldest first, and the approvers, with their users and roles', async () => {
+    it('returns the history oldest first, and the reviewers, with their users and roles', async () => {
       const submitted = await submittedRequest('First');
       await reviewTtaRequest(
         submitted,
@@ -980,10 +979,9 @@ describe('ttaRequests service', () => {
       expect(found.notes.map(({ note }) => note)).toEqual(['First', 'Second']);
       expect(found.notes.map(({ user }) => user.id)).toEqual([creator.id, reviewer.id]);
       expect(Array.isArray(found.notes[0].user.roles)).toBe(true);
-      expect(found.approvers).toEqual([
+      expect(found.reviewers).toEqual([
         expect.objectContaining({
           userId: reviewer.id,
-          step: TTA_REQUEST_STEPS.REVIEWER,
           status: APPROVER_STATUSES.NEEDS_ACTION,
           user: expect.objectContaining({ id: reviewer.id, name: reviewer.name }),
         }),
@@ -1049,18 +1047,15 @@ describe('ttaRequests service', () => {
       );
 
       expect(reviewed.status).toBe(TTA_REQUEST_STATUSES.AWAITING_APPROVAL);
-      expect(
-        reviewed.approvers.map(({ userId, step, status }) => ({ userId, step, status }))
-      ).toEqual(
-        expect.arrayContaining([
-          {
-            userId: reviewer.id,
-            step: TTA_REQUEST_STEPS.REVIEWER,
-            status: APPROVER_STATUSES.APPROVED,
-          },
-          { userId: backupCor.id, step: TTA_REQUEST_STEPS.APPROVER, status: null },
-        ])
-      );
+      expect(reviewed.reviewers.map(({ userId, status }) => ({ userId, status }))).toEqual([
+        { userId: reviewer.id, status: APPROVER_STATUSES.APPROVED },
+      ]);
+      expect(reviewed.approvers.map(({ userId, status }) => ({ userId, status }))).toEqual([
+        { userId: backupCor.id, status: null },
+      ]);
+      // the reviewer and the approving COR are kept apart
+      expect(await TtaRequestReviewer.count({ where: { ttaRequestId: submitted.id } })).toBe(1);
+      expect(await TtaRequestApprover.count({ where: { ttaRequestId: submitted.id } })).toBe(1);
       expect(reviewed.notes[1]).toMatchObject({
         step: TTA_REQUEST_STEPS.REVIEWER,
         action: TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL,
@@ -1084,7 +1079,7 @@ describe('ttaRequests service', () => {
       const stored = await ttaRequestById(submitted.id);
       expect(stored.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
       expect(stored.notes).toHaveLength(1);
-      expect(stored.approvers[0].status).toBeNull();
+      expect(stored.reviewers[0].status).toBeNull();
       expect(await TtaRequestAssignedStaff.count({ where: { ttaRequestId: submitted.id } })).toBe(
         0
       );
@@ -1103,7 +1098,8 @@ describe('ttaRequests service', () => {
 
       const stored = await ttaRequestById(submitted.id);
       expect(stored.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
-      expect(stored.approvers).toHaveLength(1);
+      expect(stored.reviewers[0].status).toBeNull();
+      expect(stored.approvers).toEqual([]);
       expect(stored.assignedStaff).toEqual([]);
     });
 

@@ -1,5 +1,5 @@
 import { Alert, Button } from '@trussworks/react-uswds';
-import { APPROVER_STATUSES, TTA_REQUEST_STATUSES, TTA_REQUEST_STEPS } from '@ttahub/common';
+import { APPROVER_STATUSES, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import useInterval from '@use-it/interval';
 import { isEqual } from 'lodash';
 import moment from 'moment-timezone';
@@ -20,7 +20,7 @@ import {
   submitTtaRequest,
 } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
-import { canEditTtaRequest, canReviewerEditTtaRequest } from '../../permissions';
+import { canEditTtaRequest } from '../../permissions';
 import UserContext from '../../UserContext';
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
 import ApproverStatusList from '../ActivityReport/Pages/components/ApproverStatusList';
@@ -30,7 +30,6 @@ import {
   defaultValues,
   LOAD_ERROR,
   NO_REGION_ERROR,
-  REVIEWER_SAVE_ERROR,
   SAVE_ERROR,
   SUBMIT_ERROR,
   TTA_REQUEST_FIELDS,
@@ -71,9 +70,7 @@ const grantIdsKey = (grants: TtaRequestGrant[]) => grants.map((grant) => grant.i
  * Submitting saves the request as it stands and submits it for review, then returns the user
  * to where they came from with a message saying so.
  *
- * The reviewer can also change a request submitted to them here, before they review it. They
- * save it, still submitted, and go back to the review; who reviews it and the creator's notes
- * are the creator's, so those aren't shown, and nothing is autosaved.
+ * The reviewer changes a request submitted to them on the review itself, not here.
  */
 export default function TtaRequestForm(props: TtaRequestFormProps): React.ReactElement {
   const { ttaRequestId } = useParams<{ ttaRequestId?: string }>();
@@ -141,8 +138,6 @@ function TtaRequestFormBody({
     LOAD_ERROR,
     true
   );
-
-  const isReviewerEditing = !!savedRequest && canReviewerEditTtaRequest(user, savedRequest);
 
   // a saved draft keeps its own recipient, whichever record's link it was opened from
   useEffect(() => {
@@ -258,8 +253,7 @@ function TtaRequestFormBody({
   useInterval(async () => {
     // Don't auto save if we are already saving, or if the form hasn't been touched. A skipped
     // tick returns before taking the lock, so it can't release one an in-flight save holds.
-    // The reviewer's changes are only saved when they say so.
-    if (isAppLoading || !isDirty || weAreAutoSaving || isReviewerEditing) {
+    if (isAppLoading || !isDirty || weAreAutoSaving) {
       return;
     }
     setWeAreAutoSaving(true);
@@ -275,11 +269,6 @@ function TtaRequestFormBody({
    * first, since submitting needs its id. The loading overlay also holds off the autosave.
    */
   const onSubmit = async () => {
-    if (isReviewerEditing) {
-      await onReviewerSave();
-      return;
-    }
-
     setAppLoadingText('Submitting');
     setIsAppLoading(true);
 
@@ -316,40 +305,12 @@ function TtaRequestFormBody({
     }
   };
 
-  /**
-   * The reviewer's changes, once they pass validation, saved to the still submitted request.
-   * The reviewer and creator notes stay the creator's, so they aren't sent.
-   */
-  const onReviewerSave = async () => {
-    setAppLoadingText('Saving');
-    setIsAppLoading(true);
-
-    try {
-      const {
-        reviewerId: _reviewerId,
-        creatorNotes: _creatorNotes,
-        ...details
-      } = toApiPayload(getValues() as TtaRequestFormValues);
-      const saved: TtaRequestResponse = await saveTtaRequest(savedRequest.id, details);
-      history.push(ttaRequestViewPath(saved.id, backLinkTo));
-    } catch (e) {
-      const validationMessage =
-        e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
-      setSaveError(validationMessage || REVIEWER_SAVE_ERROR);
-    } finally {
-      setIsAppLoading(false);
-    }
-  };
-
   // nothing to show until the draft in the route has been fetched, as the other forms wait for
   // their report; the form's defaults would otherwise be saved over it. An id that can't be a
   // request's has nothing to fetch.
   const notes = useMemo(() => toNotesSummary(savedRequest?.notes), [savedRequest]);
   // the reviewer whose review the request is waiting on, and where they stand
-  const reviewers = useMemo(
-    () => (savedRequest?.approvers ?? []).filter(({ step }) => step === TTA_REQUEST_STEPS.REVIEWER),
-    [savedRequest]
-  );
+  const reviewers = useMemo(() => savedRequest?.reviewers ?? [], [savedRequest]);
 
   if (!isNewRequest && !savedRequest) {
     const error = routeId === null ? LOAD_ERROR : loadError;
@@ -361,8 +322,8 @@ function TtaRequestFormBody({
   }
 
   // only the creator edits a draft, or a request sent back to them for changes, and only while
-  // they can write in its region; the reviewer edits one submitted to them. Anyone else, or a
-  // request at any other step, is shown read-only, as
+  // they can write in its region. Anyone else - the reviewer included, who edits on the review -
+  // or a request at any other step, is shown read-only, as
   // collaboration reports do, rather than a form whose every save would be refused
   if (savedRequest && !canEditTtaRequest(user, savedRequest)) {
     return <Redirect to={ttaRequestViewPath(savedRequest.id, backLinkTo)} />;
@@ -396,7 +357,7 @@ function TtaRequestFormBody({
           <form onSubmit={hookForm.handleSubmit(onSubmit)}>
             <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />
             <GoalAndContext regionId={effectiveRegionId} />
-            {!isReviewerEditing && <SubmitForReview regionId={effectiveRegionId} notes={notes} />}
+            <SubmitForReview regionId={effectiveRegionId} notes={notes} />
             {needsAction && (
               <div className="margin-top-4">
                 <p className="text-bold margin-top-0 margin-bottom-1">Review status</p>
@@ -430,23 +391,17 @@ function TtaRequestFormBody({
               </Alert>
             )}
             <div className="display-flex margin-top-4">
-              {isReviewerEditing ? (
-                <Button type="submit">Save and return to review</Button>
-              ) : (
-                <>
-                  <Button type="submit" className="margin-right-1" disabled={weAreAutoSaving}>
-                    {needsAction ? 'Update request' : 'Submit'}
-                  </Button>
-                  <Button
-                    type="button"
-                    outline
-                    disabled={weAreAutoSaving}
-                    onClick={() => onSaveDraft()}
-                  >
-                    Save draft
-                  </Button>
-                </>
-              )}
+              <Button type="submit" className="margin-right-1" disabled={weAreAutoSaving}>
+                {needsAction ? 'Update request' : 'Submit'}
+              </Button>
+              <Button
+                type="button"
+                outline
+                disabled={weAreAutoSaving}
+                onClick={() => onSaveDraft()}
+              >
+                Save draft
+              </Button>
             </div>
             <DismissingComponentWrapper
               shown={showSavedDraft}

@@ -28,6 +28,7 @@ const {
   TtaRequest,
   TtaRequestGrant,
   TtaRequestCitation,
+  TtaRequestReviewer,
   TtaRequestApprover,
   TtaRequestAssignedStaff,
   TtaRequestNote,
@@ -135,9 +136,15 @@ export async function ttaRequestById(id: number) {
         attributes: ['id', 'citation', 'findingType'],
       },
       {
+        model: TtaRequestReviewer,
+        as: 'reviewers',
+        attributes: ['id', 'userId', 'status'],
+        include: [userWithRoles('user')],
+      },
+      {
         model: TtaRequestApprover,
         as: 'approvers',
-        attributes: ['id', 'userId', 'step', 'status'],
+        attributes: ['id', 'userId', 'status'],
         include: [userWithRoles('user')],
       },
       {
@@ -462,30 +469,32 @@ export async function updateTtaRequest(
 }
 
 /**
- * Who is on a step of the request. For the reviewer, it is the one picked on the form; for the
- * approver, the COR the reviewer sent it to. A replaced user who had acted on the step is soft
- * deleted, so what they did stays on record; one who never acted on it has nothing to show, so
- * is removed, as collaboration report approvers are. The current one is pending again.
+ * Who is on a step of the request: its reviewer, the one picked on the form, or its approver,
+ * the COR the reviewer sent it to. A replaced user who had acted on the step is soft deleted,
+ * so what they did stays on record; one who never acted on it has nothing to show, so is
+ * removed, as collaboration report approvers are. The current one is pending again.
  */
-async function syncStepApprover(ttaRequestId: number, step: string, userId: number) {
+async function syncStepUser(
+  model: typeof TtaRequestReviewer | typeof TtaRequestApprover,
+  ttaRequestId: number,
+  userId: number
+) {
   const replaced = {
     ttaRequestId,
-    step,
     userId: { [Op.ne]: userId },
   };
-  await TtaRequestApprover.destroy({ where: { ...replaced, status: null }, force: true });
-  await TtaRequestApprover.destroy({ where: replaced });
+  await model.destroy({ where: { ...replaced, status: null }, force: true });
+  await model.destroy({ where: replaced });
 
-  const existing = await TtaRequestApprover.findOne({
-    where: { ttaRequestId, userId, step },
+  const existing = await model.findOne({
+    where: { ttaRequestId, userId },
     paranoid: false,
   });
 
   if (!existing) {
-    await TtaRequestApprover.create({
+    await model.create({
       ttaRequestId,
       userId,
-      step,
       status: null,
     });
     return;
@@ -529,7 +538,7 @@ export async function submitTtaRequest(
     }
   }
 
-  await syncStepApprover(existing.id, TTA_REQUEST_STEPS.REVIEWER, saved.reviewerId);
+  await syncStepUser(TtaRequestReviewer, existing.id, saved.reviewerId);
 
   await TtaRequestNote.create({
     ttaRequestId: existing.id,
@@ -566,8 +575,8 @@ export async function reviewTtaRequest(
   // approved, and approved comes with an approving COR
   const sentForApproval = status === APPROVER_STATUSES.APPROVED;
 
-  const reviewer = await TtaRequestApprover.findOne({
-    where: { ttaRequestId: existing.id, userId, step: TTA_REQUEST_STEPS.REVIEWER },
+  const reviewer = await TtaRequestReviewer.findOne({
+    where: { ttaRequestId: existing.id, userId },
   });
 
   if (!reviewer) {
@@ -596,7 +605,7 @@ export async function reviewTtaRequest(
   );
 
   if (sentForApproval) {
-    await syncStepApprover(existing.id, TTA_REQUEST_STEPS.APPROVER, approverId);
+    await syncStepUser(TtaRequestApprover, existing.id, approverId);
   }
 
   await TtaRequestNote.create({

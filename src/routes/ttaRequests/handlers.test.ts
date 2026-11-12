@@ -362,7 +362,7 @@ describe('TTA request handlers', () => {
       expect(updateTtaRequest).not.toHaveBeenCalled();
     });
 
-    it("lets the reviewer save the request's details, but not its reviewer or creator notes", async () => {
+    it("lets the reviewer save the request's details, its grants among them, but not its recipient, reviewer or creator notes", async () => {
       const reviewer = {
         id: 789,
         permissions: [{ scopeId: SCOPES.REVIEW_TTA_REQUESTS, regionId: 1 }],
@@ -375,11 +375,21 @@ describe('TTA request handlers', () => {
       (currentUserId as jest.Mock).mockResolvedValue(reviewer.id);
       (userById as jest.Mock).mockResolvedValue(reviewer);
       (ttaRequestById as jest.Mock).mockResolvedValue(existing);
-      req.body = { recipientId: 4, reviewerId: 12, creatorNotes: 'mine' };
+      req.body = {
+        recipientId: 4,
+        grantIds: [5],
+        reviewerId: 12,
+        creatorNotes: 'mine',
+        context: 'x',
+      };
 
       await saveTtaRequest(req as Request, res as Response);
 
-      expect(updateTtaRequest).toHaveBeenCalledWith(existing, { recipientId: 4 }, reviewer.id);
+      expect(updateTtaRequest).toHaveBeenCalledWith(
+        existing,
+        { grantIds: [5], context: 'x' },
+        reviewer.id
+      );
     });
 
     it('returns 400 when the service rejects the data', async () => {

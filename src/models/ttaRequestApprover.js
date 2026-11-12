@@ -1,9 +1,10 @@
 const { Model } = require('sequelize');
-const { APPROVER_STATUSES, TTA_REQUEST_STEPS } = require('@ttahub/common');
+const { APPROVER_STATUSES } = require('@ttahub/common');
 
 /**
- * Who is on a step of a TTA request - its reviewer, or later its approver - and where they
- * stand. A null status is pending. The request's own status is set by the service, not here.
+ * The approving COR the reviewer sent a TTA request to, and where they stand. A null status is
+ * pending. The request's own status is set by the service, not here. Its reviewer is a
+ * TtaRequestReviewer.
  */
 export default (sequelize, DataTypes) => {
   class TtaRequestApprover extends Model {
@@ -44,10 +45,6 @@ export default (sequelize, DataTypes) => {
           key: 'id',
         },
       },
-      step: {
-        allowNull: false,
-        type: DataTypes.ENUM([TTA_REQUEST_STEPS.REVIEWER, TTA_REQUEST_STEPS.APPROVER]),
-      },
       status: {
         allowNull: true,
         type: DataTypes.ENUM(Object.values(APPROVER_STATUSES)),
@@ -61,9 +58,9 @@ export default (sequelize, DataTypes) => {
       timestamps: true,
       indexes: [
         {
-          name: 'tta_request_approvers_tta_request_id_user_id_step',
+          name: 'tta_request_approvers_tta_request_id_user_id',
           unique: true,
-          fields: ['ttaRequestId', 'userId', 'step'],
+          fields: ['ttaRequestId', 'userId'],
         },
       ],
     }

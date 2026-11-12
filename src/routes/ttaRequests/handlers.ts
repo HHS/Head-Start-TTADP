@@ -200,8 +200,14 @@ export async function saveTtaRequest(req: Request, res: Response) {
       return;
     }
 
-    // the reviewer edits the request's details, but not who reviews it or the creator's notes
-    const { reviewerId: _reviewerId, creatorNotes: _creatorNotes, ...details } = req.body;
+    // the reviewer edits the request's details, its grants among them, but not who it is for,
+    // who reviews it or the creator's notes
+    const {
+      recipientId: _recipientId,
+      reviewerId: _reviewerId,
+      creatorNotes: _creatorNotes,
+      ...details
+    } = req.body;
     const data = authorization.canReviewerEdit() ? details : req.body;
 
     const ttaRequest = await updateTtaRequest(existing, data, userId);

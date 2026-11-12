@@ -22,6 +22,12 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 2.4.28
+
+Splits a TTA request's reviewers from its approvers in `src/ttaRequests.d.ts`: the response
+declares `reviewers` (`TtaRequestReviewerData`) beside `approvers` (`TtaRequestApproverData`),
+and neither has a `step` any more.
+
 ## 2.4.27
 
 Adds `TTA_REQUEST_STATUSES.AWAITING_APPROVAL`, `TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL`,

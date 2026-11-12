@@ -66,14 +66,22 @@ export interface TtaRequestNoteData {
   user: TtaRequestUser | null;
 }
 
-/** who is on a step of the request, and where they stand; a null status is pending */
-export interface TtaRequestApproverData {
+/**
+ * someone on a step of the request - its reviewer, or the approving COR the reviewer sent it
+ * to - and where they stand; a null status is pending
+ */
+interface TtaRequestStepUserData {
   id: number;
   userId: number;
-  step: 'reviewer' | 'approver';
   status: 'needs_action' | 'approved' | null;
   user: TtaRequestUser | null;
 }
+
+/** the reviewer the request was submitted to */
+export type TtaRequestReviewerData = TtaRequestStepUserData;
+
+/** the approving COR the reviewer sent the request to */
+export type TtaRequestApproverData = TtaRequestStepUserData;
 
 /** a saved TTA request, as the API returns it */
 export interface TtaRequestResponse {
@@ -96,6 +104,7 @@ export interface TtaRequestResponse {
   submittedAt?: string | null;
   /** the request's history, oldest first */
   notes?: TtaRequestNoteData[];
+  reviewers?: TtaRequestReviewerData[];
   approvers?: TtaRequestApproverData[];
   /** the staff the reviewer assigned */
   assignedStaff?: TtaRequestUser[];
