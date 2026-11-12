@@ -515,7 +515,7 @@ describe('TtaRequestForm', () => {
 
       expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('');
       expect(screen.getByText('Needs action').closest('li')).toHaveTextContent(
-        'Needs action from Ross Geller, TTAC'
+        'Needs action from Ross Geller (TTAC)'
       );
       expect(screen.getByRole('button', { name: 'Update request' })).toBeVisible();
       expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull();

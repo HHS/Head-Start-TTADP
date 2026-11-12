@@ -263,7 +263,7 @@ test.describe('TTA request review', () => {
         page.getByText(`${REVIEWER.withRole} is asking for changes to this TTA request.`)
       ).toBeVisible();
       await expect(page.getByText('Needs action', { exact: true }).locator('..')).toContainText(
-        `Needs action from ${REVIEWER.fullName}`
+        `Needs action from ${REVIEWER.withRole}`
       );
 
       await expect(noteEntries(page)).toHaveCount(2);

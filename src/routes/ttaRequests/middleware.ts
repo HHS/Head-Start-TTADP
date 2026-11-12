@@ -84,19 +84,25 @@ export const submitTtaRequestBodySchema = updateTtaRequestBodySchema.keys({
   reviewerId: requiredId,
 });
 
+// the regional team members the reviewer assigns, no more than the limit
+const assignedStaffIds = Joi.array()
+  .items(Joi.number().integer().positive())
+  .unique()
+  .max(TTA_REQUEST_MAX_ASSIGNED_STAFF);
+
 /**
- * The reviewer assigns staff, then sends the request back for changes or on to an approving
- * COR, with an optional note. The approving COR is only sent with the request.
+ * The reviewer sends the request back for changes or on to an approving COR, with an optional
+ * note. Staff must be assigned to send it on, and the approving COR is only sent with it.
  */
 export const reviewTtaRequestBodySchema = Joi.object({
   status: Joi.string().valid(APPROVER_STATUSES.NEEDS_ACTION, APPROVER_STATUSES.APPROVED).required(),
   note: looseString,
-  assignedStaffIds: Joi.array()
-    .items(Joi.number().integer().positive())
-    .unique()
-    .min(1)
-    .max(TTA_REQUEST_MAX_ASSIGNED_STAFF)
-    .required(),
+  // sending the request back for changes can leave staff for a later review
+  assignedStaffIds: Joi.when('status', {
+    is: APPROVER_STATUSES.APPROVED,
+    then: assignedStaffIds.min(1).required(),
+    otherwise: assignedStaffIds.default([]),
+  }),
   approverId: Joi.when('status', {
     is: APPROVER_STATUSES.APPROVED,
     then: requiredId,

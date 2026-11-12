@@ -818,6 +818,19 @@ describe('ttaRequests service', () => {
       ]);
     });
 
+    it('sends the request back for changes without assigning staff', async () => {
+      const submitted = await submittedRequest();
+
+      const reviewed = await reviewTtaRequest(
+        submitted,
+        { assignedStaffIds: [], status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Add the agenda' },
+        reviewer.id
+      );
+
+      expect(reviewed.status).toBe(TTA_REQUEST_STATUSES.NEEDS_ACTION);
+      expect(reviewed.assignedStaff).toEqual([]);
+    });
+
     it('records a review without a note', async () => {
       const submitted = await submittedRequest();
 

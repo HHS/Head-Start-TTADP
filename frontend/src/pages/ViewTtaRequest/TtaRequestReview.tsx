@@ -83,8 +83,9 @@ interface TtaRequestReviewProps {
 /**
  * The reviewer's form for a submitted request: its details, which they can edit in place, the
  * staff they assign to it, then their decision, with notes. Asking for changes sends the
- * request back to its creator, and sending it to the COR sends it on for approval; either way
- * the reviewer returns to the list.
+ * request back to its creator, with or without staff assigned; sending it to the COR, which
+ * needs at least one assigned, sends it on for approval. Either way the reviewer returns to
+ * the list.
  *
  * Edits to the details are saved along with the review, so it is one form: nothing the
  * reviewer has filled in is lost as they move between its parts. The recipient is the
@@ -139,8 +140,19 @@ export default function TtaRequestReview({
       note: '',
     },
   });
-  const { register, handleSubmit, control, watch, getValues, setValue } = hookForm;
+  const { register, handleSubmit, control, watch, getValues, setValue, errors, trigger } =
+    hookForm;
   const sendingToCor = watch('status') === APPROVER_STATUSES.APPROVED;
+
+  // whether staff must be assigned follows the review status, so an error shown for the
+  // last status is checked again against the new one
+  const staffError = !!errors.assignedStaff;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a change of status calls for checking the staff again
+  useEffect(() => {
+    if (staffError) {
+      trigger('assignedStaff');
+    }
+  }, [sendingToCor]);
 
   // every grant the recipient could choose is only known once the details are being edited,
   // from the same list the request form offers
@@ -250,7 +262,7 @@ export default function TtaRequestReview({
           />
         )}
         <h2 className="font-serif-lg margin-top-4 margin-bottom-3">TTA assignment</h2>
-        <FormItem label="Assign staff" name="assignedStaff">
+        <FormItem label="Assign staff" name="assignedStaff" required={sendingToCor}>
           <div className="maxw-mobile-lg">
             <MultiSelect
               name="assignedStaff"
@@ -263,10 +275,13 @@ export default function TtaRequestReview({
               required={false}
               rules={{
                 validate: (value: SelectOption[]) => {
-                  if (!value || !value.length) {
+                  // staff only have to be assigned when the request goes on to the COR; one
+                  // sent back for changes can leave them for a later review
+                  const sending = getValues('status') === APPROVER_STATUSES.APPROVED;
+                  if (sending && (!value || !value.length)) {
                     return ASSIGN_STAFF_REQUIRED;
                   }
-                  return value.length <= TTA_REQUEST_MAX_ASSIGNED_STAFF || ASSIGN_STAFF_MAX;
+                  return (value ?? []).length <= TTA_REQUEST_MAX_ASSIGNED_STAFF || ASSIGN_STAFF_MAX;
                 },
               }}
             />

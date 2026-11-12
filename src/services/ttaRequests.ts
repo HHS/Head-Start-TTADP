@@ -563,7 +563,7 @@ export async function submitTtaRequest(
 
 /**
  * The reviewer assigns staff to the request, then either sends it back to its creator for
- * changes or sends it on to the approving COR. Their decision and note are added to the
+ * changes, where no staff need be assigned, or sends it on to the approving COR. Their decision and note are added to the
  * request's history. Everything is checked before anything is written.
  */
 export async function reviewTtaRequest(

@@ -191,6 +191,17 @@ describe('TTA request body middleware', () => {
       expect(req.body).toEqual(sentForApproval);
     });
 
+    it('accepts needs action without assigned staff, defaulting to none', () => {
+      const { req, next } = run(checkReviewTtaRequestBody, { status: 'needs_action' });
+      expect(next).toHaveBeenCalled();
+      expect(req.body.assignedStaffIds).toEqual([]);
+    });
+
+    it('accepts needs action with an empty list of assigned staff', () => {
+      const { next } = run(checkReviewTtaRequestBody, { ...needsAction, assignedStaffIds: [] });
+      expect(next).toHaveBeenCalled();
+    });
+
     it('accepts five assigned staff', () => {
       const { next } = run(checkReviewTtaRequestBody, {
         ...needsAction,
@@ -201,11 +212,12 @@ describe('TTA request body middleware', () => {
 
     it.each([
       {},
-      { status: 'needs_action' },
       { ...needsAction, status: 'rejected' },
       { ...needsAction, note: 5 },
-      { ...needsAction, assignedStaffIds: [] },
       { ...needsAction, assignedStaffIds: [1, 2, 3, 4, 5, 6] },
+      { ...sentForApproval, assignedStaffIds: [] },
+      { ...sentForApproval, assignedStaffIds: undefined },
+      { ...sentForApproval, assignedStaffIds: [1, 2, 3, 4, 5, 6] },
       { ...needsAction, assignedStaffIds: [7, 7] },
       { ...needsAction, assignedStaffIds: ['7'] },
       { ...needsAction, approverId: 9 },

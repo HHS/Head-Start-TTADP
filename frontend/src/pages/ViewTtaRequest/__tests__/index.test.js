@@ -492,16 +492,48 @@ describe('ViewTtaRequest', () => {
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
   });
 
-  it('requires a review status and assigned staff', async () => {
+  it('requires a review status', async () => {
     mockReviewerFetches();
     fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);
     renderView({}, REVIEWER);
 
     userEvent.click(await screen.findByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Select at least one staff member')).toBeVisible();
-    expect(screen.getByText('Choose a review status')).toBeVisible();
+    expect(await screen.findByText('Choose a review status')).toBeVisible();
+    expect(screen.queryByText('Select at least one staff member')).toBeNull();
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
+  });
+
+  it('requires assigned staff to send the request to the COR', async () => {
+    mockReviewerFetches();
+    fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);
+    renderView({}, REVIEWER);
+
+    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText('Select at least one staff member')).toBeVisible();
+    expect(fetchMock.called(REVIEW_URL)).toBe(false);
+
+    // sending it back for changes instead doesn't need staff, so the error goes
+    userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
+    await waitFor(() => expect(screen.queryByText('Select at least one staff member')).toBeNull());
+  });
+
+  it('sends the request back for changes without assigned staff', async () => {
+    mockReviewerFetches();
+    fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);
+    renderView({}, REVIEWER);
+
+    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'needs_action');
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(fetchMock.called(REVIEW_URL)).toBe(true));
+    expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body)).toEqual({
+      status: 'needs_action',
+      note: '',
+      assignedStaffIds: [],
+    });
   });
 
   it('allows no more than five assigned staff', async () => {

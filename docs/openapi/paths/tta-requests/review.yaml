@@ -24,7 +24,6 @@ put:
           type: object
           required:
             - status
-            - assignedStaffIds
           properties:
             status:
               type: string
@@ -33,12 +32,11 @@ put:
                 - approved
             assignedStaffIds:
               type: array
-              minItems: 1
               maxItems: 5
               uniqueItems: true
               items:
                 type: integer
-              description: The regional team members assigned to the request
+              description: The regional team members assigned to the request; at least one is required when the status is approved, and none are needed for needs_action (defaults to an empty list)
             approverId:
               type: integer
               description: The approving COR; required when the status is approved, and not allowed otherwise

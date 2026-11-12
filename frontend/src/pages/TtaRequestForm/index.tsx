@@ -307,8 +307,16 @@ function TtaRequestFormBody({
   // their report; the form's defaults would otherwise be saved over it. An id that can't be a
   // request's has nothing to fetch.
   const notes = useMemo(() => toNotesSummary(savedRequest?.notes), [savedRequest]);
-  // the reviewer whose review the request is waiting on, and where they stand
-  const reviewers = useMemo(() => savedRequest?.reviewers ?? [], [savedRequest]);
+  // the reviewer whose review the request is waiting on, and where they stand, named with
+  // their role as the banner names them
+  const reviewers = useMemo(
+    () =>
+      (savedRequest?.reviewers ?? []).map((reviewer) => ({
+        ...reviewer,
+        user: reviewer.user && { ...reviewer.user, fullName: nameWithRole(reviewer.user) },
+      })),
+    [savedRequest]
+  );
 
   if (!isNewRequest && !savedRequest) {
     const error = routeId === null ? LOAD_ERROR : loadError;
