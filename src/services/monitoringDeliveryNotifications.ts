@@ -7,12 +7,15 @@ import {
   ACTIONABLE_NOTIFICATIONS_FLAG,
   findMonitoringNotificationUsersByRegion,
   findNewlyDeliveredReviews,
+  findPendingMonitoringDeliveries,
   type MonitoringNotificationUser,
+  markMonitoringDeliveriesNotified,
   type NewMonitoringDelivery,
+  type NotifiableMonitoringDelivery,
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
 import { createNotification } from './notifications';
-import { userSettingOverridesById } from './userSettings';
+import { usersWithSetting } from './userSettings';
 
 const { MonitoringReportDelivery } = db;
 
@@ -30,39 +33,50 @@ export type MonitoringDeliveryNotificationSummary = {
   emails: number;
 };
 
+export type RecordedMonitoringDelivery = NewMonitoringDelivery &
+  NotifiableMonitoringDelivery & {
+    // false when an earlier run already recorded this recipient/report/region
+    created: boolean;
+  };
+
 /**
- * Records each delivery in MonitoringReportDeliveries and returns only the ones that were
- * not already recorded. This keeps a rerun from notifying twice about the same
- * recipient/report, and the recorded rows feed the monitoring digest.
+ * Records each delivery in MonitoringReportDeliveries, one row per recipient/report/region.
+ * Rows already recorded by an earlier run are left as they are, which keeps a rerun from
+ * notifying twice. The recorded rows also feed the monitoring digest.
  * @param {NewMonitoringDelivery[]} deliveries From `findNewlyDeliveredReviews()`.
- * @returns {Promise<NewMonitoringDelivery[]>} The deliveries recorded by this call.
+ * @returns {Promise<RecordedMonitoringDelivery[]>} Every delivery with its row id, flagged with
+ * whether this call created the row.
  */
 export async function recordMonitoringDeliveries(
   deliveries: NewMonitoringDelivery[]
-): Promise<NewMonitoringDelivery[]> {
-  const recorded: NewMonitoringDelivery[] = [];
+): Promise<RecordedMonitoringDelivery[]> {
+  const recorded: RecordedMonitoringDelivery[] = [];
   for (const delivery of deliveries) {
-    const [, created] = await MonitoringReportDelivery.findOrCreate({
-      where: { deliveredReviewId: delivery.deliveredReviewId, recipientId: delivery.recipientId },
-      defaults: { regionId: delivery.regionId },
+    const [row, created] = await MonitoringReportDelivery.findOrCreate({
+      where: {
+        deliveredReviewId: delivery.deliveredReviewId,
+        recipientId: delivery.recipientId,
+        regionId: delivery.regionId,
+      },
     });
-    if (created) {
-      recorded.push(delivery);
-    }
+    recorded.push({ ...delivery, monitoringDeliveryId: row.id, created });
   }
   return recorded;
 }
 
 /**
- * Creates the "new monitoring report" in-app notification (Misc-1a) for each user. The user's
- * in-app setting is applied by `createNotification`. A failure for one user is logged and
- * does not stop the others.
- * @returns {Promise<number>} How many notifications were created or already existed.
+ * Creates the "new monitoring report" in-app notification (Misc-1a) for each user, keyed on
+ * the MonitoringReportDelivery row so two recipients on one review never share a
+ * notification, even with the same name. The user's in-app setting is applied by
+ * `createNotification`, which also skips notifications that already exist, so a retry does
+ * not duplicate them. A failure for one user is logged and does not stop the others.
+ * @returns {Promise<{ count: number, failed: number }>} How many notifications were created or
+ * already existed, and how many users failed.
  */
 export async function createMonitoringDataReceivedNotifications(
-  delivery: NewMonitoringDelivery,
+  delivery: NotifiableMonitoringDelivery,
   users: MonitoringNotificationUser[]
-): Promise<number> {
+): Promise<{ count: number; failed: number }> {
   const metadata: MonitoringDataReceivedMetadata = {
     recipientName: delivery.recipientName,
     recipientId: delivery.recipientId,
@@ -70,11 +84,12 @@ export async function createMonitoringDataReceivedNotifications(
   };
 
   let count = 0;
+  let failed = 0;
   for (const user of users) {
     try {
       const notification = await createNotification(
         user.id,
-        delivery.deliveredReviewId,
+        delivery.monitoringDeliveryId,
         NOTIFICATION_TYPES.MONITORING_DATA_RECEIVED,
         { metadata }
       );
@@ -82,37 +97,44 @@ export async function createMonitoringDataReceivedNotifications(
         count += 1;
       }
     } catch (err) {
+      failed += 1;
       auditLogger.error(
-        `Error creating monitoring data received notification for user ${user.id}, delivered review ${delivery.deliveredReviewId}, recipient ${delivery.recipientId}: ${err}`
+        `Error creating monitoring data received notification for user ${user.id}, monitoring delivery ${delivery.monitoringDeliveryId}, delivered review ${delivery.deliveredReviewId}, recipient ${delivery.recipientId}: ${err}`
       );
     }
   }
-  return count;
+  return { count, failed };
 }
 
 /**
  * Returns the users whose monitoring email setting is "immediately". The default is "never",
- * so users without an override are left out.
+ * so users without an override are left out. `usersWithSetting` also requires SITE_ACCESS.
  */
 export async function usersWantingImmediateMonitoringEmail(
   users: MonitoringNotificationUser[]
 ): Promise<MonitoringNotificationUser[]> {
-  const settings = await Promise.all(
-    users.map((user) => userSettingOverridesById(user.id, EMAIL_ACTIONS.MONITORING_DETAILS_ADDED))
-  );
-  return users.filter((_user, i) => settings[i]?.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY);
+  if (!users.length) {
+    return [];
+  }
+  const immediate = await usersWithSetting(EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, [
+    USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+  ]);
+  const immediateIds = new Set(immediate.map(({ id }) => id));
+  return users.filter(({ id }) => immediateIds.has(id));
 }
 
 /**
  * Notifies TTAC/ECM/GSM users in each delivery's home region, in-app and by immediate email.
- * Adds the counts to `summary`.
+ * Adds the counts to `summary`. The email is only sent once every in-app notification for the
+ * delivery succeeded, so a retry after an in-app failure does not email twice.
+ * @returns {Promise<number[]>} The MonitoringReportDelivery ids that were fully notified.
  */
 async function sendMonitoringDeliveryNotifications(
-  deliveries: NewMonitoringDelivery[],
+  deliveries: NotifiableMonitoringDelivery[],
   summary: MonitoringDeliveryNotificationSummary
-): Promise<void> {
+): Promise<number[]> {
   if (!deliveries.length) {
-    return;
+    return [];
   }
 
   const usersByRegion = await findMonitoringNotificationUsersByRegion(
@@ -120,27 +142,47 @@ async function sendMonitoringDeliveryNotifications(
     ACTIONABLE_NOTIFICATIONS_FLAG
   );
 
-  // users are the same for every delivery in a region, so look up email settings once each
+  // one settings lookup covers every region
+  const emailUsers = await usersWantingImmediateMonitoringEmail([...usersByRegion.values()].flat());
   const emailUsersByRegion = new Map<number, MonitoringNotificationUser[]>();
-  for (const [regionId, users] of usersByRegion) {
-    emailUsersByRegion.set(regionId, await usersWantingImmediateMonitoringEmail(users));
-  }
+  emailUsers.forEach((user) => {
+    emailUsersByRegion.set(user.homeRegionId, [
+      ...(emailUsersByRegion.get(user.homeRegionId) ?? []),
+      user,
+    ]);
+  });
 
+  const notified: number[] = [];
   for (const delivery of deliveries) {
     const users = usersByRegion.get(delivery.regionId) ?? [];
-    summary.inApp += await createMonitoringDataReceivedNotifications(delivery, users);
+    const { count, failed } = await createMonitoringDataReceivedNotifications(delivery, users);
+    summary.inApp += count;
+    if (failed) {
+      continue;
+    }
 
-    const emailUsers = emailUsersByRegion.get(delivery.regionId) ?? [];
-    monitoringDetailsAddedNotification(delivery, emailUsers);
-    summary.emails += emailUsers.length;
+    const regionEmailUsers = emailUsersByRegion.get(delivery.regionId) ?? [];
+    try {
+      await monitoringDetailsAddedNotification(delivery, regionEmailUsers);
+      summary.emails += regionEmailUsers.length;
+      notified.push(delivery.monitoringDeliveryId);
+    } catch (err) {
+      auditLogger.error(
+        `Error enqueuing monitoring details added emails for monitoring delivery ${delivery.monitoringDeliveryId}: ${err}`
+      );
+    }
   }
+  return notified;
 }
 
 /**
  * Notifies TTAC/ECM/GSM users in the home region of every monitoring report delivered by the
  * latest refresh, in-app and by immediate email. Run after `updateMonitoringFactTables()` has
- * committed, passing the snapshot taken before it started. Deliveries already recorded in
- * MonitoringReportDeliveries are skipped, so a rerun does not notify twice.
+ * committed, passing the snapshot taken before it started.
+ *
+ * New deliveries are recorded in MonitoringReportDeliveries first. Then every recorded
+ * delivery that is still pending is sent, including ones an earlier run could not finish, and
+ * marked as notified once its in-app notifications are created and its emails are queued.
  *
  * An empty snapshot means DeliveredReviews was empty before the refresh (a fresh or rebuilt
  * database), so every review would look new. In that case nothing is recorded or sent.
@@ -167,9 +209,17 @@ export async function notifyNewMonitoringDeliveries(
   const deliveries = await findNewlyDeliveredReviews(previouslyDeliveredMrids);
   summary.detected = deliveries.length;
   const recorded = await recordMonitoringDeliveries(deliveries);
-  summary.recorded = recorded.length;
-  await sendMonitoringDeliveryNotifications(recorded, summary);
+  summary.recorded = recorded.filter(({ created }) => created).length;
 
+  const pending = await findPendingMonitoringDeliveries();
+  const notified = await sendMonitoringDeliveryNotifications(pending, summary);
+  await markMonitoringDeliveriesNotified(notified);
+
+  if (notified.length < pending.length) {
+    auditLogger.error(
+      `Monitoring delivery notifications: ${pending.length - notified.length} of ${pending.length} deliveries could not be fully notified and will be retried`
+    );
+  }
   logger.info(`Monitoring delivery notifications: ${JSON.stringify(summary)}`);
   return summary;
 }
@@ -199,11 +249,12 @@ export async function notifyRecentMonitoringDeliveries(
   const recorded = await recordMonitoringDeliveries(deliveries);
   const summary: MonitoringDeliveryNotificationSummary = {
     detected: deliveries.length,
-    recorded: recorded.length,
+    recorded: recorded.filter(({ created }) => created).length,
     inApp: 0,
     emails: 0,
   };
-  await sendMonitoringDeliveryNotifications(deliveries, summary);
+  const notified = await sendMonitoringDeliveryNotifications(recorded, summary);
+  await markMonitoringDeliveriesNotified(notified);
 
   logger.info(`Recent monitoring delivery notifications: ${JSON.stringify(summary)}`);
   return summary;

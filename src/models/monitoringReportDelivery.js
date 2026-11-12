@@ -1,8 +1,9 @@
 import { Model } from 'sequelize';
 
 /**
- * One row per recipient/monitoring report combination the Hub detected as newly delivered.
- * `createdAt` is when the Hub detected the delivery. See
+ * One row per recipient/monitoring report/region combination the Hub detected as newly
+ * delivered. `createdAt` is when the Hub detected the delivery, and `notifiedAt` when its
+ * notifications were sent (NULL while pending). See
  * src/services/monitoringDeliveryNotifications.ts.
  */
 export default (sequelize, DataTypes) => {
@@ -41,6 +42,10 @@ export default (sequelize, DataTypes) => {
       regionId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+      },
+      notifiedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {

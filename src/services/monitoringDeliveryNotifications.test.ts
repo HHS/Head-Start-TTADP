@@ -9,6 +9,8 @@ import db from '../models';
 import {
   findMonitoringNotificationUsersByRegion,
   findNewlyDeliveredReviews,
+  findPendingMonitoringDeliveries,
+  markMonitoringDeliveriesNotified,
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
 import {
@@ -20,12 +22,14 @@ import {
   usersWantingImmediateMonitoringEmail,
 } from './monitoringDeliveryNotifications';
 import { createNotification } from './notifications';
-import { userSettingOverridesById } from './userSettings';
+import { usersWithSetting } from './userSettings';
 
 jest.mock('./monitoringDeliveries', () => ({
   ACTIONABLE_NOTIFICATIONS_FLAG: 'actionable_notifications',
   findNewlyDeliveredReviews: jest.fn(),
   findMonitoringNotificationUsersByRegion: jest.fn(),
+  findPendingMonitoringDeliveries: jest.fn(),
+  markMonitoringDeliveriesNotified: jest.fn(),
   snapshotDeliveredReviewMrids: jest.fn(),
 }));
 
@@ -38,16 +42,20 @@ jest.mock('../lib/mailer', () => ({
 }));
 
 jest.mock('./userSettings', () => ({
-  userSettingOverridesById: jest.fn(),
+  usersWithSetting: jest.fn(),
 }));
 
 const mockEmailTrigger = monitoringDetailsAddedNotification as jest.MockedFunction<
   typeof monitoringDetailsAddedNotification
 >;
-const mockSetting = userSettingOverridesById as jest.MockedFunction<
-  typeof userSettingOverridesById
+const mockUsersWithSetting = usersWithSetting as jest.MockedFunction<typeof usersWithSetting>;
+const mockFindPending = findPendingMonitoringDeliveries as jest.MockedFunction<
+  typeof findPendingMonitoringDeliveries
 >;
-const { IMMEDIATELY, DAILY_DIGEST } = USER_SETTINGS.EMAIL.VALUES;
+const mockMarkNotified = markMonitoringDeliveriesNotified as jest.MockedFunction<
+  typeof markMonitoringDeliveriesNotified
+>;
+const { IMMEDIATELY } = USER_SETTINGS.EMAIL.VALUES;
 
 const mockFindNew = findNewlyDeliveredReviews as jest.MockedFunction<
   typeof findNewlyDeliveredReviews
@@ -68,6 +76,17 @@ const deliveryA = {
 };
 const deliveryB = { ...deliveryA, recipientId: 600, recipientName: 'Recipient B', regionId: 2 };
 
+// what findPendingMonitoringDeliveries returns for a recorded delivery
+const pending = (delivery: typeof deliveryA, monitoringDeliveryId: number) => ({
+  monitoringDeliveryId,
+  deliveredReviewId: delivery.deliveredReviewId,
+  recipientId: delivery.recipientId,
+  recipientName: delivery.recipientName,
+  regionId: delivery.regionId,
+});
+const pendingA = pending(deliveryA, 1001);
+const pendingB = pending(deliveryB, 1002);
+
 const user1 = { id: 11, name: 'One', email: 'one@example.com', homeRegionId: 1 };
 const user2 = { id: 12, name: 'Two', email: 'two@example.com', homeRegionId: 1 };
 const user3 = { id: 13, name: 'Three', email: 'three@example.com', homeRegionId: 2 };
@@ -79,10 +98,12 @@ describe('monitoringDeliveryNotifications', () => {
     jest.clearAllMocks();
     findOrCreateSpy = jest
       .spyOn(db.MonitoringReportDelivery, 'findOrCreate')
-      .mockResolvedValue([{}, true]);
+      .mockResolvedValue([{ id: 1001 }, true]);
     mockCreateNotification.mockResolvedValue({ id: 1 } as never);
     // default: nobody has opted into email (the setting default is "never")
-    mockSetting.mockResolvedValue(undefined);
+    mockUsersWithSetting.mockResolvedValue([]);
+    mockFindPending.mockResolvedValue([]);
+    mockEmailTrigger.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -111,27 +132,32 @@ describe('monitoringDeliveryNotifications', () => {
   });
 
   describe('recordMonitoringDeliveries', () => {
-    it('returns only the deliveries that were not already recorded', async () => {
-      findOrCreateSpy.mockResolvedValueOnce([{}, true]).mockResolvedValueOnce([{}, false]);
+    it('returns every delivery with its row id, flagging the ones it created', async () => {
+      findOrCreateSpy
+        .mockResolvedValueOnce([{ id: 1001 }, true])
+        .mockResolvedValueOnce([{ id: 1002 }, false]);
 
       const result = await recordMonitoringDeliveries([deliveryA, deliveryB]);
 
-      expect(result).toEqual([deliveryA]);
+      expect(result).toEqual([
+        { ...deliveryA, monitoringDeliveryId: 1001, created: true },
+        { ...deliveryB, monitoringDeliveryId: 1002, created: false },
+      ]);
+      // region is part of the key: one review can cover a recipient's grants in two regions
       expect(findOrCreateSpy).toHaveBeenCalledWith({
-        where: { deliveredReviewId: 1, recipientId: 500 },
-        defaults: { regionId: 1 },
+        where: { deliveredReviewId: 1, recipientId: 500, regionId: 1 },
       });
     });
   });
 
   describe('createMonitoringDataReceivedNotifications', () => {
-    it('creates one notification per user keyed on the delivered review', async () => {
-      const count = await createMonitoringDataReceivedNotifications(deliveryA, [user1, user2]);
+    it('creates one notification per user keyed on the monitoring delivery', async () => {
+      const result = await createMonitoringDataReceivedNotifications(pendingA, [user1, user2]);
 
-      expect(count).toBe(2);
+      expect(result).toEqual({ count: 2, failed: 0 });
       expect(mockCreateNotification).toHaveBeenCalledWith(
         11,
-        1,
+        1001,
         NOTIFICATION_TYPES.MONITORING_DATA_RECEIVED,
         { metadata: { recipientName: 'Recipient A', recipientId: 500, regionId: 1 } }
       );
@@ -140,9 +166,9 @@ describe('monitoringDeliveryNotifications', () => {
     it('does not count users who opted out and keeps going after an error', async () => {
       mockCreateNotification.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(null);
 
-      const count = await createMonitoringDataReceivedNotifications(deliveryA, [user1, user2]);
+      const result = await createMonitoringDataReceivedNotifications(pendingA, [user1, user2]);
 
-      expect(count).toBe(0);
+      expect(result).toEqual({ count: 0, failed: 1 });
       expect(mockCreateNotification).toHaveBeenCalledTimes(2);
     });
   });
@@ -154,10 +180,12 @@ describe('monitoringDeliveryNotifications', () => {
       expect(summary).toEqual({ detected: 0, recorded: 0, inApp: 0, emails: 0 });
       expect(mockFindNew).not.toHaveBeenCalled();
       expect(findOrCreateSpy).not.toHaveBeenCalled();
+      expect(mockFindPending).not.toHaveBeenCalled();
     });
 
-    it('notifies flagged users in each delivery’s home region only', async () => {
+    it('notifies flagged users in each pending delivery’s home region only', async () => {
       mockFindNew.mockResolvedValue([deliveryA, deliveryB]);
+      mockFindPending.mockResolvedValue([pendingA, pendingB]);
       mockFindUsers.mockResolvedValue(
         new Map([
           [1, [user1, user2]],
@@ -174,16 +202,17 @@ describe('monitoringDeliveryNotifications', () => {
         metadata.recipientName,
       ]);
       expect(calls).toEqual([
-        [11, 1, 'Recipient A'],
-        [12, 1, 'Recipient A'],
-        [13, 1, 'Recipient B'],
+        [11, 1001, 'Recipient A'],
+        [12, 1001, 'Recipient A'],
+        [13, 1002, 'Recipient B'],
       ]);
       expect(summary).toEqual({ detected: 2, recorded: 2, inApp: 3, emails: 0 });
+      expect(mockMarkNotified).toHaveBeenCalledWith([1001, 1002]);
     });
 
-    it('does not notify about deliveries that were already recorded', async () => {
+    it('does not count deliveries that were already recorded', async () => {
       mockFindNew.mockResolvedValue([deliveryA]);
-      findOrCreateSpy.mockResolvedValue([{}, false]);
+      findOrCreateSpy.mockResolvedValue([{ id: 1001 }, false]);
 
       const summary = await notifyNewMonitoringDeliveries(new Set([99]));
 
@@ -193,49 +222,104 @@ describe('monitoringDeliveryNotifications', () => {
       expect(mockEmailTrigger).not.toHaveBeenCalled();
     });
 
+    it('retries deliveries an earlier run left pending', async () => {
+      mockFindNew.mockResolvedValue([]);
+      mockFindPending.mockResolvedValue([pendingA]);
+      mockFindUsers.mockResolvedValue(new Map([[1, [user1]]]));
+
+      const summary = await notifyNewMonitoringDeliveries(new Set([99]));
+
+      expect(summary).toEqual({ detected: 0, recorded: 0, inApp: 1, emails: 0 });
+      expect(mockMarkNotified).toHaveBeenCalledWith([1001]);
+    });
+
+    it('leaves a delivery pending, without emailing, when an in-app notification fails', async () => {
+      mockFindPending.mockResolvedValue([pendingA, pendingB]);
+      mockFindNew.mockResolvedValue([]);
+      mockFindUsers.mockResolvedValue(
+        new Map([
+          [1, [user1]],
+          [2, [user3]],
+        ])
+      );
+      mockUsersWithSetting.mockResolvedValue([user1, user3] as never);
+      mockCreateNotification.mockRejectedValueOnce(new Error('boom'));
+
+      await notifyNewMonitoringDeliveries(new Set([99]));
+
+      expect(mockEmailTrigger).toHaveBeenCalledTimes(1);
+      expect(mockEmailTrigger).toHaveBeenCalledWith(pendingB, [user3]);
+      expect(mockMarkNotified).toHaveBeenCalledWith([1002]);
+    });
+
+    it('leaves a delivery pending when its emails cannot be queued', async () => {
+      mockFindPending.mockResolvedValue([pendingA, pendingB]);
+      mockFindNew.mockResolvedValue([]);
+      mockFindUsers.mockResolvedValue(
+        new Map([
+          [1, [user1]],
+          [2, [user3]],
+        ])
+      );
+      mockEmailTrigger.mockRejectedValueOnce(new Error('redis down'));
+
+      const summary = await notifyNewMonitoringDeliveries(new Set([99]));
+
+      expect(mockMarkNotified).toHaveBeenCalledWith([1002]);
+      expect(summary.inApp).toBe(2);
+    });
+
+    it('leaves everything pending when the audience lookup fails', async () => {
+      mockFindNew.mockResolvedValue([deliveryA]);
+      mockFindPending.mockResolvedValue([pendingA]);
+      mockFindUsers.mockRejectedValue(new Error('db down'));
+
+      await expect(notifyNewMonitoringDeliveries(new Set([99]))).rejects.toThrow('db down');
+      expect(findOrCreateSpy).toHaveBeenCalled();
+      expect(mockMarkNotified).not.toHaveBeenCalled();
+    });
+
     it('emails only users set to "immediately", once per recipient/report', async () => {
-      const deliveryA2 = { ...deliveryA, deliveredReviewId: 2, mrid: 200 };
-      mockFindNew.mockResolvedValue([deliveryA, deliveryA2, deliveryB]);
+      const pendingA2 = { ...pendingA, monitoringDeliveryId: 1003, deliveredReviewId: 2 };
+      mockFindNew.mockResolvedValue([]);
+      mockFindPending.mockResolvedValue([pendingA, pendingA2, pendingB]);
       mockFindUsers.mockResolvedValue(
         new Map([
           [1, [user1, user2]],
           [2, [user3]],
         ])
       );
-      mockSetting.mockImplementation(async (userId) => {
-        if (userId === user1.id)
-          return { key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, value: IMMEDIATELY };
-        if (userId === user3.id)
-          return { key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, value: DAILY_DIGEST };
-        return undefined;
-      });
+      mockUsersWithSetting.mockResolvedValue([user1] as never);
 
       const summary = await notifyNewMonitoringDeliveries(new Set([99]));
 
+      // the emails are awaited, so the CLI cannot exit before they are queued
       expect(mockEmailTrigger).toHaveBeenCalledTimes(3);
-      expect(mockEmailTrigger).toHaveBeenNthCalledWith(1, deliveryA, [user1]);
-      expect(mockEmailTrigger).toHaveBeenNthCalledWith(2, deliveryA2, [user1]);
-      expect(mockEmailTrigger).toHaveBeenNthCalledWith(3, deliveryB, []);
+      expect(mockEmailTrigger).toHaveBeenNthCalledWith(1, pendingA, [user1]);
+      expect(mockEmailTrigger).toHaveBeenNthCalledWith(2, pendingA2, [user1]);
+      expect(mockEmailTrigger).toHaveBeenNthCalledWith(3, pendingB, []);
       expect(summary.emails).toBe(2);
-      // settings are looked up once per user, not once per delivery
-      expect(mockSetting).toHaveBeenCalledTimes(3);
+      // settings are looked up once, not once per delivery or user
+      expect(mockUsersWithSetting).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('usersWantingImmediateMonitoringEmail', () => {
-    it('keeps only users whose monitoring email setting is "immediately"', async () => {
-      mockSetting
-        .mockResolvedValueOnce({ key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, value: IMMEDIATELY })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce({
-          key: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED,
-          value: DAILY_DIGEST,
-        });
+    it('keeps only the given users whose monitoring email setting is "immediately"', async () => {
+      // usersWithSetting returns every user in the Hub with the setting, so filter to the audience
+      mockUsersWithSetting.mockResolvedValue([user1, { id: 999 }] as never);
 
       const result = await usersWantingImmediateMonitoringEmail([user1, user2, user3]);
 
       expect(result).toEqual([user1]);
-      expect(mockSetting).toHaveBeenCalledWith(user1.id, 'emailWhenMonitoringDetailsAdded');
+      expect(mockUsersWithSetting).toHaveBeenCalledWith(EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, [
+        IMMEDIATELY,
+      ]);
+    });
+
+    it('does not query when there are no users', async () => {
+      expect(await usersWantingImmediateMonitoringEmail([])).toEqual([]);
+      expect(mockUsersWithSetting).not.toHaveBeenCalled();
     });
   });
 
@@ -258,13 +342,18 @@ describe('monitoringDeliveryNotifications', () => {
       (snapshotDeliveredReviewMrids as jest.Mock).mockResolvedValue(new Set());
       mockFindNew.mockResolvedValue([deliveryA]);
       mockFindUsers.mockResolvedValue(new Map([[1, [user1]]]));
-      mockSetting.mockResolvedValue({ value: IMMEDIATELY } as never);
-      findOrCreateSpy.mockResolvedValue([{}, false]);
+      mockUsersWithSetting.mockResolvedValue([user1] as never);
+      findOrCreateSpy.mockResolvedValue([{ id: 1001 }, false]);
 
       const summary = await notifyRecentMonitoringDeliveries();
 
-      expect(mockEmailTrigger).toHaveBeenCalledWith(deliveryA, [user1]);
+      expect(mockEmailTrigger).toHaveBeenCalledWith(
+        expect.objectContaining({ ...deliveryA, monitoringDeliveryId: 1001 }),
+        [user1]
+      );
       expect(summary).toEqual({ detected: 1, recorded: 0, inApp: 1, emails: 1 });
+      expect(mockMarkNotified).toHaveBeenCalledWith([1001]);
+      expect(mockFindPending).not.toHaveBeenCalled();
     });
   });
 });

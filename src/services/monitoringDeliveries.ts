@@ -1,19 +1,40 @@
 import { Op } from 'sequelize';
+import { EMAIL_ACTIONS } from '../constants';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import Users from '../policies/user';
 
-const { DeliveredReview, Grant, MonitoringReportDelivery, Permission, Recipient, Role, User } = db;
+const {
+  DeliveredReview,
+  Grant,
+  MailerLogs,
+  MonitoringReportDelivery,
+  Permission,
+  Recipient,
+  Role,
+  User,
+} = db;
 
 // rollout gate for the in-app, immediate email and digest monitoring notifications
 export const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
 
-// The digest window comes from frequencyToInterval() as a SQL expression. Only these values
-// are accepted, since the expression is used as a literal.
-const DIGEST_WINDOWS = [
-  "NOW() - INTERVAL '1 DAY'",
-  "NOW() - INTERVAL '1 WEEK'",
-  "NOW() - INTERVAL '1 MONTH'",
-];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// The digest fetcher receives the window from frequencyToInterval() as a SQL expression. Only
+// these values are accepted. The window actually starts at the user's last successful
+// monitoring digest, so deliveries are not missed when a run is skipped (the daily digest only
+// runs on weekdays, but monitoring data arrives every day). Each value here is the longest the
+// window can reach back, which also applies when the user has never had a digest.
+const DIGEST_MAX_LOOKBACK_DAYS: Record<string, number> = {
+  // Friday to Monday, plus a Monday holiday
+  "NOW() - INTERVAL '1 DAY'": 4,
+  "NOW() - INTERVAL '1 WEEK'": 8,
+  "NOW() - INTERVAL '1 MONTH'": 32,
+};
+
+// Pending deliveries older than this are no longer retried, so a long outage does not end in a
+// flood of stale notifications.
+const PENDING_RETRY_DAYS = 7;
 
 // Users with any of these roles, whose home region matches a newly delivered monitoring
 // report's grant region, are notified of the report (Misc-1a / Misc-6a).
@@ -27,6 +48,16 @@ export type NewMonitoringDelivery = {
   recipientName: string;
   regionId: number;
   grantIds: number[];
+};
+
+// What sending notifications for one delivery needs. `monitoringDeliveryId` is the
+// MonitoringReportDelivery row, one per recipient/report/region.
+export type NotifiableMonitoringDelivery = {
+  monitoringDeliveryId: number;
+  deliveredReviewId: number;
+  recipientId: number;
+  recipientName: string;
+  regionId: number;
 };
 
 export type MonitoringNotificationUser = {
@@ -60,11 +91,11 @@ export async function snapshotDeliveredReviewMrids(deliveredBefore?: string): Pr
 /**
  * Returns monitoring reports that have a delivery date now but were not in the snapshot,
  * meaning either a new row arrived already delivered or an existing row's delivery date went
- * from NULL to a value. Results have one entry per recipient/report combination, because one
- * review can cover several grants and recipients. Grants without a recipient or region are
- * skipped.
+ * from NULL to a value. Results have one entry per recipient/report/region combination,
+ * because one review can cover several grants and recipients, and a recipient's grants can be
+ * in more than one region. Grants without a recipient or region are skipped.
  * @param {Set<number>} previouslyDeliveredMrids From `snapshotDeliveredReviewMrids()`.
- * @returns {Promise<NewMonitoringDelivery[]>} The new recipient/report combinations.
+ * @returns {Promise<NewMonitoringDelivery[]>} The new recipient/report/region combinations.
  */
 export async function findNewlyDeliveredReviews(
   previouslyDeliveredMrids: Set<number>
@@ -95,7 +126,7 @@ export async function findNewlyDeliveredReviews(
       if (!grant.recipientId || !grant.regionId) {
         return;
       }
-      const key = `${review.id}-${grant.recipientId}`;
+      const key = `${review.id}-${grant.recipientId}-${grant.regionId}`;
       const existing = deliveries.get(key);
       if (existing) {
         existing.grantIds.push(grant.id);
@@ -118,8 +149,9 @@ export async function findNewlyDeliveredReviews(
 
 /**
  * Returns the users who should hear about monitoring reports in the given regions: those
- * with a TTAC, ECM or GSM role whose home region is one of the regions. Read permissions are
- * not considered; a TTAC who can read several regions is only notified about their home region.
+ * with Hub access (SITE_ACCESS) and a TTAC, ECM or GSM role whose home region is one of the
+ * regions. Read permissions are not considered; a TTAC who can read several regions is only
+ * notified about their home region.
  * @param {number[]} regionIds Regions to target.
  * @param {string} [featureFlag] When given, only users who can see this feature flag.
  * @returns {Promise<Map<number, MonitoringNotificationUser[]>>} Users keyed by home region.
@@ -138,7 +170,7 @@ export async function findMonitoringNotificationUsersByRegion(
     attributes: ['id', 'name', 'email', 'homeRegionId', 'flags'],
     where: { homeRegionId: uniqueRegionIds },
     include: [
-      // the feature flag check lets admins through, which needs permissions
+      // all permissions, not only SITE_ACCESS: the feature flag check lets admins through
       { model: Permission, as: 'permissions', attributes: ['scopeId', 'regionId'] },
       {
         model: Role,
@@ -152,6 +184,10 @@ export async function findMonitoringNotificationUsersByRegion(
   });
 
   users.forEach((user) => {
+    // users whose Hub access was revoked keep their role and home region
+    if (!user.permissions.some(({ scopeId }) => scopeId === SCOPES.SITE_ACCESS)) {
+      return;
+    }
     if (featureFlag && !new Users(user).canSeeBehindFeatureFlag(featureFlag)) {
       return;
     }
@@ -167,6 +203,52 @@ export async function findMonitoringNotificationUsersByRegion(
   return byRegion;
 }
 
+/**
+ * Returns the recorded deliveries whose notifications have not all been sent yet, oldest
+ * first. A delivery stays pending when sending failed, so the next refresh retries it.
+ * Deliveries recorded more than a week ago are left alone.
+ * @param {Date} [now] Defaults to the current time.
+ * @returns {Promise<NotifiableMonitoringDelivery[]>}
+ */
+export async function findPendingMonitoringDeliveries(
+  now: Date = new Date()
+): Promise<NotifiableMonitoringDelivery[]> {
+  const rows = await MonitoringReportDelivery.findAll({
+    attributes: ['id', 'deliveredReviewId', 'recipientId', 'regionId'],
+    where: {
+      notifiedAt: null,
+      createdAt: { [Op.gte]: new Date(now.getTime() - PENDING_RETRY_DAYS * DAY_MS) },
+    },
+    include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'] }],
+    order: [['id', 'ASC']],
+  });
+
+  return rows.map((row) => ({
+    monitoringDeliveryId: row.id,
+    deliveredReviewId: row.deliveredReviewId,
+    recipientId: row.recipientId,
+    recipientName: row.recipient?.name ?? '',
+    regionId: row.regionId,
+  }));
+}
+
+/**
+ * Marks deliveries as fully notified so they are not retried.
+ * @param {number[]} monitoringDeliveryIds MonitoringReportDelivery ids.
+ */
+export async function markMonitoringDeliveriesNotified(
+  monitoringDeliveryIds: number[],
+  now: Date = new Date()
+): Promise<void> {
+  if (!monitoringDeliveryIds.length) {
+    return;
+  }
+  await MonitoringReportDelivery.update(
+    { notifiedAt: now },
+    { where: { id: monitoringDeliveryIds } }
+  );
+}
+
 export type MonitoringDigestRecipient = {
   id: number;
   displayId: string;
@@ -175,24 +257,29 @@ export type MonitoringDigestRecipient = {
 
 /**
  * Digest fetcher for the monitoring digest (Misc-6a). Returns the recipients with monitoring
- * reports the Hub detected in the user's home region since `date`, one entry per recipient,
- * sorted by name. Returns an empty list for users who would not get the in-app or
- * immediate notification: no TTAC/ECM/GSM role, no home region, or no
- * actionable_notifications feature flag.
+ * reports the Hub detected in the user's home region since the user's last successful
+ * monitoring digest, one entry per recipient, sorted by name. The window reaches back no
+ * further than `DIGEST_MAX_LOOKBACK_DAYS` for the frequency. Returns an empty list for users
+ * who would not get the in-app or immediate notification: no TTAC/ECM/GSM role, no home
+ * region, or no actionable_notifications feature flag.
  * @param {number} userId The digest recipient.
- * @param {string} date SQL interval expression from `frequencyToInterval()`.
+ * @param {string} date SQL interval expression from `frequencyToInterval()`, used to pick the
+ * longest window.
+ * @param {Date} [now] Defaults to the current time.
  * @returns {Promise<MonitoringDigestRecipient[]>} `id` is the recipient id and `displayId` its name.
  */
 export async function monitoringReportsDeliveredInRegionByDate(
   userId: number,
-  date: string
+  date: string,
+  now: Date = new Date()
 ): Promise<MonitoringDigestRecipient[]> {
-  if (!DIGEST_WINDOWS.includes(date)) {
+  const maxLookbackDays = DIGEST_MAX_LOOKBACK_DAYS[date];
+  if (!maxLookbackDays) {
     throw new Error(`Invalid monitoring digest window: ${date}`);
   }
 
   const user = await User.findByPk(userId, {
-    attributes: ['id', 'homeRegionId', 'flags'],
+    attributes: ['id', 'email', 'homeRegionId', 'flags'],
     include: [
       { model: Permission, as: 'permissions', attributes: ['scopeId', 'regionId'] },
       { model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } },
@@ -207,11 +294,26 @@ export async function monitoringReportsDeliveredInRegionByDate(
     return [];
   }
 
+  const lastDigest = await MailerLogs.findOne({
+    attributes: ['createdAt'],
+    where: {
+      action: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
+      success: true,
+      emailTo: { [Op.contains]: [user.email] },
+    },
+    order: [['createdAt', 'DESC']],
+  });
+  const earliest = new Date(now.getTime() - maxLookbackDays * DAY_MS);
+  const since =
+    lastDigest && new Date(lastDigest.createdAt) > earliest
+      ? new Date(lastDigest.createdAt)
+      : earliest;
+
   const deliveries = await MonitoringReportDelivery.findAll({
     attributes: ['recipientId'],
     where: {
       regionId: user.homeRegionId,
-      createdAt: { [Op.gte]: db.sequelize.literal(date) },
+      createdAt: { [Op.gte]: since },
     },
     include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'] }],
   });

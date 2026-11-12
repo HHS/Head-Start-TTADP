@@ -77,11 +77,13 @@ const sendIfEnabled = (emailAddresses, sendFn) => {
 
 const emailTemplatePath = path.join(process.cwd(), 'email_templates');
 
+// Returns the queue add promise so callers that must know the job reached Redis can await it.
 const enqueueNotification = (action, data) => {
   try {
-    notificationQueue.add(action, { ...data, ...referenceData() });
+    return notificationQueue.add(action, { ...data, ...referenceData() });
   } catch (err) {
     auditLogger.error(err);
+    return undefined;
   }
 };
 
@@ -449,19 +451,23 @@ export const notifyMonitoringDetailsAdded = (job, transport = defaultTransport) 
  * @param {{ deliveredReviewId: number, recipientId: number, recipientName: string,
  *   regionId: number }} delivery
  * @param {{ id: number, name: string, email: string }[]} users
+ * @returns {Promise<unknown[]>} Resolves once every job is in the queue, and rejects if any
+ * could not be added.
  */
 export const monitoringDetailsAddedNotification = (delivery, users) => {
   const { deliveredReviewId, recipientId, recipientName, regionId } = delivery;
-  users.forEach(({ id, name, email }) => {
-    enqueueNotification(EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, {
-      // `report` is what the queue's completed/failed logging reads
-      report: { id: deliveredReviewId, displayId: `monitoring report for ${recipientName}` },
-      user: { id, name, email },
-      recipientId,
-      recipientName,
-      regionId,
-    });
-  });
+  return Promise.all(
+    users.map(({ id, name, email }) =>
+      enqueueNotification(EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, {
+        // `report` is what the queue's completed/failed logging reads
+        report: { id: deliveredReviewId, displayId: `monitoring report for ${recipientName}` },
+        user: { id, name, email },
+        recipientId,
+        recipientName,
+        regionId,
+      })
+    )
+  );
 };
 
 export const collaboratorReportSubmittedForReviewNotification = (

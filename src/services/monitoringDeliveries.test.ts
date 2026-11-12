@@ -4,10 +4,14 @@ import db from '../models';
 import {
   findMonitoringNotificationUsersByRegion,
   findNewlyDeliveredReviews,
+  findPendingMonitoringDeliveries,
   MONITORING_NOTIFICATION_ROLES,
+  markMonitoringDeliveriesNotified,
   monitoringReportsDeliveredInRegionByDate,
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
+
+const siteAccess = { scopeId: SCOPES.SITE_ACCESS, regionId: 14 };
 
 // In-memory DeliveredReviews used to simulate the table before and after a refresh.
 type FakeReview = {
@@ -150,6 +154,25 @@ describe('monitoringDeliveries', () => {
       expect(result.find((r) => r.recipientId === 600)?.grantIds).toEqual([12]);
     });
 
+    it('returns one entry per region when a recipient’s grants span two regions', async () => {
+      const grantAOtherRegion = { ...grantA2, regionId: 2 };
+      mockDeliveredReviews([
+        {
+          id: 5,
+          mrid: 500,
+          report_delivery_date: '2026-11-10',
+          grants: [grantA, grantAOtherRegion],
+        },
+      ]);
+
+      const result = await findNewlyDeliveredReviews(new Set());
+
+      expect(result.map((r) => [r.recipientId, r.regionId, r.grantIds])).toEqual([
+        [500, 1, [10]],
+        [500, 2, [11]],
+      ]);
+    });
+
     it('skips grants without a recipient or region', async () => {
       mockDeliveredReviews([
         {
@@ -175,11 +198,24 @@ describe('monitoringDeliveries', () => {
 
   describe('findMonitoringNotificationUsersByRegion', () => {
     it('queries by home region and TTAC/ECM/GSM roles, grouping users by region', async () => {
+      const ttac = {
+        id: 1,
+        name: 'TTAC One',
+        email: 'one@example.com',
+        homeRegionId: 1,
+        permissions: [siteAccess],
+      };
       const spy = jest.spyOn(db.User, 'findAll').mockResolvedValue([
-        { id: 1, name: 'TTAC One', email: 'one@example.com', homeRegionId: 1 },
+        ttac,
         // same user returned twice when they hold two matching roles
-        { id: 1, name: 'TTAC One', email: 'one@example.com', homeRegionId: 1 },
-        { id: 2, name: 'GSM Two', email: 'two@example.com', homeRegionId: 2 },
+        ttac,
+        {
+          id: 2,
+          name: 'GSM Two',
+          email: 'two@example.com',
+          homeRegionId: 2,
+          permissions: [siteAccess],
+        },
       ]);
 
       const result = await findMonitoringNotificationUsersByRegion([1, 2, 2]);
@@ -207,7 +243,7 @@ describe('monitoringDeliveries', () => {
           email: 'a@example.com',
           homeRegionId: 1,
           flags: ['flag'],
-          permissions: [],
+          permissions: [siteAccess],
         },
         {
           id: 2,
@@ -215,11 +251,44 @@ describe('monitoringDeliveries', () => {
           email: 'b@example.com',
           homeRegionId: 1,
           flags: [],
-          permissions: [],
+          permissions: [siteAccess],
         },
         {
           id: 3,
           name: 'Admin',
+          email: 'c@example.com',
+          homeRegionId: 1,
+          flags: [],
+          permissions: [siteAccess, { scopeId: SCOPES.ADMIN, regionId: 14 }],
+        },
+      ]);
+
+      const result = await findMonitoringNotificationUsersByRegion([1], 'flag');
+
+      expect(result.get(1)?.map((u) => u.id)).toEqual([1, 3]);
+    });
+
+    it('filters out users whose Hub access (SITE_ACCESS) was revoked', async () => {
+      jest.spyOn(db.User, 'findAll').mockResolvedValue([
+        {
+          id: 1,
+          name: 'Active',
+          email: 'a@example.com',
+          homeRegionId: 1,
+          flags: ['flag'],
+          permissions: [siteAccess, { scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
+        },
+        {
+          id: 2,
+          name: 'Revoked',
+          email: 'b@example.com',
+          homeRegionId: 1,
+          flags: ['flag'],
+          permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
+        },
+        {
+          id: 3,
+          name: 'Revoked admin',
           email: 'c@example.com',
           homeRegionId: 1,
           flags: [],
@@ -229,7 +298,7 @@ describe('monitoringDeliveries', () => {
 
       const result = await findMonitoringNotificationUsersByRegion([1], 'flag');
 
-      expect(result.get(1)?.map((u) => u.id)).toEqual([1, 3]);
+      expect(result.get(1)?.map((u) => u.id)).toEqual([1]);
     });
 
     it('does not query when no valid regions are given', async () => {
@@ -240,16 +309,73 @@ describe('monitoringDeliveries', () => {
     });
   });
 
+  describe('findPendingMonitoringDeliveries', () => {
+    it('returns unnotified deliveries from the last week with recipient names', async () => {
+      const now = new Date('2026-11-12T12:00:00Z');
+      const spy = jest
+        .spyOn(db.MonitoringReportDelivery, 'findAll')
+        .mockResolvedValue([
+          { id: 7, deliveredReviewId: 1, recipientId: 500, regionId: 2, recipient: { name: 'A' } },
+        ]);
+
+      const result = await findPendingMonitoringDeliveries(now);
+
+      expect(result).toEqual([
+        {
+          monitoringDeliveryId: 7,
+          deliveredReviewId: 1,
+          recipientId: 500,
+          recipientName: 'A',
+          regionId: 2,
+        },
+      ]);
+      const { where } = spy.mock.calls[0][0] as {
+        where: { notifiedAt: null; createdAt: { [Op.gte]: Date } };
+      };
+      expect(where.notifiedAt).toBeNull();
+      expect(where.createdAt[Op.gte]).toEqual(new Date('2026-11-05T12:00:00Z'));
+    });
+  });
+
+  describe('markMonitoringDeliveriesNotified', () => {
+    it('sets notifiedAt on the given deliveries', async () => {
+      const now = new Date('2026-11-12T12:00:00Z');
+      const spy = jest.spyOn(db.MonitoringReportDelivery, 'update').mockResolvedValue([2]);
+
+      await markMonitoringDeliveriesNotified([7, 8], now);
+
+      expect(spy).toHaveBeenCalledWith({ notifiedAt: now }, { where: { id: [7, 8] } });
+    });
+
+    it('does nothing for an empty list', async () => {
+      const spy = jest.spyOn(db.MonitoringReportDelivery, 'update');
+      await markMonitoringDeliveriesNotified([]);
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('monitoringReportsDeliveredInRegionByDate', () => {
     const DAY = "NOW() - INTERVAL '1 DAY'";
+    const WEEK = "NOW() - INTERVAL '1 WEEK'";
+    const now = new Date('2026-11-16T21:00:00Z'); // a Monday afternoon
     const qualifyingUser = {
       id: 5,
+      email: 'ttac@example.com',
       homeRegionId: 3,
       flags: ['actionable_notifications'],
       permissions: [],
       roles: [{ name: 'GS' }, { name: 'ECM' }],
     };
     const delivery = (id: number, name: string) => ({ recipient: { id, name } });
+
+    const windowStart = (spy: jest.SpyInstance) =>
+      (spy.mock.calls[0][0] as { where: { createdAt: { [Op.gte]: Date } } }).where.createdAt[
+        Op.gte
+      ];
+
+    beforeEach(() => {
+      jest.spyOn(db.MailerLogs, 'findOne').mockResolvedValue(null);
+    });
 
     it('returns each recipient delivered in the home region once, sorted by name', async () => {
       jest.spyOn(db.User, 'findByPk').mockResolvedValue(qualifyingUser);
@@ -261,18 +387,63 @@ describe('monitoringDeliveries', () => {
         delivery(3, 'Zeta Start'),
       ]);
 
-      const result = await monitoringReportsDeliveredInRegionByDate(5, DAY);
+      const result = await monitoringReportsDeliveredInRegionByDate(5, DAY, now);
 
       expect(result).toEqual([
         { id: 1, displayId: 'Alpha Start', regionId: 3 },
         { id: 2, displayId: 'Zeta Start', regionId: 3 },
         { id: 3, displayId: 'Zeta Start', regionId: 3 },
       ]);
-      const { where } = findAllSpy.mock.calls[0][0] as {
-        where: { regionId: number; createdAt: { [Op.gte]: { val: string } } };
-      };
+      const { where } = findAllSpy.mock.calls[0][0] as { where: { regionId: number } };
       expect(where.regionId).toBe(3);
-      expect(where.createdAt[Op.gte].val).toBe(DAY);
+    });
+
+    it('starts the window at the last successful monitoring digest for the user', async () => {
+      jest.spyOn(db.User, 'findByPk').mockResolvedValue(qualifyingUser);
+      // Friday's daily digest; Monday's covers the weekend
+      const friday = new Date('2026-11-13T21:01:00Z');
+      const mailerSpy = jest
+        .spyOn(db.MailerLogs, 'findOne')
+        .mockResolvedValue({ createdAt: friday });
+      const findAllSpy = jest.spyOn(db.MonitoringReportDelivery, 'findAll').mockResolvedValue([]);
+
+      await monitoringReportsDeliveredInRegionByDate(5, DAY, now);
+
+      expect(windowStart(findAllSpy)).toEqual(friday);
+      expect(mailerSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            action: 'monitoringDetailsAddedDigest',
+            success: true,
+            emailTo: { [Op.contains]: ['ttac@example.com'] },
+          },
+          order: [['createdAt', 'DESC']],
+        })
+      );
+    });
+
+    it.each([
+      ['daily', DAY, '2026-11-12T21:00:00Z'],
+      ['weekly', WEEK, '2026-11-08T21:00:00Z'],
+    ])('caps the %s window when the last digest is older', async (_label, window, expected) => {
+      jest.spyOn(db.User, 'findByPk').mockResolvedValue(qualifyingUser);
+      jest
+        .spyOn(db.MailerLogs, 'findOne')
+        .mockResolvedValue({ createdAt: new Date('2026-09-01T00:00:00Z') });
+      const findAllSpy = jest.spyOn(db.MonitoringReportDelivery, 'findAll').mockResolvedValue([]);
+
+      await monitoringReportsDeliveredInRegionByDate(5, window, now);
+
+      expect(windowStart(findAllSpy)).toEqual(new Date(expected));
+    });
+
+    it('uses the longest window when the user has never had a monitoring digest', async () => {
+      jest.spyOn(db.User, 'findByPk').mockResolvedValue(qualifyingUser);
+      const findAllSpy = jest.spyOn(db.MonitoringReportDelivery, 'findAll').mockResolvedValue([]);
+
+      await monitoringReportsDeliveredInRegionByDate(5, DAY, now);
+
+      expect(windowStart(findAllSpy)).toEqual(new Date('2026-11-12T21:00:00Z'));
     });
 
     it.each([

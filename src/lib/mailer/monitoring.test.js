@@ -91,10 +91,10 @@ describe('monitoring details added email (TTAHUB-6004)', () => {
   });
 
   describe('monitoringDetailsAddedNotification', () => {
-    it('enqueues one job per user for the recipient/report', () => {
-      const addSpy = jest.spyOn(notificationQueue, 'add').mockClear();
+    it('enqueues one job per user for the recipient/report', async () => {
+      const addSpy = jest.spyOn(notificationQueue, 'add').mockClear().mockResolvedValue({});
 
-      monitoringDetailsAddedNotification(delivery, [userA, userB]);
+      await monitoringDetailsAddedNotification(delivery, [userA, userB]);
 
       expect(addSpy).toHaveBeenCalledTimes(2);
       expect(addSpy).toHaveBeenCalledWith(
@@ -107,10 +107,36 @@ describe('monitoring details added email (TTAHUB-6004)', () => {
       );
     });
 
-    it('enqueues nothing when no users want the email', () => {
+    it('enqueues nothing when no users want the email', async () => {
       const addSpy = jest.spyOn(notificationQueue, 'add').mockClear();
-      monitoringDetailsAddedNotification(delivery, []);
+      await monitoringDetailsAddedNotification(delivery, []);
       expect(addSpy).not.toHaveBeenCalled();
+    });
+
+    it('resolves only after every job is added, and rejects if one cannot be', async () => {
+      let resolveAdd;
+      jest
+        .spyOn(notificationQueue, 'add')
+        .mockClear()
+        .mockReturnValueOnce(
+          new Promise((resolve) => {
+            resolveAdd = resolve;
+          })
+        );
+      let settled = false;
+      const pending = monitoringDetailsAddedNotification(delivery, [userA]).then(() => {
+        settled = true;
+      });
+      await Promise.resolve();
+      expect(settled).toBe(false);
+      resolveAdd({});
+      await pending;
+      expect(settled).toBe(true);
+
+      jest.spyOn(notificationQueue, 'add').mockRejectedValueOnce(new Error('redis down'));
+      await expect(monitoringDetailsAddedNotification(delivery, [userA])).rejects.toThrow(
+        'redis down'
+      );
     });
   });
 

@@ -1,10 +1,12 @@
 const { prepMigration, removeTables } = require('../lib/migration');
 
 /**
- * Records each recipient/monitoring report combination the Hub detected as newly delivered
- * after a monitoring fact table refresh. `createdAt` is when the Hub detected the delivery,
- * which can be later than the report's official delivery date. Used to send at most one
- * immediate notification per combination and to build the monitoring digest (TTAHUB-6062).
+ * Records each recipient/monitoring report/region combination the Hub detected as newly
+ * delivered after a monitoring fact table refresh. `createdAt` is when the Hub detected the
+ * delivery, which can be later than the report's official delivery date. `notifiedAt` is set
+ * once the in-app and immediate notifications were sent; rows without it are retried. Used to
+ * send at most one immediate notification per combination and to build the monitoring digest
+ * (TTAHUB-6062).
  */
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -46,6 +48,10 @@ module.exports = {
               key: 'id',
             },
           },
+          notifiedAt: {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
           createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
@@ -60,7 +66,7 @@ module.exports = {
 
       await queryInterface.addIndex(
         'MonitoringReportDeliveries',
-        ['deliveredReviewId', 'recipientId'],
+        ['deliveredReviewId', 'recipientId', 'regionId'],
         {
           unique: true,
           transaction,
