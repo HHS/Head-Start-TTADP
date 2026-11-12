@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_HOST: db
       REDIS_HOST: redis
-      YARN_CACHE_FOLDER: /yarn-cache
+      YARN_GLOBAL_FOLDER: /yarn-cache
       NEW_RELIC_ENABLED: "false"
     depends_on:
       db:
@@ -50,7 +50,7 @@ services:
       - ../../.env
     environment:
       BACKEND_PROXY: http://backend:8080
-      YARN_CACHE_FOLDER: /yarn-cache
+      YARN_GLOBAL_FOLDER: /yarn-cache
       NODE_OPTIONS: --no-deprecation
       FONTAWESOME_NPM_AUTH_TOKEN: ${FONTAWESOME_NPM_AUTH_TOKEN}
     healthcheck:
@@ -75,6 +75,10 @@ services:
       - ../../frontend:/workspace/frontend:rw
       - ../../packages:/workspace/packages:rw
       - ../../docker:/workspace/docker:ro
+      # Yarn 4: the root .yarnrc.yml selects the committed release (yarnPath) and sets the
+      # node-modules linker and FontAwesome registry for frontend installs.
+      - ../../.yarnrc.yml:/workspace/.yarnrc.yml:ro
+      - ../../.yarn/releases:/workspace/.yarn/releases:ro
       - frontend-node-modules:/workspace/frontend/node_modules
       - frontend-yarn-cache:/yarn-cache
 
@@ -128,7 +132,7 @@ services:
       POSTGRES_HOST: db
       REDIS_HOST: redis
       SMTP_HOST: mailpit
-      YARN_CACHE_FOLDER: /yarn-cache
+      YARN_GLOBAL_FOLDER: /yarn-cache
       NEW_RELIC_ENABLED: "false"
     depends_on:
       db:
@@ -160,7 +164,7 @@ services:
     environment:
       POSTGRES_HOST: db
       REDIS_HOST: redis
-      YARN_CACHE_FOLDER: /yarn-cache
+      YARN_GLOBAL_FOLDER: /yarn-cache
       NEW_RELIC_ENABLED: "false"
     healthcheck:
       test: ["CMD", "/workspace/docker/scripts/healthcheck-http.sh", "http://127.0.0.1:9999/testingOnly"]

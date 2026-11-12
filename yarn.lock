@@ -7874,6 +7874,7 @@ __metadata:
     multiparty: "npm:^4.3.1"
     mz: "npm:^2.7.0"
     newrelic: "npm:^13.20.0"
+    node-gyp: "npm:^13.1.0"
     nodemailer: "npm:^10.3.1"
     nodemon: "npm:^3.1.14"
     nyc: "npm:^18.0.0"
@@ -10593,7 +10594,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-gyp@npm:latest":
+"node-gyp@npm:^13.1.0, node-gyp@npm:latest":
   version: 13.1.0
   resolution: "node-gyp@npm:13.1.0"
   dependencies:
