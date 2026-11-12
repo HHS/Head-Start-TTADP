@@ -1,4 +1,6 @@
 import request from 'supertest';
+import { auditLogger } from './logger';
+import { getAccessToken, getMissingLoginState, getUserInfo } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 
 jest.mock('./services/currentUser', () => ({
@@ -15,6 +17,8 @@ jest.mock('./middleware/authMiddleware', () => ({
     req.session.pkce = { codeVerifier: 'v', state: 'xyz', nonce: 'n' };
     res.redirect('/');
   }),
+
+  getMissingLoginState: jest.fn(),
 
   getAccessToken: jest.fn(async (req) => {
     req.session = req.session || {};
@@ -67,6 +71,18 @@ describe('TTA Hub server', () => {
     process.env.BYPASS_AUTH = 'false';
 
     retrieveUserDetails.mockResolvedValue({ id: 1 });
+    process.env.TTA_SMART_HUB_URI = 'http://localhost:3000';
+    // resetAllMocks in afterEach clears the module-level implementations
+    getMissingLoginState.mockReturnValue(undefined);
+    getAccessToken.mockImplementation(async (req) => {
+      req.session.claims = { sub: 'user-123' };
+      return 'fake-access-token';
+    });
+    getUserInfo.mockResolvedValue({
+      email: 'user@example.com',
+      given_name: 'Test',
+      family_name: 'User',
+    });
   });
 
   afterEach(() => {
@@ -92,6 +108,91 @@ describe('TTA Hub server', () => {
     );
 
     expect(resp.status).toBe(302);
+  });
+
+  describe('login callback', () => {
+    const callback = (query) => request(app).get('/oauth2-client/login/oauth2/code/').query(query);
+
+    test.each(['missing_session', 'missing_pkce', 'missing_code_verifier'])(
+      'returns 400 with a restart link and no user lookup when login state is lost (%s)',
+      async (reason) => {
+        const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+        const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+        getMissingLoginState.mockReturnValue(reason);
+
+        const resp = await callback({ code: 'secret-code', state: 'secret-state' });
+
+        expect(resp.status).toBe(400);
+        expect(resp.text).toContain('href="http://localhost:3000/api/login"');
+        expect(getAccessToken).not.toHaveBeenCalled();
+        expect(getUserInfo).not.toHaveBeenCalled();
+        expect(retrieveUserDetails).not.toHaveBeenCalled();
+        expect(alertSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('Login callback cannot be completed', {
+          reason,
+          hasSession: true,
+          hasPkce: expect.any(Boolean),
+          hasCode: true,
+          hasState: true,
+          hasIdpError: false,
+        });
+        const logged = JSON.stringify(errorSpy.mock.calls);
+        expect(logged).not.toMatch(/secret-code|secret-state/);
+
+        errorSpy.mockRestore();
+        alertSpy.mockRestore();
+      }
+    );
+
+    test('returns 400 without starting an exchange when HSES reports an error', async () => {
+      const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+
+      const resp = await callback({ error: 'access_denied' });
+
+      expect(resp.status).toBe(400);
+      expect(resp.text).toContain('Start login again');
+      expect(getMissingLoginState).not.toHaveBeenCalled();
+      expect(getAccessToken).not.toHaveBeenCalled();
+      expect(retrieveUserDetails).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Login callback cannot be completed',
+        expect.objectContaining({ reason: 'idp_error', hasIdpError: true })
+      );
+
+      errorSpy.mockRestore();
+    });
+
+    test('still returns 500 and alerts when the token exchange genuinely fails', async () => {
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+      getAccessToken.mockResolvedValue(undefined);
+
+      const resp = await callback({ code: 'abc', state: 'xyz' });
+
+      expect(resp.status).toBe(500);
+      expect(alertSpy).toHaveBeenCalledWith(
+        'No access token retrieved',
+        'auth_access_token_missing'
+      );
+      expect(retrieveUserDetails).not.toHaveBeenCalled();
+
+      alertSpy.mockRestore();
+    });
+
+    test('does not carry pkce state into the session after a successful login', async () => {
+      let callbackReq;
+      getAccessToken.mockImplementation(async (req) => {
+        callbackReq = req;
+        req.session.pkce = { codeVerifier: 'v', state: 'xyz', nonce: 'n' };
+        req.session.claims = { sub: 'user-123' };
+        return 'fake-access-token';
+      });
+
+      const resp = await callback({ code: 'abc', state: 'xyz' });
+
+      expect(resp.status).toBe(302);
+      expect(callbackReq.session.userId).toBe(1);
+      expect(callbackReq.session.pkce).toBeUndefined();
+    });
   });
 
   test('parses bracket-notation query arrays with more than 20 entries as arrays', () => {

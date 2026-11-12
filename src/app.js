@@ -3,7 +3,7 @@ import {} from 'dotenv/config';
 import express from 'express';
 import fs from 'fs';
 import helmet from 'helmet';
-import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from 'http-codes';
 import { omit } from 'lodash';
 import path from 'path';
 import qs from 'qs';
@@ -11,7 +11,7 @@ import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
 import { runCronJobs } from './lib/cron';
 import { auditLogger, logger, requestLogger } from './logger';
-import { getAccessToken, getUserInfo } from './middleware/authMiddleware';
+import { getAccessToken, getMissingLoginState, getUserInfo } from './middleware/authMiddleware';
 import { getPublicJwk } from './middleware/jwkKeyManager';
 import sanitizeUrlParams from './middleware/sanitizeUrlParams';
 import sessionMiddleware from './middleware/sessionMiddleware';
@@ -34,6 +34,24 @@ app.set('query parser', (str) => qs.parse(str, { arrayLimit: 1000 }));
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
+
+// Shown when the login callback can't be completed because the login state is gone or HSES
+// reported an error. The user restarts login themselves; redirecting automatically could loop
+// forever if the browser keeps dropping the session cookie.
+const sendLoginRecoveryPage = (res) => {
+  const loginUrl = join(process.env.TTA_SMART_HUB_URI, '/api/login');
+  res
+    .status(BAD_REQUEST)
+    .set('Content-Type', 'text/html')
+    .send(
+      '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
+        '<title>Login could not be completed</title></head><body>' +
+        '<h1>Login could not be completed</h1>' +
+        '<p>Your login session expired or was interrupted before it finished.</p>' +
+        `<p><a href="${loginUrl}">Start login again</a></p>` +
+        '</body></html>'
+    );
+};
 
 registerEventListener();
 
@@ -124,6 +142,20 @@ app.get('/.well-known/jwks.json', async (_req, res) => {
 
 app.get(oauth2CallbackPath, async (req, res) => {
   try {
+    // Log a stable reason and presence flags only; never the url, code, state, nonce or cookies.
+    const missingLoginState = req.query?.error ? 'idp_error' : getMissingLoginState(req);
+    if (missingLoginState) {
+      auditLogger.error('Login callback cannot be completed', {
+        reason: missingLoginState,
+        hasSession: !!req.session,
+        hasPkce: !!req.session?.pkce,
+        hasCode: !!req.query?.code,
+        hasState: !!req.query?.state,
+        hasIdpError: !!req.query?.error,
+      });
+      return sendLoginRecoveryPage(res);
+    }
+
     const accessToken = await getAccessToken(req);
     if (!accessToken) {
       auditLogger.alertError('No access token retrieved', 'auth_access_token_missing');
@@ -138,7 +170,6 @@ app.get(oauth2CallbackPath, async (req, res) => {
     const dbUser = await retrieveUserDetails(data);
     const claims = req.session?.claims || {};
     const idToken = req.session?.id_token || '';
-    const prevPkce = req.session?.pkce;
 
     // console.log('REQ SESSION BEFORE REGEN:', req.session);
     await new Promise((resolve) => {
@@ -154,7 +185,6 @@ app.get(oauth2CallbackPath, async (req, res) => {
         req.session.uuid = uuidv4();
         req.session.claims = claims;
         req.session.id_token = idToken;
-        req.session.pkce = prevPkce;
 
         const redirectPath =
           req.session.referrerPath && req.session.referrerPath !== '/logout'
