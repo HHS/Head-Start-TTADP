@@ -143,7 +143,7 @@ export async function login(req, res) {
  * Reports which piece of login state the callback needs but the session no longer has
  * (session expired, cookie not sent, callback URL revisited after login).
  * Only reads the session; never returns or logs the values themselves.
- * @param {import('express').Request} req
+ * @param {{ session?: { pkce?: { codeVerifier?: string, state?: string, nonce?: string } } }} req
  * @returns {'missing_session' | 'missing_pkce' | 'missing_code_verifier' | 'missing_state' | 'missing_nonce' | undefined}
  */
 export function getMissingLoginState(req) {
