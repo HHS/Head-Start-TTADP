@@ -62,6 +62,19 @@ describe('yarn-npm-audit parser', () => {
     expect(() => parseYarnNpmAudit('{"value":')).toThrow(/line 1/);
   });
 
+  it.each([null, [], [''], [' '], [42], ['5.3.1', null]])(
+    'rejects advisory rows with invalid installed versions: %j',
+    (versions) => {
+      expect(() => parseYarnNpmAudit(auditLine({ versions }))).toThrow(/Tree Versions/);
+    }
+  );
+
+  it('rejects advisory rows with missing installed versions', () => {
+    const row = JSON.parse(auditLine());
+    delete row.children['Tree Versions'];
+    expect(() => parseYarnNpmAudit(JSON.stringify(row))).toThrow(/Tree Versions/);
+  });
+
   it('formats Yarn locators as readable dependents', () => {
     expect(formatDependent('nise@npm:5.1.9')).toBe('nise@5.1.9');
     expect(formatDependent('@otel/x@virtual:abc#npm:0.201.1')).toBe('@otel/x@0.201.1');
@@ -86,9 +99,9 @@ describe('run-yarn-audit', () => {
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'run-yarn-audit-'));
     issuesFile = path.join(tempDir, 'yarn-audit-known-issues');
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'info').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => { });
+    jest.spyOn(console, 'info').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -98,7 +111,7 @@ describe('run-yarn-audit', () => {
 
   const spawnWith =
     (stdout, status = stdout ? 1 : 0) =>
-    () => ({ status, stdout, stderr: '' });
+      () => ({ status, stdout, stderr: '' });
 
   it('passes when the audit reports nothing', () => {
     expect(main({ spawn: spawnWith(''), issuesFile })).toBe(0);
@@ -129,6 +142,15 @@ describe('run-yarn-audit', () => {
   it('throws when yarn cannot be started', () => {
     const spawn = () => ({ error: new Error('ENOENT') });
     expect(() => runAudit(spawn)).toThrow(/ENOENT/);
+  });
+
+  it.each([
+    { status: null, signal: 'SIGTERM' },
+    { status: 2, signal: null },
+  ])('rejects incomplete audits even with known advisories: %j', (result) => {
+    fs.writeFileSync(issuesFile, `${auditLine()}\n`);
+    const spawn = () => ({ ...result, stdout: auditLine(), stderr: '' });
+    expect(() => main({ spawn, issuesFile })).toThrow(/did not complete/);
   });
 
   it('indexes one entry per advisory and installed version', () => {

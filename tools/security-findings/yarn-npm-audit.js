@@ -77,6 +77,15 @@ function normalizeAuditRow(row) {
     return null;
   }
 
+  const versions = details['Tree Versions'];
+  if (
+    !Array.isArray(versions) ||
+    versions.length === 0 ||
+    versions.some((version) => typeof version !== 'string' || !version.trim())
+  ) {
+    throw new Error('Yarn audit field "Tree Versions" must be a non-empty array of versions');
+  }
+
   const dependents = toStringArray(details.Dependents, 'Dependents')
     .map(formatDependent)
     .filter(Boolean);
@@ -89,7 +98,7 @@ function normalizeAuditRow(row) {
     title: details.Issue || null,
     severity: typeof details.Severity === 'string' ? details.Severity.toLowerCase() : null,
     vulnerableVersions: details['Vulnerable Versions'] || null,
-    versions: [...new Set(toStringArray(details['Tree Versions'], 'Tree Versions'))].sort(),
+    versions: [...new Set(versions)].sort(),
     dependents: [...new Set(dependents)].sort(),
   };
 }

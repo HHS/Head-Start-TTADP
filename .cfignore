@@ -29,9 +29,17 @@ build/temp/
 .idea/
 *.log
 *.lock
-# The buildpack only installs with Yarn (Yarn 4 via .yarnrc.yml) when yarn.lock is present;
-# without it, it falls back to npm, which ignores the lockfile and package.json resolutions.
-!yarn.lock
+
+# nodejs-buildpack v1.9.6 installs and checks Yarn Classic before it detects Yarn 4 from
+
+# .yarnrc.yml, and Classic's `yarn --version --loglevel notice` check fails once yarnPath hands
+
+# off to Yarn 4. Keep the Yarn 4 files (and yarn.lock, above) out of the upload so the buildpack
+
+# installs with npm, as it did before the Yarn 4 migration.
+
+.yarnrc.yml
+.yarn/
 .env*
 .eslintrc*
 .prettier*

@@ -48,6 +48,11 @@ function runAudit(spawn = spawnSync) {
   if (result.error) {
     throw new Error(`Unable to run "${YARN_NPM_AUDIT_COMMAND}": ${result.error.message}`);
   }
+  if (result.signal || (result.status !== 0 && result.status !== 1)) {
+    throw new Error(
+      `"${YARN_NPM_AUDIT_COMMAND}" did not complete (signal: ${result.signal || 'none'}, status: ${result.status}):\n${result.stdout || ''}${result.stderr || ''}`
+    );
+  }
 
   let advisories;
   try {
