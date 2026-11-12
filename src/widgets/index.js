@@ -23,6 +23,7 @@ import trSessionsByTopic from './trSessionsByTopic';
 import trSessionsForRecipient from './trSessionsForRecipient';
 import trStandardGoalList from './trStandardGoalList';
 import ttaHistoryOverview from './ttaHistoryOverview';
+import ttaHoursProvidedOverTime from './ttaHoursProvidedOverTime';
 
 /*
   All widgets need to be added to this object
@@ -43,6 +44,7 @@ export default {
   trSessionsByTopic,
   trSessionsForRecipient,
   ttaHistoryOverview,
+  ttaHoursProvidedOverTime,
   trHoursOfTrainingByNationalCenter,
   approvalRateByDeadline,
 

@@ -31,11 +31,58 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
   } = data || {};
 
   if (deliveryMethod === 'hybrid') {
-    return (Number(numberOfParticipantsInPerson) || 0)
-      + (Number(numberOfParticipantsVirtually) || 0);
+    return (
+      (Number(numberOfParticipantsInPerson) || 0) + (Number(numberOfParticipantsVirtually) || 0)
+    );
   }
 
   return Number(numberOfParticipants) || 0;
+}
+
+/**
+ * Returns the validated, de-duplicated ids of the grants in scope.
+ *
+ * Independently validate that every grant id is a positive integer before it is
+ * interpolated into SQL by `sessionRecipientGrantFilter`. Per AGENTS.md ("Traps
+ * to Avoid → SQL injection in filters"), `sequelize.escape` is insufficient —
+ * types must be re-checked at the SQL boundary even when the upstream source
+ * (here, Grant.findAll) is expected to return integers.
+ */
+export async function getRecipientGrantIds(scopes: IScopes): Promise<number[]> {
+  const grants = (await Grant.findAll({
+    attributes: ['id'],
+    where: scopes.grant.where,
+    raw: true,
+  })) as { id: number }[];
+
+  return [...new Set(grants.map((g) => g.id))]
+    .map((id) => Number(id))
+    .filter((id) => Number.isInteger(id) && id > 0);
+}
+
+/**
+ * SQL literal that restricts sessions (aliased as "sessionReports") to only those
+ * containing at least one of the given grant IDs in the JSONB data.recipients array,
+ * pushing the filter into SQL rather than scanning all sessions in JS.
+ *
+ * Guard the ::integer cast against malformed session data: a single recipient
+ * entry whose `value` is null, an object, or a non-numeric string would
+ * otherwise raise "invalid input syntax for type integer" and fail the
+ * entire widget for everyone in scope. We accept either a JSONB number or
+ * a JSONB string of digits, and skip everything else.
+ *
+ * `grantIdList` must be non-empty and come from `getRecipientGrantIds`.
+ */
+export function sessionRecipientGrantFilter(grantIdList: number[]) {
+  return sequelize.literal(`EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements("sessionReports"."data"->'recipients') elem
+    WHERE (
+      jsonb_typeof(elem->'value') = 'number'
+      OR (jsonb_typeof(elem->'value') = 'string' AND elem->>'value' ~ '^[0-9]+$')
+    )
+    AND (elem->>'value')::integer IN (${grantIdList.join(', ')})
+  )`);
 }
 
 /**
@@ -59,54 +106,25 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
  * intentionally excluded so the combined "In person activities" widget stays
  * consistent with the AR-only behavior.
  */
-export default async function trSessionsForRecipient(
-  scopes: IScopes
-): Promise<{
+export default async function trSessionsForRecipient(scopes: IScopes): Promise<{
   numSessions: string;
   sumDuration: number;
   numParticipants: number;
   numInPerson: number;
 }> {
   // Find all grants visible to this user/recipient via the standard grant scopes.
-  const grants = (await Grant.findAll({
-    attributes: ['id'],
-    where: scopes.grant.where,
-    raw: true,
-  })) as { id: number }[];
-
-  // Independently validate that every grant id is a positive integer before
-  // interpolating into the SQL literal below. Per AGENTS.md ("Traps to Avoid →
-  // SQL injection in filters"), `sequelize.escape` is insufficient — types
-  // must be re-checked at the SQL boundary even when the upstream source
-  // (here, Grant.findAll) is expected to return integers.
-  const grantIdList = [...new Set(grants.map((g) => g.id))]
-    .map((id) => Number(id))
-    .filter((id) => Number.isInteger(id) && id > 0);
+  const grantIdList = await getRecipientGrantIds(scopes);
 
   if (grantIdList.length === 0) {
     return {
-      numSessions: '0', sumDuration: 0, numParticipants: 0, numInPerson: 0,
+      numSessions: '0',
+      sumDuration: 0,
+      numParticipants: 0,
+      numInPerson: 0,
     };
   }
 
-  // Build a SQL literal that restricts sessions to only those containing at least
-  // one of the recipient's grant IDs in the JSONB data.recipients array, pushing
-  // the filter into SQL rather than scanning all sessions in JS.
-  //
-  // Guard the ::integer cast against malformed session data: a single recipient
-  // entry whose `value` is null, an object, or a non-numeric string would
-  // otherwise raise "invalid input syntax for type integer" and fail the
-  // entire widget for everyone in scope. We accept either a JSONB number or
-  // a JSONB string of digits, and skip everything else.
-  const recipientGrantFilter = sequelize.literal(`EXISTS (
-    SELECT 1
-    FROM jsonb_array_elements("sessionReports"."data"->'recipients') elem
-    WHERE (
-      jsonb_typeof(elem->'value') = 'number'
-      OR (jsonb_typeof(elem->'value') = 'string' AND elem->>'value' ~ '^[0-9]+$')
-    )
-    AND (elem->>'value')::integer IN (${grantIdList.join(', ')})
-  )`);
+  const recipientGrantFilter = sessionRecipientGrantFilter(grantIdList);
 
   const baseScopes = baseTRScopes(scopes);
   const reports = (await TrainingReport.findAll({
@@ -129,35 +147,43 @@ export default async function trSessionsForRecipient(
   // number in JSONB, but we parseFloat defensively to match the activity report
   // overview's handling of legacy/string-typed durations.
   const sumDuration = reports.reduce(
-    (sum, r) => sum + r.sessionReports.reduce(
-      (sessionSum, s) => sessionSum + (parseFloat(s.data?.duration as string) || 0),
-      0,
-    ),
-    0,
+    (sum, r) =>
+      sum +
+      r.sessionReports.reduce(
+        (sessionSum, s) => sessionSum + (parseFloat(s.data?.duration as string) || 0),
+        0
+      ),
+    0
   );
 
   // Sum participants across every matching session using the same per-delivery-method
   // logic as `trOverview`, so the combined widget value stays consistent with the
   // global TR overview.
   const numParticipants = reports.reduce(
-    (sum, r) => sum + r.sessionReports.reduce(
-      (sessionSum, s) => sessionSum + getSessionParticipantCount(s.data),
-      0,
-    ),
-    0,
+    (sum, r) =>
+      sum +
+      r.sessionReports.reduce(
+        (sessionSum, s) => sessionSum + getSessionParticipantCount(s.data),
+        0
+      ),
+    0
   );
 
   // Count sessions whose delivery method is strictly 'in-person', mirroring the
   // AR overview's equality check so the combined "In person activities" widget
   // counts AR and TR sessions the same way.
   const numInPerson = reports.reduce(
-    (sum, r) => sum + r.sessionReports.filter(
-      (s) => (s.data?.deliveryMethod || '').toLowerCase() === 'in-person',
-    ).length,
-    0,
+    (sum, r) =>
+      sum +
+      r.sessionReports.filter((s) => (s.data?.deliveryMethod || '').toLowerCase() === 'in-person')
+        .length,
+    0
   );
 
   return {
-    numSessions: formatNumber(numSessions), sumDuration, numParticipants, numInPerson,
+    numSessions: formatNumber(numSessions),
+    sumDuration,
+    numParticipants,
+    numInPerson,
   };
 }
