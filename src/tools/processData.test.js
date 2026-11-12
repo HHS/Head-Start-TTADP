@@ -39,6 +39,7 @@ import processData, {
   processCitationGrantNumbers,
   truncateAuditTables,
 } from './processData';
+import { countNonEmptyAuditTables } from './verifyProcessedData';
 
 jest.mock('../logger');
 
@@ -417,8 +418,13 @@ describe('processData', () => {
       dml_txid: uuidv4(),
     });
 
+    // Run against the real database: Sequelize returns information_schema table-name queries in a
+    // dialect-specific shape that a mocked query would hide
+    expect(await countNonEmptyAuditTables()).toBeGreaterThan(0);
+
     await truncateAuditTables();
     expect(await ZALGoal.count()).toBe(0);
+    expect(await countNonEmptyAuditTables()).toBe(0);
   });
 
   describe('deleteNotifications', () => {

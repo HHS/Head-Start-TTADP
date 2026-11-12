@@ -2459,10 +2459,12 @@ commands:
           success_message: ':database: Restored data processed'
           directory: "./"
           timeout: "3000"
-          # processData and its verification run in one transaction, so any failure (including a
-          # failed verification) rolls back and a rerun starts from the same raw data
-          attempts: 2
-          log_filter: "verifyProcessedData counts"
+          # One attempt only: processing takes ~40 minutes, so a second attempt cannot finish
+          # inside the job's 60-minute limit and would only turn a failure into a timeout
+          attempts: 1
+          # the verification counts line and the "processData failed: <name>" error line; neither
+          # carries data values
+          log_filter: "verifyProcessedData counts|processData failed"
 
   cf_restore:
     description: "Restore db from S3 to << parameters.target_env >>"
@@ -2632,7 +2634,7 @@ commands:
         type: integer
         default: 1
       log_filter:
-        description: "If set, print the task's recent log lines containing this text (only use for lines that carry no data values)"
+        description: "If set, print the task's recent log lines matching this extended regex, e.g. \"a|b\" (only use for lines that carry no data values)"
         type: string
         default: ""
       cancel_task_patterns:
@@ -2699,7 +2701,7 @@ commands:
                 name: Show task log lines matching "<< parameters.log_filter >>"
                 when: always
                 command: |
-                  cf logs tta-automation --recent | grep -F "<< parameters.log_filter >>" || echo "No matching log lines found"
+                  cf logs tta-automation --recent | grep -E "<< parameters.log_filter >>" || echo "No matching log lines found"
       - run:
           name: Logout of service account
           command: |
