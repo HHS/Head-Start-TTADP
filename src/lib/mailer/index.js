@@ -18,8 +18,9 @@ import {
   activityReportsSubmittedWhereCreatorByDate,
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
-import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
+import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
 import { trainingReportsWherePocByDate } from '../../services/trainingReportDigests';
+import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
 import referenceData from '../../workers/referenceData';
 import transactionQueueWrapper from '../../workers/transactionWrapper';
@@ -76,11 +77,13 @@ const sendIfEnabled = (emailAddresses, sendFn) => {
 
 const emailTemplatePath = path.join(process.cwd(), 'email_templates');
 
+// Returns the queue add promise so callers that must know the job reached Redis can await it.
 const enqueueNotification = (action, data) => {
   try {
-    notificationQueue.add(action, { ...data, ...referenceData() });
+    return notificationQueue.add(action, { ...data, ...referenceData() });
   } catch (err) {
     auditLogger.error(err);
+    return undefined;
   }
 };
 
@@ -414,6 +417,57 @@ export const notifyCollaboratorReportSubmittedForReview = (job, transport = defa
       locals: { reportPath, displayId, isResubmission },
     });
   });
+};
+
+/**
+ * Process function for monitoringDetailsAdded jobs added to the notification queue.
+ * Emails a TTAC/ECM/GSM user that a monitoring report for a recipient in their home region
+ * is available (TTAHUB-6004). One job per user per recipient/report.
+ */
+export const notifyMonitoringDetailsAdded = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { user, recipientName, recipientId, regionId } = job.data;
+  logger.debug(
+    `MAILER: Attempting to notify user ${user.id} of a monitoring report for recipient ${recipientId}`
+  );
+
+  const monitoringPath = `${process.env.TTA_SMART_HUB_URI}/recipient-tta-records/${recipientId}/region/${regionId}/monitoring`;
+  return sendIfEnabled([user.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying user ${user.id} of a monitoring report for recipient ${recipientId}`
+    );
+    return createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'monitoring_details_added'),
+      message: { to: toEmails },
+      locals: { recipientName, monitoringPath },
+    });
+  });
+};
+
+/**
+ * Enqueues one monitoringDetailsAdded email per user for a newly delivered monitoring report.
+ * Callers filter users to those whose setting is "immediately".
+ * @param {{ deliveredReviewId: number, recipientId: number, recipientName: string,
+ *   regionId: number }} delivery
+ * @param {{ id: number, name: string, email: string }[]} users
+ * @returns {Promise<unknown[]>} Resolves once every job is in the queue, and rejects if any
+ * could not be added.
+ */
+export const monitoringDetailsAddedNotification = (delivery, users) => {
+  const { deliveredReviewId, recipientId, recipientName, regionId } = delivery;
+  return Promise.all(
+    users.map(({ id, name, email }) =>
+      enqueueNotification(EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, {
+        // `report` is what the queue's completed/failed logging reads
+        report: { id: deliveredReviewId, displayId: `monitoring report for ${recipientName}` },
+        user: { id, name, email },
+        recipientId,
+        recipientName,
+        regionId,
+      })
+    )
+  );
 };
 
 export const collaboratorReportSubmittedForReviewNotification = (
@@ -986,6 +1040,8 @@ export const changesRequestedNotification = (
 // Digest reports link to the AR by id unless the DIGEST_CONFIG entry gives a reportLink
 const activityReportDigestLink = (report) => `/activity-reports/${report.id}`;
 const trainingReportDigestLink = (report) => `/training-report/view/${report.displayId}`;
+const monitoringDigestLink = (report) =>
+  `/recipient-tta-records/${report.id}/region/${report.regionId}/monitoring`;
 
 // Registry: add one entry per digest type. The cron layer iterates this.
 export const DIGEST_CONFIG = {
@@ -1032,6 +1088,16 @@ export const DIGEST_CONFIG = {
     logKey: 'TrainingReportPocAddedDigest',
     reportLink: trainingReportDigestLink,
   },
+  // Misc-6a (TTAHUB-6062): `reports` are recipients with new monitoring reports in the
+  // user's home region, each linking to the recipient's monitoring tab. Not sent when empty.
+  [EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED,
+    reportFetcher: monitoringReportsDeliveredInRegionByDate,
+    actionType: EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST,
+    logKey: 'MonitoringDetailsAddedDigest',
+    reportLink: monitoringDigestLink,
+    skipEmpty: true,
+  },
 };
 
 export async function digestForSetting({
@@ -1041,6 +1107,7 @@ export async function digestForSetting({
   logKey,
   freq,
   subjectFreq,
+  skipEmpty = false,
 }) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ${logKey} with freq ${freq}`);
@@ -1051,6 +1118,9 @@ export async function digestForSetting({
     const users = await usersWithSetting(settingKey, [freq]);
     const records = users.map(async (user) => {
       const reports = await reportFetcher(user.id, date);
+      if (skipEmpty && !reports.length) {
+        return null;
+      }
       const data = {
         user,
         reports,
@@ -1062,7 +1132,7 @@ export async function digestForSetting({
       notificationQueue.add(actionType, data);
       return data;
     });
-    return Promise.all(records);
+    return (await Promise.all(records)).filter(Boolean);
   } catch (err) {
     logger.info(`MAILER: ${logKey} with key ${settingKey} freq ${freq} error ${err}`);
     throw err;
@@ -1521,6 +1591,7 @@ export const processNotificationQueue = () => {
       notifyCollaboratorReportSubmittedForReview,
     ],
     [EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, notifyCreatorReportSubmittedForReview],
+    [EMAIL_ACTIONS.MONITORING_DETAILS_ADDED, notifyMonitoringDetailsAdded],
   ];
   instantProcessors.forEach(([action, handler]) => {
     notificationQueue.process(action, transactionQueueWrapper(handler, action));

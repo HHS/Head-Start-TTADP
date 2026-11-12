@@ -8,3 +8,6 @@ export const frequencyValues: { key: EmailFrequencyValue; label: string }[] = [
   { key: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST, label: 'Weekly digest' },
   { key: USER_SETTINGS.EMAIL.VALUES.MONTHLY_DIGEST, label: 'Monthly digest' },
 ];
+
+// Monitoring report notifications only go to TTACs and managers (TTAHUB-6003)
+export const MONITORING_NOTIFICATION_ROLES = ['TTAC', 'ECM', 'GSM'];
