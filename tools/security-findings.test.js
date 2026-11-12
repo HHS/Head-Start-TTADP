@@ -156,39 +156,27 @@ function createSastScanConfigFixture(overrides = {}) {
   };
 }
 
+// One line of `yarn npm audit --json` (Yarn 4) output.
 function createAuditAdvisory({
   advisoryId = 111,
   ghsa = 'GHSA-test-1234',
   moduleName = 'qs',
   version = '6.15.1',
+  versions = null,
   severity = 'moderate',
   title = 'A test advisory',
-  created = '2026-06-01T12:00:00.000Z',
-  paths = ['express>qs'],
-  findings = null,
+  dependents = ['express@npm:4.22.1'],
 } = {}) {
   return JSON.stringify({
-    type: 'auditAdvisory',
-    data: {
-      advisory: {
-        id: advisoryId,
-        github_advisory_id: ghsa,
-        module_name: moduleName,
-        severity,
-        title,
-        created,
-        patched_versions: '>=6.15.2',
-        vulnerable_versions: '<=6.15.1',
-        recommendation: 'Upgrade',
-        cves: [],
-        cwe: [],
-        findings: findings || [
-          {
-            version,
-            paths,
-          },
-        ],
-      },
+    value: moduleName,
+    children: {
+      ID: advisoryId,
+      Issue: title,
+      URL: `https://github.com/advisories/${ghsa}`,
+      Severity: severity,
+      'Vulnerable Versions': '<=6.15.1',
+      'Tree Versions': versions || [version],
+      Dependents: dependents,
     },
   });
 }
@@ -437,13 +425,13 @@ describe('security-findings tooling', () => {
           ghsa: 'GHSA-q8mj-m7cp-5q26',
           moduleName: 'qs',
           version: '6.15.1',
-          paths: ['express>qs'],
+          dependents: ['express@npm:4.22.1'],
         }),
         createAuditAdvisory({
           ghsa: 'GHSA-q8mj-m7cp-5q26',
           moduleName: 'qs',
           version: '6.15.1',
-          paths: ['email-templates>@ladjs/i18n>qs'],
+          dependents: ['@ladjs/i18n@virtual:abc123#npm:10.0.0'],
         }),
       ].join('\n')
     );
@@ -471,13 +459,16 @@ describe('security-findings tooling', () => {
     expect(backend.findings[0].id).toBe(
       buildScaFindingId('backend', 'GHSA-q8mj-m7cp-5q26', 'qs', '6.15.1')
     );
-    expect(backend.findings[0].paths).toEqual(['email-templates>@ladjs/i18n>qs', 'express>qs']);
+    expect(backend.findings[0].paths).toEqual(['@ladjs/i18n@10.0.0', 'express@4.22.1']);
+    expect(backend.findings[0].advisoryUrl).toBe(
+      'https://github.com/advisories/GHSA-q8mj-m7cp-5q26'
+    );
     expect(frontend.findings).toHaveLength(1);
     expect(frontend.findings[0].severity).toBe('low');
     expect(frontend.findings[0].firstDetected).toBe('2026-06-17');
   });
 
-  it('keeps Yarn Audit paths scoped to the matching affected version', () => {
+  it('creates one SCA finding per installed version and skips non-advisory rows', () => {
     const scanTypesPath = path.join(tempDir, 'security/findings/scan-types.json');
     const backendAuditPath = path.join(tempDir, 'yarn-audit-known-issues');
     const backendBaselinePath = path.join(tempDir, 'security/dependencies/backend-baseline.json');
@@ -485,14 +476,19 @@ describe('security-findings tooling', () => {
     writeJson(scanTypesPath, createScanTypesFixture());
     writeFixtureFile(
       backendAuditPath,
-      createAuditAdvisory({
-        ghsa: 'GHSA-multi-1234',
-        moduleName: 'pkg',
-        findings: [
-          { version: '1.0.0', paths: ['root>pkg'] },
-          { version: '2.0.0', paths: ['nested>pkg'] },
-        ],
-      })
+      [
+        createAuditAdvisory({
+          ghsa: 'GHSA-multi-1234',
+          moduleName: 'pkg',
+          versions: ['2.0.0', '1.0.0'],
+          dependents: ['root@npm:1.0.0', 'app@workspace:.'],
+        }),
+        JSON.stringify({
+          value: 'old-pkg',
+          children: { ID: 'old-pkg (deprecation)', Issue: 'Deprecated', Severity: 'moderate' },
+        }),
+        JSON.stringify({ type: 'auditSummary', data: {} }),
+      ].join('\n')
     );
 
     const baseline = createScaBaselines({
@@ -505,13 +501,13 @@ describe('security-findings tooling', () => {
       cwd: tempDir,
     }).backend;
 
-    const byId = Object.fromEntries(baseline.findings.map((finding) => [finding.id, finding]));
-    expect(byId[buildScaFindingId('backend', 'GHSA-multi-1234', 'pkg', '1.0.0')].paths).toEqual([
-      'root>pkg',
+    expect(baseline.findings.map((finding) => finding.id)).toEqual([
+      buildScaFindingId('backend', 'GHSA-multi-1234', 'pkg', '1.0.0'),
+      buildScaFindingId('backend', 'GHSA-multi-1234', 'pkg', '2.0.0'),
     ]);
-    expect(byId[buildScaFindingId('backend', 'GHSA-multi-1234', 'pkg', '2.0.0')].paths).toEqual([
-      'nested>pkg',
-    ]);
+    baseline.findings.forEach((finding) => {
+      expect(finding.paths).toEqual(['app', 'root@1.0.0']);
+    });
   });
 
   it('seeds the common register and reports migration warnings instead of strict errors by default', () => {
