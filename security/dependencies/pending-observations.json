@@ -1,59 +1,17 @@
 {
   "items": {
-    "SCA-BACKEND-GHSA-3g3m-2fjr-6pw4-glob-10.5.0": {
-      "id": "SCA-BACKEND-GHSA-3g3m-2fjr-6pw4-glob-10.5.0",
-      "scanType": "sca",
-      "scanner": "yarn-audit",
-      "scope": "backend",
-      "scannerFindingId": "GHSA-3g3m-2fjr-6pw4",
-      "module": "glob",
-      "affectedVersion": "10.5.0",
-      "sourceSeverity": "moderate",
-      "severity": "moderate",
-      "firstSeen": "2026-11-02",
-      "lastObserved": "2026-11-02",
-      "escalationState": "warning"
-    },
-    "SCA-BACKEND-GHSA-g3hv-75wg-m249-minimatch-3.1.5": {
-      "id": "SCA-BACKEND-GHSA-g3hv-75wg-m249-minimatch-3.1.5",
-      "scanType": "sca",
-      "scanner": "yarn-audit",
-      "scope": "backend",
-      "scannerFindingId": "GHSA-g3hv-75wg-m249",
-      "module": "minimatch",
-      "affectedVersion": "3.1.5",
-      "sourceSeverity": "moderate",
-      "severity": "moderate",
-      "firstSeen": "2026-11-02",
-      "lastObserved": "2026-11-02",
-      "escalationState": "warning"
-    },
-    "SCA-BACKEND-GHSA-g3hv-75wg-m249-minimatch-9.0.9": {
-      "id": "SCA-BACKEND-GHSA-g3hv-75wg-m249-minimatch-9.0.9",
-      "scanType": "sca",
-      "scanner": "yarn-audit",
-      "scope": "backend",
-      "scannerFindingId": "GHSA-g3hv-75wg-m249",
-      "module": "minimatch",
-      "affectedVersion": "9.0.9",
-      "sourceSeverity": "moderate",
-      "severity": "moderate",
-      "firstSeen": "2026-11-02",
-      "lastObserved": "2026-11-02",
-      "escalationState": "warning"
-    },
-    "SCA-FRONTEND-GHSA-g3hv-75wg-m249-minimatch-10.2.6": {
-      "id": "SCA-FRONTEND-GHSA-g3hv-75wg-m249-minimatch-10.2.6",
+    "SCA-FRONTEND-GHSA-qr28-fpjm-wq7f-decode-uri-component-0.2.2": {
+      "id": "SCA-FRONTEND-GHSA-qr28-fpjm-wq7f-decode-uri-component-0.2.2",
       "scanType": "sca",
       "scanner": "yarn-audit",
       "scope": "frontend",
-      "scannerFindingId": "GHSA-g3hv-75wg-m249",
-      "module": "minimatch",
-      "affectedVersion": "10.2.6",
-      "sourceSeverity": "moderate",
-      "severity": "moderate",
-      "firstSeen": "2026-11-02",
-      "lastObserved": "2026-11-02",
+      "scannerFindingId": "GHSA-qr28-fpjm-wq7f",
+      "module": "decode-uri-component",
+      "affectedVersion": "0.2.2",
+      "sourceSeverity": "high",
+      "severity": "high",
+      "firstSeen": "2026-11-12",
+      "lastObserved": "2026-11-12",
       "escalationState": "warning"
     },
     "SCA-FRONTEND-GHSA-vcc3-ghjq-m6fr-decode-uri-component-0.2.2": {
@@ -67,7 +25,7 @@
       "sourceSeverity": "moderate",
       "severity": "moderate",
       "firstSeen": "2026-10-16",
-      "lastObserved": "2026-11-02",
+      "lastObserved": "2026-11-12",
       "escalationState": "warning"
     }
   }
