@@ -25,6 +25,7 @@ import {
   group,
   groups,
   groupsByRegion,
+  lockGroup,
   potentialGroupUsers,
   potentialRecipientGrants,
 } from './groups';
@@ -697,6 +698,24 @@ describe('Groups service', () => {
       expect(creatorCollabAfterEdit).toBeDefined();
       expect(creatorCollabAfterEdit.userId).toBe(mockUser.id);
       expect(result.sharedWith).toBe(GROUP_SHARED_WITH.EVERYONE);
+    });
+  });
+
+  describe('lockGroup', () => {
+    it('holds the group row until the transaction ends', async () => {
+      await sequelize.transaction(async () => {
+        await lockGroup(existingGroupToEdit.id);
+
+        // another transaction can't take the same lock while this one holds it
+        const lockedElsewhere = await sequelize.transaction(async (other) =>
+          Group.findByPk(existingGroupToEdit.id, {
+            lock: other.LOCK.NO_KEY_UPDATE,
+            skipLocked: true,
+            transaction: other,
+          })
+        );
+        expect(lockedElsewhere).toBeNull();
+      });
     });
   });
 

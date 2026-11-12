@@ -10,9 +10,11 @@ import {
   editGroup,
   group,
   groups,
+  lockGroup,
   potentialGroupUsers,
   potentialRecipientGrants,
 } from '../../services/groups';
+import { userById } from '../../services/users';
 import {
   createGroup,
   deleteGroup,
@@ -44,6 +46,7 @@ jest.mock('../../services/users', () => ({
     permissions: [
       {
         regionId: 1,
+        scopeId: 4, // SCOPES.READ_REPORTS
       },
     ],
   })),
@@ -60,6 +63,7 @@ jest.mock('../../services/groups', () => ({
   editGroup: jest.fn(),
   destroyGroup: jest.fn(),
   checkGroupNameAvailable: jest.fn(),
+  lockGroup: jest.fn(),
   potentialRecipientGrants: jest.fn(),
   potentialGroupUsers: jest.fn(),
 }));
@@ -181,15 +185,6 @@ describe('Groups Handlers', () => {
     });
     it('should return 200 and the group', async () => {
       const groupResponse = { id: 1, name: 'Group 1' };
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
-
       GroupPolicy.mockImplementation(() => ({
         canAddToGroup: () => true,
       }));
@@ -203,15 +198,6 @@ describe('Groups Handlers', () => {
 
     it('uses default value for co-owners', async () => {
       const groupResponse = { id: 1, name: 'Group 1' };
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
-
       GroupPolicy.mockImplementation(() => ({
         canAddToGroup: () => true,
       }));
@@ -234,15 +220,6 @@ describe('Groups Handlers', () => {
 
     it('used individuals from request body', async () => {
       const groupResponse = { id: 1, name: 'Group 1' };
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
-
       GroupPolicy.mockImplementation(() => ({
         canAddToGroup: () => true,
         canUseGroup: () => true,
@@ -265,14 +242,6 @@ describe('Groups Handlers', () => {
     });
 
     it('should return 200 with an error if the group already exists', async () => {
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
       GroupPolicy.mockImplementation(() => ({
         canAddToGroup: () => true,
       }));
@@ -286,14 +255,6 @@ describe('Groups Handlers', () => {
     });
 
     it('should return FORBIDDEN if permissions bad', async () => {
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
       GroupPolicy.mockImplementation(() => ({
         canAddToGroup: () => false,
       }));
@@ -304,14 +265,6 @@ describe('Groups Handlers', () => {
     });
 
     it('should return ACCEPTED if co-owner permissions bad', async () => {
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
       GroupPolicy.mockImplementation((userData) => ({
         canAddToGroup: () => {
           if (userData.id === 1) return true;
@@ -338,14 +291,6 @@ describe('Groups Handlers', () => {
     });
 
     it('should return ACCEPTED if individuals permissions bad', async () => {
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
       GroupPolicy.mockImplementation((userData) => ({
         canUseGroup: () => false,
         canAddToGroup: () => {
@@ -374,14 +319,6 @@ describe('Groups Handlers', () => {
     });
 
     it('should return 500 if there is an error', async () => {
-      Grant.findAll.mockReturnValue([
-        {
-          id: 1,
-          regionId: 1,
-          recipientId: 1,
-          status: 'Active',
-        },
-      ]);
       GroupPolicy.mockImplementation(() => ({
         canAddToGroup: () => true,
       }));
@@ -406,6 +343,7 @@ describe('Groups Handlers', () => {
         },
         body: {
           name: 'Group 1',
+          grants: [],
           coOwners: [],
           individuals: [],
         },
@@ -454,6 +392,7 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
           },
         },
         res
@@ -481,6 +420,7 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
             coOwners: [2],
             individuals: [3],
           },
@@ -518,6 +458,7 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
             coOwners: [2],
             individuals: [3],
           },
@@ -552,6 +493,7 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
             coOwners: [],
             individuals: [3],
           },
@@ -587,6 +529,7 @@ describe('Groups Handlers', () => {
           },
           body: {
             name: 'Group 1',
+            grants: [],
             coOwners: [],
             individuals: [],
           },
@@ -636,6 +579,230 @@ describe('Groups Handlers', () => {
     });
   });
 
+  describe('grant authorization', () => {
+    const ActualGroupPolicy = jest.requireActual('../../policies/group').default;
+    const SCOPES = jest.requireActual('../../middleware/scopeConstants').default;
+    const userId = 1;
+    // userById is mocked to give every user report access to region 1 only, unless a test
+    // supplies its own users with mockUsers
+    const allGrants = [
+      { id: 1, regionId: 1, recipientId: 1, status: 'Active' },
+      { id: 2, regionId: 2, recipientId: 2, status: 'Active' },
+      { id: 3, regionId: 1, recipientId: 3, status: 'Active' },
+      { id: 4, regionId: 1, recipientId: 4, status: 'Inactive' },
+      { id: 5, regionId: 2, recipientId: 5, status: 'Inactive' },
+    ];
+    const malformedGrantIds = [
+      ['a SQL fragment', ['1 OR 1=1']],
+      ['a boolean', [true]],
+      ['a nested array', [[1]]],
+      ['an object that cannot be converted', [{ valueOf: null, toString: null }]],
+      ['a hex string', ['0x1']],
+      ['zero', [0]],
+      ['a decimal', [1.5]],
+      ['a non-array', 'all'],
+    ];
+    const permission = (regionId, scopeId = SCOPES.READ_REPORTS) => ({ regionId, scopeId });
+    const mockUsers = (permissionsById) => {
+      userById.mockImplementation(async (id) => ({ id, permissions: permissionsById[id] }));
+    };
+    let res;
+    let statusJson;
+
+    beforeEach(() => {
+      statusJson = jest.fn();
+      res = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: statusJson })),
+      };
+      currentUserId.mockReturnValue(userId);
+      checkGroupNameAvailable.mockResolvedValue(true);
+      GroupPolicy.mockImplementation((...args) => new ActualGroupPolicy(...args));
+      Grant.findAll.mockImplementation(({ where }) =>
+        allGrants.filter(
+          (grant) => where.id.includes(grant.id) && (!where.status || grant.status === where.status)
+        )
+      );
+      // The creator's grants, as the grant picker returns them
+      potentialRecipientGrants.mockImplementation(async () =>
+        allGrants
+          .filter(({ regionId, status }) => regionId === 1 && status === 'Active')
+          .map(({ id, regionId }) => ({ grantId: id, regionId }))
+      );
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      Grant.findAll.mockReset();
+      userById.mockReset();
+      userById.mockImplementation((id) => ({ id, permissions: [permission(1)] }));
+    });
+
+    describe('createGroup', () => {
+      it('rejects grants outside the user regions without creating the group', async () => {
+        await createGroup({ body: { name: 'Group 1', grants: [1, 2] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(createNewGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects grants in a region where the user has no report scope', async () => {
+        mockUsers({
+          [userId]: [permission(1), permission(2, SCOPES.READ_WRITE_TRAINING_REPORTS)],
+        });
+        await createGroup({ body: { name: 'Group 1', grants: [1, 2] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(createNewGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects grant ids that do not exist', async () => {
+        await createGroup({ body: { name: 'Group 1', grants: [1, 999] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(createNewGroup).not.toHaveBeenCalled();
+      });
+
+      it.each(malformedGrantIds)('rejects malformed grant ids: %s', async (_label, grants) => {
+        await createGroup({ body: { name: 'Group 1', grants } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+        expect(createNewGroup).not.toHaveBeenCalled();
+      });
+
+      it('persists the resolved grant ids when the user can access them', async () => {
+        const groupResponse = { id: 1, name: 'Group 1' };
+        createNewGroup.mockResolvedValue(groupResponse);
+        await createGroup({ body: { name: 'Group 1', grants: ['1', 1, 3] } }, res);
+        expect(createNewGroup).toHaveBeenCalledWith(expect.objectContaining({ grants: [1, 3] }));
+        expect(res.json).toHaveBeenCalledWith(groupResponse);
+      });
+
+      describe.each([
+        ['co-owner', 'coOwners', 'co-owner-permissions', false],
+        ['shared-with user', 'individuals', 'shared-with-permissions', true],
+      ])('a %s', (_label, field, error, isPublic) => {
+        const collaboratorId = 2;
+        const body = (extra = {}) => ({
+          name: 'Group 1',
+          grants: [1],
+          isPublic,
+          [field]: [collaboratorId],
+          ...extra,
+        });
+
+        it('is rejected without access to the submitted grants', async () => {
+          mockUsers({ [userId]: [permission(1)], [collaboratorId]: [permission(2)] });
+          await createGroup({ body: body() }, res);
+          expect(res.status).toHaveBeenCalledWith(httpCodes.ACCEPTED);
+          expect(statusJson).toHaveBeenCalledWith(expect.objectContaining({ error }));
+          expect(createNewGroup).not.toHaveBeenCalled();
+        });
+
+        it('is rejected without access to every region the creator can access', async () => {
+          // The creator can also access region 2, which the collaborator cannot
+          mockUsers({
+            [userId]: [permission(1), permission(2)],
+            [collaboratorId]: [permission(1)],
+          });
+          potentialRecipientGrants.mockResolvedValue([
+            { grantId: 1, regionId: 1 },
+            { grantId: 2, regionId: 2 },
+          ]);
+          await createGroup({ body: body() }, res);
+          expect(res.status).toHaveBeenCalledWith(httpCodes.ACCEPTED);
+          expect(statusJson).toHaveBeenCalledWith(expect.objectContaining({ error }));
+          expect(createNewGroup).not.toHaveBeenCalled();
+        });
+
+        it('is accepted with access to every region the creator can access', async () => {
+          mockUsers({ [userId]: [permission(1)], [collaboratorId]: [permission(1)] });
+          createNewGroup.mockResolvedValue({ id: 1, name: 'Group 1' });
+          await createGroup({ body: body() }, res);
+          expect(createNewGroup).toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe('updateGroup', () => {
+      const ownedGroup = (grants) => ({
+        id: 1,
+        name: 'Group 1',
+        isPublic: false,
+        grants,
+        groupCollaborators: [
+          { user: { id: userId }, collaboratorType: { name: GROUP_COLLABORATORS.CREATOR } },
+        ],
+      });
+
+      it('locks the group before reading it', async () => {
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        editGroup.mockResolvedValue({ id: 1, name: 'Group 1' });
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [1] } }, res);
+        expect(lockGroup).toHaveBeenCalledWith(1);
+        expect(lockGroup.mock.invocationCallOrder[0]).toBeLessThan(
+          group.mock.invocationCallOrder[0]
+        );
+      });
+
+      it('rejects newly added grants outside the user regions without editing', async () => {
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [1, 2] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(editGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects newly added grants in a region where the user has no report scope', async () => {
+        mockUsers({ [userId]: [permission(1), permission(2, SCOPES.POC_TRAINING_REPORTS)] });
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [1, 2] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(editGroup).not.toHaveBeenCalled();
+      });
+
+      it('rejects newly added grant ids that do not exist', async () => {
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [1, 999] } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+        expect(editGroup).not.toHaveBeenCalled();
+      });
+
+      it.each(malformedGrantIds)('rejects malformed grant ids: %s', async (_label, grants) => {
+        group.mockResolvedValue(ownedGroup([allGrants[0]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants } }, res);
+        expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+        expect(editGroup).not.toHaveBeenCalled();
+      });
+
+      it('only authorizes grants that are newly added to the group', async () => {
+        const groupResponse = { id: 1, name: 'Group 1' };
+        editGroup.mockResolvedValue(groupResponse);
+        // grant 2 is already on the group, grant 3 is being added
+        group.mockResolvedValue(ownedGroup([allGrants[1]]));
+        await updateGroup({ body: { id: 1, name: 'Group 1', grants: [2, 3] } }, res);
+        expect(editGroup).toHaveBeenCalledWith(1, expect.objectContaining({ grants: [2, 3] }));
+        expect(res.json).toHaveBeenCalledWith(groupResponse);
+        // Authorization and the collaborator checks share one grant query
+        expect(Grant.findAll).toHaveBeenCalledTimes(1);
+      });
+
+      it('checks co-owners against active grants only', async () => {
+        const coOwnerId = 2;
+        const groupResponse = { id: 1, name: 'Group 1' };
+        editGroup.mockResolvedValue(groupResponse);
+        // Inactive grant 5 is in region 2, which the co-owner cannot access. It is already on the
+        // group, so the editor does not need access to it, and it is left out of the co-owner
+        // check, so the co-owner only needs access to active grant 1
+        mockUsers({ [userId]: [permission(1)], [coOwnerId]: [permission(1)] });
+        group.mockResolvedValue(ownedGroup([allGrants[0], allGrants[4]]));
+        await updateGroup(
+          { body: { id: 1, name: 'Group 1', grants: [1, 5], coOwners: [coOwnerId] } },
+          res
+        );
+        expect(statusJson).not.toHaveBeenCalled();
+        expect(editGroup).toHaveBeenCalledWith(1, expect.objectContaining({ grants: [1, 5] }));
+        expect(res.json).toHaveBeenCalledWith(groupResponse);
+      });
+    });
+  });
+
   describe('deleteGroup', () => {
     let req;
     let res;
@@ -674,6 +841,13 @@ describe('Groups Handlers', () => {
       destroyGroup.mockReturnValue(groupResponse);
       await deleteGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
+    });
+
+    it('locks the group before reading it', async () => {
+      group.mockReturnValue(null);
+      await deleteGroup(req, res);
+      expect(lockGroup).toHaveBeenCalledWith(1);
+      expect(lockGroup.mock.invocationCallOrder[0]).toBeLessThan(group.mock.invocationCallOrder[0]);
     });
 
     it('should return 200 if the group no longer exists', async () => {

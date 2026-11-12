@@ -606,6 +606,29 @@ function run_task {
     fi
 }
 
+# Print the app's task list, retrying when cf cannot list it. Returns non-zero after the last
+# failed attempt so callers never read an API error as "no active tasks". Callers run this
+# under `if`/`||`/`!`, where errexit is off, so the status must be checked explicitly
+function list_tasks() {
+    local app_name=$1
+    local attempts=${2:-3}
+    local attempt output
+
+    for (( attempt = 1; attempt <= attempts; attempt++ )); do
+        if output=$(cf tasks "$app_name" 2>&1); then
+            echo "$output"
+            return 0
+        fi
+        log "WARN" "Failed to list tasks for '$app_name' (attempt $attempt of $attempts): $output"
+        if (( attempt < attempts )); then
+            sleep 10
+        fi
+    done
+
+    log "ERROR" "Could not list tasks for '$app_name'."
+    return 1
+}
+
 # Function to monitor task
 function monitor_task {
     local app_name="tta-automation"
@@ -614,16 +637,21 @@ function monitor_task {
 
     validate_parameters "$task_name"
     local start_time
-    local task_id
+    local task_id=""
     local task_state="PENDING"
     start_time=$(date +%s)
     log "INFO" "Monitoring task status. Waiting for task to complete..."
     while true; do
-        local task_info
-        task_info=$(cf tasks "$app_name" | grep "$task_name" | head -n 1)
-        task_id=$(echo "$task_info" | awk '{print $1}')
-        task_state=$(echo "$task_info" | awk '{print $3}')
-        log "INFO" "Task $task_id is currently $task_state."
+        local tasks task_info
+        # On a failed listing keep the last known task ID, so a timeout can still terminate it
+        if tasks=$(list_tasks "$app_name"); then
+            task_info=$(awk -v name="$task_name" '$2 == name {print; exit}' <<< "$tasks")
+            task_id=$(awk '{print $1}' <<< "$task_info")
+            task_state=$(awk '{print $3}' <<< "$task_info")
+        else
+            task_state="UNKNOWN"
+        fi
+        log "INFO" "Task ${task_id:-?} is currently $task_state."
         if [[ "$task_state" == "SUCCEEDED" ]]; then
             log "INFO" "Task completed successfully."
             return 0
@@ -635,10 +663,91 @@ function monitor_task {
         currentTime=$(date +%s)
         if (( currentTime - start_time >= timeout )); then
             log "ERROR" "Timeout reached while monitoring task $task_id."
+            # The task keeps running in cloud.gov unless it is stopped, and could keep writing to the
+            # database after this job has failed. Skip when the task was never listed; the caller
+            # still has to run stop_app, so nothing here may exit the script
+            if [[ -n "$task_id" ]]; then
+                terminate_task_and_wait "$task_id" || true
+            fi
             return 1
         fi
         sleep 10
     done
+}
+
+# Terminate a task by its exact ID and wait until it is no longer active
+function terminate_task_and_wait() {
+    local app_name="tta-automation"
+    local task_id=$1
+    local timeout=${2:-300}  # Default timeout is 300 seconds (5 minutes)
+
+    # Return rather than exit (validate_parameters exits), so callers can still clean up
+    if [[ -z "$task_id" ]]; then
+        log "ERROR" "No task ID given to terminate."
+        return 1
+    fi
+
+    log "INFO" "Terminating task $task_id..."
+    # Ignore errors: the task may have finished since it was listed
+    cf terminate-task "$app_name" "$task_id" || true
+
+    local start_time
+    start_time=$(date +%s)
+    local current_time
+    local task_state
+    local tasks
+    while true; do
+        # A failed listing says nothing about the task, so keep waiting rather than report it stopped
+        if tasks=$(list_tasks "$app_name"); then
+            task_state=$(awk -v id="$task_id" '$1 == id {print $3}' <<< "$tasks")
+            if [[ "$task_state" != "PENDING" && "$task_state" != "RUNNING" && "$task_state" != "CANCELING" ]]; then
+                log "INFO" "Task $task_id is no longer active (${task_state:-not listed})."
+                return 0
+            fi
+        else
+            task_state="UNKNOWN"
+        fi
+
+        current_time=$(date +%s)
+        if (( current_time - start_time >= timeout )); then
+            log "ERROR" "Timeout reached while waiting for task $task_id to terminate."
+            return 1
+        fi
+
+        log "INFO" "Task $task_id is $task_state. Waiting for it to terminate..."
+        sleep 10
+    done
+}
+
+# Terminate active tasks whose names match one of the regexes in a JSON array, such as a task
+# left running after its CircleCI job was cancelled. CANCELING counts as active: such a task can
+# still reconnect to the database until it has stopped
+function terminate_active_tasks_matching() {
+    local app_name="tta-automation"
+    local patterns_json=$1
+    local timeout=$2
+
+    validate_json "$patterns_json"
+
+    local tasks
+    if ! tasks=$(list_tasks "$app_name"); then
+        log "ERROR" "Cannot tell whether a task that must be stopped is active."
+        return 1
+    fi
+
+    local active_tasks
+    active_tasks=$(awk '/^[0-9]+/ && ($3 == "RUNNING" || $3 == "PENDING" || $3 == "CANCELING") {print $1, $2}' <<< "$tasks")
+
+    local task_id task_name
+    while read -r task_id task_name; do
+        if [[ -z "$task_id" ]]; then
+            continue
+        fi
+        if jq -e --arg name "$task_name" 'any(.[]; . as $pattern | $name | test($pattern))' <<< "$patterns_json" > /dev/null; then
+            log "INFO" "Active task $task_id:$task_name must be stopped first."
+            terminate_task_and_wait "$task_id" "$timeout" || return 1
+        fi
+    done <<< "$active_tasks"
 }
 
 # Check for active tasks in the application
@@ -651,9 +760,15 @@ function check_active_tasks() {
     start_time=$(date +%s)
     local current_time
     local active_tasks
+    local tasks
 
     while true; do
-        active_tasks=$(cf tasks "$app_name" | grep -E "RUNNING|PENDING")
+        # A failed listing counts as still active, so cleanup never runs beside a live task
+        if tasks=$(list_tasks "$app_name"); then
+            active_tasks=$(awk '/^[0-9]+/ && ($3 == "RUNNING" || $3 == "PENDING" || $3 == "CANCELING")' <<< "$tasks")
+        else
+            active_tasks="unknown"
+        fi
 
         if [ -z "$active_tasks" ]; then
             log "INFO" "No active tasks found in application '$app_name'."
@@ -709,7 +824,7 @@ main() {
   validate_json "$json_input"
 
   # Parse JSON and assign to variables
-  local directory config task_name command args timeout_active_tasks timeout_ensure_app_stopped
+  local directory config task_name command args timeout_active_tasks timeout_ensure_app_stopped cancel_task_patterns
   directory=$(echo "$json_input" | jq -r '.directory // "./automation"')
   config=$(echo "$json_input" | jq -r '.config // "error"')
   task_name=$(echo "$json_input" | jq -r '.task_name // "default-task-name"')
@@ -717,9 +832,14 @@ main() {
   args=$(echo "$json_input" | jq -r '.args // "default-arg1 default-arg2"')
   timeout_active_tasks=$(echo "$json_input" | jq -r '.timeout_active_tasks // 300')
   timeout_ensure_app_stopped=$(echo "$json_input" | jq -r '.timeout_ensure_app_stopped // 300')
+  cancel_task_patterns=$(echo "$json_input" | jq -c '.cancel_task_patterns // []')
 
   # Check for active tasks and ensure the app is stopped before pushing
   if check_app_exists; then
+      if ! terminate_active_tasks_matching "$cancel_task_patterns" "$timeout_active_tasks"; then
+          log "ERROR" "Cannot proceed because a task that must be stopped is still active."
+          exit 1
+      fi
       if ! check_active_tasks "$timeout_active_tasks"; then
           log "ERROR" "Cannot proceed with pushing the app due to active tasks."
           exit 1

@@ -122,6 +122,22 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     ORDER BY mf."findingId", mf.id DESC
     ;
 
+    -- finding_identity: shared citation-text / initial-review-name lookup for
+    -- finding-based alert messages below. Citations.mfid is unique, so this
+    -- is a plain lookup, not a dedupe.
+    DROP TABLE IF EXISTS pg_temp.finding_identity;
+    CREATE TEMP TABLE finding_identity
+    ON COMMIT DROP
+    AS
+    SELECT
+      c.mfid id,
+      c.citation,
+      dr.review_name
+    FROM "Citations" c
+    LEFT JOIN "DeliveredReviews" dr
+      ON dr.review_uuid = c.initial_review_uuid
+    ;
+
     -- previously_flagged: (entity_type, entity_id, observation_name, category)
     -- combinations already true as of the previous cycle's run - the "since
     -- previous cycle" alert window (see docs/monitoring-data-validation.md,
@@ -494,560 +510,989 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
 
     -- finding_category_missing. IS NOT DISTINCT FROM, not =, in the
     -- previously_flagged join: this check's category can be NULL.
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'category'
+        AND vr.category IS NULL
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        fi.citation,
+        fi.review_name
+      FROM flagged f
+      LEFT JOIN finding_identity fi
+        ON fi.id = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_category_missing',
-      COUNT(*) || ' finding(s) on delivered reviews have no category',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review') || ' has no category.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'category',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'category'
-      AND vr.category IS NULL
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- review_delivery_report_lag
+    WITH flagged AS (
+      SELECT vr.entity_id, vr.scalar, vr.context->>'learned_date' learned_date
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'delivery_report_lag_days'
+        AND vr.scalar > 7
+        AND (vr.context->>'learned_date')::date >= (CURRENT_DATE - INTERVAL '3 days')
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.scalar max_lag_days,
+        f.learned_date,
+        dr.review_name,
+        dr.report_delivery_date
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.scalar DESC, f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'review_delivery_report_lag',
-      COUNT(*) || ' review(s) reported their delivery date more than 7 days late',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review') || ' reported a delivery date of '
+        || COALESCE(s.report_delivery_date::text, 'an invalid date')
+        || ' but that date did not reach TTA Hub until ' || s.learned_date
+        || ', ' || s.max_lag_days || ' days later.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'delivery_report_lag_days',
         'threshold_days', 7,
-        'count', COUNT(*),
-        'max_lag_days', MAX(vr.scalar),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.scalar DESC))[1:20]
+        'count', s.cnt,
+        'max_lag_days', s.max_lag_days,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY scalar DESC))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'delivery_report_lag_days'
-      AND vr.scalar > 7
-      AND (vr.context->>'learned_date')::date >= (CURRENT_DATE - INTERVAL '3 days')
-    GROUP BY cur.run_id
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
-    -- history_determination_unrecognized
+    -- history_determination_unrecognized. review_uuid comes straight from the
+    -- observation's own context (set in monitoringObservations.ts) - the
+    -- review the unrecognized determination actually came from.
+    WITH flagged AS (
+      SELECT vr.entity_id, vr.category determination, vr.context->>'review_uuid' review_uuid
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'history_determination_recognized'
+        AND vr.category <> 'consistent'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        f.determination,
+        c.citation,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "Citations" c
+        ON c.mfid = f.entity_id
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.review_uuid = f.review_uuid
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'history_determination_unrecognized',
-      COUNT(*) || ' finding(s) carry an unrecognized determination value in their history',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review') || ' has an unrecognized determination value ('
+        || COALESCE(s.determination, 'unknown') || ') in its linking history record.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'history_determination_recognized',
-        'count', COUNT(*),
-        'distinct_values', (ARRAY_AGG(DISTINCT vr.category))[1:20],
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'distinct_values', (SELECT (ARRAY_AGG(DISTINCT determination))[1:20] FROM flagged),
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'history_determination_recognized'
-      AND vr.category <> 'consistent'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- review_type_shape_violation
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'review_type_shape'
+        AND vr.category <> 'consistent'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'review_type_shape_violation',
-      COUNT(*) || ' review(s) mix CLASS and finding-based review shapes unexpectedly',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' mixes CLASS and finding-based review shapes unexpectedly.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'review_type_shape',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'review_type_shape'
-      AND vr.category <> 'consistent'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- review_status_vs_delivery_mismatch
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'review_status_vs_delivery'
+        AND vr.category = 'delivered_not_complete'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'review_status_vs_delivery_mismatch',
-      COUNT(*) || ' review(s) have a reportDeliveryDate but a status other than Complete',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a reportDeliveryDate but a status other than Complete.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'review_status_vs_delivery',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'review_status_vs_delivery'
-      AND vr.category = 'delivered_not_complete'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- review_grantee_duplicated
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'review_grantee_duplicated'
+        AND vr.category = 'duplicated'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'review_grantee_duplicated',
-      COUNT(*) || ' review(s) have a duplicated (review, grant) grantee link',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a duplicated (review, grant) grantee link.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'review_grantee_duplicated',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'review_grantee_duplicated'
-      AND vr.category = 'duplicated'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- review_grantee_multi_grant
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'review_grantee_multi_grant'
+        AND vr.category = 'grantee_multi_grant'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'review_grantee_multi_grant',
-      COUNT(*) || ' review(s) have a grantee link whose granteeId resolves to more than one grant',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a grantee link whose granteeId resolves to more than one grant.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'review_grantee_multi_grant',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'review_grantee_multi_grant'
-      AND vr.category = 'grantee_multi_grant'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- finding_grant_not_on_own_review
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'finding_grant_on_own_review'
+        AND vr.category = 'grant_not_on_own_review'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        fi.citation,
+        fi.review_name
+      FROM flagged f
+      LEFT JOIN finding_identity fi
+        ON fi.id = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_grant_not_on_own_review',
-      COUNT(*) || ' finding(s) are attached to a grant not on any of their own reviews',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review') || ' is attached to a grant not on any of its own reviews.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'finding_grant_on_own_review',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'finding_grant_on_own_review'
-      AND vr.category = 'grant_not_on_own_review'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
-    -- finding_review_history_duplicated
+    -- finding_review_history_duplicated. review_uuid and the disagreement
+    -- flags come straight from the observation's own context.
+    WITH flagged AS (
+      SELECT
+        vr.entity_id,
+        vr.context->>'review_uuid' review_uuid,
+        (vr.context->>'status_disagrees')::boolean status_disagrees,
+        (vr.context->>'determination_disagrees')::boolean determination_disagrees
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'finding_review_history_duplicated'
+        AND vr.category = 'duplicated_disagreeing'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        f.status_disagrees,
+        f.determination_disagrees,
+        c.citation,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "Citations" c
+        ON c.mfid = f.entity_id
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.review_uuid = f.review_uuid
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_review_history_duplicated',
-      COUNT(*) || ' finding(s) have disagreeing duplicate history rows for the same review',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review')
+        || ' has duplicate history rows for that review that disagree on '
+        || CASE
+          WHEN s.status_disagrees AND s.determination_disagrees THEN 'status and determination'
+          WHEN s.status_disagrees THEN 'status'
+          WHEN s.determination_disagrees THEN 'determination'
+          ELSE 'an unknown field'
+        END || '.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'finding_review_history_duplicated',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'finding_review_history_duplicated'
-      AND vr.category = 'duplicated_disagreeing'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
-    -- finding_standard_missing
+    -- finding_standard_missing. No citation text here - a finding with no
+    -- live standard has none to show.
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'finding_standard_missing'
+        AND vr.category = 'no_live_standard'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        fi.review_name
+      FROM flagged f
+      LEFT JOIN finding_identity fi
+        ON fi.id = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_standard_missing',
-      COUNT(*) || ' finding(s) have no live standard at all',
+      'Finding ' || s.mfid || ' on ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' has no associated citation text.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'finding_standard_missing',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'finding_standard_missing'
-      AND vr.category = 'no_live_standard'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- history_status_unresolvable / finding_status_unresolvable /
     -- review_status_unresolvable
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'history_status_resolvable'
+        AND vr.category = 'unresolvable'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        fi.citation,
+        fi.review_name
+      FROM flagged f
+      LEFT JOIN finding_identity fi
+        ON fi.id = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'history_status_unresolvable',
-      COUNT(*) || ' finding(s) have a history statusId that does not resolve',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review') || ' has a history statusId that does not resolve.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'history_status_resolvable',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'history_status_resolvable'
-      AND vr.category = 'unresolvable'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'finding_status_resolvable'
+        AND vr.category = 'unresolvable'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        fi.citation,
+        fi.review_name
+      FROM flagged f
+      LEFT JOIN finding_identity fi
+        ON fi.id = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_status_unresolvable',
-      COUNT(*) || ' finding(s) have a statusId that does not resolve',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review') || ' has a statusId that does not resolve.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'finding_status_resolvable',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'finding_status_resolvable'
-      AND vr.category = 'unresolvable'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'review_status_resolvable'
+        AND vr.category = 'unresolvable'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'review_status_unresolvable',
-      COUNT(*) || ' review(s) have a statusId that does not resolve',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a statusId that does not resolve.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'review_status_resolvable',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'review_status_resolvable'
-      AND vr.category = 'unresolvable'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
-    -- statuses_table_integrity_violated
+    -- statuses_table_integrity_violated. Entity here is a *Statuses table row
+    -- itself, not a Finding/Review (see docs/monitoring-validation-checks.md),
+    -- so there's no name to show - entity_type + the row's own id locates it.
+    WITH flagged AS (
+      SELECT vr.entity_type, vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'statuses_table_integrity'
+        AND vr.category = 'duplicate_live_status'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        entity_type,
+        entity_id
+      FROM flagged
+      ORDER BY entity_type, entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'statuses_table_integrity_violated',
-      COUNT(*) || ' status table row(s) share a statusId with another live row',
+      s.entity_type || ' row ' || s.entity_id || ' shares a statusId with another live row.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'observation_name', 'statuses_table_integrity',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(jsonb_build_object('entity_type', vr.entity_type, 'entity_id', vr.entity_id)))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(jsonb_build_object('entity_type', entity_type, 'entity_id', entity_id)))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'statuses_table_integrity'
-      AND vr.category = 'duplicate_live_status'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- review_grantee_orphaned_grant
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'review_grantee_orphaned_grant'
+        AND vr.category = 'orphaned_grant_number'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'review_grantee_orphaned_grant',
-      COUNT(*) || ' review(s) have a grantee link with no matching live grant',
+      'Review ' || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a grantee link with no matching undeleted grant.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringReviews',
         'observation_name', 'review_grantee_orphaned_grant',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'review_grantee_orphaned_grant'
-      AND vr.category = 'orphaned_grant_number'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- finding_standard_citation_text_disagrees
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'standard_consistency'
+        AND vr.category = 'citation_text_disagrees'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        fi.citation,
+        fi.review_name
+      FROM flagged f
+      LEFT JOIN finding_identity fi
+        ON fi.id = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_standard_citation_text_disagrees',
-      COUNT(*) || ' finding(s) have disagreeing citation text across their standards',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review') || ' has disagreeing citation text across its standards.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'standard_consistency',
         'category', 'citation_text_disagrees',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'standard_consistency'
-      AND vr.category = 'citation_text_disagrees'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
     -- finding_standard_category_disagrees
+    WITH flagged AS (
+      SELECT vr.entity_id
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      LEFT JOIN previously_flagged pf
+        ON pf.entity_type = vr.entity_type
+        AND pf.entity_id = vr.entity_id
+        AND pf.observation_name = vr.observation_name
+        AND pf.category IS NOT DISTINCT FROM vr.category
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'standard_consistency'
+        AND vr.category = 'category_disagrees_no_source'
+        AND pf.entity_id IS NULL
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        fi.citation,
+        fi.review_name
+      FROM flagged f
+      LEFT JOIN finding_identity fi
+        ON fi.id = f.entity_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'finding_standard_category_disagrees',
-      COUNT(*) || ' finding(s) with no source have disagreeing category guidance across their standards',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review')
+        || ' has no source and has disagreeing category guidance across its standards.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'standard_consistency',
         'category', 'category_disagrees_no_source',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    LEFT JOIN previously_flagged pf
-      ON pf.entity_type = vr.entity_type
-      AND pf.entity_id = vr.entity_id
-      AND pf.observation_name = vr.observation_name
-      AND pf.category IS NOT DISTINCT FROM vr.category
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'standard_consistency'
-      AND vr.category = 'category_disagrees_no_source'
-      AND pf.entity_id IS NULL
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
-    -- history_vs_finding_status_disagrees
+    -- history_vs_finding_status_disagrees. review_id/finding_status come
+    -- straight from the observation's own context.
+    WITH flagged AS (
+      SELECT
+        vr.entity_id,
+        (vr.context->>'review_id')::int review_id,
+        vr.context->>'finding_status' finding_status
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'history_vs_finding_status'
+        AND vr.category = 'history_corrected_finding_disagrees'
+        AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        f.finding_status,
+        c.citation,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "Citations" c
+        ON c.mfid = f.entity_id
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.review_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'history_vs_finding_status_disagrees',
-      COUNT(*) || ' finding(s) have a Corrected history status but a finding-level status that disagrees',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a Corrected history status but a finding-level status of '
+        || COALESCE(s.finding_status, 'unknown') || '.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.team_notification,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'history_vs_finding_status',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'history_vs_finding_status'
-      AND vr.category = 'history_corrected_finding_disagrees'
-      AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
-    GROUP BY cur.run_id, cur.team_notification
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
 
-    -- history_vs_outcome_disagrees
+    -- history_vs_outcome_disagrees. review_id/history_status come straight
+    -- from the observation's own context.
+    WITH flagged AS (
+      SELECT
+        vr.entity_id,
+        (vr.context->>'review_id')::int review_id,
+        vr.context->>'history_status' history_status
+      FROM "ValidationRecords" vr
+      CROSS JOIN validation_run cur
+      WHERE vr.run_id = cur.run_id
+        AND vr.observation_name = 'history_vs_outcome'
+        AND vr.category = 'open_status_on_compliant_review'
+        AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
+    ),
+    sample AS (
+      SELECT
+        (SELECT COUNT(*) FROM flagged) cnt,
+        f.entity_id mfid,
+        f.history_status,
+        c.citation,
+        dr.review_name
+      FROM flagged f
+      LEFT JOIN "Citations" c
+        ON c.mfid = f.entity_id
+      LEFT JOIN "DeliveredReviews" dr
+        ON dr.mrid = f.review_id
+      ORDER BY f.entity_id
+      LIMIT 1
+    )
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'history_vs_outcome_disagrees',
-      COUNT(*) || ' finding(s) have an open history status on a Compliant-outcome review',
+      'Citation ' || COALESCE(s.citation, 'unknown') || '(' || s.mfid || ') on '
+        || COALESCE(s.review_name, 'an unnamed review')
+        || ' has a history status of ' || COALESCE(s.history_status, 'unknown')
+        || ' on a Compliant-outcome review.'
+        || CASE WHEN s.cnt > 1
+          THEN ' There are ' || s.cnt || ' examples of this alert condition.'
+          ELSE ''
+        END,
       cur.alert,
       jsonb_build_object(
         'entity_type', 'MonitoringFindings',
         'observation_name', 'history_vs_outcome',
-        'count', COUNT(*),
-        'sample_entity_ids', (ARRAY_AGG(vr.entity_id ORDER BY vr.entity_id))[1:20]
+        'count', s.cnt,
+        'sample_entity_ids', (SELECT (ARRAY_AGG(entity_id ORDER BY entity_id))[1:20] FROM flagged)
       ),
       NOW(),
       NOW()
-    FROM "ValidationRecords" vr
+    FROM sample s
     CROSS JOIN validation_run cur
-    WHERE vr.run_id = cur.run_id
-      AND vr.observation_name = 'history_vs_outcome'
-      AND vr.category = 'open_status_on_compliant_review'
-      AND (vr.context->>'learned_at')::timestamptz >= (NOW() - INTERVAL '7 days')
-    GROUP BY cur.run_id, cur.alert
-    HAVING COUNT(*) > 0
+    WHERE s.cnt > 0
     ;
     `,
     { raw: true, transaction }
