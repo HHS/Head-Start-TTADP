@@ -9,11 +9,13 @@ import db from '../models';
 import {
   findMonitoringNotificationUsersByRegion,
   findNewlyDeliveredReviews,
+  snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
 import {
   ACTIONABLE_NOTIFICATIONS_FLAG,
   createMonitoringDataReceivedNotifications,
   notifyNewMonitoringDeliveries,
+  notifyRecentMonitoringDeliveries,
   recordMonitoringDeliveries,
   usersWantingImmediateMonitoringEmail,
 } from './monitoringDeliveryNotifications';
@@ -24,6 +26,7 @@ jest.mock('./monitoringDeliveries', () => ({
   ACTIONABLE_NOTIFICATIONS_FLAG: 'actionable_notifications',
   findNewlyDeliveredReviews: jest.fn(),
   findMonitoringNotificationUsersByRegion: jest.fn(),
+  snapshotDeliveredReviewMrids: jest.fn(),
 }));
 
 jest.mock('./notifications', () => ({
@@ -233,6 +236,35 @@ describe('monitoringDeliveryNotifications', () => {
 
       expect(result).toEqual([user1]);
       expect(mockSetting).toHaveBeenCalledWith(user1.id, 'emailWhenMonitoringDetailsAdded');
+    });
+  });
+
+  describe('notifyRecentMonitoringDeliveries', () => {
+    it('treats reviews delivered yesterday or today as new', async () => {
+      const mockSnapshot = snapshotDeliveredReviewMrids as jest.MockedFunction<
+        typeof snapshotDeliveredReviewMrids
+      >;
+      mockSnapshot.mockResolvedValue(new Set([99]));
+      mockFindNew.mockResolvedValue([]);
+
+      const summary = await notifyRecentMonitoringDeliveries(new Date('2026-11-12T03:00:00Z'));
+
+      expect(mockSnapshot).toHaveBeenCalledWith('2026-11-11');
+      expect(mockFindNew).toHaveBeenCalledWith(new Set([99]));
+      expect(summary).toEqual({ detected: 0, recorded: 0, inApp: 0, emails: 0 });
+    });
+
+    it('sends again for deliveries that were already recorded', async () => {
+      (snapshotDeliveredReviewMrids as jest.Mock).mockResolvedValue(new Set());
+      mockFindNew.mockResolvedValue([deliveryA]);
+      mockFindUsers.mockResolvedValue(new Map([[1, [user1]]]));
+      mockSetting.mockResolvedValue({ value: IMMEDIATELY } as never);
+      findOrCreateSpy.mockResolvedValue([{}, false]);
+
+      const summary = await notifyRecentMonitoringDeliveries();
+
+      expect(mockEmailTrigger).toHaveBeenCalledWith(deliveryA, [user1]);
+      expect(summary).toEqual({ detected: 1, recorded: 0, inApp: 1, emails: 1 });
     });
   });
 });

@@ -4,12 +4,11 @@ import { NavLink } from 'react-router-dom';
 import BuildInfo from '../../components/BuildInfo';
 import CourseEdit from './CourseEdit';
 import Courses from './Courses';
-import Digests from './Digests';
 import Diag from './diag';
+import EmailTesting from './EmailTesting';
 import FeedPreview from './FeedPreview';
 import Flags from './Flags';
 import Goals from './Goals';
-import MonitoringEmails from './MonitoringEmails';
 import NationalCenters from './NationalCenters';
 import Redis from './Redis';
 import SiteAlerts from './SiteAlerts';
@@ -29,15 +28,12 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
           Diag
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/digests">
-          Email digests
-        </NavLink>
         <NavLink
           activeClassName="usa-button--active"
           className="usa-button"
-          to="/admin/monitoring-emails"
+          to="/admin/email-testing"
         >
-          Monitoring emails
+          Email testing
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/goals">
           Goals
@@ -90,8 +86,7 @@ function Admin() {
         <Route path="/admin/users/:userId?" render={({ match }) => <User match={match} />} />
         <Route path="/admin/ss/" render={({ match }) => <SS match={match} />} />
         <Route path="/admin/diag/" render={({ match }) => <Diag match={match} />} />
-        <Route path="/admin/digests/" render={() => <Digests />} />
-        <Route path="/admin/monitoring-emails/" render={() => <MonitoringEmails />} />
+        <Route path="/admin/email-testing/" render={() => <EmailTesting />} />
         <Route path="/admin/flags/" render={({ match }) => <Flags match={match} />} />
         <Route path="/admin/site-alerts/" render={({ match }) => <SiteAlerts match={match} />} />
         <Route path="/admin/redis/" render={({ match }) => <Redis match={match} />} />

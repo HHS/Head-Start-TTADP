@@ -4,11 +4,12 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import join from 'url-join';
-import Digests from '../Digests';
+import EmailTesting from '../EmailTesting';
 
-const digestUrl = (freq) => join('/', 'api', 'admin', 'digests', freq);
+const digestUrl = (freq) => join('/', 'api', 'admin', 'email-testing', 'digests', freq);
+const monitoringUrl = join('/', 'api', 'admin', 'email-testing', 'monitoring-deliveries');
 
-describe('Digests', () => {
+describe('EmailTesting', () => {
   const oldWindowConfirm = window.confirm;
 
   beforeEach(() => {
@@ -23,7 +24,7 @@ describe('Digests', () => {
 
   it('runs the chosen digest and shows how many were queued', async () => {
     fetchMock.post(digestUrl('weekly'), { frequency: 'WEEKLY', queued: 4 });
-    render(<Digests />);
+    render(<EmailTesting />);
 
     // the live region exists before the run so the result is announced
     const statusRegion = screen.getByRole('status');
@@ -36,34 +37,51 @@ describe('Digests', () => {
     expect(fetchMock.called(digestUrl('weekly'))).toBe(true);
   });
 
+  it('runs the monitoring deliveries and shows what was sent', async () => {
+    fetchMock.post(monitoringUrl, { detected: 2, recorded: 0, inApp: 3, emails: 1 });
+    render(<EmailTesting />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Run monitoring deliveries' }));
+
+    expect(
+      await screen.findByText(
+        'Found 2 monitoring deliveries. Created 3 in-app notifications and queued 1 email.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('does nothing if the confirm is cancelled', async () => {
     window.confirm = jest.fn(() => false);
     fetchMock.post(digestUrl('daily'), { frequency: 'DAILY', queued: 1 });
-    render(<Digests />);
+    fetchMock.post(monitoringUrl, {});
+    render(<EmailTesting />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Run daily digests' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Run monitoring deliveries' }));
 
-    expect(fetchMock.called(digestUrl('daily'))).toBe(false);
+    expect(fetchMock.called()).toBe(false);
   });
 
-  it('shows an error when the run fails', async () => {
+  it('shows an error when a run fails', async () => {
     fetchMock.post(digestUrl('monthly'), 500);
-    render(<Digests />);
+    fetchMock.post(monitoringUrl, 500);
+    render(<EmailTesting />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Run monthly digests' }));
-
     expect(await screen.findByText('Error running monthly digests.')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Error running monthly digests.');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Run monitoring deliveries' }));
+    expect(await screen.findByText('Error running monitoring deliveries.')).toBeInTheDocument();
   });
 
   it('explains when the run is blocked in production', async () => {
-    fetchMock.post(digestUrl('daily'), 403);
-    render(<Digests />);
+    fetchMock.post(monitoringUrl, 403);
+    render(<EmailTesting />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Run daily digests' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Run monitoring deliveries' }));
 
     expect(
-      await screen.findByText('Manually running digests is not available in production.')
+      await screen.findByText('Email testing is not available in production.')
     ).toBeInTheDocument();
   });
 });

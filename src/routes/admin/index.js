@@ -4,7 +4,7 @@ import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagno
 import transactionWrapper from '../transactionWrapper';
 import buildInfo from './buildInfo';
 import courseRouter from './course';
-import digestsRouter from './digests';
+import emailTestingRouter from './emailTesting';
 import goalRouter from './goal';
 import groupRouter from './group';
 import getRequestErrors, { getRequestError } from './handlers';
@@ -14,7 +14,6 @@ import {
   getMonitoringDiagnostic,
   getMonitoringDiagnostics,
 } from './monitoringHandlers';
-import monitoringNotificationsRouter from './monitoringNotifications';
 import nationalCenterRouter from './nationalCenter';
 import recipientRouter from './recipient';
 import redisRouter from './redis';
@@ -41,8 +40,7 @@ router.use('/goals', goalRouter);
 router.use('/roles', roleRouter);
 router.use('/alerts', siteAlertRouter);
 router.use('/redis', redisRouter);
-router.use('/digests', digestsRouter);
-router.use('/monitoring-notifications', monitoringNotificationsRouter);
+router.use('/email-testing', emailTestingRouter);
 router.use('/national-center', nationalCenterRouter);
 router.use('/training-reports', trainingReportRouter);
 router.use('/legacy-reports', legacyReportRouter);

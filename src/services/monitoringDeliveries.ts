@@ -41,12 +41,16 @@ export type MonitoringNotificationUser = {
  * Take this snapshot before `updateMonitoringFactTables()` and pass it to
  * `findNewlyDeliveredReviews()` afterward. Soft-deleted rows are included so a review that is
  * removed and later restored by the refresh is not treated as a new delivery.
+ * @param {string} [deliveredBefore] `YYYY-MM-DD`. When given, only reviews delivered before
+ * this date are included, so reviews delivered on or after it look new.
  * @returns {Promise<Set<number>>} The mrids already delivered.
  */
-export async function snapshotDeliveredReviewMrids(): Promise<Set<number>> {
+export async function snapshotDeliveredReviewMrids(deliveredBefore?: string): Promise<Set<number>> {
   const rows = await DeliveredReview.findAll({
     attributes: ['mrid'],
-    where: { report_delivery_date: { [Op.ne]: null } },
+    where: {
+      report_delivery_date: deliveredBefore ? { [Op.lt]: deliveredBefore } : { [Op.ne]: null },
+    },
     paranoid: false,
     raw: true,
   });

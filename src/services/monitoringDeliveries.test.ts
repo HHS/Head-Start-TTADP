@@ -66,6 +66,18 @@ describe('monitoringDeliveries', () => {
         })
       );
     });
+
+    it('only includes reviews delivered before the given date', async () => {
+      const spy = mockDeliveredReviews([]);
+
+      await snapshotDeliveredReviewMrids('2026-11-11');
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { report_delivery_date: { [Op.lt]: '2026-11-11' } },
+        })
+      );
+    });
   });
 
   describe('findNewlyDeliveredReviews', () => {

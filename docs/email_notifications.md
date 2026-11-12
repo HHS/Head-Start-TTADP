@@ -567,17 +567,11 @@ To configure your local docker environment for testing emails:
 - Test via mailpit at `http://localhost:8025/`
 - You can modify the cron frequency in `src/lib/cron.js`
 
-### Sending the monitoring emails on demand (dev and staging only)
+### Running email jobs on demand (non-production only)
 
-Admins can use **Admin → Monitoring emails** (`/admin/monitoring-emails`, backed by `POST /api/admin/monitoring-notifications/test`). It emails the signed-in admin unless user IDs are entered, and lists each email it sent. The CLI below does the same from a cloud.gov task.
+Admins can use **Admin → Email testing** (`/admin/email-testing`) to run email jobs right away. Emails go to the users who would normally get them, based on their settings. Both endpoints return 403 in production (`isNonProductionEnvironment()`).
 
-`yarn cli:send-test-monitoring-notifications` sends the monitoring report emails (TTAHUB-6004 immediate, TTAHUB-6062 digest) straight to the users you name, without the queue and regardless of their settings, role or home region. It uses a real delivered review (the most recent one by default) and, for the digest, the user's real digest data when there is any, falling back to that review's recipients.
+- **Run daily/weekly/monthly digests** (`POST /api/admin/email-testing/digests/:frequency`) runs the digest cron for that frequency, including the monitoring digest.
+- **Run monitoring deliveries** (`POST /api/admin/email-testing/monitoring-deliveries`) runs the monitoring delivery notifications (in-app and immediate email) as if the daily refresh had just loaded every report delivered yesterday or today (`notifyRecentMonitoringDeliveries`). Unlike the nightly run, it does not skip reports that were already sent, so several people can test on the same day: immediate emails are resent each run, while existing in-app notifications are not duplicated. Deliveries are still recorded in `MonitoringReportDeliveries` so the daily digest includes them.
 
-Both refuse to run unless `TTA_SMART_HUB_URI` is a dev (`tta-smarthub-dev-*`) or staging cloud.gov host, or localhost outside cloud.gov, so it cannot send from production.
-
-```bash
-cf run-task tta-smarthub-staging --name monitoring-email-test \
-  --command "yarn cli:send-test-monitoring-notifications --userId 123 --type both --freq WEEKLY"
-```
-
-Options: `--userId` (required, repeatable), `--type immediate|digest|both` (default `both`), `--freq DAILY|WEEKLY|MONTHLY` (default `DAILY`), `--deliveredReviewId` (default: most recently delivered review). Locally, emails are only delivered when `SEND_NON_PRODUCTION_NOTIFICATIONS=true` (for example to mailpit, as above).
+Locally, emails are only delivered when `SEND_NON_PRODUCTION_NOTIFICATIONS=true` (for example to mailpit, as above).

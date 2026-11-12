@@ -9,6 +9,7 @@ import {
   findNewlyDeliveredReviews,
   type MonitoringNotificationUser,
   type NewMonitoringDelivery,
+  snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
 import { createNotification } from './notifications';
 import { userSettingOverridesById } from './userSettings';
@@ -103,9 +104,43 @@ export async function usersWantingImmediateMonitoringEmail(
 }
 
 /**
+ * Notifies TTAC/ECM/GSM users in each delivery's home region, in-app and by immediate email.
+ * Adds the counts to `summary`.
+ */
+async function sendMonitoringDeliveryNotifications(
+  deliveries: NewMonitoringDelivery[],
+  summary: MonitoringDeliveryNotificationSummary
+): Promise<void> {
+  if (!deliveries.length) {
+    return;
+  }
+
+  const usersByRegion = await findMonitoringNotificationUsersByRegion(
+    deliveries.map(({ regionId }) => regionId),
+    ACTIONABLE_NOTIFICATIONS_FLAG
+  );
+
+  // users are the same for every delivery in a region, so look up email settings once each
+  const emailUsersByRegion = new Map<number, MonitoringNotificationUser[]>();
+  for (const [regionId, users] of usersByRegion) {
+    emailUsersByRegion.set(regionId, await usersWantingImmediateMonitoringEmail(users));
+  }
+
+  for (const delivery of deliveries) {
+    const users = usersByRegion.get(delivery.regionId) ?? [];
+    summary.inApp += await createMonitoringDataReceivedNotifications(delivery, users);
+
+    const emailUsers = emailUsersByRegion.get(delivery.regionId) ?? [];
+    monitoringDetailsAddedNotification(delivery, emailUsers);
+    summary.emails += emailUsers.length;
+  }
+}
+
+/**
  * Notifies TTAC/ECM/GSM users in the home region of every monitoring report delivered by the
  * latest refresh, in-app and by immediate email. Run after `updateMonitoringFactTables()` has
- * committed, passing the snapshot taken before it started.
+ * committed, passing the snapshot taken before it started. Deliveries already recorded in
+ * MonitoringReportDeliveries are skipped, so a rerun does not notify twice.
  *
  * An empty snapshot means DeliveredReviews was empty before the refresh (a fresh or rebuilt
  * database), so every review would look new. In that case nothing is recorded or sent.
@@ -133,29 +168,43 @@ export async function notifyNewMonitoringDeliveries(
   summary.detected = deliveries.length;
   const recorded = await recordMonitoringDeliveries(deliveries);
   summary.recorded = recorded.length;
-
-  if (recorded.length) {
-    const usersByRegion = await findMonitoringNotificationUsersByRegion(
-      recorded.map(({ regionId }) => regionId),
-      ACTIONABLE_NOTIFICATIONS_FLAG
-    );
-
-    // users are the same for every delivery in a region, so look up email settings once each
-    const emailUsersByRegion = new Map<number, MonitoringNotificationUser[]>();
-    for (const [regionId, users] of usersByRegion) {
-      emailUsersByRegion.set(regionId, await usersWantingImmediateMonitoringEmail(users));
-    }
-
-    for (const delivery of recorded) {
-      const users = usersByRegion.get(delivery.regionId) ?? [];
-      summary.inApp += await createMonitoringDataReceivedNotifications(delivery, users);
-
-      const emailUsers = emailUsersByRegion.get(delivery.regionId) ?? [];
-      monitoringDetailsAddedNotification(delivery, emailUsers);
-      summary.emails += emailUsers.length;
-    }
-  }
+  await sendMonitoringDeliveryNotifications(recorded, summary);
 
   logger.info(`Monitoring delivery notifications: ${JSON.stringify(summary)}`);
+  return summary;
+}
+
+/**
+ * Sends the delivery notifications for every monitoring report delivered yesterday or today,
+ * as the daily refresh would. Unlike `notifyNewMonitoringDeliveries`, deliveries that were
+ * already notified are sent again, so several people can test on the same day. Immediate
+ * emails are resent; in-app notifications that already exist are not duplicated. Deliveries
+ * are still recorded so they appear in the monitoring digest. Used by the admin email testing
+ * page in non-production environments only.
+ * @param {Date} [now] Defaults to the current time.
+ * @returns {Promise<MonitoringDeliveryNotificationSummary>} Counts for logging.
+ */
+export async function notifyRecentMonitoringDeliveries(
+  now: Date = new Date()
+): Promise<MonitoringDeliveryNotificationSummary> {
+  const yesterday = new Date(now);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  // with a date cutoff an empty snapshot is fine: every review in it is recent, so none would
+  // be wrongly treated as new
+  const previouslyDeliveredMrids = await snapshotDeliveredReviewMrids(
+    yesterday.toISOString().slice(0, 10)
+  );
+
+  const deliveries = await findNewlyDeliveredReviews(previouslyDeliveredMrids);
+  const recorded = await recordMonitoringDeliveries(deliveries);
+  const summary: MonitoringDeliveryNotificationSummary = {
+    detected: deliveries.length,
+    recorded: recorded.length,
+    inApp: 0,
+    emails: 0,
+  };
+  await sendMonitoringDeliveryNotifications(deliveries, summary);
+
+  logger.info(`Recent monitoring delivery notifications: ${JSON.stringify(summary)}`);
   return summary;
 }

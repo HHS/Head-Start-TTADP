@@ -75,12 +75,12 @@ export const flushRedis = async () => {
 };
 
 export const runEmailDigests = async (frequency) => {
-  const result = await post(join('/', 'api', 'admin', 'digests', frequency));
+  const result = await post(join('/', 'api', 'admin', 'email-testing', 'digests', frequency));
   return result.json();
 };
 
-export const sendTestMonitoringEmails = async (data) => {
-  const result = await post(join('/', 'api', 'admin', 'monitoring-notifications', 'test'), data);
+export const runMonitoringDeliveries = async () => {
+  const result = await post(join('/', 'api', 'admin', 'email-testing', 'monitoring-deliveries'));
   return result.json();
 };
 
