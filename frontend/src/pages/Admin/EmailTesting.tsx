@@ -75,8 +75,9 @@ export default function EmailTesting() {
       </div>
       <h3>Monitoring deliveries</h3>
       <p className="usa-prose">
-        Runs the monitoring notification pipeline. This will duplicate emails each time. In-app notifications are not duplicated. For testing purposes only.  Do not run in production.
-      </p> 
+        Runs the monitoring notification pipeline. This will duplicate emails each time. In-app
+        notifications are not duplicated. For testing purposes only. Do not run in production.
+      </p>
       <Button
         type="button"
         className="margin-bottom-2"
