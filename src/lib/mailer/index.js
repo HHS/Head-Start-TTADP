@@ -792,6 +792,13 @@ export const trSessionChangesRequested = async (event, session) => {
 export const trCollaboratorAdded = async (report, newCollaboratorId) => {
   if (process.env.CI) return;
   try {
+    // Digest subscribers are covered by TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST.
+    const setting = await userSettingOverridesById(
+      newCollaboratorId,
+      EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT
+    );
+    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+
     const collaborator = await userById(newCollaboratorId, true);
     if (!collaborator) {
       throw new Error(
