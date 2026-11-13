@@ -11,7 +11,7 @@ import {
 } from '@ttahub/common';
 import { parse } from 'csv-parse/sync';
 import moment from 'moment';
-import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
+import { cast, Op, type WhereOptions as SequelizeWhereOptions, Transaction } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { trEventComplete, trPocAdded } from '../lib/mailer';
 import runInSavepoint from '../lib/runInSavepoint';
@@ -474,8 +474,11 @@ export async function updateEvent(
   request: UpdateEventRequest,
   runAfterCommit: RunAfterCommit = runNow
 ): Promise<EventShape> {
+  // Lock the row for the caller's transaction so overlapping saves serialize here, and each reads
+  // the POCs the previous save committed; otherwise both would email the same newly added POC.
   const event = await EventReportPilot.findOne({
     where: { id },
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
   });
 
   if (!event) {

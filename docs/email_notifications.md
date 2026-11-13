@@ -170,7 +170,7 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 
 Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`. Their fetchers live in `src/services/trainingReportDigests.ts` and read the `ZALEventReportPilots` audit log. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 
-**Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
+**Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `sendEmailDigests`.
 
 #### Cron schedule
 
@@ -179,6 +179,10 @@ Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry 
 | Daily | 4:01 PM ET, Mon–Fri | `today` | Also sends TR task-due alerts |
 | Weekly | 4:05 PM ET, Fridays | `this week` | — |
 | Monthly | 4:10 PM ET, 28th–31st | `this month` | Skips non-last-day-of-month |
+
+#### Running digests manually
+
+`POST /api/admin/digests/:frequency` (`daily`, `weekly` or `monthly`) runs `sendEmailDigests` on demand. It is admin-only and returns 403 unless `isNonProductionEnvironment()` (`src/envParser.js`) recognizes `TTA_SMART_HUB_URI` as a local, dev or staging host. Manual monthly runs skip the last-day-of-month check, and manual daily runs also send TR task-due alerts when `SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true'`. The run is not atomic: if it fails partway, digests already queued still go out.
 
 ### Training report notifications
 

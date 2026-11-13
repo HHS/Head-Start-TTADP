@@ -18,8 +18,8 @@ import {
   activityReportsSubmittedWhereCreatorByDate,
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
-import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { trainingReportsWherePocByDate } from '../../services/trainingReportDigests';
+import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
 import referenceData from '../../workers/referenceData';
 import transactionQueueWrapper from '../../workers/transactionWrapper';
@@ -1059,10 +1059,11 @@ export async function digestForSetting({
         subjectFreq,
         ...referenceData(),
       };
-      notificationQueue.add(actionType, data);
+      await notificationQueue.add(actionType, data);
       return data;
     });
-    return Promise.all(records);
+    // await so a failed enqueue is logged below and the caller never counts it as queued
+    return await Promise.all(records);
   } catch (err) {
     logger.info(`MAILER: ${logKey} with key ${settingKey} freq ${freq} error ${err}`);
     throw err;
@@ -1206,7 +1207,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
 
     const users = await Promise.all(specialistIds.map(async (id) => userById(id, true)));
 
-    const records = users.map((user, i) => {
+    const records = users.map(async (user, i) => {
       const userReportIds = reportIdsByUser.get(specialistIds[i]);
       const data = {
         user,
@@ -1217,11 +1218,11 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
         ...referenceData(),
       };
 
-      notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, data);
+      await notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, data);
       return data;
     });
 
-    return Promise.all(records);
+    return await Promise.all(records);
   } catch (err) {
     logger.info(
       `MAILER: RecipientApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL} freq ${freq} error ${err}`

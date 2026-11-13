@@ -28,17 +28,28 @@ exports.getEnvNumber = (key, defaultValue, options = {}) => {
   return value;
 };
 
+// Hosts allowed to run non-production-only features. Keep in sync with the dev environments in
+// .circleci/config.yml and deployment_config/staging_vars.yml. Production also has a cloud.gov
+// route (tta-smarthub-prod1.app.cloud.gov), so a *.app.cloud.gov suffix check is not safe.
+const NON_PRODUCTION_HOSTS = new Set([
+  'localhost',
+  '127.0.0.1',
+  'tta-smarthub-dev-blue.app.cloud.gov',
+  'tta-smarthub-dev-green.app.cloud.gov',
+  'tta-smarthub-dev-red.app.cloud.gov',
+  'tta-smarthub-dev-gold.app.cloud.gov',
+  'tta-smarthub-dev-pink.app.cloud.gov',
+  'tta-smarthub-staging.app.cloud.gov',
+]);
+
 /**
- * True only when TTA_SMART_HUB_URI points at a known non-production host:
- * a cloud.gov dev/staging app (*.app.cloud.gov) or local development.
- * Fails closed: a missing or unparseable URI counts as production.
+ * True only when TTA_SMART_HUB_URI points at a known non-production host (see
+ * NON_PRODUCTION_HOSTS). Fails closed: a missing, unparseable, or unlisted URI counts as production.
  */
 exports.isNonProductionEnvironment = () => {
   try {
     const { hostname } = new URL(process.env.TTA_SMART_HUB_URI);
-    return (
-      hostname.endsWith('.app.cloud.gov') || hostname === 'localhost' || hostname === '127.0.0.1'
-    );
+    return NON_PRODUCTION_HOSTS.has(hostname);
   } catch {
     return false;
   }

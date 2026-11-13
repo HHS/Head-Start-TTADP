@@ -4,7 +4,6 @@ import { handleError } from '../../lib/apiErrorHandler';
 import { sendEmailDigests } from '../../lib/cron';
 import { auditLogger } from '../../logger';
 import { currentUserId } from '../../services/currentUser';
-import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'ADMIN:DIGESTS:RUN';
 const logContext = { namespace };
@@ -44,6 +43,8 @@ export async function runDigests(req: Request, res: Response) {
 
 const router = express.Router();
 
-router.post('/:frequency', transactionWrapper(runDigests));
+// No request transaction: queued Redis jobs can't roll back with it, and handleError needs a
+// usable connection to record a failure that happens partway through the run.
+router.post('/:frequency', runDigests);
 
 export default router;
