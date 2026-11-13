@@ -816,15 +816,25 @@ test.describe('post /activity-reports/goals', () => {
       const priorSaveGoals = await priorSave.json();
       priorObjectiveId = priorSaveGoals[0].objectives[0].id;
 
-      await query(
+      // If the save response ever goes out before COMMIT again, this matches 0 rows; fail here
+      // rather than at the later status assertion.
+      const objectiveUpdateResponse = await query(
         request,
         `
         UPDATE "Objectives"
         SET status = '${OBJECTIVE_STATUS.IN_PROGRESS}',
             "onApprovedAR" = true,
             "updatedAt" = NOW()
-        WHERE id = ${priorObjectiveId};
+        WHERE id = ${priorObjectiveId}
+        RETURNING id;
+        `
+      );
+      const [updatedObjectiveRows] = await objectiveUpdateResponse.json();
+      expect(updatedObjectiveRows).toHaveLength(1);
 
+      await query(
+        request,
+        `
         UPDATE "ActivityReportObjectives"
         SET status = '${OBJECTIVE_STATUS.IN_PROGRESS}',
             "objectiveCreatedHere" = false,
