@@ -1,8 +1,10 @@
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import db from '../models';
-import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from './eventFlow';
+import { isSessionSubmitted, REGIONAL_PD_WITH_NATIONAL_CENTERS } from './eventFlow';
+import type { EventShape, SessionShape } from './types/event';
 
-const { EventReportPilot, sequelize } = db;
+const { EventReportPilot, SessionReportPilot, sequelize } = db;
 
 export interface TrainingReportDigestRow {
   id: number;
@@ -100,6 +102,59 @@ export async function trainingReportsWhereCollaboratorByDate(
       ownerId: { [Op.ne]: id },
       id: { [Op.in]: eventsWhereUserAddedSince('collaboratorIds', id, date) },
     },
+    order: [['id', 'ASC']],
+    raw: true,
+  });
+}
+
+/**
+ * Training Reports with sessions submitted or resubmitted to the user for approval within the
+ * interval (TR-21). Sessions the user has since approved or requested changes on are skipped,
+ * as are sessions since reassigned to another approver or no longer submitted (e.g. reset by a
+ * facilitation change), since `submittedAt` survives those.
+ * @param userId The approver's user id.
+ * @param date A trusted interval expression from `frequencyToInterval`.
+ */
+export async function trainingReportsWhereSessionSubmittedByDate(
+  userId: number | string,
+  date: string
+): Promise<TrainingReportDigestRow[]> {
+  const id = toUserId(userId);
+  if (id === null) {
+    return [];
+  }
+
+  const sessions = await SessionReportPilot.findAll({
+    attributes: ['eventId', 'approverId', 'data'],
+    include: [{ model: EventReportPilot, as: 'event', attributes: ['data'] }],
+    where: {
+      approverId: id,
+      submittedAt: { [Op.gt]: sequelize.literal(date) },
+      [Op.or]: [
+        { data: { status: null } },
+        {
+          data: {
+            status: {
+              [Op.notIn]: [TRAINING_REPORT_STATUSES.COMPLETE, REPORT_STATUSES.NEEDS_ACTION],
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  const submittedEventIds = sessions
+    .map((session) => session.get({ plain: true }))
+    .filter((session) => isSessionSubmitted(session.event as EventShape, session as SessionShape))
+    .map((session) => session.eventId);
+
+  if (!submittedEventIds.length) {
+    return [];
+  }
+
+  return EventReportPilot.findAll({
+    attributes: ['id', ['eventId', 'displayId']],
+    where: { id: [...new Set(submittedEventIds)] },
     order: [['id', 'ASC']],
     raw: true,
   });

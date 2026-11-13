@@ -22,6 +22,7 @@ import { userSettingOverridesById, usersWithSetting } from '../../services/userS
 import {
   trainingReportsWhereCollaboratorByDate,
   trainingReportsWherePocByDate,
+  trainingReportsWhereSessionSubmittedByDate,
 } from '../../services/trainingReportDigests';
 import { userById } from '../../services/users';
 import referenceData from '../../workers/referenceData';
@@ -1047,6 +1048,13 @@ export const DIGEST_CONFIG = {
     reportFetcher: trainingReportsWhereCollaboratorByDate,
     actionType: EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST,
     logKey: 'TrainingReportCollaboratorAddedDigest',
+    reportLink: trainingReportDigestLink,
+  },
+  [EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT,
+    reportFetcher: trainingReportsWhereSessionSubmittedByDate,
+    actionType: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+    logKey: 'TrainingReportSessionSubmittedDigest',
     reportLink: trainingReportDigestLink,
   },
 };

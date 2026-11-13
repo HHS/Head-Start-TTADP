@@ -6,11 +6,12 @@ import { REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS } f
 import {
   trainingReportsWhereCollaboratorByDate,
   trainingReportsWherePocByDate,
+  trainingReportsWhereSessionSubmittedByDate,
 } from './trainingReportDigests';
 
 jest.mock('bull');
 
-const { EventReportPilot, User, sequelize } = db;
+const { EventReportPilot, SessionReportPilot, User, sequelize } = db;
 
 const DAILY = frequencyToInterval('today');
 
@@ -51,6 +52,7 @@ describe('training report digests', () => {
   });
 
   afterAll(async () => {
+    await SessionReportPilot.destroy({ where: { eventId: eventIds } });
     await EventReportPilot.destroy({ where: { id: eventIds } });
     await User.destroy({ where: { id: [owner.id, poc.id] } });
     await sequelize.close();
@@ -135,6 +137,62 @@ describe('training report digests', () => {
 
     it('returns nothing for a non-integer user id', async () => {
       expect(await trainingReportsWhereCollaboratorByDate('x', DAILY)).toEqual([]);
+    });
+  });
+  describe('trainingReportsWhereSessionSubmittedByDate', () => {
+    // a Regional PD session counts as submitted once the collaborator and POC sides are complete
+    const COMPLETE = { collabComplete: true, pocComplete: true };
+    const createSession = (
+      eventId: number,
+      submittedAt: Date | null,
+      data = {},
+      approverId = poc.id
+    ) =>
+      SessionReportPilot.create({
+        eventId,
+        approverId,
+        submittedAt,
+        data: { ...COMPLETE, ...data },
+      });
+
+    it('returns each report with a session submitted to the user within the interval once', async () => {
+      const [submitted, approved, old, otherApprover] = await Promise.all([
+        createEvent([]),
+        createEvent([]),
+        createEvent([]),
+        createEvent([]),
+      ]);
+      const now = new Date();
+      const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      await Promise.all([
+        createSession(submitted.id, now, { status: 'In progress' }),
+        createSession(submitted.id, now, {}),
+        createSession(approved.id, now, { status: 'Complete' }),
+        createSession(approved.id, now, { status: 'needs_action' }),
+        createSession(old.id, lastWeek),
+        createSession(otherApprover.id, now, {}, owner.id),
+      ]);
+
+      const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
+
+      expect(reports).toEqual([{ id: submitted.id, displayId: submitted.eventId }]);
+    });
+
+    it('skips sessions no longer submitted though they keep a recent submittedAt', async () => {
+      // e.g. a facilitation reset cleared completion and only one side resubmitted
+      const partial = await createEvent([]);
+      await createSession(partial.id, new Date(), {
+        status: 'In progress',
+        collabComplete: false,
+      });
+
+      const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
+
+      expect(reports.map((report) => report.id)).not.toContain(partial.id);
+    });
+
+    it('returns nothing for a non-integer user id', async () => {
+      expect(await trainingReportsWhereSessionSubmittedByDate('x', DAILY)).toEqual([]);
     });
   });
 });

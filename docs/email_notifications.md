@@ -168,8 +168,9 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCreatorReportSubmittedForReview` |
 | `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
 | `ADDED_AS_COLLABORATOR_TRAINING_REPORT` | `TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST` | `emailWhenAddedAsCollaboratorTrainingReport` |
+| `SESSION_REVIEW_REQUESTED_TRAINING_REPORT` | `TRAINING_REPORT_SESSION_SUBMITTED_DIGEST` | `emailWhenSessionReviewRequestedTrainingReport` |
 
-Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`. Their fetchers live in `src/services/trainingReportDigests.ts` and read the `ZALEventReportPilots` audit log. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
+Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`. Their fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the session digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
 
