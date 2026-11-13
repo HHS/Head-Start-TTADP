@@ -486,7 +486,7 @@ describe('session report handlers', () => {
       expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
     });
 
-    it('emails the owner when the session moves into needs action', async () => {
+    it('emails the owner after commit when the session moves into needs action', async () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
@@ -495,9 +495,18 @@ describe('session report handlers', () => {
       findSessionById.mockResolvedValue({ ...mockSession, data: { status: 'submitted' } });
       updateSession.mockResolvedValue(needsActionSession);
       trSessionChangesRequested.mockClear();
-      await updateHandler(mockRequest, mockResponse);
-      expect(trSessionChangesRequested).toHaveBeenCalledWith(mockEvent, needsActionSession);
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await updateHandler(req, mockResponse);
+
       expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(trSessionChangesRequested).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toHaveLength(1);
+
+      await req.transactionCommittedCallbacks[0]();
+
+      expect(trSessionChangesRequested).toHaveBeenCalledTimes(1);
+      expect(trSessionChangesRequested).toHaveBeenCalledWith(mockEvent, needsActionSession);
     });
 
     it('does not email the owner when the session was already in needs action', async () => {
@@ -508,7 +517,12 @@ describe('session report handlers', () => {
       findSessionById.mockResolvedValue({ ...mockSession, data: { status: 'needs_action' } });
       updateSession.mockResolvedValue({ ...mockSession, data: { status: 'needs_action' } });
       trSessionChangesRequested.mockClear();
-      await updateHandler(mockRequest, mockResponse);
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await updateHandler(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(req.transactionCommittedCallbacks).toBeUndefined();
       expect(trSessionChangesRequested).not.toHaveBeenCalled();
     });
 

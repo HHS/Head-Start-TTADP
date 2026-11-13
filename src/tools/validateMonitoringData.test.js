@@ -150,9 +150,14 @@ describe('validateMonitoringData', () => {
   // Kept separate from the main `reviewId` so none of this affects its
   // finding_count assertion.
   const reviewIdCompliant = uuidv4();
-  // A CLASS review with a linked finding, for review_type_shape. No
-  // reportDeliveryDate, so it can't also trip delivery-based checks.
+  // A CLASS review with a linked finding, for review_type_shape, which now
+  // requires a reportDeliveryDate (undelivered reviews are never alerted on).
   const reviewIdClassWithFindings = uuidv4();
+  // A second review for findingIdDupHistory's history rows, duplicated but
+  // agreeing (same status, same determination) - lets
+  // finding_review_history_duplicated's pair-selection prove it picks the
+  // disagreeing pair on reviewIdCompliant over this one.
+  const reviewIdDupHistorySecond = uuidv4();
   const reportDeliveryDateBadStatus = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   const reportDeliveryDateCompliant = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
 
@@ -551,9 +556,15 @@ describe('validateMonitoringData', () => {
     ]);
 
     // Three more reviews: one with an unresolvable status, one Compliant
-    // review hosting most of the findings below, and one CLASS review.
+    // review hosting most of the findings below, and one CLASS review. Plus a
+    // fourth for findingIdDupHistory's second history pair.
     await Promise.all(
-      [reviewIdBadStatus, reviewIdCompliant, reviewIdClassWithFindings].map((id) =>
+      [
+        reviewIdBadStatus,
+        reviewIdCompliant,
+        reviewIdClassWithFindings,
+        reviewIdDupHistorySecond,
+      ].map((id) =>
         MonitoringReviewLink.findOrCreate({ where: { reviewId: id }, defaults: linkTimestamps })
       )
     );
@@ -594,8 +605,21 @@ describe('validateMonitoringData', () => {
         startDate: '2026-06-01',
         endDate: '2026-06-15',
         reviewType: 'CLASS',
-        reportDeliveryDate: null,
+        reportDeliveryDate: reportDeliveryDateCompliant,
         name: 'Review VMD class',
+        hash: `hash-${uuidv4()}`,
+        ...timestamps,
+        sourceCreatedAt: new Date(),
+      }),
+      MonitoringReview.create({
+        reviewId: reviewIdDupHistorySecond,
+        contentId: uuidv4(),
+        statusId: REVIEW_STATUS_COMPLETE_ID,
+        startDate: '2026-06-01',
+        endDate: '2026-06-15',
+        reviewType: 'FA-1',
+        reportDeliveryDate: null,
+        name: 'Review VMD dup history second',
         hash: `hash-${uuidv4()}`,
         ...timestamps,
         sourceCreatedAt: new Date(),
@@ -801,6 +825,58 @@ describe('validateMonitoringData', () => {
       },
     ]);
 
+    // A second audit event on findingIdDupHistory/reviewIdCompliant (already
+    // created above) whose old_row_data matches their current live values
+    // exactly - no tracked column actually changed, so this extra band
+    // should not count as a change for the finding/review *_change_count
+    // observations asserted on these same fixtures below.
+    const [dupHistoryFinding, compliantReviewForChangeCount] = await Promise.all([
+      MonitoringFinding.findOne({ where: { findingId: findingIdDupHistory } }),
+      MonitoringReview.findOne({ where: { reviewId: reviewIdCompliant } }),
+    ]);
+    await Promise.all([
+      sequelize.query(
+        `
+        INSERT INTO "ZALMonitoringFindings"
+          (data_id, dml_type, old_row_data, dml_timestamp, dml_by, dml_as, dml_txid)
+        VALUES
+          (:dataId, 'UPDATE', :oldRowData::jsonb, :dmlTimestamp, -1, -1, :dmlTxid)
+        `,
+        {
+          replacements: {
+            dataId: dupHistoryFinding.id,
+            oldRowData: JSON.stringify({
+              statusId: FINDING_STATUS_ACTIVE_ID,
+              correctionDeadLine: null,
+              findingType: 'Deficiency',
+              source: 'FA-1',
+            }),
+            dmlTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            dmlTxid: uuidv4(),
+          },
+        }
+      ),
+      sequelize.query(
+        `
+        INSERT INTO "ZALMonitoringReviews"
+          (data_id, dml_type, old_row_data, dml_timestamp, dml_by, dml_as, dml_txid)
+        VALUES
+          (:dataId, 'UPDATE', :oldRowData::jsonb, :dmlTimestamp, -1, -1, :dmlTxid)
+        `,
+        {
+          replacements: {
+            dataId: compliantReviewForChangeCount.id,
+            oldRowData: JSON.stringify({
+              statusId: REVIEW_STATUS_COMPLETE_ID,
+              outcome: 'Compliant',
+            }),
+            dmlTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            dmlTxid: uuidv4(),
+          },
+        }
+      ),
+    ]);
+
     await MonitoringFindingHistory.bulkCreate([
       {
         reviewId: reviewIdCompliant,
@@ -834,6 +910,30 @@ describe('validateMonitoringData', () => {
         ordinal: 1,
         determination: 'Noncompliance',
         name: 'History VMD dup 2',
+        ...timestamps,
+      },
+      // A second, merely-duplicated (not disagreeing) pair on a different
+      // review - the disagreeing pair above must still be the one picked.
+      {
+        reviewId: reviewIdDupHistorySecond,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdDupHistory,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Narrative VMD dup 3',
+        ordinal: 0,
+        determination: 'Deficiency',
+        name: 'History VMD dup 3',
+        ...timestamps,
+      },
+      {
+        reviewId: reviewIdDupHistorySecond,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdDupHistory,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Narrative VMD dup 4',
+        ordinal: 1,
+        determination: 'Deficiency',
+        name: 'History VMD dup 4',
         ...timestamps,
       },
       {
@@ -1161,7 +1261,13 @@ describe('validateMonitoringData', () => {
     ]);
 
     // citation_review_count / citation_grant_count / citation_days_review_1_to_2 /
-    // citation_days_review_2_to_3 / delivered_review_citation_no_window.
+    // citation_days_review_2_to_3 / delivered_review_citation_no_window /
+    // citation_count_noncompliance / citation_count_deficiency. The citation's
+    // own calculated_finding_type is deliberately the *latest* classification
+    // (Deficiency) and disagrees with its first review's own
+    // calculated_review_finding_type (Noncompliance, set below) - the
+    // follow-up-reclassification scenario citation_count_* must not rewrite
+    // the older review's count for.
     await Citation.bulkCreate([
       {
         id: citationIdTimeline,
@@ -1169,6 +1275,7 @@ describe('validateMonitoringData', () => {
         finding_uuid: uuidv4(),
         active: true,
         calculated_status: 'Active',
+        calculated_finding_type: 'Deficiency',
       },
       {
         id: citationIdNoWindow,
@@ -1205,6 +1312,7 @@ describe('validateMonitoringData', () => {
         deliveredReviewId: deliveredReviewIdTimeline1,
         citationId: citationIdTimeline,
         raw_history_status: 'Deficiency',
+        calculated_review_finding_type: 'Noncompliance',
         latest_review_start: timelineReview1Start,
         latest_review_end: timelineReview1End,
       },
@@ -1212,6 +1320,7 @@ describe('validateMonitoringData', () => {
         deliveredReviewId: deliveredReviewIdTimeline2,
         citationId: citationIdTimeline,
         raw_history_status: 'Active',
+        calculated_review_finding_type: 'Deficiency',
         latest_review_start: timelineReview2Start,
         latest_review_end: timelineOpenPlaceholderEnd,
       },
@@ -1283,7 +1392,12 @@ describe('validateMonitoringData', () => {
       force: true,
     });
     const lagReviewIds = [reviewIdLagStale, reviewIdLagFresh, reviewIdTooOld];
-    const otherReviewIds = [reviewIdBadStatus, reviewIdCompliant, reviewIdClassWithFindings];
+    const otherReviewIds = [
+      reviewIdBadStatus,
+      reviewIdCompliant,
+      reviewIdClassWithFindings,
+      reviewIdDupHistorySecond,
+    ];
     await MonitoringReview.destroy({
       where: { reviewId: [reviewId, ...lagReviewIds, ...otherReviewIds] },
       force: true,
@@ -1717,6 +1831,25 @@ describe('validateMonitoringData', () => {
     expect(alerts).toHaveLength(1);
     expect(alerts[0].severity).toBe(VALIDATION_ALERT_SEVERITY.ALERT);
     expect(alerts[0].context.sample_entity_ids).toContain(compliantReview.id);
+
+    // Reuses this same review: a synthetic audit event with no real column
+    // change was added above, regression-testing the *_change_count
+    // LAG(col, 1, col) fix (a bare LAG(col) would wrongly count it).
+    const [reviewStatusChange, reviewOutcomeChange] = await Promise.all(
+      ['review_status_change_count', 'review_outcome_change_count'].map((observation_name) =>
+        ValidationRecord.findOne({
+          where: {
+            run_id: run.id,
+            entity_type: 'MonitoringReviews',
+            entity_id: compliantReview.id,
+            observation_name,
+          },
+          raw: true,
+        })
+      )
+    );
+    expect(Number(reviewStatusChange.scalar)).toBe(0);
+    expect(Number(reviewOutcomeChange.scalar)).toBe(0);
   });
 
   it('flags a CLASS review with a linked finding', async () => {
@@ -1799,12 +1932,48 @@ describe('validateMonitoringData', () => {
       raw: true,
     });
     expect(record.category).toBe('duplicated_disagreeing');
+    // The disagreeing pair (reviewIdCompliant) must be the one named in
+    // context, not the merely-duplicated pair on reviewIdDupHistorySecond.
+    expect(record.context.review_uuid).toBe(reviewIdCompliant);
+    expect(record.context.determination_disagrees).toBe(true);
+    expect(record.context.status_disagrees).toBe(false);
 
     const alerts = await ValidationAlert.findAll({
       where: { run_id: run.id, check_name: 'finding_review_history_duplicated' },
       raw: true,
     });
     expect(alerts[0].context.sample_entity_ids).toContain(finding.id);
+    // review_name comes from the DeliveredReviews fact table, which this
+    // suite never populates - message falls back to "an unnamed review"
+    // regardless of which reviewId was picked, so the real regression guard
+    // for the picked pair is record.context.review_uuid above.
+    expect(alerts[0].message).toContain('determination');
+
+    // Reuses this same finding: a synthetic audit event with no real column
+    // change was added above, regression-testing the *_change_count
+    // LAG(col, 1, col) fix (a bare LAG(col) would wrongly count it).
+    const [statusChange, deadlineChange, typeChange, sourceChange] = await Promise.all(
+      [
+        'finding_status_change_count',
+        'finding_correction_deadline_change_count',
+        'finding_type_change_count',
+        'finding_source_change_count',
+      ].map((observation_name) =>
+        ValidationRecord.findOne({
+          where: {
+            run_id: run.id,
+            entity_type: 'MonitoringFindings',
+            entity_id: finding.id,
+            observation_name,
+          },
+          raw: true,
+        })
+      )
+    );
+    expect(Number(statusChange.scalar)).toBe(0);
+    expect(Number(deadlineChange.scalar)).toBe(0);
+    expect(Number(typeChange.scalar)).toBe(0);
+    expect(Number(sourceChange.scalar)).toBe(0);
   });
 
   it('flags an unrecognized history determination value', async () => {
@@ -2212,6 +2381,35 @@ describe('validateMonitoringData', () => {
     expect(period2to3.category).toBe('Active');
     expect(Number(period2to3.scalar)).toBeGreaterThanOrEqual(39);
     expect(Number(period2to3.scalar)).toBeLessThanOrEqual(41);
+
+    // citation_count_*: the citation's own calculated_finding_type is the
+    // *latest* classification (Deficiency), but review 1's own
+    // calculated_review_finding_type is Noncompliance - review 1's count
+    // must reflect its own classification, not get rewritten to match the
+    // citation's later reclassification.
+    const review1 = await DeliveredReview.findOne({ where: { id: deliveredReviewIdTimeline1 } });
+    const [review1Noncompliance, review1Deficiency] = await Promise.all([
+      ValidationRecord.findOne({
+        where: {
+          run_id: run.id,
+          entity_type: 'MonitoringReviews',
+          entity_id: review1.mrid,
+          observation_name: 'citation_count_noncompliance',
+        },
+        raw: true,
+      }),
+      ValidationRecord.findOne({
+        where: {
+          run_id: run.id,
+          entity_type: 'MonitoringReviews',
+          entity_id: review1.mrid,
+          observation_name: 'citation_count_deficiency',
+        },
+        raw: true,
+      }),
+    ]);
+    expect(Number(review1Noncompliance.scalar)).toBe(1);
+    expect(Number(review1Deficiency.scalar)).toBe(0);
   });
 
   it('flags a DeliveredReviewCitation that lost a same-day tie-break and was never authoritative', async () => {

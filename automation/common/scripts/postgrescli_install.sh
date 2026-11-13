@@ -131,6 +131,9 @@ function install_pg_tools() {
     validate_parameters "$deb_file"
     validate_parameters "$bin_dir"
 
+    # Scripts that skip awscli_install.sh (which also creates this directory) need it created here
+    mkdir -p "$bin_dir"
+
     # Starting in the current directory
     local start_dir
     start_dir=$(pwd)

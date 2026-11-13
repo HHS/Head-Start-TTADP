@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import db from '../../models';
-import { getUserReadRegions } from '../../services/accessValidation';
+import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import { createReport, destroyReport, getUniqueId } from '../../testUtils';
 import router from './index';
@@ -26,12 +26,16 @@ app.use('/api/activity-reports', router);
 
 describe('POST /api/activity-reports/export', () => {
   let report;
+  let recipientId;
 
   beforeAll(async () => {
+    const grantId = getUniqueId();
     report = await createReport({
       regionId: REGION_ID,
-      activityRecipients: [{ grantId: getUniqueId() }],
+      activityRecipients: [{ grantId }],
     });
+    const grant = await db.Grant.findByPk(grantId);
+    recipientId = grant.recipientId;
   });
 
   afterAll(async () => {
@@ -43,6 +47,7 @@ describe('POST /api/activity-reports/export', () => {
     jest.clearAllMocks();
     currentUserId.mockResolvedValue(USER_ID);
     getUserReadRegions.mockResolvedValue([REGION_ID]);
+    setReadRegions.mockImplementation((query) => Promise.resolve(query));
   });
 
   it('streams a CSV export for the in-scope report', async () => {
@@ -58,6 +63,32 @@ describe('POST /api/activity-reports/export', () => {
     expect(res.text).toContain(`R${REGION_ID}-AR-${report.id}`);
     expect(currentUserId).toHaveBeenCalled();
     expect(getUserReadRegions).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it.each([
+    ['without reportIds', undefined],
+    ['instead of supplied reportIds', [0]],
+  ])('exports the full filtered table %s', async (_description, reportIds) => {
+    const res = await request(app)
+      .post(`${EXPORT_URL}?region.in[]=${REGION_ID}&recipientId.ctn[]=${recipientId}`)
+      .send({ dataSet: 'activity-reports', exportAll: true, reportIds });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('text/csv; charset=utf-8');
+    expect(res.text).toContain(`R${REGION_ID}-AR-${report.id}`);
+    expect(setReadRegions).toHaveBeenCalledWith(
+      { 'region.in': [String(REGION_ID)], 'recipientId.ctn': [String(recipientId)] },
+      USER_ID
+    );
+  });
+
+  it('applies recipient query-string filters to full-table exports', async () => {
+    const res = await request(app)
+      .post(`${EXPORT_URL}?region.in[]=${REGION_ID}&recipientId.ctn[]=${getUniqueId()}`)
+      .send({ dataSet: 'activity-reports', exportAll: true });
+
+    expect(res.status).toBe(200);
+    expect(res.text).not.toContain(`R${REGION_ID}-AR-${report.id}`);
   });
 
   it('enforces region policy from the SQL, not the supplied ids', async () => {
@@ -95,5 +126,15 @@ describe('POST /api/activity-reports/export', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/reportIds is required/);
+  });
+
+  it('returns 400 for a string exportAll without reportIds', async () => {
+    const res = await request(app)
+      .post(EXPORT_URL)
+      .send({ dataSet: 'activity-reports', exportAll: 'true' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/reportIds is required/);
+    expect(setReadRegions).not.toHaveBeenCalled();
   });
 });

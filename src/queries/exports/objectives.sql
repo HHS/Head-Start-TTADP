@@ -90,7 +90,13 @@ AS
 -- feeds every downstream temp table.
 SELECT
   ar.id arid,
-  'R' || LPAD("regionId"::text, 2, '0') || '-AR-' || ar.id report_id,
+  COALESCE(
+    NULLIF(ar."legacyId", ''),
+    CASE
+      WHEN ar."regionId" IS NULL OR ar."regionId" = 0 THEN '???'
+      ELSE 'R' || LPAD(ar."regionId"::text, 2, '0')
+    END || '-AR-' || ar.id
+  ) report_id,
   ar."regionId" region,
   ar."startDate" start_date,
   ar."endDate" end_date,

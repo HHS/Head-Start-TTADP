@@ -1,4 +1,5 @@
 import { GROUP_COLLABORATORS } from '../constants';
+import { REPORT_ACCESS_SCOPES } from '../middleware/scopeConstants';
 
 interface Permission {
   regionId: number;
@@ -10,7 +11,7 @@ interface UserType {
   permissions: Permission[];
 }
 
-interface GrantType {
+export interface GrantType {
   id: number;
   regionId: number;
   recipientId?: number;
@@ -49,14 +50,21 @@ export default class Group {
     );
   }
 
-  private userIsAbleToAccessGrants() {
+  // With scopeIds, only permissions with one of those scopes count toward a grant's region
+  private userIsAbleToAccessGrants(scopeIds?: number[]) {
     return this.grants.every((grant) =>
-      this.user.permissions.some((permission) => permission.regionId === grant.regionId)
+      this.user.permissions.some(
+        (permission) =>
+          permission.regionId === grant.regionId &&
+          (!scopeIds || scopeIds.includes(permission.scopeId))
+      )
     );
   }
 
+  // Requires the same report scopes as the grant picker (potentialRecipientGrants), so a user
+  // cannot add a grant the picker would never offer them
   canAddToGroup() {
-    return this.userIsAbleToAccessGrants();
+    return this.userIsAbleToAccessGrants(REPORT_ACCESS_SCOPES);
   }
 
   canEditGroup() {

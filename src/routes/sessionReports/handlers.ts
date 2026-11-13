@@ -274,7 +274,7 @@ export const updateHandler = async (req: Request, res: Response) => {
       previousStatus !== REPORT_STATUSES.NEEDS_ACTION &&
       updatedStatus === REPORT_STATUSES.NEEDS_ACTION
     ) {
-      await trSessionChangesRequested(event, updatedSession);
+      onTransactionCommitted(req, () => trSessionChangesRequested(event, updatedSession));
     }
 
     return res.status(httpCodes.CREATED).send(updatedSession);
