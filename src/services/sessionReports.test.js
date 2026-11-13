@@ -769,8 +769,74 @@ describe('session reports service', () => {
       await destroySession(created.id);
     });
 
+    it('archives the former approver notification when facilitation resets a submitted session', async () => {
+      const created = await createSubmittedNcSession();
+      jest.clearAllMocks();
+
+      await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { facilitation: 'regional_tta_staff' },
+      });
+
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledWith(created.id);
+
+      await destroySession(created.id);
+    });
+
+    it('hands a submitted session to a new approver without resetting it', async () => {
+      const [created, newApprover] = await Promise.all([
+        createSubmittedNcSession(),
+        createUser({}),
+      ]);
+      jest.clearAllMocks();
+      const before = new Date();
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { approverId: newApprover.id },
+      });
+
+      expect(updated.submitted).toBe(true);
+      expect(updated.data).toMatchObject(completeData);
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledWith(created.id);
+      expect(createSessionSubmittedNotification).toHaveBeenCalledTimes(1);
+      expect(createSessionSubmittedNotification).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ id: created.id, approverId: newApprover.id })
+      );
+      // the new approver's digest picks it up
+      const saved = await SessionReportPilot.findByPk(created.id);
+      expect(saved.submittedAt.getTime()).toBeGreaterThanOrEqual(before.getTime() - 1000);
+
+      await destroySession(created.id);
+      await db.User.destroy({ where: { id: newApprover.id } });
+    });
+
+    it('does not ask a new approver to review a session that needs action', async () => {
+      const [created, newApprover] = await Promise.all([
+        createSubmittedNcSession(),
+        createUser({}),
+      ]);
+      await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { status: REPORT_STATUSES.NEEDS_ACTION },
+      });
+      jest.clearAllMocks();
+
+      await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { approverId: newApprover.id },
+      });
+
+      expect(createSessionSubmittedNotification).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+      await db.User.destroy({ where: { id: newApprover.id } });
+    });
+
     it('keeps flags and the approver when facilitation is unchanged', async () => {
       const created = await createSubmittedNcSession();
+      jest.clearAllMocks();
 
       const updated = await updateSession(created.id, {
         eventId: ncEventId,
@@ -780,6 +846,7 @@ describe('session reports service', () => {
       expect(updated.approverId).toBe(approver.id);
       expect(updated.submitted).toBe(true);
       expect(updated.data).toMatchObject(completeData);
+      expect(archiveSessionSubmittedNotifications).not.toHaveBeenCalled();
 
       await destroySession(created.id);
     });

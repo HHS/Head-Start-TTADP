@@ -1,4 +1,4 @@
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
@@ -262,14 +262,22 @@ export const updateHandler = async (req: Request, res: Response) => {
       onTransactionCommitted(req, work)
     );
 
-    // Only notify on the transition into "submitted" so later saves don't resend.
-    if (!session?.submitted && updatedSession?.submitted) {
+    const previousStatus = (session?.data as { status?: string } | undefined)?.status;
+    const updatedStatus = (updatedSession?.data as { status?: string } | undefined)?.status;
+
+    // Only notify on the transition into "submitted" so later saves don't resend, or when a
+    // session awaiting review is reassigned to a new approver (mirrors updateSession).
+    const isReassigned =
+      session?.submitted &&
+      updatedSession?.submitted &&
+      updatedSession.approverId !== session.approverId &&
+      updatedStatus !== REPORT_STATUSES.NEEDS_ACTION &&
+      updatedStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
+    if ((!session?.submitted && updatedSession?.submitted) || isReassigned) {
       await trSessionSubmittedForApproval(event, updatedSession);
     }
 
     // Likewise, only email the owner on the transition into "needs action".
-    const previousStatus = (session?.data as { status?: string } | undefined)?.status;
-    const updatedStatus = (updatedSession?.data as { status?: string } | undefined)?.status;
     if (
       previousStatus !== REPORT_STATUSES.NEEDS_ACTION &&
       updatedStatus === REPORT_STATUSES.NEEDS_ACTION

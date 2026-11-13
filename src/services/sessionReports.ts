@@ -452,7 +452,14 @@ export async function updateSession(
   // change can leave needs action before it is complete, so being submitted again counts too.
   const isSubmission = isSubmitted && !isNeedsAction && (wasNeedsAction || !wasSubmitted);
 
-  if (isSubmission) {
+  const newApproverId = update.approverId !== undefined ? update.approverId : session.approverId;
+  const approverChanged = newApproverId !== session.approverId;
+  // an admin handed a session awaiting review to a different approver; the work is still
+  // done, so it stays submitted and the new approver is asked to review it
+  const isReassigned =
+    wasSubmitted && isSubmitted && approverChanged && !isNeedsAction && !isComplete;
+
+  if (isSubmission || isReassigned) {
     // read by the TR-21 digest
     update.submittedAt = new Date();
   }
@@ -470,7 +477,7 @@ export async function updateSession(
       () =>
         createSessionSubmittedNotification(event, {
           id,
-          approverId: update.approverId !== undefined ? update.approverId : session.approverId,
+          approverId: newApproverId,
           data: newData as { sessionName?: string },
         }),
       `Error creating session submitted approver notification for session ${id}:`
@@ -490,11 +497,29 @@ export async function updateSession(
     await runAfterCommit(() => trSessionSubmittedToCollaborators(event, { id, data: newData }));
   }
 
-  if ((isNeedsAction && !wasNeedsAction) || (isComplete && !wasComplete)) {
-    // the approver approved the session or requested changes, so they no longer need to act
+  // a facilitation reset or approver change can leave the status untouched, so the former
+  // approver's alert must be archived on those too
+  const isWithdrawn = wasSubmitted && (!isSubmitted || approverChanged);
+
+  if ((isNeedsAction && !wasNeedsAction) || (isComplete && !wasComplete) || isWithdrawn) {
+    // the approver approved the session, requested changes, or can no longer review it,
+    // so they no longer need to act
     await runInSavepoint(
       () => archiveSessionSubmittedNotifications(id),
       `Error archiving session submitted notifications for session ${id}:`
+    );
+  }
+
+  if (isReassigned) {
+    // TR-3a for the new approver, created after the former approver's alert is archived
+    await runInSavepoint(
+      () =>
+        createSessionSubmittedNotification(event, {
+          id,
+          approverId: newApproverId,
+          data: newData as { sessionName?: string },
+        }),
+      `Error creating session submitted approver notification for session ${id}:`
     );
   }
 

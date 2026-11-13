@@ -1,7 +1,8 @@
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import db from '../models';
-import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from './eventFlow';
+import { isSessionSubmitted, REGIONAL_PD_WITH_NATIONAL_CENTERS } from './eventFlow';
+import type { EventShape, SessionShape } from './types/event';
 
 const { EventReportPilot, SessionReportPilot, sequelize } = db;
 
@@ -109,7 +110,8 @@ export async function trainingReportsWhereCollaboratorByDate(
 /**
  * Training Reports with sessions submitted or resubmitted to the user for approval within the
  * interval (TR-21). Sessions the user has since approved or requested changes on are skipped,
- * as are sessions since reassigned to another approver.
+ * as are sessions since reassigned to another approver or no longer submitted (e.g. reset by a
+ * facilitation change), since `submittedAt` survives those.
  * @param userId The approver's user id.
  * @param date A trusted interval expression from `frequencyToInterval`.
  */
@@ -123,7 +125,8 @@ export async function trainingReportsWhereSessionSubmittedByDate(
   }
 
   const sessions = await SessionReportPilot.findAll({
-    attributes: ['eventId'],
+    attributes: ['eventId', 'approverId', 'data'],
+    include: [{ model: EventReportPilot, as: 'event', attributes: ['data'] }],
     where: {
       approverId: id,
       submittedAt: { [Op.gt]: sequelize.literal(date) },
@@ -138,16 +141,20 @@ export async function trainingReportsWhereSessionSubmittedByDate(
         },
       ],
     },
-    raw: true,
   });
 
-  if (!sessions.length) {
+  const submittedEventIds = sessions
+    .map((session) => session.get({ plain: true }))
+    .filter((session) => isSessionSubmitted(session.event as EventShape, session as SessionShape))
+    .map((session) => session.eventId);
+
+  if (!submittedEventIds.length) {
     return [];
   }
 
   return EventReportPilot.findAll({
     attributes: ['id', ['eventId', 'displayId']],
-    where: { id: [...new Set(sessions.map((session) => session.eventId))] },
+    where: { id: [...new Set(submittedEventIds)] },
     order: [['id', 'ASC']],
     raw: true,
   });

@@ -140,8 +140,20 @@ describe('training report digests', () => {
     });
   });
   describe('trainingReportsWhereSessionSubmittedByDate', () => {
-    const createSession = (eventId: number, submittedAt: Date | null, data = {}, approverId = poc.id) =>
-      SessionReportPilot.create({ eventId, approverId, submittedAt, data });
+    // a Regional PD session counts as submitted once the collaborator and POC sides are complete
+    const COMPLETE = { collabComplete: true, pocComplete: true };
+    const createSession = (
+      eventId: number,
+      submittedAt: Date | null,
+      data = {},
+      approverId = poc.id
+    ) =>
+      SessionReportPilot.create({
+        eventId,
+        approverId,
+        submittedAt,
+        data: { ...COMPLETE, ...data },
+      });
 
     it('returns each report with a session submitted to the user within the interval once', async () => {
       const [submitted, approved, old, otherApprover] = await Promise.all([
@@ -164,6 +176,19 @@ describe('training report digests', () => {
       const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
 
       expect(reports).toEqual([{ id: submitted.id, displayId: submitted.eventId }]);
+    });
+
+    it('skips sessions no longer submitted though they keep a recent submittedAt', async () => {
+      // e.g. a facilitation reset cleared completion and only one side resubmitted
+      const partial = await createEvent([]);
+      await createSession(partial.id, new Date(), {
+        status: 'In progress',
+        collabComplete: false,
+      });
+
+      const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
+
+      expect(reports.map((report) => report.id)).not.toContain(partial.id);
     });
 
     it('returns nothing for a non-integer user id', async () => {
