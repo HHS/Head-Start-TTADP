@@ -16,6 +16,26 @@ export const FACILITATION_NATIONAL_CENTER = 'national_center';
 export const NATIONAL_CENTER_ROLE_NAME = 'NC';
 
 /**
+ * The users newly added as Regional points of contact on a save, who are notified (TR-1a/b).
+ * Only Regional PD events with National Centers notify POCs; the event owner and POCs who
+ * were already on the report are skipped.
+ */
+export const getNewPocIds = (
+  event: { ownerId: number; data?: { eventOrganizer?: string } | null },
+  previousPocIds: number[] | null | undefined,
+  currentPocIds: number[] | null | undefined
+): number[] => {
+  if (event.data?.eventOrganizer !== REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+    return [];
+  }
+
+  const previous = new Set(previousPocIds ?? []);
+  return [...new Set(currentPocIds ?? [])].filter(
+    (pocId) => !previous.has(pocId) && pocId !== event.ownerId
+  );
+};
+
+/**
  * True when the supplied user has the National Center role.
  *
  * Returns false when user is null/undefined, when roles is missing or not an

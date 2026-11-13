@@ -1,4 +1,4 @@
-const { getEnvNumber } = require('./envParser');
+const { getEnvNumber, isNonProductionEnvironment } = require('./envParser');
 
 describe('envParser', () => {
   describe('getEnvNumber', () => {
@@ -86,6 +86,46 @@ describe('envParser', () => {
       expect(() => getEnvNumber('TEST_VAR', 42, { requireInteger: true })).toThrow(
         'TEST_VAR must be an integer, got: 1e-3'
       );
+    });
+  });
+
+  describe('isNonProductionEnvironment', () => {
+    const originalUri = process.env.TTA_SMART_HUB_URI;
+
+    afterEach(() => {
+      if (originalUri === undefined) {
+        delete process.env.TTA_SMART_HUB_URI;
+      } else {
+        process.env.TTA_SMART_HUB_URI = originalUri;
+      }
+    });
+
+    it.each([
+      'https://tta-smarthub-dev-blue.app.cloud.gov',
+      'https://tta-smarthub-staging.app.cloud.gov',
+      'http://localhost:3000',
+      'http://127.0.0.1:8080',
+    ])('returns true for %s', (uri) => {
+      process.env.TTA_SMART_HUB_URI = uri;
+      expect(isNonProductionEnvironment()).toBe(true);
+    });
+
+    it.each([
+      'https://ttahub.ohs.acf.hhs.gov',
+      'https://tta-smarthub-prod1.app.cloud.gov',
+      'https://tta-smarthub-prod.app.cloud.gov',
+      'https://some-other-app.app.cloud.gov',
+      'https://app.cloud.gov.example.com',
+      'not a url',
+      '',
+    ])('returns false for %p', (uri) => {
+      process.env.TTA_SMART_HUB_URI = uri;
+      expect(isNonProductionEnvironment()).toBe(false);
+    });
+
+    it('returns false when the URI is unset', () => {
+      delete process.env.TTA_SMART_HUB_URI;
+      expect(isNonProductionEnvironment()).toBe(false);
     });
   });
 });

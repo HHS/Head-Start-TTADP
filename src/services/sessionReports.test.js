@@ -35,6 +35,7 @@ import {
 jest.mock('bull');
 jest.mock('../lib/mailer', () => ({
   trEventComplete: jest.fn(),
+  trPocAdded: jest.fn(),
   trSessionSubmittedToCollaborators: jest.fn(),
 }));
 jest.mock('./notifications/trainingReport', () => ({

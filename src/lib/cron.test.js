@@ -2,8 +2,13 @@ import { CronJob } from 'cron';
 import { auditLogger, logger } from '../logger';
 import { deleteExpiredArchivedNotifications } from '../services/notifications';
 import deleteOldRecords from '../tools/dbMaintenance';
-import { dailyNightSched, lastDayOfMonth, runCronJobs } from './cron';
-import { DIGEST_CONFIG, digestForSetting, recipientApprovedDigest } from './mailer';
+import { dailyNightSched, lastDayOfMonth, runCronJobs, sendEmailDigests } from './cron';
+import {
+  DIGEST_CONFIG,
+  digestForSetting,
+  recipientApprovedDigest,
+  trainingReportTaskDueNotifications,
+} from './mailer';
 import updateGrantsRecipients from './updateGrantsRecipients';
 
 jest.mock('cron', () => ({
@@ -405,6 +410,60 @@ describe('cron', () => {
 
       expect(digestForSetting).not.toHaveBeenCalled();
       expect(recipientApprovedDigest).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sendEmailDigests', () => {
+    const originalSend = process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION;
+
+    afterEach(() => {
+      process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION = originalSend;
+    });
+
+    it('runs every digest for the frequency and returns the number queued', async () => {
+      digestForSetting.mockResolvedValue([{}, {}]);
+      recipientApprovedDigest.mockResolvedValue([{}]);
+
+      const queued = await sendEmailDigests('WEEKLY');
+
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.keys(DIGEST_CONFIG).length);
+      expect(digestForSetting).toHaveBeenCalledWith({
+        ...DIGEST_CONFIG.approvedAction,
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
+      expect(recipientApprovedDigest).toHaveBeenCalledWith('this week', 'weekly');
+      expect(trainingReportTaskDueNotifications).not.toHaveBeenCalled();
+      expect(queued).toBe(Object.keys(DIGEST_CONFIG).length * 2 + 1);
+    });
+
+    it('sends training report task due notifications when requested and enabled', async () => {
+      process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION = 'true';
+      digestForSetting.mockResolvedValue([]);
+      recipientApprovedDigest.mockResolvedValue([]);
+
+      await sendEmailDigests('DAILY', { includeTrainingReport: true });
+
+      expect(trainingReportTaskDueNotifications).toHaveBeenCalledWith('today');
+    });
+
+    it('rejects when a digest fails', async () => {
+      digestForSetting.mockRejectedValueOnce(new Error('boom'));
+
+      await expect(sendEmailDigests('MONTHLY')).rejects.toThrow('boom');
+    });
+
+    it('rejects when a digest fails after earlier digests were queued', async () => {
+      digestForSetting
+        .mockResolvedValueOnce([{}, {}])
+        .mockRejectedValueOnce(new Error('Redis down'));
+
+      await expect(sendEmailDigests('DAILY', { includeTrainingReport: true })).rejects.toThrow(
+        'Redis down'
+      );
+      expect(digestForSetting).toHaveBeenCalledTimes(2);
+      expect(recipientApprovedDigest).not.toHaveBeenCalled();
+      expect(trainingReportTaskDueNotifications).not.toHaveBeenCalled();
     });
   });
 });

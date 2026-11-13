@@ -16,12 +16,14 @@ case type
         p The following Activity Reports, on which you are a collaborator, have been submitted for approval:
     when 'creatorReportSubmittedForReviewDigest'
         p The following Activity Reports, on which you are a creator, have been submitted for approval:
+    when 'trainingReportPocAddedDigest'
+        p You were added as a regional point of contact on these Training Reports:
     default
         p
 ul
   for report in reports
     li
-      a(href=reportPath + report.id)= report.displayId
+      a(href=report.link)= report.displayId
 p That's it!
 p Best wishes,
   br

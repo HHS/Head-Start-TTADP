@@ -166,8 +166,11 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | `APPROVAL` | `APPROVED_DIGEST` | `emailWhenReportApproval` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCollaboratorReportSubmittedForReview` |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCreatorReportSubmittedForReview` |
+| `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
 
-**Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
+Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`. Their fetchers live in `src/services/trainingReportDigests.ts` and read the `ZALEventReportPilots` audit log. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
+
+**Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `sendEmailDigests`.
 
 #### Cron schedule
 
@@ -177,9 +180,13 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | Weekly | 4:05 PM ET, Fridays | `this week` | — |
 | Monthly | 4:10 PM ET, 28th–31st | `this month` | Skips non-last-day-of-month |
 
+#### Running digests manually
+
+`POST /api/admin/digests/:frequency` (`daily`, `weekly` or `monthly`) runs `sendEmailDigests` on demand. It is admin-only and returns 403 unless `isNonProductionEnvironment()` (`src/envParser.js`) recognizes `TTA_SMART_HUB_URI` as a local, dev or staging host. Manual monthly runs skip the last-day-of-month check, and manual daily runs also send TR task-due alerts when `SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true'`. The run is not atomic: if it fails partway, digests already queued still go out.
+
 ### Training report notifications
 
-Queued by TR-lifecycle functions (`trCollaboratorAdded`, `trOwnerAdded`, `trSessionCreated`, `trEventComplete`) and by the `trainingReportTaskDueNotifications` digest function. All are processed by `sendTrainingReportNotification` which uses `SEND_NOTIFICATIONS === 'true' && !CI` as its guard.
+Queued by TR-lifecycle functions (`trCollaboratorAdded`, `trOwnerAdded`, `trPocAdded`, `trSessionCreated`, `trEventComplete`) and by the `trainingReportTaskDueNotifications` digest function. All are processed by `sendTrainingReportNotification` which uses `SEND_NOTIFICATIONS === 'true' && !CI` as its guard.
 
 **Alert-type reminders** are driven by `TR_NOTIFICATION_CONFIG_DICT`:
 

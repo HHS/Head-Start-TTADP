@@ -538,6 +538,22 @@ describe('event handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
+    it('defers createEvent side effects until the transaction commits', async () => {
+      EventReport.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      createEvent.mockResolvedValue(mockEvent);
+      const work = jest.fn();
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await createHandler(req, mockResponse);
+      const [, runAfterCommit] = createEvent.mock.calls[createEvent.mock.calls.length - 1];
+      runAfterCommit(work);
+
+      expect(work).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toEqual([work]);
+    });
+
     it('returns 400 when no body', async () => {
       await createHandler({ body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -569,6 +585,23 @@ describe('event handlers', () => {
       updateEvent.mockResolvedValue(mockEvent);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('defers updateEvent side effects until the transaction commits', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditEvent: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      updateEvent.mockResolvedValue(mockEvent);
+      const work = jest.fn();
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await updateHandler(req, mockResponse);
+      const [, , runAfterCommit] = updateEvent.mock.calls[updateEvent.mock.calls.length - 1];
+      runAfterCommit(work);
+
+      expect(work).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toEqual([work]);
     });
 
     it('returns 400 when no body', async () => {
