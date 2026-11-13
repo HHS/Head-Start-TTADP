@@ -363,6 +363,52 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('defers the POC email until after commit so its queries cannot abort the save', async () => {
+      const created = await createAnEvent(98_989);
+      // Like the real mailer: a failed query whose error is swallowed. Inside the request
+      // transaction this would abort it, so the email must wait for the commit.
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockImplementation(async () => {
+        try {
+          await db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"');
+        } catch {
+          // swallowed, as the mailer does
+        }
+      });
+      const deferred = [];
+
+      const updated = await db.sequelize.transaction(async () => {
+        const result = await updateEvent(
+          created.id,
+          {
+            ownerId: 98_989,
+            pocIds: [98_989, 11_111],
+            regionId: 98_989,
+            collaboratorIds: [98_989],
+            data: {
+              status: 'active',
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+              owner: { id: 98_989, name: 'test' },
+            },
+          },
+          (work) => {
+            deferred.push(work);
+          }
+        );
+        expect(trPocAddedSpy).not.toHaveBeenCalled();
+        return result;
+      });
+      await Promise.all(deferred.map((work) => work()));
+
+      expect(updated.pocIds).toEqual([98_989, 11_111]);
+      expect(trPocAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [11_111]
+      );
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('does not email POCs on events without National Centers', async () => {
       const created = await createAnEvent(98_989);
       const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();

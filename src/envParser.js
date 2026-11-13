@@ -27,3 +27,19 @@ exports.getEnvNumber = (key, defaultValue, options = {}) => {
 
   return value;
 };
+
+/**
+ * True only when TTA_SMART_HUB_URI points at a known non-production host:
+ * a cloud.gov dev/staging app (*.app.cloud.gov) or local development.
+ * Fails closed: a missing or unparseable URI counts as production.
+ */
+exports.isNonProductionEnvironment = () => {
+  try {
+    const { hostname } = new URL(process.env.TTA_SMART_HUB_URI);
+    return (
+      hostname.endsWith('.app.cloud.gov') || hostname === 'localhost' || hostname === '127.0.0.1'
+    );
+  } catch {
+    return false;
+  }
+};

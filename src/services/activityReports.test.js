@@ -1612,6 +1612,16 @@ describe('Activity report service', () => {
         );
       });
 
+      it('returns the same filtered approved reports as the table', async () => {
+        const filters = { 'region.in': ['14'] };
+        const [download, table] = await Promise.all([
+          getAllDownloadableActivityReports([14], filters),
+          activityReports(filters),
+        ]);
+        expect(download.map(({ id }) => id).sort()).toEqual(table.rows.map(({ id }) => id).sort());
+        expect(download).toHaveLength(table.count);
+      });
+
       it('returns all approved reports when provided with IDs', async () => {
         const rows = await getAllDownloadableActivityReports([14], {}, 0, [approvedReport.id]);
         const ids = rows.map((row) => row.id);

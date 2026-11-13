@@ -354,6 +354,25 @@ describe('processData', () => {
     }
   });
 
+  it('runs verify inside the transaction and rolls everything back when it fails', async () => {
+    const report = await ActivityReport.create(reportObject);
+    let emailSeenByVerify;
+    const verify = jest.fn(async () => {
+      const user = await User.findOne({ where: { id: mockUser.id } });
+      emailSeenByVerify = user.email;
+      throw new Error('verification failed');
+    });
+
+    await expect(processData(report, { verify })).rejects.toThrow('verification failed');
+
+    expect(verify).toHaveBeenCalledTimes(1);
+    // verify sees the uncommitted anonymized data...
+    expect(emailSeenByVerify).not.toBe(mockUser.email);
+    // ...and none of it is committed after the failure
+    const user = await User.findOne({ where: { id: mockUser.id } });
+    expect(user.email).toBe(mockUser.email);
+  });
+
   it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockActivityReportFile.activityReportId = report.id;

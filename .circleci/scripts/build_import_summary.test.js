@@ -88,13 +88,13 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
     );
     // report-only critical: criticalCount > 0 but the phase succeeded (nothing
     // blocked), so it must still be surfaced alongside the alerts
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+      'Monitoring Gate: {"asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '2');
@@ -105,10 +105,10 @@ describe('build_import_summary.sh', () => {
         'New Goals: Example Recipient Alpha (Region 1)\n' +
         'New Goals: Example Recipient Bravo (Region 3)\n' +
         '```\n' +
-        'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT): ```\n' +
+        'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT, run 111): ```\n' +
         'Region 5 created no monitoring reviews in the last four complete weeks\n' +
         '```\n' +
-        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - did not block the fact-table refresh: ```\n' +
+        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT, run 222) - did not block the fact-table refresh: ```\n' +
         '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
         '```\n'
     );
@@ -189,7 +189,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
     );
 
     const { goalFile, alertsFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
@@ -200,7 +200,7 @@ describe('build_import_summary.sh', () => {
       'Monitoring Updates: ```\nNew Goals: Example Recipient Alpha (Region 1)\n```\n'
     );
     expect(fs.readFileSync(alertsFile, 'utf-8')).toBe(
-      'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT): ```\n' +
+      'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT, run 111): ```\n' +
         'Region 5 created no monitoring reviews in the last four complete weeks\n' +
         '```\n' +
         'Monitoring Gate: no result found\n'
@@ -243,7 +243,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
     );
 
     const { ohsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
@@ -282,7 +282,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[' +
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[' +
         '{"message":"16 finding(s) are attached to a grant not on any of their own reviews","severity":"alert"},' +
         '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
         ']}\n'
@@ -548,7 +548,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '6');
@@ -556,7 +556,7 @@ describe('build_import_summary.sh', () => {
     const summary = fs.readFileSync(summaryFile, 'utf-8');
     // The critical data condition is the headline; the refresh block is a clause.
     expect(summary).toBe(
-      'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - blocked the fact-table refresh: ```\n' +
+      'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT, run 222) - blocked the fact-table refresh: ```\n' +
         '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
         '```\n'
     );
@@ -596,7 +596,7 @@ describe('build_import_summary.sh', () => {
     // phase is what failed. The critical must still reach the channel.
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-update_fact_tables.log'),
@@ -610,7 +610,7 @@ describe('build_import_summary.sh', () => {
       'Monitoring job failure: ```\n' +
         'Error: fact-table refresh failed\n' +
         '```\n' +
-        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - did not block the fact-table refresh: ```\n' +
+        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT, run 222) - did not block the fact-table refresh: ```\n' +
         '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
         '```\n'
     );
@@ -646,7 +646,7 @@ describe('build_import_summary.sh', () => {
     // and no criticals - this must NOT be mislabeled as a critical block.
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","runId":222,"error":"connection terminated unexpectedly"}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '6');
@@ -691,7 +691,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","runId":222,"error":"connection terminated unexpectedly"}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '2');
@@ -700,7 +700,7 @@ describe('build_import_summary.sh', () => {
     expect(summary).toBe(
       'Monitoring Updates: none\n' +
         'Monitoring Validation: no result found\n' +
-        'Monitoring Gate: did not complete, data was not validated (as of 2026-03-24 06:00 EDT)\n'
+        'Monitoring Gate: did not complete, data was not validated (as of 2026-03-24 06:00 EDT, run 222)\n'
     );
   });
 
@@ -776,7 +776,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","runId":222,"error":"connection terminated unexpectedly"}\n'
     );
 
     const { goalFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '6', {
@@ -883,11 +883,11 @@ describe('build_import_summary.sh', () => {
       );
       fs.writeFileSync(
         path.join(logDir, 'phase-validate_monitoring_data.log'),
-        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[]}\n'
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[]}\n'
       );
       fs.writeFileSync(
         path.join(logDir, 'phase-validate_monitoring_gate.log'),
-        'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":0,"alerts":[]}\n'
+        'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":0,"alerts":[]}\n'
       );
 
       const { alertOnlyFile } = runSummaryScript(artifactDir, summaryFile, '1');
@@ -924,13 +924,13 @@ describe('build_import_summary.sh', () => {
       );
       fs.writeFileSync(
         path.join(logDir, 'phase-validate_monitoring_data.log'),
-        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[' +
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[' +
           '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
           ']}\n'
       );
       fs.writeFileSync(
         path.join(logDir, 'phase-validate_monitoring_gate.log'),
-        'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":0,"alerts":[]}\n'
+        'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":0,"alerts":[]}\n'
       );
 
       const { alertOnlyFile, teamNotificationsFile } = runSummaryScript(
@@ -973,7 +973,7 @@ describe('build_import_summary.sh', () => {
       );
       fs.writeFileSync(
         path.join(logDir, 'phase-validate_monitoring_data.log'),
-        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
       );
 
       const { alertOnlyFile } = runSummaryScript(artifactDir, summaryFile, '1');
@@ -1049,7 +1049,7 @@ describe('build_import_summary.sh', () => {
       );
       fs.writeFileSync(
         path.join(logDir, 'phase-validate_monitoring_data.log'),
-        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[' +
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[' +
           '{"message":"16 finding(s) are attached to a grant not on any of their own reviews","severity":"alert"},' +
           '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
           ']}\n'
@@ -1064,7 +1064,7 @@ describe('build_import_summary.sh', () => {
 
       expect(teamComprehensive).toBe(
         summary +
-          'Monitoring Validation Team Notifications (as of 2026-03-24 06:00 EDT): ```\n' +
+          'Monitoring Validation Team Notifications (as of 2026-03-24 06:00 EDT, run 111): ```\n' +
           '4 finding(s) on delivered reviews have no category\n' +
           '```\n'
       );

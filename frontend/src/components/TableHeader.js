@@ -28,11 +28,17 @@ export default function TableHeader({
   offset,
   perPage,
   handlePageChange,
+  exportMenu,
+  showSelectedCount,
+  showPagination,
 }) {
   const tableHeaderClassNames = ['ttahub-table-header', 'desktop:display-flex'];
 
   if (hideMenu) {
     tableHeaderClassNames.push('ttahub-table-header--hide-menu');
+  }
+  if (!showPagination) {
+    tableHeaderClassNames.push('ttahub-table-header--actions-only');
   }
 
   const controlsWrapDisplay = hideMenu ? 'display-none' : 'display-flex';
@@ -41,8 +47,10 @@ export default function TableHeader({
       <div className="ttahub-table-header--contents padding-y-2">
         <div className="ttahub-table-header--contents-heading-section display-flex">
           <h2 className="font-body-lg margin-y-0 margin-left-2 margin-right-1">{title}</h2>
-          <span className={`smart-hub--table-controls margin-x-0 ${controlsWrapDisplay} flex-row`}>
-            {numberOfSelected > 0 && (
+          <span
+            className={`smart-hub--table-controls margin-x-0 ${controlsWrapDisplay} flex-row ${exportMenu ? 'position-relative flex-wrap' : ''}`}
+          >
+            {showSelectedCount && numberOfSelected > 0 && (
               <span className="display-flex flex-align-center padding-x-2 padding-y-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs smart-hub--selected-tag">
                 {numberOfSelected} selected{' '}
                 <Button
@@ -57,35 +65,38 @@ export default function TableHeader({
                 </Button>
               </span>
             )}
-            {!hideMenu && (
-              <ReportMenu
-                label={menuAriaLabel}
-                hasSelectedReports={numberOfSelected > 0}
-                onExportAll={handleDownloadAll}
-                onExportSelected={handleDownloadClick}
-                count={count}
-                downloadError={downloadError}
-                setDownloadError={setDownloadError}
-                isDownloading={isDownloading}
-                downloadAllButtonRef={downloadAllButtonRef}
-                downloadSelectedButtonRef={downloadSelectedButtonRef}
-                exportIdPrefix={exportIdPrefix}
-              />
-            )}
+            {!hideMenu &&
+              (exportMenu || (
+                <ReportMenu
+                  label={menuAriaLabel}
+                  hasSelectedReports={numberOfSelected > 0}
+                  onExportAll={handleDownloadAll}
+                  onExportSelected={handleDownloadClick}
+                  count={count}
+                  downloadError={downloadError}
+                  setDownloadError={setDownloadError}
+                  isDownloading={isDownloading}
+                  downloadAllButtonRef={downloadAllButtonRef}
+                  downloadSelectedButtonRef={downloadSelectedButtonRef}
+                  exportIdPrefix={exportIdPrefix}
+                />
+              ))}
           </span>
         </div>
-        <div className="display-flex flex-align-center">
-          <PaginationCard
-            currentPage={activePage}
-            totalCount={count}
-            offset={offset}
-            perPage={perPage}
-            hideCountHeaderOnEmpty={hideCountHeaderOnEmpty}
-            handlePageChange={handlePageChange}
-            accessibleLandmarkName="Pagination, top"
-            paginationClassName="padding-x-1 margin-0"
-          />
-        </div>
+        {showPagination && (
+          <div className="display-flex flex-align-center">
+            <PaginationCard
+              currentPage={activePage}
+              totalCount={count}
+              offset={offset}
+              perPage={perPage}
+              hideCountHeaderOnEmpty={hideCountHeaderOnEmpty}
+              handlePageChange={handlePageChange}
+              accessibleLandmarkName="Pagination, top"
+              paginationClassName="padding-x-1 margin-0"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -106,6 +117,9 @@ TableHeader.propTypes = {
   hideMenu: PropTypes.bool,
   hideCountHeaderOnEmpty: PropTypes.bool,
   menuAriaLabel: PropTypes.string,
+  exportMenu: PropTypes.node,
+  showSelectedCount: PropTypes.bool,
+  showPagination: PropTypes.bool,
   setDownloadError: PropTypes.func,
   downloadError: PropTypes.bool,
   isDownloading: PropTypes.bool,
@@ -129,6 +143,9 @@ TableHeader.defaultProps = {
   hideMenu: false,
   hideCountHeaderOnEmpty: false,
   menuAriaLabel: 'Reports menu',
+  exportMenu: null,
+  showSelectedCount: true,
+  showPagination: true,
   downloadError: false,
   setDownloadError: null,
   isDownloading: false,

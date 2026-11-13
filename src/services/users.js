@@ -245,7 +245,7 @@ export async function userEmailIsVerifiedByUserId(userId) {
  */
 export async function requireEmailVerification(userId) {
   const [count] = await UserValidationStatus.update(
-    { validatedAt: null },
+    { validatedAt: null, token: '' },
     { where: { userId, type: 'email' } }
   );
   return count;

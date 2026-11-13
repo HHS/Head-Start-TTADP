@@ -15,7 +15,7 @@ Three vocabularies, matching the three tables they're recorded in:
 
 **MonitoringFindings**
 - `category` → `finding_category_missing` (team_notification)
-- `closure_state` → *(none)*
+- `closure_state` → _(none)_
 - `history_determination_recognized` → `history_determination_unrecognized` (team_notification)
 - `finding_grant_on_own_review` → `finding_grant_not_on_own_review` (alert)
 - `finding_review_history_duplicated` → `finding_review_history_duplicated` (team_notification)
@@ -27,15 +27,15 @@ Three vocabularies, matching the three tables they're recorded in:
 - `history_vs_outcome` → `history_vs_outcome_disagrees` (alert)
 - `citation_reopened` → `citation_reopened_on_activity_report` (alert), `citation_reopened` (team_notification)
 - `activity_report_citation_source_deleted` → `activity_report_citation_source_deleted` (alert), `activity_report_citation_source_deleted_editable` (alert)
-- `citation_review_count` → *(none)*
-- `citation_grant_count` → *(none)*
-- `citation_days_review_1_to_2` → *(none)*
-- `citation_days_review_2_to_3` → *(none)*
+- `citation_review_count` → _(none)_
+- `citation_grant_count` → _(none)_
+- `citation_days_review_1_to_2` → _(none)_
+- `citation_days_review_2_to_3` → _(none)_
 - `delivered_review_citation_no_window` → `delivered_review_citation_no_window` (team_notification)
 
 **MonitoringReviews**
 - `delivery_report_lag_days` → `review_delivery_report_lag` (alert)
-- `finding_count` → *(none)*
+- `finding_count` → _(none)_
 - `review_type_shape` → `review_type_shape_violation` (alert)
 - `review_status_vs_delivery` → `review_status_vs_delivery_mismatch` (alert)
 - `review_grantee_duplicated` → `review_grantee_duplicated` (team_notification)
@@ -56,7 +56,7 @@ Three vocabularies, matching the three tables they're recorded in:
 - `import_lag_elevated_z` → `import_lag_zscore_elevated` (alert)
 - `source_lag_elevated_z` → `source_lag_zscore_elevated` (alert)
 - `completion_gap_elevated_z` → `completion_gap_zscore_elevated` (alert)
-- *(no backing stat — computed inline from the same per-review data as the three Z-score stats above)* → `review_lag_region_week_all_elevated` (alert)
+- _(no backing stat — computed inline from the same per-review data as the three Z-score stats above)_ → `review_lag_region_week_all_elevated` (alert)
 
 ### Gate checks (no backing observation)
 
@@ -79,7 +79,7 @@ Data logic only — severity, message wording, and freshness windows are in [Che
 
 **`finding_review_history_duplicated`** — more than one live `MonitoringFindingHistories` row for the same `(findingId, reviewId)`. Only `duplicated_disagreeing` when the duplicates disagree on status or determination.
 
-**`finding_standard_missing`** — a finding with no `MonitoringFindingStandards` link resolving to a *live* `MonitoringStandards` row. An orphaned link (the row exists, but its `standardId` has no live standard) is as invisible to the fact-table transform's inner join as no link at all.
+**`finding_standard_missing`** — a finding with no `MonitoringFindingStandards` link resolving to a _live_ `MonitoringStandards` row. An orphaned link (the row exists, but its `standardId` has no live standard) is as invisible to the fact-table transform's inner join as no link at all.
 
 **`history_status_resolvable` / `finding_status_resolvable`** — a `statusId` that doesn't resolve to any live row in its `*Statuses` table.
 
@@ -101,6 +101,8 @@ Data logic only — severity, message wording, and freshness windows are in [Che
 
 ### MonitoringReviews
 
+The observations below that back an alert (`review_type_shape`, `review_status_vs_delivery`, `review_grantee_duplicated`, `review_grantee_multi_grant`, `review_status_resolvable`, `review_grantee_orphaned_grant`) only run against delivered reviews (`reportDeliveryDate IS NOT NULL`) — an undelivered review is never itself alert-worthy; it only ever assists in interpreting a delivered one (e.g. `linked_review_undelivered_count`). Observations with no alert of their own (`finding_count`, `review_status_change_count`, `review_outcome_change_count`) aren't scoped this way.
+
 **`delivery_report_lag_days`** — days between a review's `reportDeliveryDate` and when that date first appeared in the imported data (from `ZALMonitoringReviews` audit history).
 
 **`finding_count`** — distinct findings linked to a review.
@@ -111,11 +113,11 @@ Data logic only — severity, message wording, and freshness windows are in [Che
 
 **`review_grantee_duplicated`** — more than one live `MonitoringReviewGrantees` row for the same `(reviewId, grantNumber)`.
 
-**`review_grantee_multi_grant`** — a review-grantee link whose `granteeId` also appears on a live link with a *different* `grantNumber`. A real misattribution risk anywhere `granteeId` is used to look up "the" grant for a review (e.g. `finding_grant_on_own_review`).
+**`review_grantee_multi_grant`** — a review-grantee link whose `granteeId` also appears on a live link with a _different_ `grantNumber`. A real misattribution risk anywhere `granteeId` is used to look up "the" grant for a review (e.g. `finding_grant_on_own_review`).
 
 **`review_status_resolvable`** — a `statusId` that doesn't resolve to any live row in `MonitoringReviewStatuses`.
 
-**`review_grantee_orphaned_grant`** — a review-grantee link whose `grantNumber` has no live `Grants.number` match.
+**`review_grantee_orphaned_grant`** — a review-grantee link whose `grantNumber` has no undeleted `Grants.number` match (active or inactive).
 
 **`delivered_review_completion_state`** — same idea as `citation_reopened`, for `DeliveredReviews.complete` flipping true→false, read from `DeliveredReviews`' own ZAL audit history.
 
@@ -197,7 +199,7 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 **`statuses_table_integrity_violated`** (alert) — a `*Statuses` table has a duplicated live `statusId`. Window: since previous cycle.
 
-**`review_grantee_orphaned_grant`** (alert) — a review-grantee link with no matching live grant. Window: since previous cycle.
+**`review_grantee_orphaned_grant`** (alert) — a review-grantee link with no matching undeleted grant. Window: since previous cycle.
 
 **`finding_standard_citation_text_disagrees`** (alert) — a finding's live standards disagree on citation text. Window: since previous cycle.
 
@@ -205,7 +207,7 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 **`history_vs_finding_status_disagrees`** (team_notification) — a finding's Corrected history status disagrees with its finding-level status. team_notification, not alert, since it's a known, understood pattern that doesn't need urgent action. Window: 7 days from whichever of the history status or finding status changed more recently.
 
-**`history_vs_outcome_disagrees`** (alert) — an open history status on a Compliant-outcome review. Alert, not team_notification, since it's two fields on the *same* review disagreeing (unlike `history_vs_finding_status_disagrees`, where one side is already known to be unreliable). Window: 7 days from whichever of the review outcome or history status changed more recently.
+**`history_vs_outcome_disagrees`** (alert) — an open history status on a Compliant-outcome review. Alert, not team_notification, since it's two fields on the _same_ review disagreeing (unlike `history_vs_finding_status_disagrees`, where one side is already known to be unreliable). Window: 7 days from whichever of the review outcome or history status changed more recently.
 
 **`citation_reopened_on_activity_report`** (alert) — a reopened citation that's cited on a real Activity Report — warrants prompt attention since it's in active use. Window: 7 days from the reopening transition.
 
