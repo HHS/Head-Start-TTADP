@@ -77,3 +77,30 @@ export async function trainingReportsWherePocByDate(
     raw: true,
   });
 }
+
+/**
+ * Training Reports the user was added to as an Event Collaborator within the interval (TR-20).
+ * The owner is skipped, and the user must still be a collaborator.
+ * @param userId The collaborator's user id.
+ * @param date A trusted interval expression from `frequencyToInterval`.
+ */
+export async function trainingReportsWhereCollaboratorByDate(
+  userId: number | string,
+  date: string
+): Promise<TrainingReportDigestRow[]> {
+  const id = toUserId(userId);
+  if (id === null) {
+    return [];
+  }
+
+  return EventReportPilot.findAll({
+    attributes: ['id', ['eventId', 'displayId']],
+    where: {
+      collaboratorIds: { [Op.contains]: [id] },
+      ownerId: { [Op.ne]: id },
+      id: { [Op.in]: eventsWhereUserAddedSince('collaboratorIds', id, date) },
+    },
+    order: [['id', 'ASC']],
+    raw: true,
+  });
+}
