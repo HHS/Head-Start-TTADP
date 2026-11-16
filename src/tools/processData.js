@@ -23,14 +23,18 @@ const {
   READ_REPORTS,
   APPROVE_REPORTS,
   APPROVE_TTA_REQUESTS,
+  BACKUP_APPROVE_TTA_REQUESTS,
 } = SCOPES;
 
 const REGIONS = Array.from({ length: 12 }, (_, index) => index + 1);
 const ALL_SCOPE_IDS = Object.values(SCOPES);
-// APPROVE_TTA_REQUESTS is left out: each region allows only one primary approver (enforced by a
-// unique index), so granting it here would collide with real approvers in the restored data.
+// The TTA request approver (COR) scopes are left out. Each region allows only one primary
+// approver (enforced by a unique index), so granting APPROVE_TTA_REQUESTS here would collide with
+// real approvers in the restored data. BACKUP_APPROVE_TTA_REQUESTS is left out too, so the test
+// user is not made an approver at all.
+const EXCLUDED_SCOPE_IDS = [ADMIN, APPROVE_TTA_REQUESTS, BACKUP_APPROVE_TTA_REQUESTS];
 const ALL_SCOPE_IDS_EXCEPT_ADMIN = ALL_SCOPE_IDS.filter(
-  (scopeId) => scopeId !== ADMIN && scopeId !== APPROVE_TTA_REQUESTS
+  (scopeId) => !EXCLUDED_SCOPE_IDS.includes(scopeId)
 );
 
 /**
