@@ -18,6 +18,8 @@ import {
   notifyNewMonitoringDeliveries,
   notifyRecentMonitoringDeliveries,
   recordMonitoringDeliveries,
+  SIMULATED_REVIEW_NAME,
+  simulateMonitoringReview,
   usersWantingImmediateMonitoringEmail,
 } from './monitoringDeliveryNotifications';
 import { createNotification } from './notifications';
@@ -352,6 +354,102 @@ describe('monitoringDeliveryNotifications', () => {
       expect(summary).toEqual({ detected: 1, recorded: 0, inApp: 1, emails: 1 });
       expect(mockMarkNotified).toHaveBeenCalledWith([1001]);
       expect(mockFindPending).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('simulateMonitoringReview', () => {
+    const transaction = { id: 'tx' };
+    const regionUser = { ...user1, homeRegionId: 3 };
+    const grant = {
+      id: 10,
+      regionId: 3,
+      recipientId: 500,
+      recipient: { id: 500, name: 'Recipient A' },
+    };
+    let findGrantSpy: jest.SpyInstance;
+    let minSpy: jest.SpyInstance;
+    let createReviewSpy: jest.SpyInstance;
+    let createLinkSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      findGrantSpy = jest.spyOn(db.Grant, 'findOne').mockResolvedValue(grant as never);
+      minSpy = jest.spyOn(db.DeliveredReview, 'min').mockResolvedValue(null as never);
+      createReviewSpy = jest
+        .spyOn(db.DeliveredReview, 'create')
+        .mockImplementation(async (values) => ({ id: 77, ...values }) as never);
+      createLinkSpy = jest.spyOn(db.GrantDeliveredReview, 'create').mockResolvedValue({} as never);
+      jest
+        .spyOn(db.sequelize, 'transaction')
+        .mockImplementation(async (cb: (t: unknown) => unknown) => cb(transaction) as never);
+      mockFindUsers.mockResolvedValue(new Map([[3, [regionUser]]]));
+      mockUsersWithSetting.mockResolvedValue([regionUser] as never);
+    });
+
+    it('returns null without creating anything when the region has no active grant', async () => {
+      findGrantSpy.mockResolvedValue(null);
+
+      expect(await simulateMonitoringReview(3)).toBeNull();
+      expect(createReviewSpy).not.toHaveBeenCalled();
+      expect(mockEmailTrigger).not.toHaveBeenCalled();
+    });
+
+    it('creates a review delivered today with a negative mrid and notifies the region', async () => {
+      const result = await simulateMonitoringReview(3, new Date('2026-11-16T15:00:00Z'));
+
+      expect(findGrantSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { regionId: 3, status: 'Active' } })
+      );
+      expect(createReviewSpy).toHaveBeenCalledWith(
+        {
+          mrid: -1,
+          review_name: SIMULATED_REVIEW_NAME,
+          review_status: 'Complete',
+          report_delivery_date: '2026-11-16',
+        },
+        { transaction }
+      );
+      expect(createLinkSpy).toHaveBeenCalledWith(
+        {
+          grantId: 10,
+          deliveredReviewId: 77,
+          recipient_id: 500,
+          recipient_name: 'Recipient A',
+          region_id: 3,
+        },
+        { transaction }
+      );
+      expect(findOrCreateSpy).toHaveBeenCalledWith({
+        where: { deliveredReviewId: 77, recipientId: 500, regionId: 3 },
+      });
+      expect(mockEmailTrigger).toHaveBeenCalledWith(
+        expect.objectContaining({ monitoringDeliveryId: 1001, recipientName: 'Recipient A' }),
+        [regionUser]
+      );
+      expect(mockMarkNotified).toHaveBeenCalledWith([1001]);
+      expect(result).toEqual({
+        mrid: -1,
+        recipientName: 'Recipient A',
+        regionId: 3,
+        detected: 1,
+        recorded: 1,
+        inApp: 1,
+        emails: 1,
+      });
+    });
+
+    it('goes below the lowest existing mrid so simulated reviews never collide', async () => {
+      minSpy.mockResolvedValue(-4 as never);
+
+      const result = await simulateMonitoringReview(3);
+
+      expect(minSpy).toHaveBeenCalledWith('mrid', { paranoid: false, transaction });
+      expect(result?.mrid).toBe(-5);
+    });
+
+    it('starts at -1 when every existing mrid is positive', async () => {
+      minSpy.mockResolvedValue(12345 as never);
+
+      expect((await simulateMonitoringReview(3))?.mrid).toBe(-1);
     });
   });
 });

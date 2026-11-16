@@ -7,7 +7,11 @@ import {
   monitoringReportsDeliveredInRegionByDate,
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
-import { notifyNewMonitoringDeliveries } from './monitoringDeliveryNotifications';
+import {
+  notifyNewMonitoringDeliveries,
+  SIMULATED_REVIEW_NAME,
+  simulateMonitoringReview,
+} from './monitoringDeliveryNotifications';
 
 const {
   DeliveredReview,
@@ -36,9 +40,11 @@ describe('monitoring delivery notifications (database)', () => {
   let oldReview;
   let newReview;
   let multiReview;
+  let simulatedReview;
   const users: Record<string, { id: number }> = {};
 
-  const reviewIds = () => [oldReview?.id, newReview?.id, multiReview?.id].filter(Boolean);
+  const reviewIds = () =>
+    [oldReview?.id, newReview?.id, multiReview?.id, simulatedReview?.id].filter(Boolean);
   const monitoringNotifications = async (reviewId: number) => {
     const deliveries = await MonitoringReportDelivery.findAll({
       where: { deliveredReviewId: reviewId },
@@ -280,5 +286,52 @@ describe('monitoring delivery notifications (database)', () => {
       ].sort()
     );
     expect(forUser(users.revokedTtac.id)).toEqual([]);
+  });
+
+  it('simulates a review delivered today in the region and notifies that region', async () => {
+    const result = await simulateMonitoringReview(region.id);
+
+    simulatedReview = await DeliveredReview.findOne({ where: { mrid: result.mrid } });
+    expect(simulatedReview.mrid).toBeLessThan(0);
+    expect(simulatedReview.review_name).toBe(SIMULATED_REVIEW_NAME);
+    expect(simulatedReview.report_delivery_date).toBe(new Date().toISOString().slice(0, 10));
+
+    // the first active grant in the region is grant (created before twinGrant)
+    const links = await GrantDeliveredReview.findAll({
+      where: { deliveredReviewId: simulatedReview.id },
+    });
+    expect(links.map((l) => [l.grantId, l.recipient_id, l.region_id])).toEqual([
+      [grant.id, grant.recipientId, region.id],
+    ]);
+
+    const [delivery] = await MonitoringReportDelivery.findAll({
+      where: { deliveredReviewId: simulatedReview.id },
+    });
+    expect([delivery.recipientId, delivery.regionId]).toEqual([grant.recipientId, region.id]);
+    expect(delivery.notifiedAt).not.toBeNull();
+
+    const notifications = await monitoringNotifications(simulatedReview.id);
+    expect(notifications.map(({ userId }) => userId).sort()).toEqual(
+      [users.ttac.id, users.ecm.id, users.gsm.id].sort()
+    );
+    expect(result).toMatchObject({
+      regionId: region.id,
+      recipientName: (await Recipient.findByPk(grant.recipientId)).name,
+      detected: 1,
+      recorded: 1,
+      inApp: 3,
+    });
+
+    // the next real refresh snapshots it as already delivered, so it is not notified again
+    expect((await snapshotDeliveredReviewMrids()).has(simulatedReview.mrid)).toBe(true);
+  });
+
+  it('returns null for a region without an active grant', async () => {
+    const emptyRegion = await createRegion({ id: getUniqueId(9001, 12000) });
+    try {
+      expect(await simulateMonitoringReview(emptyRegion.id)).toBeNull();
+    } finally {
+      await Region.destroy({ where: { id: emptyRegion.id } });
+    }
   });
 });

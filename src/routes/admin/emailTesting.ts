@@ -4,7 +4,10 @@ import { handleError } from '../../lib/apiErrorHandler';
 import { sendEmailDigests } from '../../lib/cron';
 import { auditLogger } from '../../logger';
 import { currentUserId } from '../../services/currentUser';
-import { notifyRecentMonitoringDeliveries } from '../../services/monitoringDeliveryNotifications';
+import {
+  notifyRecentMonitoringDeliveries,
+  simulateMonitoringReview,
+} from '../../services/monitoringDeliveryNotifications';
 
 const namespace = 'ADMIN:EMAIL_TESTING';
 
@@ -65,6 +68,38 @@ export async function runMonitoringDeliveries(req: Request, res: Response) {
   }
 }
 
+/**
+ * Creates a fake monitoring review delivered today for a grant in the region and sends its
+ * delivery notifications, so the monitoring emails can be tested without new monitoring data.
+ * Disabled in production.
+ */
+export async function simulateMonitoringReviewHandler(req: Request, res: Response) {
+  // admin access is already checked in the middleware
+  try {
+    if (!isNonProductionEnvironment()) {
+      res.status(403).json({ error: PRODUCTION_ERROR });
+      return;
+    }
+
+    const regionId = Number(req.params.regionId);
+    if (!Number.isInteger(regionId) || regionId < 1) {
+      res.status(400).json({ error: `Invalid region: ${req.params.regionId}` });
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    auditLogger.info(`User ${userId} simulated a monitoring review in region ${regionId}`);
+    const result = await simulateMonitoringReview(regionId);
+    if (!result) {
+      res.status(404).json({ error: `No active grant found in region ${regionId}` });
+      return;
+    }
+    res.status(200).json(result);
+  } catch (err) {
+    await handleError(req, res, err, { namespace: `${namespace}:SIMULATE_MONITORING_REVIEW` });
+  }
+}
+
 const router = express.Router();
 
 // No request transaction: queued Redis jobs can't roll back with it, one failed query would abort
@@ -72,5 +107,6 @@ const router = express.Router();
 // happens partway through the run.
 router.post('/digests/:frequency', runDigests);
 router.post('/monitoring-deliveries', runMonitoringDeliveries);
+router.post('/simulate-monitoring-review/:regionId', simulateMonitoringReviewHandler);
 
 export default router;

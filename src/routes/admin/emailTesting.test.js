@@ -1,8 +1,15 @@
 import { isNonProductionEnvironment } from '../../envParser';
 import { handleError } from '../../lib/apiErrorHandler';
 import { sendEmailDigests } from '../../lib/cron';
-import { notifyRecentMonitoringDeliveries } from '../../services/monitoringDeliveryNotifications';
-import router, { runDigests, runMonitoringDeliveries } from './emailTesting';
+import {
+  notifyRecentMonitoringDeliveries,
+  simulateMonitoringReview,
+} from '../../services/monitoringDeliveryNotifications';
+import router, {
+  runDigests,
+  runMonitoringDeliveries,
+  simulateMonitoringReviewHandler,
+} from './emailTesting';
 
 jest.mock('../../lib/cron', () => ({
   sendEmailDigests: jest.fn(),
@@ -10,6 +17,7 @@ jest.mock('../../lib/cron', () => ({
 
 jest.mock('../../services/monitoringDeliveryNotifications', () => ({
   notifyRecentMonitoringDeliveries: jest.fn(),
+  simulateMonitoringReview: jest.fn(),
 }));
 
 jest.mock('../../services/currentUser', () => ({
@@ -43,9 +51,13 @@ describe('admin email testing', () => {
     isNonProductionEnvironment.mockReturnValue(true);
   });
 
-  it('runs both endpoints outside a request transaction', () => {
+  it('runs every endpoint outside a request transaction', () => {
     const handlers = router.stack.map(({ route }) => route.stack.map(({ handle }) => handle));
-    expect(handlers).toEqual([[runDigests], [runMonitoringDeliveries]]);
+    expect(handlers).toEqual([
+      [runDigests],
+      [runMonitoringDeliveries],
+      [simulateMonitoringReviewHandler],
+    ]);
   });
 
   describe('runDigests', () => {
@@ -128,6 +140,65 @@ describe('admin email testing', () => {
 
       expect(handleError).toHaveBeenCalledWith(req, mockResponse, error, {
         namespace: 'ADMIN:EMAIL_TESTING:MONITORING_DELIVERIES',
+      });
+    });
+  });
+
+  describe('simulateMonitoringReviewHandler', () => {
+    it('refuses to run in production', async () => {
+      isNonProductionEnvironment.mockReturnValue(false);
+
+      await simulateMonitoringReviewHandler(mockRequest({ regionId: '1' }), mockResponse);
+
+      expect(simulateMonitoringReview).not.toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+    });
+
+    it('rejects an invalid region', async () => {
+      await simulateMonitoringReviewHandler(mockRequest({ regionId: '1 OR 1=1' }), mockResponse);
+      await simulateMonitoringReviewHandler(mockRequest({ regionId: '0' }), mockResponse);
+
+      expect(simulateMonitoringReview).not.toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledTimes(2);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+    });
+
+    it('simulates a review in the region and returns the result', async () => {
+      const result = {
+        mrid: -1,
+        recipientName: 'Recipient A',
+        regionId: 3,
+        detected: 1,
+        recorded: 1,
+        inApp: 4,
+        emails: 2,
+      };
+      simulateMonitoringReview.mockResolvedValue(result);
+
+      await simulateMonitoringReviewHandler(mockRequest({ regionId: '3' }), mockResponse);
+
+      expect(simulateMonitoringReview).toHaveBeenCalledWith(3);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(json).toHaveBeenCalledWith(result);
+    });
+
+    it('returns 404 when the region has no active grant', async () => {
+      simulateMonitoringReview.mockResolvedValue(null);
+
+      await simulateMonitoringReviewHandler(mockRequest({ regionId: '3' }), mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+
+    it('handles errors', async () => {
+      const error = new Error('boom');
+      simulateMonitoringReview.mockRejectedValue(error);
+      const req = mockRequest({ regionId: '3' });
+
+      await simulateMonitoringReviewHandler(req, mockResponse);
+
+      expect(handleError).toHaveBeenCalledWith(req, mockResponse, error, {
+        namespace: 'ADMIN:EMAIL_TESTING:SIMULATE_MONITORING_REVIEW',
       });
     });
   });

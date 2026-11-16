@@ -1,20 +1,36 @@
-import { Alert, Button } from '@trussworks/react-uswds';
+import { Alert, Button, Label, Select } from '@trussworks/react-uswds';
 import React, { useState } from 'react';
+import { REGIONS } from '../../Constants';
 import { HTTPError } from '../../fetchers';
-import { runEmailDigests, runMonitoringDeliveries } from '../../fetchers/Admin';
+import {
+  runEmailDigests,
+  runMonitoringDeliveries,
+  simulateMonitoringReview,
+} from '../../fetchers/Admin';
 
 const FREQUENCIES = ['daily', 'weekly', 'monthly'] as const;
 
-type Job = (typeof FREQUENCIES)[number] | 'monitoring';
+type Job = (typeof FREQUENCIES)[number] | 'monitoring' | 'simulate';
 
 type Status = { type: 'success' | 'error'; message: string } | null;
 
 const plural = (count: number, word: string, many = `${word}s`) =>
   `${count} ${count === 1 ? word : many}`;
 
+const jobName = (job: Job) => {
+  if (job === 'monitoring') {
+    return 'monitoring deliveries';
+  }
+  if (job === 'simulate') {
+    return 'monitoring review simulation';
+  }
+  return `${job} digests`;
+};
+
 export default function EmailTesting() {
   const [running, setRunning] = useState<Job | null>(null);
   const [status, setStatus] = useState<Status>(null);
+  const [simulateRegion, setSimulateRegion] = useState<number>(REGIONS[0]);
 
   const run = async (job: Job, confirmText: string, action: () => Promise<string>) => {
     if (!window.confirm(`${confirmText} Real users will be notified.`)) {
@@ -26,10 +42,12 @@ export default function EmailTesting() {
     try {
       setStatus({ type: 'success', message: await action() });
     } catch (err) {
-      const message =
-        err instanceof HTTPError && err.status === 403
-          ? 'Email testing is not available in production.'
-          : `Error running ${job === 'monitoring' ? 'monitoring deliveries' : `${job} digests`}.`;
+      let message = `Error running ${jobName(job)}.`;
+      if (err instanceof HTTPError && err.status === 403) {
+        message = 'Email testing is not available in production.';
+      } else if (job === 'simulate' && err instanceof HTTPError && err.status === 404) {
+        message = `No active grant found in region ${simulateRegion}.`;
+      }
       setStatus({ type: 'error', message });
     } finally {
       setRunning(null);
@@ -49,6 +67,16 @@ export default function EmailTesting() {
       async () => {
         const { detected, inApp, emails } = await runMonitoringDeliveries();
         return `Found ${plural(detected, 'monitoring delivery', 'monitoring deliveries')}. Created ${plural(inApp, 'in-app notification')} and queued ${plural(emails, 'email')}.`;
+      }
+    );
+
+  const runSimulate = () =>
+    run(
+      'simulate',
+      `Create a simulated monitoring review in region ${simulateRegion} and send its notifications?`,
+      async () => {
+        const { recipientName, inApp, emails } = await simulateMonitoringReview(simulateRegion);
+        return `Simulated a monitoring review for ${recipientName} in region ${simulateRegion}. Created ${plural(inApp, 'in-app notification')} and queued ${plural(emails, 'email')}.`;
       }
     );
 
@@ -87,6 +115,35 @@ export default function EmailTesting() {
         {running === 'monitoring'
           ? 'Running monitoring deliveries...'
           : 'Run monitoring deliveries'}
+      </Button>
+      <h3>Simulate monitoring review</h3>
+      <p className="usa-prose">
+        Creates a monitoring review delivered today for an active grant in the region, then sends
+        its notifications. Users with a TTAC, ECM or GSM role in that home region are notified, and
+        the review is included in the next monitoring digest. The review is named "SIMULATED - email
+        testing" and is removed by the next monitoring data refresh. For testing purposes only. Do
+        not run in production.
+      </p>
+      <Label htmlFor="simulate-region">Region</Label>
+      <Select
+        id="simulate-region"
+        name="simulate-region"
+        value={simulateRegion}
+        onChange={(e) => setSimulateRegion(Number(e.target.value))}
+      >
+        {REGIONS.map((region) => (
+          <option key={region} value={region}>
+            Region {region}
+          </option>
+        ))}
+      </Select>
+      <Button
+        type="button"
+        className="margin-y-2"
+        disabled={running !== null}
+        onClick={runSimulate}
+      >
+        {running === 'simulate' ? 'Simulating monitoring review...' : 'Simulate monitoring review'}
       </Button>
       {/* kept mounted so screen readers announce the result when it appears */}
       <div role="status" aria-live="polite" aria-atomic="true">

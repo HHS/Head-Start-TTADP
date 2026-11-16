@@ -84,6 +84,13 @@ export const runMonitoringDeliveries = async () => {
   return result.json();
 };
 
+export const simulateMonitoringReview = async (regionId) => {
+  const result = await post(
+    join('/', 'api', 'admin', 'email-testing', 'simulate-monitoring-review', String(regionId))
+  );
+  return result.json();
+};
+
 export const deleteNationalCenter = async (id) => {
   const result = await destroy(join('/', 'api', 'admin', 'national-center', String(id)));
   return result.json();

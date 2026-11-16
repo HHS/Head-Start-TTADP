@@ -16,7 +16,14 @@ import {
 import { createNotification } from './notifications';
 import { usersWithSetting } from './userSettings';
 
-const { MonitoringReportDelivery } = db;
+const {
+  DeliveredReview,
+  Grant,
+  GrantDeliveredReview,
+  MonitoringReportDelivery,
+  Recipient,
+  sequelize,
+} = db;
 
 type MonitoringDataReceivedMetadata = NotificationMetadata & {
   recipientId: number;
@@ -254,4 +261,103 @@ export async function notifyRecentMonitoringDeliveries(
 
   logger.info(`Recent monitoring delivery notifications: ${JSON.stringify(summary)}`);
   return summary;
+}
+
+export const SIMULATED_REVIEW_NAME = 'SIMULATED - email testing';
+
+export type SimulatedMonitoringReview = MonitoringDeliveryNotificationSummary & {
+  mrid: number;
+  recipientName: string;
+  regionId: number;
+};
+
+/**
+ * Creates a fake monitoring review delivered today for the first active grant in the region,
+ * then sends its delivery notifications (in-app and immediate email) and records it for the
+ * monitoring digest, as if the daily refresh had found it. Used by the admin email testing page
+ * in non-production environments only.
+ *
+ * The review gets a negative mrid, so it can never match a real one, and is named
+ * `SIMULATED_REVIEW_NAME`. The next `updateMonitoringFactTables()` soft-deletes it because its
+ * mrid is not in the source data.
+ * @param {number} regionId The region to simulate a delivery in.
+ * @returns {Promise<SimulatedMonitoringReview | null>} The review and notification counts, or
+ * null when the region has no active grant with a recipient.
+ */
+export async function simulateMonitoringReview(
+  regionId: number,
+  now: Date = new Date()
+): Promise<SimulatedMonitoringReview | null> {
+  const grant = (await Grant.findOne({
+    attributes: ['id', 'regionId', 'recipientId'],
+    where: { regionId, status: 'Active' },
+    include: [{ model: Recipient, as: 'recipient', attributes: ['id', 'name'], required: true }],
+    order: [['id', 'ASC']],
+  })) as {
+    id: number;
+    regionId: number;
+    recipientId: number;
+    recipient: { id: number; name: string };
+  } | null;
+  if (!grant) {
+    return null;
+  }
+
+  const reportDeliveryDate = now.toISOString().slice(0, 10);
+  const review = await sequelize.transaction(async (transaction) => {
+    // real mrids are positive; soft-deleted rows still hold their mrid
+    const lowest = (await DeliveredReview.min('mrid', { paranoid: false, transaction })) as
+      | number
+      | null;
+    const mrid = Math.min(Number(lowest ?? 0), 0) - 1;
+    const created = await DeliveredReview.create(
+      {
+        mrid,
+        review_name: SIMULATED_REVIEW_NAME,
+        review_status: 'Complete',
+        report_delivery_date: reportDeliveryDate,
+      },
+      { transaction }
+    );
+    await GrantDeliveredReview.create(
+      {
+        grantId: grant.id,
+        deliveredReviewId: created.id,
+        recipient_id: grant.recipientId,
+        recipient_name: grant.recipient.name,
+        region_id: grant.regionId,
+      },
+      { transaction }
+    );
+    return created;
+  });
+
+  const delivery: NewMonitoringDelivery = {
+    deliveredReviewId: review.id,
+    mrid: review.mrid,
+    reportDeliveryDate,
+    recipientId: grant.recipientId,
+    recipientName: grant.recipient.name,
+    regionId: grant.regionId,
+    grantIds: [grant.id],
+  };
+  const recorded = await recordMonitoringDeliveries([delivery]);
+  const summary: MonitoringDeliveryNotificationSummary = {
+    detected: 1,
+    recorded: recorded.filter(({ created }) => created).length,
+    inApp: 0,
+    emails: 0,
+  };
+  const notified = await sendMonitoringDeliveryNotifications(recorded, summary);
+  await markMonitoringDeliveriesNotified(notified);
+
+  logger.info(
+    `Simulated monitoring review ${review.mrid} for recipient ${grant.recipientId} in region ${grant.regionId}: ${JSON.stringify(summary)}`
+  );
+  return {
+    ...summary,
+    mrid: review.mrid,
+    recipientName: grant.recipient.name,
+    regionId: grant.regionId,
+  };
 }

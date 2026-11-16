@@ -8,6 +8,8 @@ import EmailTesting from '../EmailTesting';
 
 const digestUrl = (freq) => join('/', 'api', 'admin', 'email-testing', 'digests', freq);
 const monitoringUrl = join('/', 'api', 'admin', 'email-testing', 'monitoring-deliveries');
+const simulateUrl = (region) =>
+  join('/', 'api', 'admin', 'email-testing', 'simulate-monitoring-review', String(region));
 
 describe('EmailTesting', () => {
   const oldWindowConfirm = window.confirm;
@@ -82,6 +84,51 @@ describe('EmailTesting', () => {
 
     expect(
       await screen.findByText('Email testing is not available in production.')
+    ).toBeInTheDocument();
+  });
+
+  it('simulates a monitoring review in the chosen region', async () => {
+    fetchMock.post(simulateUrl(4), {
+      mrid: -1,
+      recipientName: 'Recipient A',
+      regionId: 4,
+      detected: 1,
+      recorded: 1,
+      inApp: 2,
+      emails: 1,
+    });
+    render(<EmailTesting />);
+
+    await userEvent.selectOptions(screen.getByLabelText('Region'), '4');
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate monitoring review' }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Create a simulated monitoring review in region 4 and send its notifications? Real users will be notified.'
+    );
+    expect(
+      await screen.findByText(
+        'Simulated a monitoring review for Recipient A in region 4. Created 2 in-app notifications and queued 1 email.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('explains when the region has no active grant to simulate with', async () => {
+    fetchMock.post(simulateUrl(1), 404);
+    render(<EmailTesting />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate monitoring review' }));
+
+    expect(await screen.findByText('No active grant found in region 1.')).toBeInTheDocument();
+  });
+
+  it('shows an error when the simulation fails', async () => {
+    fetchMock.post(simulateUrl(1), 500);
+    render(<EmailTesting />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Simulate monitoring review' }));
+
+    expect(
+      await screen.findByText('Error running monitoring review simulation.')
     ).toBeInTheDocument();
   });
 });
