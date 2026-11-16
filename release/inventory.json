@@ -515,15 +515,15 @@
       "tier": "reconciled",
       "locator": {
         "type": "cloudFoundryBuildpack",
-        "value": "1.9.6",
+        "value": "1.9.7",
         "pinned": true
       },
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "manifest.yml",
-        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.6, the released v1.9.6 tag, which currently resolves to commit 1819bb83c6678b4c6f786f44664318c39bbd4aa5. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
+        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.7, the released v1.9.7 tag, which currently resolves to commit 45ebdfb58bb0cc91883d9a9edef1e27e6e129d82. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
       },
-      "notes": "Pinned by TTAHUB-5732 to a released tag (now v1.9.6, the first release shipping the Node 24.22.1 build that matches package.json engines). The nightly automation app (automation/configs/process.yml) is pinned to the same tag. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
+      "notes": "Pinned by TTAHUB-5732 to a released tag (now v1.9.7, which ships the Node 24.22.1 build that matches package.json engines; bumped from v1.9.6 by TTAHUB-2958 after the cloud.gov buildpack security update notice). The nightly automation app (automation/configs/process.yml) is pinned to the same tag. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
     },
     {
       "id": "platform.nodeVersion",
@@ -572,7 +572,7 @@
         "type": "repositoryFile",
         "value": "manifest.yml"
       },
-      "sha256": "2d48d5c57aef40c78f7a25a6d4756a65d26668daade0c2ac739bb16030219354",
+      "sha256": "1dc4c26437fefd4d75be5f3e1a214ad388bbad3be331c51d4e2cea07a10df123",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
