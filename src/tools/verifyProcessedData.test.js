@@ -9,12 +9,17 @@ jest.mock('./processData', () => ({
   KEPT_AUDIT_TABLES: ['ZALDDL'],
 }));
 
+// Sequelize's Postgres dialect returns rows of this query as arrays of values, whatever the type
+const SEQUELIZE_TABLE_NAME_SQL = 'SELECT table_name FROM information_schema.tables';
+
 // Answer each query by what it selects, in the order verifyProcessedData asks
 const mockQueries = ({ unanonymizedUsers = 0, auditTables = {}, requestErrors = 0 }) => {
   sequelize.query.mockImplementation(async (sql) => {
     if (sql.includes('FROM "Users"')) return [{ count: unanonymizedUsers }];
     if (sql.includes('information_schema.tables')) {
-      return Object.keys(auditTables).map((name) => ({ table_name: name }));
+      const names = Object.keys(auditTables);
+      if (sql.trim().startsWith(SEQUELIZE_TABLE_NAME_SQL)) return names.map((name) => [name]);
+      return names.map((name) => ({ tableName: name }));
     }
     const existsMatch = sql.match(/FROM "(ZAL\w+)"/);
     if (existsMatch) return [{ hasRows: auditTables[existsMatch[1]] }];
