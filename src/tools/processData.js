@@ -16,11 +16,22 @@ import {
 } from '../models';
 
 // Define constants representing different permission scopes that can be assigned to users
-const { SITE_ACCESS, ADMIN, READ_WRITE_REPORTS, READ_REPORTS, APPROVE_REPORTS } = SCOPES;
+const {
+  SITE_ACCESS,
+  ADMIN,
+  READ_WRITE_REPORTS,
+  READ_REPORTS,
+  APPROVE_REPORTS,
+  APPROVE_TTA_REQUESTS,
+} = SCOPES;
 
 const REGIONS = Array.from({ length: 12 }, (_, index) => index + 1);
 const ALL_SCOPE_IDS = Object.values(SCOPES);
-const ALL_SCOPE_IDS_EXCEPT_ADMIN = ALL_SCOPE_IDS.filter((scopeId) => scopeId !== ADMIN);
+// APPROVE_TTA_REQUESTS is left out: each region allows only one primary approver (enforced by a
+// unique index), so granting it here would collide with real approvers in the restored data.
+const ALL_SCOPE_IDS_EXCEPT_ADMIN = ALL_SCOPE_IDS.filter(
+  (scopeId) => scopeId !== ADMIN && scopeId !== APPROVE_TTA_REQUESTS
+);
 
 /**
  * The processData script is responsible for anonymizing sensitive user data, including names,
