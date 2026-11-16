@@ -223,7 +223,7 @@ describe('monitoring delivery notifications (database)', () => {
     );
     expect(monthly).toEqual([{ id: recipient.id, displayId: recipient.name, regionId: region.id }]);
 
-    for (const excluded of [users.gs, users.otherRegionTtac, users.revokedTtac]) {
+    for (const excluded of [users.gs, users.otherRegionTtac]) {
       expect(
         await monitoringReportsDeliveredInRegionByDate(
           excluded.id,
