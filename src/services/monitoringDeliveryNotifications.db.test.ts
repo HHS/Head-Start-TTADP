@@ -7,10 +7,7 @@ import {
   monitoringReportsDeliveredInRegionByDate,
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
-import {
-  ACTIONABLE_NOTIFICATIONS_FLAG,
-  notifyNewMonitoringDeliveries,
-} from './monitoringDeliveryNotifications';
+import { notifyNewMonitoringDeliveries } from './monitoringDeliveryNotifications';
 
 const {
   DeliveredReview,
@@ -72,21 +69,20 @@ describe('monitoring delivery notifications (database)', () => {
       createGrant({ regionId: region.id, recipientId: twinRecipient.id }),
     ]);
 
-    const flags = [ACTIONABLE_NOTIFICATIONS_FLAG];
-    const [ttac, ecm, gsm, gs, otherRegionTtac, noFlagTtac, revokedTtac] = await Promise.all([
-      createUser({ homeRegionId: region.id, flags }),
-      createUser({ homeRegionId: region.id, flags }),
-      createUser({ homeRegionId: region.id, flags }),
-      createUser({ homeRegionId: region.id, flags }),
-      createUser({ homeRegionId: otherRegion.id, flags }),
+    // no feature flags: monitoring notifications are not behind one
+    const [ttac, ecm, gsm, gs, otherRegionTtac, revokedTtac] = await Promise.all([
       createUser({ homeRegionId: region.id, flags: [] }),
-      createUser({ homeRegionId: region.id, flags }),
+      createUser({ homeRegionId: region.id, flags: [] }),
+      createUser({ homeRegionId: region.id, flags: [] }),
+      createUser({ homeRegionId: region.id, flags: [] }),
+      createUser({ homeRegionId: otherRegion.id, flags: [] }),
+      createUser({ homeRegionId: region.id, flags: [] }),
     ]);
-    Object.assign(users, { ttac, ecm, gsm, gs, otherRegionTtac, noFlagTtac, revokedTtac });
+    Object.assign(users, { ttac, ecm, gsm, gs, otherRegionTtac, revokedTtac });
 
     // everyone but revokedTtac has Hub access; revokedTtac keeps a read permission
     await Permission.bulkCreate([
-      ...[ttac, ecm, gsm, gs, otherRegionTtac, noFlagTtac].map(({ id }) => ({
+      ...[ttac, ecm, gsm, gs, otherRegionTtac].map(({ id }) => ({
         userId: id,
         scopeId: SCOPES.SITE_ACCESS,
         regionId: region.id,
@@ -102,7 +98,6 @@ describe('monitoring delivery notifications (database)', () => {
       addRole(gsm.id, 'GSM'),
       addRole(gs.id, 'GS'),
       addRole(otherRegionTtac.id, 'TTAC'),
-      addRole(noFlagTtac.id, 'TTAC'),
       addRole(revokedTtac.id, 'TTAC'),
     ]);
 
@@ -139,38 +134,11 @@ describe('monitoring delivery notifications (database)', () => {
   });
 
   it('targets only TTAC/ECM/GSM users with Hub access whose home region matches', async () => {
-    const byRegion = await findMonitoringNotificationUsersByRegion(
-      [region.id],
-      ACTIONABLE_NOTIFICATIONS_FLAG
-    );
+    const byRegion = await findMonitoringNotificationUsersByRegion([region.id]);
     const ids = (byRegion.get(region.id) ?? []).map(({ id }) => id).sort();
 
     expect(ids).toEqual([users.ttac.id, users.ecm.id, users.gsm.id].sort());
     expect(byRegion.has(otherRegion.id)).toBe(false);
-  });
-
-  it('targets admins with Hub access even without the feature flag', async () => {
-    const admin = await createUser({ homeRegionId: region.id, flags: [] });
-    try {
-      await Permission.bulkCreate([
-        { userId: admin.id, scopeId: SCOPES.SITE_ACCESS, regionId: region.id },
-        { userId: admin.id, scopeId: SCOPES.ADMIN, regionId: region.id },
-      ]);
-      await addRole(admin.id, 'TTAC');
-
-      const byRegion = await findMonitoringNotificationUsersByRegion(
-        [region.id],
-        ACTIONABLE_NOTIFICATIONS_FLAG
-      );
-      const ids = (byRegion.get(region.id) ?? []).map(({ id }) => id);
-
-      expect(ids).toContain(admin.id);
-      expect(ids).not.toContain(users.noFlagTtac.id);
-    } finally {
-      await UserRole.destroy({ where: { userId: admin.id } });
-      await Permission.destroy({ where: { userId: admin.id } });
-      await User.destroy({ where: { id: admin.id } });
-    }
   });
 
   it('notifies about a newly delivered review once, ignoring already-delivered ones', async () => {
@@ -242,20 +210,26 @@ describe('monitoring delivery notifications (database)', () => {
 
     const daily = await monitoringReportsDeliveredInRegionByDate(
       users.ttac.id,
-      "NOW() - INTERVAL '1 DAY'"
+      "NOW() - INTERVAL '1 DAY'",
+      'today'
     );
     expect(daily).toEqual([{ id: recipient.id, displayId: recipient.name, regionId: region.id }]);
 
     // both deliveries are in the monthly window but the recipient is listed once
     const monthly = await monitoringReportsDeliveredInRegionByDate(
       users.ttac.id,
-      "NOW() - INTERVAL '1 MONTH'"
+      "NOW() - INTERVAL '1 MONTH'",
+      'this month'
     );
     expect(monthly).toEqual([{ id: recipient.id, displayId: recipient.name, regionId: region.id }]);
 
-    for (const excluded of [users.gs, users.otherRegionTtac, users.noFlagTtac]) {
+    for (const excluded of [users.gs, users.otherRegionTtac, users.revokedTtac]) {
       expect(
-        await monitoringReportsDeliveredInRegionByDate(excluded.id, "NOW() - INTERVAL '1 MONTH'")
+        await monitoringReportsDeliveredInRegionByDate(
+          excluded.id,
+          "NOW() - INTERVAL '1 MONTH'",
+          'this month'
+        )
       ).toEqual([]);
     }
   });

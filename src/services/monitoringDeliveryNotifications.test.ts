@@ -14,7 +14,6 @@ import {
   snapshotDeliveredReviewMrids,
 } from './monitoringDeliveries';
 import {
-  ACTIONABLE_NOTIFICATIONS_FLAG,
   createMonitoringDataReceivedNotifications,
   notifyNewMonitoringDeliveries,
   notifyRecentMonitoringDeliveries,
@@ -25,7 +24,6 @@ import { createNotification } from './notifications';
 import { usersWithSetting } from './userSettings';
 
 jest.mock('./monitoringDeliveries', () => ({
-  ACTIONABLE_NOTIFICATIONS_FLAG: 'actionable_notifications',
   findNewlyDeliveredReviews: jest.fn(),
   findMonitoringNotificationUsersByRegion: jest.fn(),
   findPendingMonitoringDeliveries: jest.fn(),
@@ -183,7 +181,7 @@ describe('monitoringDeliveryNotifications', () => {
       expect(mockFindPending).not.toHaveBeenCalled();
     });
 
-    it('notifies flagged users in each pending delivery’s home region only', async () => {
+    it('notifies users in each pending delivery’s home region only', async () => {
       mockFindNew.mockResolvedValue([deliveryA, deliveryB]);
       mockFindPending.mockResolvedValue([pendingA, pendingB]);
       mockFindUsers.mockResolvedValue(
@@ -195,7 +193,7 @@ describe('monitoringDeliveryNotifications', () => {
 
       const summary = await notifyNewMonitoringDeliveries(new Set([99]));
 
-      expect(mockFindUsers).toHaveBeenCalledWith([1, 2], ACTIONABLE_NOTIFICATIONS_FLAG);
+      expect(mockFindUsers).toHaveBeenCalledWith([1, 2]);
       const calls = mockCreateNotification.mock.calls.map(([userId, entityId, , { metadata }]) => [
         userId,
         entityId,

@@ -4,7 +4,6 @@ import { monitoringDetailsAddedNotification } from '../lib/mailer';
 import { auditLogger, logger } from '../logger';
 import db from '../models';
 import {
-  ACTIONABLE_NOTIFICATIONS_FLAG,
   findMonitoringNotificationUsersByRegion,
   findNewlyDeliveredReviews,
   findPendingMonitoringDeliveries,
@@ -18,8 +17,6 @@ import { createNotification } from './notifications';
 import { usersWithSetting } from './userSettings';
 
 const { MonitoringReportDelivery } = db;
-
-export { ACTIONABLE_NOTIFICATIONS_FLAG };
 
 type MonitoringDataReceivedMetadata = NotificationMetadata & {
   recipientId: number;
@@ -138,8 +135,7 @@ async function sendMonitoringDeliveryNotifications(
   }
 
   const usersByRegion = await findMonitoringNotificationUsersByRegion(
-    deliveries.map(({ regionId }) => regionId),
-    ACTIONABLE_NOTIFICATIONS_FLAG
+    deliveries.map(({ regionId }) => regionId)
   );
 
   // one settings lookup covers every region

@@ -57,7 +57,8 @@ const runUpdateJob = async () => {
 };
 
 /**
- * Queues every digest email for the given frequency. Throws on failure.
+ * Queues every digest email for the given frequency. Each digest runs even if an earlier one
+ * fails; once all have run, the first failure is thrown.
  * Used by the scheduled cron jobs and by the admin "run digests" endpoint.
  *
  * @param {'DAILY'|'WEEKLY'|'MONTHLY'} freqKey
@@ -68,15 +69,31 @@ export const sendEmailDigests = async (freqKey, { includeTrainingReport = false 
   const freq = EMAIL_DIGEST_FREQ[freqKey];
   const subjectFreq = DIGEST_SUBJECT_FREQ[freqKey];
   let queued = 0;
+  const errors = [];
+  const run = async (label, digest) => {
+    try {
+      const records = await digest();
+      queued += records?.length ?? 0;
+    } catch (error) {
+      errors.push(error);
+      logCronError(`Error sending ${freqKey} ${label}`, `${label} Error`, error);
+    }
+  };
+
   for (const config of Object.values(DIGEST_CONFIG)) {
     // eslint-disable-next-line no-await-in-loop
-    const records = await digestForSetting({ ...config, freq, subjectFreq });
-    queued += records?.length ?? 0;
+    await run(config.logKey, () => digestForSetting({ ...config, freq, subjectFreq }));
   }
-  const recipientRecords = await recipientApprovedDigest(freq, subjectFreq);
-  queued += recipientRecords?.length ?? 0;
+  await run('RecipientApprovedDigest', () => recipientApprovedDigest(freq, subjectFreq));
   if (includeTrainingReport && process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true') {
-    await trainingReportTaskDueNotifications(freq);
+    await run('TrainingReportTaskDueNotifications', async () => {
+      await trainingReportTaskDueNotifications(freq);
+      return [];
+    });
+  }
+
+  if (errors.length) {
+    throw errors[0];
   }
   return queued;
 };

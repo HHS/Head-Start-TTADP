@@ -1117,7 +1117,7 @@ export async function digestForSetting({
     }
     const users = await usersWithSetting(settingKey, [freq]);
     const records = users.map(async (user) => {
-      const reports = await reportFetcher(user.id, date);
+      const reports = await reportFetcher(user.id, date, freq);
       if (skipEmpty && !reports.length) {
         return null;
       }

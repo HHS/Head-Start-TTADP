@@ -197,7 +197,8 @@ describe('monitoring details added email (TTAHUB-6004)', () => {
       ]);
       expect(monitoringReportsDeliveredInRegionByDate).toHaveBeenCalledWith(
         digestUser.id,
-        "NOW() - INTERVAL '1 WEEK'"
+        "NOW() - INTERVAL '1 WEEK'",
+        EMAIL_DIGEST_FREQ.WEEKLY
       );
       expect(addSpy).toHaveBeenCalledTimes(1);
       expect(addSpy).toHaveBeenCalledWith(
