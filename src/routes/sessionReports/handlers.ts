@@ -241,20 +241,33 @@ export const updateHandler = async (req: Request, res: Response) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
     }
 
-    const { eventId } = req.body;
-    if (eventId === undefined) {
+    // Both IDs below are event display (Smartsheet) IDs, e.g. "R01-PD-23-1037":
+    // findSessionById exposes the saved event's display ID as `eventId`.
+    const { eventId: requestEventDisplayId } = req.body;
+    if (requestEventDisplayId === undefined) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
     }
 
-    // Authorization is through the associated event
-    const event = await findEventBySmartsheetId(eventId);
+    // Authorization is through the session's saved event, never the client-supplied one.
     const session = await findSessionById(Number(id));
+    const sessionEventDisplayId = session ? String(session.eventId) : null;
+    if (sessionEventDisplayId !== null && String(requestEventDisplayId) !== sessionEventDisplayId) {
+      return res
+        .status(httpCodes.FORBIDDEN)
+        .send({ message: 'Event ID does not match the session report' });
+    }
+
+    const event = await findEventBySmartsheetId(
+      sessionEventDisplayId ?? String(requestEventDisplayId)
+    );
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
     const eventAuth = await getEventAuthorization(req, res, event, session);
 
-    if (!eventAuth.canEditSession()) {
+    // With no existing session, updateSession creates one, so require create permission.
+    const authorized = session ? eventAuth.canEditSession() : eventAuth.canCreateSession();
+    if (!authorized) {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
