@@ -376,7 +376,7 @@ describe('monitoringDeliveryNotifications', () => {
       minSpy = jest.spyOn(db.DeliveredReview, 'min').mockResolvedValue(null as never);
       createReviewSpy = jest
         .spyOn(db.DeliveredReview, 'create')
-        .mockImplementation(async (values) => ({ id: 77, ...values }) as never);
+        .mockImplementation(async (values) => ({ id: 77, ...(values as object) }) as never);
       createLinkSpy = jest.spyOn(db.GrantDeliveredReview, 'create').mockResolvedValue({} as never);
       jest
         .spyOn(db.sequelize, 'transaction')
