@@ -101,7 +101,7 @@ Figma instances. No mappings are published by `yarn figma:parse`.
 Publishing writes the mappings to the Figma file. It is handled by the
 `Publish Figma Code Connect` GitHub Actions workflow
 (`.github/workflows/figma-code-connect.yml`), which runs:
-- on push to `main` when `frontend/src/codeConnect/**` or
+- on push to `main` when `frontend/src/codeConnect/**` (except this README) or
   `frontend/figma.config.json` changes, and
 - on manual dispatch (Actions tab → "Publish Figma Code Connect" → "Run workflow").
 
@@ -111,8 +111,10 @@ silently skipped.
 
 ### Token setup
 
-The workflow reads the `FIGMA_ACCESS_TOKEN` repository secret. **Never commit a
-token.** Either token type below works; switching between them only requires
+The workflow reads two repository secrets: `FIGMA_ACCESS_TOKEN` (below) and
+`FONTAWESOME_NPM_AUTH_TOKEN`, which `frontend/.npmrc` needs to install the Font
+Awesome Pro packages (same value as the CircleCI/cloud.gov variable). **Never
+commit a token.** Either token type below works; switching between them only requires
 replacing the secret's value.
 
 Preferred — **plan access token** (not tied to a person; Organization/Enterprise
@@ -141,4 +143,4 @@ token, revoke the personal token in Figma afterward.
 
 Rarely needed; prefer the manual workflow run.
 1. `export FIGMA_ACCESS_TOKEN=<token>`
-2. `yarn figma:publish`
+2. `yarn figma:publish --exit-on-unreadable-files --skip-update-check`

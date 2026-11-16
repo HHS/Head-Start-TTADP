@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'frontend/src/codeConnect/**'
+      - '!frontend/src/codeConnect/README.md'
       - 'frontend/figma.config.json'
   workflow_dispatch:
 
@@ -18,6 +19,10 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # frontend/.npmrc pulls Font Awesome Pro packages and is read by every yarn call.
+    env:
+      FONTAWESOME_NPM_AUTH_TOKEN: ${{ secrets.FONTAWESOME_NPM_AUTH_TOKEN }}
     defaults:
       run:
         working-directory: frontend
@@ -28,7 +33,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: .nvmrc # repo root; uses: steps ignore working-directory
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
 
