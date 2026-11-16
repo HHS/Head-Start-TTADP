@@ -531,8 +531,8 @@ group and run through the `tta-automation` cloud.gov app in the prod space:
    `verifyProcessedData` runs at the end of that transaction, before it commits. It checks, using counts only, that no
    user email was left unreplaced, no audit (`ZAL`) table still has rows, and `RequestErrors` is empty; any non-zero
    count fails the job. Any failure, including a failed verification, rolls back to the raw restored data rather than
-   leaving it half processed, so the second attempt starts from the same data. Processing is attempted twice before the
-   job fails.
+   leaving it half processed. Processing is attempted once: it takes about 40 minutes, so a retry could not finish
+   inside the job's 60-minute limit. The job output shows the counts line and, on failure, the error name.
 4. `backup_temp_db` backs up `ttahub-process` under the `processed` prefix. `processed-latest-backup.txt` is only updated
    after the upload succeeds.
 5. `restore (<env>)` restores the latest `processed` backup into each lower environment and waits for `yarn db:migrate:prod`.
