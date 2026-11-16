@@ -520,6 +520,31 @@ describe('ViewTtaRequest', () => {
     await waitFor(() => expect(screen.queryByText('Select at least one staff member')).toBeNull());
   });
 
+  it('sends the request back for changes after a failed attempt to send it to the COR', async () => {
+    mockReviewerFetches();
+    fetchMock.put(REVIEW_URL, { ...SUBMITTED_REQUEST, status: 'needs_action' });
+    renderView({}, REVIEWER);
+
+    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText('Select at least one staff member')).toBeVisible();
+    expect(screen.getByText('Select an approving COR')).toBeVisible();
+    expect(fetchMock.called(REVIEW_URL)).toBe(false);
+
+    // the hidden COR's error must not block sending it back instead
+    userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
+    await waitFor(() => expect(screen.queryByLabelText(/approving cor/i)).toBeNull());
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(fetchMock.called(REVIEW_URL)).toBe(true));
+    expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body)).toEqual({
+      status: 'needs_action',
+      note: '',
+      assignedStaffIds: [],
+    });
+  });
+
   it('sends the request back for changes without assigned staff', async () => {
     mockReviewerFetches();
     fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);

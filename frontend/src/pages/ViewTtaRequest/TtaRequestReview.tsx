@@ -140,15 +140,29 @@ export default function TtaRequestReview({
       note: '',
     },
   });
-  const { register, handleSubmit, control, watch, getValues, setValue, errors, trigger } =
-    hookForm;
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    getValues,
+    setValue,
+    errors,
+    trigger,
+    clearErrors,
+  } = hookForm;
   const sendingToCor = watch('status') === APPROVER_STATUSES.APPROVED;
 
   // whether staff must be assigned follows the review status, so an error shown for the
-  // last status is checked again against the new one
+  // last status is checked again against the new one. The COR is only asked for when sending
+  // the request on, and its hidden field keeps its error, which would block the submission
+  // unseen, so that error goes when the status changes away from it
   const staffError = !!errors.assignedStaff;
   // biome-ignore lint/correctness/useExhaustiveDependencies: only a change of status calls for checking the staff again
   useEffect(() => {
+    if (!sendingToCor) {
+      clearErrors('approver');
+    }
     if (staffError) {
       trigger('assignedStaff');
     }
