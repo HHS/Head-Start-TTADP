@@ -11,6 +11,7 @@ import {
 } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
+  countEventHelperBlob,
   createEvent,
   destroyEvent,
   filterEventSessions,
@@ -35,6 +36,12 @@ export const getEventAuthorization = async (req, res, report, session = null) =>
   return new EventReport(user, report, session);
 };
 
+// limit and offset come from the URL, so only accept whole, non-negative numbers
+const toPositiveInteger = (value) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+};
+
 export const getByStatus = async (req, res) => {
   try {
     const { status: statusParam } = req.params;
@@ -44,16 +51,23 @@ export const getByStatus = async (req, res) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    const events = await findEventHelperBlob({
+    const limit = toPositiveInteger(req.query.limit);
+    const offset = toPositiveInteger(req.query.offset);
+
+    const queryOptions = {
       key: 'status',
       value: status,
       regions: auth.readableRegions,
-      fallbackValue: null,
       allowNull: status === TRAINING_REPORT_STATUSES.NOT_STARTED,
       scopes,
-    });
+    };
 
-    return res.status(httpCodes.OK).send(events);
+    const [rows, count] = await Promise.all([
+      findEventHelperBlob({ ...queryOptions, fallbackValue: null, limit, offset }),
+      countEventHelperBlob(queryOptions),
+    ]);
+
+    return res.status(httpCodes.OK).send({ count, rows });
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }
@@ -70,7 +84,7 @@ export const getHandler = async (req, res) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Must provide a qualifier' });
     }
 
-    const { readOnly } = req.query;
+    const { readOnly, includeSessions } = req.query;
 
     // Check if user is a collaborator.
     const userId = await currentUserId(req, res);
@@ -80,7 +94,9 @@ export const getHandler = async (req, res) => {
     }
 
     if (eventId) {
-      event = await findEventBySmartsheetId(eventId, scopes);
+      event = await findEventBySmartsheetId(eventId, scopes, {
+        includeSessions: includeSessions !== 'false',
+      });
 
       if (event && event.data && event.data.status === 'Complete' && !readOnly) {
         return res

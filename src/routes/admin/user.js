@@ -1,14 +1,22 @@
 import express from 'express';
-import { Op } from 'sequelize';
+import httpCodes from 'http-codes';
+import { Op, UniqueConstraintError } from 'sequelize';
 import { FEATURE_FLAGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
 import { Permission, Role, sequelize, User, UserRole } from '../../models';
-import { userAttributes, userById } from '../../services/users';
+import {
+  primaryApproverConflicts,
+  regionsWithExclusiveScopeConflicts,
+  requireEmailVerification,
+  userAttributes,
+  userById,
+} from '../../services/users';
 import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'SERVICE:USER';
+const PRIMARY_TTA_APPROVER_INDEX = 'unique_primary_tta_approver_per_region';
 
 const logContext = {
   namespace,
@@ -162,6 +170,20 @@ export async function updateUser(req, res) {
   const { userId } = req.params;
 
   try {
+    const conflicts = regionsWithExclusiveScopeConflicts(requestUser.permissions);
+    if (conflicts.length) {
+      res.status(httpCodes.BAD_REQUEST).json({
+        message: `Mutually exclusive permissions are both set in region(s) ${conflicts.join(', ')}`,
+      });
+      return;
+    }
+
+    const approverConflicts = await primaryApproverConflicts(userId, requestUser.permissions);
+    if (approverConflicts.length) {
+      res.status(httpCodes.BAD_REQUEST).json({ message: approverConflicts.join('; ') });
+      return;
+    }
+
     await User.update(requestUser, {
       include: [
         { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
@@ -213,6 +235,21 @@ export async function updateUser(req, res) {
     const user = await userById(userId);
     res.json(user);
   } catch (error) {
+    if (
+      error instanceof UniqueConstraintError &&
+      (error.parent?.constraint === PRIMARY_TTA_APPROVER_INDEX ||
+        error.original?.constraint === PRIMARY_TTA_APPROVER_INDEX)
+    ) {
+      const regionId = error.fields?.regionId;
+      const message = regionId
+        ? `Region ${regionId} already has a primary COR approver`
+        : 'A primary COR approver already exists for one or more regions';
+      throw Object.assign(new Error(message), {
+        statusCode: httpCodes.BAD_REQUEST,
+        responseBody: { message },
+      });
+    }
+
     await handleErrors(req, res, error, logContext);
   }
 }
@@ -232,6 +269,28 @@ export async function deleteUser(req, res) {
 
       res.json(result);
     });
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * Clears a user's email verification so they must verify their email again.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function resetEmailVerification(req, res) {
+  const userId = parseInt(req.params.userId, 10);
+  if (Number.isNaN(userId)) {
+    res.sendStatus(httpCodes.BAD_REQUEST);
+    return;
+  }
+
+  try {
+    const count = await requireEmailVerification(userId);
+    auditLogger.warn(`User ${req.session.userId} required email verification for User: ${userId}`);
+    res.json({ count });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -280,6 +339,7 @@ router.get('/', transactionWrapper(getUsers));
 router.get('/creators/region/:regionId', transactionWrapper(getCreatorsByRegion));
 router.post('/', transactionWrapper(createUser));
 router.put('/:userId', transactionWrapper(updateUser));
+router.put('/:userId/require-email-verification', transactionWrapper(resetEmailVerification));
 router.delete('/:userId', transactionWrapper(deleteUser));
 
 export default router;

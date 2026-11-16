@@ -77,6 +77,9 @@ export async function saveObjectivesForReport(objectives, report) {
               where: {
                 // We are checking all objective id's but only one should link to the entity.
                 id: validIdsToCheck,
+                // Other entity objectives never belong to a goal. Without this, a null
+                // entity id would match grant backed objectives in any region.
+                goalId: null,
                 otherEntityId,
                 status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
               },
@@ -99,6 +102,7 @@ export async function saveObjectivesForReport(objectives, report) {
             existingObjective = await Objective.findOne({
               where: {
                 title: objective.title,
+                goalId: null,
                 otherEntityId,
                 status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
               },
@@ -119,9 +123,10 @@ export async function saveObjectivesForReport(objectives, report) {
           } else {
             // To prevent validation error exclude id.
             // In this case the user might have changed the title for objective.
-            const { id, ttaProvided, supportType, ...objProps } = objective;
+            const { id, ttaProvided, supportType, goalId, ...objProps } = objective;
             savedObjective = await Objective.create({
               ...objProps,
+              goalId: null,
               otherEntityId,
               createdVia: 'activityReport',
             });

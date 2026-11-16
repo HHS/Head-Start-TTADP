@@ -74,4 +74,91 @@ describe('UserPermissions', () => {
       });
     });
   });
+
+  describe('with a primary TTA request approver in a region', () => {
+    const MESSAGE = 'Region 3 already has a primary COR approver: Monica Geller';
+    let onRegionalPermissionChange;
+
+    const regionalCheckbox = (name) =>
+      within(screen.getByRole('group', { name: 'Regional Permissions' })).getByRole('checkbox', {
+        name: new RegExp(`^${name}`),
+      });
+
+    beforeEach(() => {
+      onRegionalPermissionChange = jest.fn();
+      render(
+        <UserPermissions
+          userId={1}
+          regionalPermissions={{}}
+          globalPermissions={{}}
+          onRegionalPermissionChange={onRegionalPermissionChange}
+          onGlobalPermissionChange={() => {}}
+          primaryApprovers={{ 3: 'Monica Geller', 5: 'Ross Geller' }}
+        />
+      );
+    });
+
+    it('refuses a second primary approver there, naming the first', () => {
+      userEvent.selectOptions(screen.getByLabelText('Region'), '3');
+      userEvent.click(regionalCheckbox('APPROVE_TTA_REQUESTS'));
+
+      expect(screen.getByText(MESSAGE)).toBeVisible();
+      expect(screen.getByText(MESSAGE)).toHaveClass('usa-error-message');
+      expect(regionalCheckbox('APPROVE_TTA_REQUESTS')).not.toBeChecked();
+      expect(onRegionalPermissionChange).not.toHaveBeenCalled();
+    });
+
+    it('shows the message just above the primary approver checkbox', () => {
+      userEvent.selectOptions(screen.getByLabelText('Region'), '3');
+      userEvent.click(regionalCheckbox('APPROVE_TTA_REQUESTS'));
+
+      const message = screen.getByText(MESSAGE);
+      expect(message.nextElementSibling).toContainElement(regionalCheckbox('APPROVE_TTA_REQUESTS'));
+    });
+
+    it('allows a backup approver there', () => {
+      userEvent.selectOptions(screen.getByLabelText('Region'), '3');
+      userEvent.click(regionalCheckbox('BACKUP_APPROVE_TTA_REQUESTS'));
+
+      expect(onRegionalPermissionChange).toHaveBeenCalled();
+      expect(screen.queryByText(MESSAGE)).toBeNull();
+    });
+
+    it('allows a primary approver in a region without one', () => {
+      userEvent.selectOptions(screen.getByLabelText('Region'), '4');
+      userEvent.click(regionalCheckbox('APPROVE_TTA_REQUESTS'));
+
+      expect(onRegionalPermissionChange).toHaveBeenCalled();
+      expect(screen.queryByText(/already has a primary COR approver/)).toBeNull();
+    });
+
+    it('names every region that has one when all regions are picked', () => {
+      userEvent.selectOptions(screen.getByLabelText('Region'), 'All');
+      userEvent.click(regionalCheckbox('APPROVE_TTA_REQUESTS'));
+
+      expect(screen.getByText(MESSAGE)).toBeVisible();
+      expect(
+        screen.getByText('Region 5 already has a primary COR approver: Ross Geller')
+      ).toBeVisible();
+      expect(onRegionalPermissionChange).not.toHaveBeenCalled();
+    });
+
+    it('clears the message when another region is picked', () => {
+      userEvent.selectOptions(screen.getByLabelText('Region'), '3');
+      userEvent.click(regionalCheckbox('APPROVE_TTA_REQUESTS'));
+      expect(screen.getByText(MESSAGE)).toBeVisible();
+
+      userEvent.selectOptions(screen.getByLabelText('Region'), '4');
+      expect(screen.queryByText(MESSAGE)).toBeNull();
+    });
+
+    it('clears the message once another permission is changed', () => {
+      userEvent.selectOptions(screen.getByLabelText('Region'), '3');
+      userEvent.click(regionalCheckbox('APPROVE_TTA_REQUESTS'));
+      expect(screen.getByText(MESSAGE)).toBeVisible();
+
+      userEvent.click(regionalCheckbox('REVIEW_TTA_REQUESTS'));
+      expect(screen.queryByText(MESSAGE)).toBeNull();
+    });
+  });
 });

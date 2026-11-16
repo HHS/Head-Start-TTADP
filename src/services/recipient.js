@@ -86,7 +86,7 @@ export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
  * @param {number} userId
  * @returns {Promise<Model>} recipient results
  */
-export async function recipientsByUserId(userId) {
+async function recipientsByUserIdForScope(userId, scopeId) {
   const user = await User.findOne({
     attributes: ['id'],
     where: {
@@ -105,7 +105,7 @@ export async function recipientsByUserId(userId) {
   }
 
   const regions = user.permissions
-    .filter((p) => p.scopeId === SCOPES.READ_WRITE_REPORTS)
+    .filter((p) => p.scopeId === scopeId)
     .map((p) => p.regionId);
 
   if (!regions.length) {
@@ -125,6 +125,14 @@ export async function recipientsByUserId(userId) {
       },
     ],
   });
+}
+
+export async function recipientsByUserId(userId) {
+  return recipientsByUserIdForScope(userId, SCOPES.READ_WRITE_REPORTS);
+}
+
+export async function recipientsByTtaRequestUserId(userId) {
+  return recipientsByUserIdForScope(userId, SCOPES.READ_WRITE_TTA_REQUESTS);
 }
 
 export async function allRecipients() {

@@ -1,4 +1,4 @@
-import { ensureArray, formatDate, uniqueStrings } from './utils';
+import { ensureArray, formatDate, parseStoredDate, uniqueStrings } from './utils';
 
 describe('utils', () => {
   describe('uniqueStrings', () => {
@@ -38,6 +38,28 @@ describe('utils', () => {
       expect(formatDate('2024-01-01')).toBe('01/01/2024');
     });
   });
+  describe('parseStoredDate', () => {
+    it('parses MM/DD/YYYY dates', () => {
+      expect(parseStoredDate('08/11/2026').format('YYYY-MM-DD')).toBe('2026-08-11');
+    });
+
+    it('parses ISO dates', () => {
+      expect(parseStoredDate('2026-08-11T00:00:00.000Z').isValid()).toBe(true);
+      expect(parseStoredDate('2026-08-11').format('YYYY-MM-DD')).toBe('2026-08-11');
+    });
+
+    it('parses Date objects', () => {
+      expect(parseStoredDate(new Date(2026, 7, 11)).format('YYYY-MM-DD')).toBe('2026-08-11');
+    });
+
+    it('returns an invalid moment for empty or unparseable values', () => {
+      expect(parseStoredDate('').isValid()).toBe(false);
+      expect(parseStoredDate(null).isValid()).toBe(false);
+      expect(parseStoredDate(undefined).isValid()).toBe(false);
+      expect(parseStoredDate('not a date').isValid()).toBe(false);
+    });
+  });
+
   describe('ensureArray', () => {
     it('returns the same array when input is an array', () => {
       const input = ['a', 'b', 'c'];

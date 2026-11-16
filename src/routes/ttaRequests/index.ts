@@ -9,6 +9,7 @@ import transactionWrapper from '../transactionWrapper';
 import {
   createTtaRequest,
   getTtaRequest,
+  getTtaRequestReviewers,
   getTtaRequests,
   getTtaRequestsByRecipient,
   saveTtaRequest,
@@ -36,6 +37,13 @@ router.get(
   checkRegionIdParam,
   checkRecipientIdParam,
   transactionWrapper(getTtaRequestsByRecipient)
+);
+
+// getTtaRequestReviewers
+router.get(
+  '/region/:regionId/reviewers',
+  checkRegionIdParam,
+  transactionWrapper(getTtaRequestReviewers)
 );
 
 // createTtaRequest

@@ -47,14 +47,12 @@ If you need internals, Yarn `docker:*` scripts are wrappers around Taskfile comm
 
 This repo uses [Biome](https://biomejs.dev/) for linting.
 Configuration is in [`biome.json`](../../biome.json)
-
 - Run lint on all files: `yarn lint`
 - Apply auto-fixes and auto-formatting: `yarn lint:fix`
 
 ### ShellCheck
 
 This repo uses [ShellCheck](https://www.shellcheck.net/) for tracked Bash scripts, including `.sh` files and extensionless files with a Bash shebang. Generated, vendor, and dependency paths are excluded. The project command fails on ShellCheck warnings and errors.
-
 - Install ShellCheck locally: `brew install shellcheck` on macOS, or use your package manager's `shellcheck` package.
 - Run Bash lint: `yarn lint:shell`
 
@@ -89,8 +87,15 @@ If a production finding cannot be fixed immediately, assess whether it is reacha
 
 Our CI will fail if code is committed that does not pass Biome linting. This repo includes a pre-commit hook in `.githooks/pre-commit`.
 
-If you are not using custom hooks:
+Besides running Biome on staged files, the hook runs two safety checks that CI also runs, so problems are caught before a commit or PR:
+- **Data file guard** (`tools/validate-data-file-guard.js --staged`): blocks staged HSES data extracts and staff email addresses in data files (`.csv`, `.xml`, `.tsv`).
+- **Secret-printing check** (`tools/checkSecretPrinting.js`): blocks scripts and the CircleCI config that print the environment or secret values, because CircleCI logs are public. It runs when files under `automation/`, `bin/` or the CircleCI config are staged. See [Secret-Printing Check](./circle-ci.md#secret-printing-check).
 
+The hook runs both checks last, after Biome has formatted and re-staged your files, and both read the git index (what will be committed), not the working tree. So an unstaged edit or an unstaged exception can't change the result, but an edit to a staged file is pulled into the index by the hook's re-staging and is checked. If a check blocks the commit, run `git restore --staged <file>` for the files it names.
+
+Neither check prints the offending text. The hook is a convenience: CI is the enforced check, and `git commit --no-verify` skips the hook but not CI.
+
+If you are not using custom hooks:
 1. `chmod 755 .githooks/pre-commit`
 2. `git config core.hooksPath .githooks`
 
@@ -99,7 +104,6 @@ If you are not using custom hooks:
 Make sure you have access to cloud.gov spaces and required credentials.
 
 On macOS:
-
 1. Install cloud foundry cli: `brew install cloudfoundry/tap/cf-cli@8`
 2. `cf login -a api.fr.cloud.gov --sso`
 3. `bash ./bin/latest_backup.sh`

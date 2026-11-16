@@ -1,22 +1,28 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import LandingMessage from '../../components/LandingMessage';
 import NewReportButton from '../../components/NewReportButton';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import FilterContext from '../../FilterContext';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
-import { expandFilters } from '../../utils';
+import { expandFilters, filtersToQueryString } from '../../utils';
 import { showFilterWithMyRegions } from '../regionHelpers';
 import CollabReports from './components/CollabReports';
 import { COLLAB_REPORT_FILTER_CONFIG } from './constants';
 import './index.scss';
 
 const FILTER_KEY = 'collab-landing-filters';
+const FILTER_QUERY_KEYS = ['collabReportAlerts', 'collabReportsTable'].map(
+  (tableKey) => `${FILTER_KEY}-${tableKey}-filter-query`
+);
 
-export const CollabReportsLanding = () => {
+const CollabReportsContent = () => {
   const { user } = useContext(UserContext);
+  const [resetPagination, setResetPagination] = useState(false);
+  const onFiltersChange = useCallback(() => setResetPagination(true), []);
   const {
     regions,
     defaultRegion,
@@ -32,9 +38,24 @@ export const CollabReportsLanding = () => {
     FILTER_KEY,
     true, // manage regions
     [],
-    COLLAB_REPORT_FILTER_CONFIG
+    COLLAB_REPORT_FILTER_CONFIG,
+    onFiltersChange
   );
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+
+  useEffect(() => {
+    const currentFilterQuery = filtersToQueryString(filtersToApply);
+    const filtersChanged = FILTER_QUERY_KEYS.some((key) => {
+      const previousFilterQuery = window.sessionStorage.getItem(key);
+      return previousFilterQuery !== null && previousFilterQuery !== currentFilterQuery;
+    });
+    if (filtersChanged) {
+      setResetPagination(true);
+    }
+    FILTER_QUERY_KEYS.forEach((key) => {
+      window.sessionStorage.setItem(key, currentFilterQuery);
+    });
+  }, [filtersToApply]);
 
   const regionLabel = `your region${defaultRegion === 14 || hasMultipleRegions ? 's' : ''}`;
   const inProgressCollabEmptyMsg = 'You have no Collaboration Reports in progress.';
@@ -79,14 +100,24 @@ export const CollabReportsLanding = () => {
         emptyMsg={inProgressCollabEmptyMsg}
         filters={filtersToApply}
         isAlerts
+        resetPagination={resetPagination}
+        setResetPagination={setResetPagination}
       />
       <CollabReports
         title="Approved Collaboration Reports"
         emptyMsg={approvedCollabEmptyMsg}
         filters={filtersToApply}
+        resetPagination={resetPagination}
+        setResetPagination={setResetPagination}
       />
     </div>
   );
 };
+
+export const CollabReportsLanding = () => (
+  <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+    <CollabReportsContent />
+  </FilterContext.Provider>
+);
 
 export default CollabReportsLanding;

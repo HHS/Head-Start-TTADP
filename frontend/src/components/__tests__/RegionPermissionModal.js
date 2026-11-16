@@ -39,12 +39,14 @@ const defaultFilters = [
 const PermissionModal = ({
   filters = defaultFilters,
   user = defaultUser,
+  accessibleRegions,
   showFilterWithMyRegions = () => {},
 }) => (
   <div>
     <RegionPermissionModal
       filters={filters}
       user={user}
+      accessibleRegions={accessibleRegions}
       showFilterWithMyRegions={showFilterWithMyRegions}
     />
   </div>
@@ -79,6 +81,22 @@ describe('Region Permission Modal', () => {
     // Check modal is visible.
     const modalElement = document.querySelector('.usa-modal-wrapper');
     expect(modalElement).toHaveClass('is-visible');
+  });
+
+  it('uses the supplied region access when checking filters', () => {
+    const filtersToPass = [
+      ...defaultFilters,
+      {
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: 1,
+      },
+    ];
+
+    render(<PermissionModal filters={filtersToPass} accessibleRegions={[2]} />);
+
+    expect(document.querySelector('.usa-modal-wrapper')).toHaveClass('is-visible');
   });
 
   it('correctly hides the modal', async () => {

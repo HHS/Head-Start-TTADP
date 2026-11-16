@@ -14,9 +14,15 @@ import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { trEventComplete } from '../lib/mailer';
+import runInSavepoint from '../lib/runInSavepoint';
+import { parseStoredDate } from '../lib/utils';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
+import {
+  archiveSessionNeedsActionNotifications,
+  createNotificationForNewPocs,
+} from './notifications/trainingReport';
 import type {
   CreateEventRequest,
   EventShape,
@@ -38,7 +44,7 @@ const {
 type WhereOptions = {
   id?: number;
   ownerId?: number;
-  pocIds?: number;
+  pocIds?: number[];
   collaboratorIds?: number[];
   regionId?: number;
 };
@@ -97,7 +103,7 @@ const injectSessionColumnDates = (session) => {
  *
  * @param {CreateEventRequest} request - The request data for creating the event.
  * @param {string} request.ownerId - The ID of the owner.
- * @param {string} request.pocIds - The ID of the point of contact.
+ * @param {number[]} request.pocIds - The IDs of the points of contact.
  * @param {string[]} request.collaboratorIds - An array of IDs of collaborators.
  * @param {string} request.regionId - The ID of the region where the event will take place.
  * @param {unknown} request.data - The data associated with the event.
@@ -120,7 +126,7 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     throw new Error('Missing required field: data.eventId');
   }
 
-  return EventReportPilot.create({
+  const created = await EventReportPilot.create({
     ownerId,
     pocIds,
     collaboratorIds,
@@ -128,6 +134,14 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
     eventId,
     data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
+
+  // a notification failure must never fail the save
+  await runInSavepoint(
+    () => createNotificationForNewPocs(created, [], pocIds),
+    `Error creating POC added notifications for event ${created.id}:`
+  );
+
+  return created;
 }
 
 /**
@@ -137,6 +151,17 @@ export async function createEvent(request: CreateEventRequest): Promise<EventSha
  * @throws - Throws an error if either of the delete operations fail
  */
 export async function destroyEvent(id: number): Promise<void> {
+  await runInSavepoint(async () => {
+    const sessions = await SessionReportPilot.findAll({
+      where: { eventId: id },
+      attributes: ['id'],
+    });
+    await Promise.all(
+      sessions.map((session) =>
+        archiveSessionNeedsActionNotifications(session.id, { removeLink: true })
+      )
+    );
+  }, `Error archiving session notifications for event ${id}:`);
   try {
     auditLogger.info(`Deleting session reports for event ${id}`);
     await SessionReportPilot.destroy({ where: { eventId: id } });
@@ -153,7 +178,8 @@ export async function destroyEvent(id: number): Promise<void> {
 
 export async function findEventHelper(
   where,
-  plural = false
+  plural = false,
+  { includeSessions = true }: { includeSessions?: boolean } = {}
 ): Promise<EventShape | EventShape[] | null> {
   const query = {
     attributes: [
@@ -173,48 +199,52 @@ export async function findEventHelper(
         model: EventReportPilotNationalCenterUser,
         as: 'eventReportPilotNationalCenterUsers',
       },
-      {
-        model: SessionReportPilot,
-        include: [
-          {
-            required: false,
-            model: File,
-            as: 'supportingAttachments',
-            where: {
-              status: {
-                [Op.ne]: FILE_STATUSES.UPLOAD_FAILED,
-              },
+      ...(includeSessions
+        ? [
+            {
+              model: SessionReportPilot,
+              include: [
+                {
+                  required: false,
+                  model: File,
+                  as: 'supportingAttachments',
+                  where: {
+                    status: {
+                      [Op.ne]: FILE_STATUSES.UPLOAD_FAILED,
+                    },
+                  },
+                },
+                {
+                  model: GoalTemplate,
+                  as: 'goalTemplates',
+                  attributes: ['id', 'standard'],
+                  through: { attributes: [] }, // exclude join table attributes
+                },
+                {
+                  required: false,
+                  model: User,
+                  as: 'trainers',
+                  attributes: ['fullName', 'name', 'id'],
+                  include: [
+                    {
+                      model: db.Role,
+                      as: 'roles',
+                      attributes: ['name'],
+                    },
+                  ],
+                },
+              ],
+              attributes: INCLUDED_SESSION_ATTRIBUTES,
+              as: 'sessionReports',
+              separate: true, // This is required to order the joined table results.
+              order: [
+                ['startDate', 'ASC'],
+                ['data.sessionName', 'ASC'],
+                ['createdAt', 'ASC'],
+              ],
             },
-          },
-          {
-            model: GoalTemplate,
-            as: 'goalTemplates',
-            attributes: ['id', 'standard'],
-            through: { attributes: [] }, // exclude join table attributes
-          },
-          {
-            required: false,
-            model: User,
-            as: 'trainers',
-            attributes: ['fullName', 'name', 'id'],
-            include: [
-              {
-                model: db.Role,
-                as: 'roles',
-                attributes: ['name'],
-              },
-            ],
-          },
-        ],
-        attributes: INCLUDED_SESSION_ATTRIBUTES,
-        as: 'sessionReports',
-        separate: true, // This is required to order the joined table results.
-        order: [
-          ['startDate', 'ASC'],
-          ['data.sessionName', 'ASC'],
-          ['createdAt', 'ASC'],
-        ],
-      },
+          ]
+        : []),
     ],
   };
 
@@ -276,16 +306,22 @@ interface FindEventHelperBlobOptions {
   fallbackValue?: string;
   allowNull?: boolean;
   scopes: SequelizeWhereOptions[];
+  limit?: number;
+  offset?: number;
 }
 
-export async function findEventHelperBlob({
+type EventHelperBlobWhereOptions = Pick<
+  FindEventHelperBlobOptions,
+  'key' | 'value' | 'regions' | 'allowNull' | 'scopes'
+>;
+
+function eventHelperBlobWhere({
   key,
   value,
   regions,
-  fallbackValue,
   allowNull = false,
   scopes,
-}: FindEventHelperBlobOptions): Promise<EventShape[]> {
+}: EventHelperBlobWhereOptions): object {
   const getClause = () => {
     if (allowNull) {
       return {
@@ -306,6 +342,25 @@ export async function findEventHelperBlob({
     // @ts-expect-error
     where.regionId = regions;
   }
+
+  return where;
+}
+
+export async function countEventHelperBlob(options: EventHelperBlobWhereOptions): Promise<number> {
+  return EventReportPilot.count({ where: eventHelperBlobWhere(options) });
+}
+
+export async function findEventHelperBlob({
+  key,
+  value,
+  regions,
+  fallbackValue,
+  allowNull = false,
+  scopes,
+  limit,
+  offset,
+}: FindEventHelperBlobOptions): Promise<EventShape[]> {
+  const where = eventHelperBlobWhere({ key, value, regions, allowNull, scopes });
 
   const events = await EventReportPilot.findAll({
     attributes: ['id', 'eventId', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
@@ -351,7 +406,10 @@ export async function findEventHelperBlob({
     order: [
       ['eventId', 'ASC'],
       ['data.startDate', 'ASC'],
+      ['id', 'ASC'],
     ],
+    ...(limit ? { limit } : {}),
+    ...(offset ? { offset } : {}),
   });
 
   // Re-derive each session's display dates from the dedicated columns.
@@ -454,6 +512,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
   } = (evt.data ?? {}) as Record<string, unknown>;
 
   const persistedData = { ...storedData, ...incomingData };
+  const previousPocIds = event.pocIds ?? [];
 
   await evt.update(
     {
@@ -465,6 +524,17 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       data: cast(JSON.stringify(persistedData), 'jsonb'),
     },
     { where: { id }, individualHooks: true }
+  );
+
+  // a notification failure must never fail the save
+  await runInSavepoint(
+    () =>
+      createNotificationForNewPocs(
+        { id: evt.id, eventId: evt.eventId, ownerId, data: persistedData },
+        previousPocIds,
+        pocIds
+      ),
+    `Error creating POC added notifications for event ${evt.id}:`
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
@@ -657,8 +727,10 @@ export async function getTrainingReportAlerts(
   };
 
   events.forEach((event: EventShape) => {
-    const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
-    const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+    const nineteenDaysAfterStart = parseStoredDate(event.data.startDate)
+      .startOf('day')
+      .add(19, 'days');
+    const nineteenDaysAfterEnd = parseStoredDate(event.data.endDate).startOf('day').add(19, 'days');
 
     // one alert triggers just for the owner
     if (ownerUserIdFilter(event, userId)) {
@@ -688,7 +760,9 @@ export async function getTrainingReportAlerts(
       );
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+        // Submitted sessions belong to the approval workflow alerts below.
+        if (isSessionSubmitted(event, session)) return;
+        const nineteenDaysAfterSessionStart = parseStoredDate(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
@@ -726,22 +800,19 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        // Submitted sessions belong to the approval workflow alerts below.
+        if (isSessionSubmitted(event, session)) return;
         // In the national center facilitation flow (Regional PD w/ NC + facilitation = national_center),
-        // POC is normally not involved — the Regional owner fills the POC-side
-        // pages and tracks completion via ownerComplete. However, POCs can now
-        // create sessions (canCreateSession() includes isPoc()), and when they
-        // do they still set pocComplete on submit (see SessionForm/index.js).
-        // Only skip the alert when we have evidence the session is using
-        // ownerComplete and not pocComplete (i.e. owner-created in the new
-        // flow); otherwise fall through and check pocComplete as usual.
-        if (
-          isNationalCenterFacilitator(event, session) &&
-          session.data.pocComplete === undefined &&
-          session.data.ownerComplete !== undefined
-        ) {
+        // POC is not part of submission — the Regional owner fills the POC-side
+        // pages and tracks completion via ownerComplete. pocComplete is read by
+        // truthiness: a missing key and an explicit false (e.g. from a form
+        // default) both mean the POC has nothing outstanding, so skip the alert.
+        // A POC who created and submitted the session has pocComplete: true,
+        // so there is nothing to alert on either way.
+        if (isNationalCenterFacilitator(event, session) && !session.data.pocComplete) {
           return;
         }
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+        const nineteenDaysAfterSessionStart = parseStoredDate(session.data.startDate)
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
@@ -856,7 +927,8 @@ export async function getTrainingReportAlertsForUser(
 
 export async function findEventBySmartsheetId(
   eventId: string,
-  scopes: WhereOptions[] = [{}]
+  scopes: WhereOptions[] = [{}],
+  options: { includeSessions?: boolean } = {}
 ): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
@@ -868,7 +940,7 @@ export async function findEventBySmartsheetId(
       ...scopes,
     ],
   };
-  return findEventHelper(where) as Promise<EventShape>;
+  return findEventHelper(where, false, options) as Promise<EventShape>;
 }
 
 export async function findEventsByOwnerId(id: number): Promise<EventShape[] | null> {
@@ -1160,7 +1232,7 @@ export async function csvImport(buffer: Buffer) {
       // (the single source of truth); it is not persisted back into the JSONB `data`.
       delete data.eventId;
 
-      await db.EventReportPilot.create({
+      const created = await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
@@ -1170,6 +1242,12 @@ export async function csvImport(buffer: Buffer) {
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
         version: EVENT_REPORT_PILOT_VERSION,
       });
+
+      // a notification failure must never fail the import
+      await runInSavepoint(
+        () => createNotificationForNewPocs(created, [], pocs),
+        `Error creating POC added notifications for event ${created.id}:`
+      );
 
       return true;
     } catch (error) {

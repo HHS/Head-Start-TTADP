@@ -13,6 +13,44 @@ validate_circleci_config() {
   fi
 }
 
+# Blocks commits that would add forbidden data or log-leaking commands. These are the same checks CI runs,
+# run here so the problem is caught before it reaches a commit or a PR. Neither check prints the offending
+# text, because it could be PII or a secret.
+#
+# This must run after the final `git add` in main: that re-stages the whole working-tree copy of every
+# staged file (including unstaged edits), so only the finished index is what will be committed. Both checks
+# read the index, never the working tree.
+run_safety_checks() {
+  # HSES data files and staff email addresses in data files, checked against what is staged.
+  if [ -f tools/validate-data-file-guard.js ]; then
+    if ! guard_output=$(node tools/validate-data-file-guard.js --staged 2>&1); then
+      echo "$guard_output"
+      echo "ERROR: the data file guard failed on the staged changes. Remove the data from the commit (git restore --staged <file>)."
+      exit 1
+    fi
+  fi
+
+  # Commands that print the environment or secret values. CircleCI logs are public, so these leak.
+  # Only run when something the check reads is staged.
+  if [ -f tools/checkSecretPrinting.js ]; then
+    local relevant=false
+    for file in "${staged_files[@]}"; do
+      case "$file" in
+        automation/*|bin/*|.circleci/config.yml|tools/checkSecretPrinting.js|tools/secretPrintingExceptions.json)
+          relevant=true
+          break
+          ;;
+      esac
+    done
+
+    if [ "$relevant" = true ] && ! secret_output=$(node tools/checkSecretPrinting.js --staged 2>&1); then
+      echo "$secret_output"
+      echo "ERROR: a script or CI config would print the environment or secret values. See docs/guides/circle-ci.md#secret-printing-check."
+      exit 1
+    fi
+  fi
+}
+
 format_terraform_file() {
   local file=$1
   
@@ -95,6 +133,8 @@ main() {
   fi
 
   git add -- "${staged_files[@]}"
+
+  run_safety_checks
 
   validate_common_versioning \
     "$common_changed" \

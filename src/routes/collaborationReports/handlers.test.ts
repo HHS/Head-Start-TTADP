@@ -16,6 +16,7 @@ import {
   getAlerts,
   getReport,
   getReports,
+  resetToDraft,
   reviewReport,
   saveReport,
   sendCollabReportCSV,
@@ -30,6 +31,8 @@ jest.mock('../../services/collabReports', () => ({
   deleteReport: jest.fn(),
   getCSVReports: jest.fn(),
   getReports: jest.fn(),
+  lockCollabReport: jest.fn(),
+  resetReportToDraft: jest.fn(),
 }));
 jest.mock('../../lib/mailer', () => ({
   collaboratorAssignedNotification: jest.fn(),
@@ -1435,6 +1438,32 @@ describe('Collaboration Reports Handlers', () => {
   });
 
   describe('sendCollabReportCSV', () => {
+    const expectedHeaders = [
+      'Report ID',
+      'Creator',
+      'Collaborators',
+      'Managers',
+      'Date created',
+      'Date submitted',
+      'Date approved',
+      'Activity name',
+      'Activity start date',
+      'Activity end date',
+      'Duration',
+      'Activity purpose',
+      'Activity type',
+      'States involved',
+      'Activity method',
+      'Activity description',
+      'Participants',
+      'Data collected/shared',
+      'Supporting goals',
+      'Next steps',
+      'Anticipated completion',
+    ]
+      .map((header) => `"${header}"`)
+      .join(',');
+
     beforeEach(() => {
       (collabReportToCsvRecord as jest.Mock).mockClear();
     });
@@ -1463,11 +1492,11 @@ describe('Collaboration Reports Handlers', () => {
 
       // Verify CSV content structure
       const csvCall = mockSend.mock.calls[0][0];
-      expect(csvCall).toContain(
-        '"Report ID","Activity name","Start date","End date","Duration","Purpose","Is state activity","Method","Description","Next steps","Created date","Last updated date"'
-      );
-      expect(csvCall).toContain('"R01-CR-001","Report 1"');
-      expect(csvCall).toContain('"R01-CR-002","Report 2"');
+      expect(csvCall).toContain(expectedHeaders);
+      expect(csvCall).toContain('"R01-CR-001"');
+      expect(csvCall).toContain('"Report 1"');
+      expect(csvCall).toContain('"R01-CR-002"');
+      expect(csvCall).toContain('"Report 2"');
     });
 
     it('should generate empty CSV when no reports exist', async () => {
@@ -1499,21 +1528,20 @@ describe('Collaboration Reports Handlers', () => {
       expect(mockSend).toHaveBeenCalled();
 
       const csvCall = mockSend.mock.calls[0][0];
-      expect(csvCall).toContain(
-        '"Report ID","Activity name","Start date","End date","Duration","Purpose","Is state activity","Method","Description","Next steps","Created date","Last updated date"'
-      );
-      expect(csvCall).toContain('"R01-CR-001","Single Report"');
+      expect(csvCall).toContain(expectedHeaders);
+      expect(csvCall).toContain('"R01-CR-001"');
+      expect(csvCall).toContain('"Single Report"');
     });
 
     it('should handle reports with special characters in CSV', async () => {
       const mockReports = [
-        { id: '1', name: 'Report "with quotes"', descriptionFormatted: 'Description,with,commas' },
+        { id: '1', name: 'Report "with quotes"', description: 'Description,with,commas' },
       ];
 
       const mockCsvRecord = {
         displayId: 'R01-CR-001',
         name: 'Report "with quotes"',
-        descriptionFormatted: 'Description,with,commas',
+        description: 'Description,with,commas',
       };
 
       (collabReportToCsvRecord as jest.Mock).mockResolvedValue(mockCsvRecord);
@@ -1567,14 +1595,12 @@ describe('Collaboration Reports Handlers', () => {
     });
 
     it('should generate proper CSV format with correct column structure', async () => {
-      const mockReports = [
-        { id: '1', name: 'Test Report', descriptionFormatted: 'Test Description' },
-      ];
+      const mockReports = [{ id: '1', name: 'Test Report', description: 'Test Description' }];
 
       const mockCsvRecord = {
         displayId: 'R01-CR-001',
         name: 'Test Report',
-        descriptionFormatted: 'Test Description',
+        description: 'Test Description',
       };
 
       (collabReportToCsvRecord as jest.Mock).mockResolvedValue(mockCsvRecord);
@@ -1587,9 +1613,7 @@ describe('Collaboration Reports Handlers', () => {
 
       // Should have header and data lines
       expect(lines.length).toBeGreaterThanOrEqual(2);
-      expect(lines[0]).toBe(
-        '"Report ID","Activity name","Start date","End date","Duration","Purpose","Is state activity","Method","Description","Next steps","Created date","Last updated date"'
-      );
+      expect(lines[0]).toBe(expectedHeaders);
       expect(lines[1]).toContain('"R01-CR-001"');
       expect(lines[1]).toContain('"Test Report"');
       expect(lines[1]).toContain('"Test Description"');
@@ -1682,6 +1706,82 @@ describe('Collaboration Reports Handlers', () => {
         mockError,
         expect.objectContaining({ namespace: 'SERVICE:COLLAB_REPORTS' })
       );
+    });
+  });
+
+  describe('resetToDraft', () => {
+    const mockReport = {
+      id: 1,
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
+    };
+
+    const mockPolicy = (canAdminReset: boolean) =>
+      (CollabReportPolicy as jest.MockedClass<typeof CollabReportPolicy>).mockImplementation(
+        () => ({ canAdminReset: () => canAdminReset }) as unknown as jest.Mocked<CollabReportPolicy>
+      );
+
+    beforeEach(() => {
+      mockRequest.params = { collabReportId: '1' };
+      (currentUserId as jest.Mock).mockResolvedValue(123);
+      (userById as jest.Mock).mockResolvedValue({
+        id: 123,
+        permissions: [{ scopeId: SCOPES.ADMIN, regionId: 14 }],
+      });
+    });
+
+    it('should return HTTP 404 when report is not found', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(null);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(404);
+      expect(CRServices.resetReportToDraft).not.toHaveBeenCalled();
+    });
+
+    it('should return HTTP 403 when user cannot reset the report', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      mockPolicy(false);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(mockSendStatus).toHaveBeenCalledWith(403);
+      expect(CRServices.resetReportToDraft).not.toHaveBeenCalled();
+    });
+
+    it('should reset the report and return it', async () => {
+      const draft = { id: 1, calculatedStatus: REPORT_STATUSES.DRAFT };
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.resetReportToDraft as jest.Mock).mockResolvedValue({ toJSON: () => draft });
+      mockPolicy(true);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.resetReportToDraft).toHaveBeenCalledWith(mockReport);
+      expect(mockJson).toHaveBeenCalledWith(draft);
+    });
+
+    it('should lock the report before reading it', async () => {
+      (CRServices.collabReportById as jest.Mock).mockResolvedValue(mockReport);
+      (CRServices.resetReportToDraft as jest.Mock).mockResolvedValue({ toJSON: () => mockReport });
+      mockPolicy(true);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(CRServices.lockCollabReport).toHaveBeenCalledWith('1');
+      expect((CRServices.lockCollabReport as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+        (CRServices.collabReportById as jest.Mock).mock.invocationCallOrder[0]
+      );
+    });
+
+    it('should call handleErrors when an exception occurs', async () => {
+      const error = new Error('Database error');
+      (CRServices.collabReportById as jest.Mock).mockRejectedValue(error);
+
+      await resetToDraft(mockRequest as Request, mockResponse as Response);
+
+      expect(handleErrors).toHaveBeenCalledWith(mockRequest, mockResponse, error, {
+        namespace: 'SERVICE:COLLAB_REPORTS',
+      });
     });
   });
 });

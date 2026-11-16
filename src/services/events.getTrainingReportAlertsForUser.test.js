@@ -493,10 +493,9 @@ describe('getTrainingReportAlertsForUser', () => {
         },
       });
 
-      // POC-created new-flow session: pocComplete is the completion signal
-      // (per SessionForm/index.js submit handler). With pocComplete: false and
-      // ownerComplete undefined the POC should still receive a
-      // missingSessionInfo alert at 19+ days past startDate.
+      // New-flow session with pocComplete: false and ownerComplete undefined.
+      // POC isn't part of submission in this flow, so the POC is not alerted;
+      // the owner side (ownerComplete) carries the missingSessionInfo alert.
       eventPocCreated = await EventReportPilot.create({
         ownerId,
         collaboratorIds: [collaboratorId],
@@ -557,12 +556,16 @@ describe('getTrainingReportAlertsForUser', () => {
       expect(sessionIds).not.toContain(sessionBothComplete.id);
     });
 
-    it('POC sees a missingSessionInfo alert when pocComplete is false on a POC-created new-flow session', async () => {
-      // Regression test for the case where canCreateSession() now includes
-      // POCs: a POC who creates a new-flow session must still receive the
-      // 19-day missingSessionInfo alert even though POC is typically not
-      // involved in the national center facilitation flow.
+    it('POC does not see missingSessionInfo when pocComplete is false on a new-flow session', async () => {
+      // pocComplete is read by truthiness: an explicit false (e.g. a form
+      // default persisted by a draft save) is treated the same as missing.
       const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).not.toContain(sessionPocCreated.id);
+    });
+
+    it('owner sees missingSessionInfo on a new-flow session with only pocComplete: false', async () => {
+      const alerts = await getTrainingReportAlertsForUser(ownerId, [regionId]);
       const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
       expect(sessionIds).toContain(sessionPocCreated.id);
     });

@@ -19,12 +19,11 @@ interface TimelineOptions {
 const PAGE_SIZE = 25;
 
 /**
- * Loads the recipient timeline in offset-paginated slices.
+ * Loads the recipient timeline in slices chained by the API's keyset cursor.
  *
- * Known limitation: offset pagination drifts if timeline data changes between slices.
- * Inserts ahead of the cursor shift rows forward and are handled by deduplication below.
- * Deletes or re-dated events ahead of the cursor shift rows backward, so the next slice
- * can skip an event. Fixing that needs keyset pagination (date plus id cursor) in the API.
+ * Each slice starts right after the last event of the previous one, so events added or deleted
+ * between slices cannot shift later slices and skip an event. Deduplication below still guards
+ * against an event that was re-dated into a range already loaded.
  */
 export default function useRecipientTimeline(
   recipientId: string,
@@ -59,7 +58,8 @@ export default function useRecipientTimeline(
   useDeepCompareEffectNoCheck(() => {
     let cancelled = false;
     let pending = false;
-    let offset = 0;
+    let cursor: string | undefined;
+    let loaded = 0;
     let exhausted = false;
     const seen = new Set<string>();
 
@@ -75,7 +75,7 @@ export default function useRecipientTimeline(
           {
             ...options,
             limit: PAGE_SIZE,
-            offset,
+            ...(cursor ? { cursor } : {}),
           }
         );
         if (cancelled) return;
@@ -86,14 +86,33 @@ export default function useRecipientTimeline(
           seen.add(key);
           return true;
         });
-        // Advance by the API slice, including duplicates, rather than the rendered count.
-        offset += slice.length;
+        // Continue from the API's cursor, which points past the last event of the slice.
+        cursor =
+          typeof response?.nextCursor === 'string' && response.nextCursor
+            ? response.nextCursor
+            : undefined;
+        loaded += slice.length;
         const total =
-          Number.isInteger(response?.count) && response.count >= 0 ? response.count : offset;
-        exhausted = slice.length === 0 || offset >= total;
+          Number.isInteger(response?.count) && response.count >= 0 ? response.count : loaded;
+        exhausted = slice.length === 0 || !cursor;
         setEvents((previous) => [...previous, ...nextEvents]);
         setCount(total);
-        setCategories(Array.isArray(response?.categories) ? response.categories : []);
+        // The first slice lists every category. Later slices name the categories of their own
+        // events, so one that had no events at first (a backdated event was added) is appended
+        // after the known ones. Existing categories keep their place, so nothing already on
+        // screen moves.
+        if (Array.isArray(response?.categories)) {
+          const incoming = response.categories;
+          setCategories((previous) => {
+            const known = new Set(previous.map(({ label }) => label));
+            const added = incoming.filter(({ label }) => {
+              if (known.has(label)) return false;
+              known.add(label);
+              return true;
+            });
+            return added.length ? [...previous, ...added] : previous;
+          });
+        }
         setHasMore(!exhausted);
         setLoadedPages((previous) => previous + 1);
       } catch (_err) {

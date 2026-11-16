@@ -328,8 +328,18 @@ const SCOPE_IDS = {
   UNLOCK_APPROVED_REPORTS: 6,
   READ_WRITE_TRAINING_REPORTS: 7,
   POC_TRAINING_REPORTS: 9,
+  READ_WRITE_TTA_REQUESTS: 10,
+  REVIEW_TTA_REQUESTS: 11,
+  APPROVE_TTA_REQUESTS: 12,
+  BACKUP_APPROVE_TTA_REQUESTS: 13,
 };
 exports.SCOPE_IDS = SCOPE_IDS;
+
+// a user can hold only one scope of each pair in a region
+const MUTUALLY_EXCLUSIVE_SCOPES = [
+  [SCOPE_IDS.APPROVE_TTA_REQUESTS, SCOPE_IDS.BACKUP_APPROVE_TTA_REQUESTS],
+];
+exports.MUTUALLY_EXCLUSIVE_SCOPES = MUTUALLY_EXCLUSIVE_SCOPES;
 
 const DECIMAL_BASE = 10;
 exports.DECIMAL_BASE = DECIMAL_BASE;
@@ -762,6 +772,8 @@ const NOTIFICATION_TYPES = {
   TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR: 'trainingReportSessionSubmittedCollaborator',
   // TR-4: Approver requests changes to a session
   TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
+  // TR-4c: Approver requests changes to a session (collaborator, informational)
+  TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR: 'trainingReportSessionNeedsActionCollaborator',
   // TR-5/6: Creator or collaborator re-submits a session for review
   TRAINING_REPORT_SESSION_RESUBMITTED: 'trainingReportSessionResubmitted',
   // Event completed (existing)

@@ -53,7 +53,7 @@ describe('MonitoringReportDashboard', () => {
 
     expect(screen.getByTestId('overview-widget')).toBeInTheDocument();
     expect(screen.getByTestId('citations-widget')).toBeInTheDocument();
-    expect(screen.queryByTestId('compliant-follow-up-widget')).not.toBeInTheDocument();
+    expect(screen.getByTestId('compliant-follow-up-widget')).toBeInTheDocument();
   });
 
   it('passes merged filters including default startDate filter to both widgets', () => {
@@ -80,7 +80,7 @@ describe('MonitoringReportDashboard', () => {
     expect(citationsFilters[0]).toEqual(incomingFilters[0]);
   });
 
-  it('renders the compliant follow-up widget only when the feature flag is enabled', () => {
+  it('renders the compliant follow-up widget', () => {
     const incomingFilters = [
       {
         id: 'f1',
@@ -90,10 +90,7 @@ describe('MonitoringReportDashboard', () => {
       },
     ];
 
-    renderDashboard(incomingFilters, {
-      id: 1,
-      flags: ['compliant_follow_up_reviews_tta_support'],
-    });
+    renderDashboard(incomingFilters);
 
     expect(screen.getByTestId('compliant-follow-up-widget')).toBeInTheDocument();
     expect(CompliantFollowUpReviewsWithTtaSupport).toHaveBeenCalledWith(
@@ -122,10 +119,7 @@ describe('MonitoringReportDashboard', () => {
       },
     ];
 
-    renderDashboard(incomingFilters, {
-      id: 1,
-      flags: ['compliant_follow_up_reviews_tta_support'],
-    });
+    renderDashboard(incomingFilters);
 
     expect(CompliantFollowUpReviewsWithTtaSupport).toHaveBeenCalledWith(
       expect.objectContaining({

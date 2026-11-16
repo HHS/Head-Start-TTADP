@@ -11,6 +11,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
+import { HTTPError } from '../../fetchers';
 import {
   createTtaRequest,
   getTtaRequest,
@@ -140,12 +141,12 @@ function TtaRequestFormBody({
 
   const selectedGrants: TtaRequestGrant[] = watch(TTA_REQUEST_FIELDS.GRANTS);
 
-  // the region follows the grants, which is what the goals, citations and approvers hang off.
+  // the region follows the grants, which is what the goals, citations and reviewers hang off.
   // A saved draft's region is fixed, whichever record's link it was opened from.
   const effectiveRegionId =
     savedRequest?.regionId ?? regionId ?? selectedGrants[0]?.regionId ?? null;
 
-  // goals belong to grants and approvers to a region, so neither survives a change of grant
+  // goals belong to grants and reviewers to a region, so neither survives a change of grant
   const grantKey = grantIdsKey(selectedGrants);
   const previousGrantKey = useRef(grantKey);
 
@@ -287,8 +288,11 @@ function TtaRequestFormBody({
       };
 
       history.push(backLinkTo, { message });
-    } catch {
-      setSaveError(SUBMIT_ERROR);
+    } catch (e) {
+      // a request the server rejects says why, which retrying would not change
+      const validationMessage =
+        e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
+      setSaveError(validationMessage || SUBMIT_ERROR);
     } finally {
       setIsAppLoading(false);
     }

@@ -3,6 +3,7 @@ import { SCOPE_IDS } from '@ttahub/common/src/constants';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
 import AriaLiveContext from '../../AriaLiveContext';
+import { allRegionsUserHasTtaRequestPermissionTo } from '../../permissions';
 import useFilters from '../useFilters';
 
 describe('useFilters', () => {
@@ -108,5 +109,34 @@ describe('useFilters', () => {
     );
 
     expect(result.current.filterConfig).toEqual([{ id: 'region' }]);
+  });
+
+  it('uses the supplied region resolver for defaults and ignores an inaccessible home region', () => {
+    const u = {
+      homeRegionId: 1,
+      permissions: [
+        { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
+        { regionId: 2, scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS },
+        { regionId: 3, scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS },
+      ],
+    };
+    const { result } = renderHook(
+      () =>
+        useFilters(
+          u,
+          `${filterKey}-tta`,
+          true,
+          [],
+          [],
+          undefined,
+          undefined,
+          allRegionsUserHasTtaRequestPermissionTo
+        ),
+      { wrapper }
+    );
+
+    expect(result.current.regions).toEqual([2, 3]);
+    expect(result.current.defaultRegion).toBe(2);
+    expect(result.current.defaultFilters[0].query).toBe(2);
   });
 });

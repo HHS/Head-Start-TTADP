@@ -54,6 +54,17 @@ export default class CommunicationLog {
     return false;
   }
 
+  /** Regions where the user has explicit write permission; admins are checked separately. */
+  getWritableRegionIds(): number[] {
+    return [
+      ...new Set(
+        this.user.permissions
+          .filter(({ scopeId }) => scopeId === SCOPES.READ_WRITE_REPORTS)
+          .map(({ regionId }) => regionId)
+      ),
+    ];
+  }
+
   canReadLog() {
     return (
       this.user.permissions.some(

@@ -1273,8 +1273,9 @@ describe('Goals DB service', () => {
         include: [
           {
             attributes: ['id', 'grantId'],
-            model: Goal,
+            model: expect.any(Function),
             as: 'goals',
+            paranoid: false,
             required: true,
             where: {
               id: mockGoalIds,

@@ -7,6 +7,7 @@ import { EMPTY_ARRAY } from '../../../Constants';
 import { UserGroupIcon } from '../../../components/icons';
 import Modal from '../../../components/Modal';
 import WidgetContainer from '../../../components/WidgetContainer';
+import FilterContext from '../../../FilterContext';
 import {
   deleteCommunicationLogById,
   getCommunicationLogs,
@@ -89,6 +90,7 @@ export default function RegionalCommLogTable({ filters, resetPagination, setRese
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { filterKey } = useContext(FilterContext);
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -126,6 +128,10 @@ export default function RegionalCommLogTable({ filters, resetPagination, setRese
   const deleteLog = async (log) => {
     try {
       await deleteCommunicationLogById(log.id);
+      window.sessionStorage.setItem(
+        `${filterKey}-communication-log-table-sorting`,
+        JSON.stringify({ ...sortConfig, activePage: 1, offset: 0 })
+      );
       window.location.reload();
     } catch (err) {
       // eslint-disable-next-line no-console

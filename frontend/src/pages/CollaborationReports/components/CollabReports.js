@@ -1,6 +1,7 @@
 import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React, { useEffect, useMemo } from 'react';
+import { NOOP } from '../../../Constants';
 import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import useFetch from '../../../hooks/useFetch';
 import useRequestSort from '../../../hooks/useRequestSort';
@@ -8,7 +9,15 @@ import useSessionSort from '../../../hooks/useSessionSort';
 import CollabReportAlertsTable from './CollabReportAlertsTable';
 import CollabReportsTable from './CollabReportsTable';
 
-const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts, filters }) => {
+const CollabReports = ({
+  title,
+  emptyMsg,
+  showCreateMsgOnEmpty,
+  isAlerts,
+  filters,
+  resetPagination,
+  setResetPagination,
+}) => {
   const sortKey = useMemo(
     () => (isAlerts ? 'collabReportAlerts' : 'collabReportsTable'),
     [isAlerts]
@@ -31,10 +40,12 @@ const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts, filter
     ? () => getAlerts(sortConfig, filters)
     : () => getReports(sortConfig, filters);
 
-  // reset pagination when filters change
   useEffect(() => {
-    setSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
-  }, [filters, setSortConfig]);
+    if (resetPagination) {
+      setSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
+      setResetPagination(false);
+    }
+  }, [resetPagination, setResetPagination, setSortConfig]);
 
   const { data, setData, error, loading } = useFetch(
     { rows: [], count: 0 },
@@ -74,6 +85,8 @@ CollabReports.defaultProps = {
   title: 'Collaboration Reports',
   isAlerts: false,
   filters: [],
+  resetPagination: false,
+  setResetPagination: NOOP,
 };
 
 CollabReports.propTypes = {
@@ -81,6 +94,8 @@ CollabReports.propTypes = {
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string,
   isAlerts: PropTypes.bool,
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
   filters: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string,

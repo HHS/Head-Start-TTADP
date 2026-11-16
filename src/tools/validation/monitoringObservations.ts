@@ -176,29 +176,35 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     -- "Dropped"), add it with no further action; if it's a variant of
     -- Noncompliance/Concern/Deficiency, fix updateMonitoringFactTables.ts
     -- first so it isn't silently dropped there too.
+    -- DISTINCT ON picks one row per finding so its reviewId can be included
+    -- in context, for use in building useful alerts.
     WITH finding_unrecognized_determination AS (
-      SELECT
+      SELECT DISTINCT ON (mfh."findingId")
         mfh."findingId",
-        MIN(CASE
-          WHEN mfh.determination IS NULL OR TRIM(mfh.determination) = '' THEN NULL
-          WHEN mfh.determination IN (
-            'Noncompliance', 'Concern', 'Deficiency', 'Withdrawn', 'Abandoned', 'Dropped', 'DROPPED'
-          ) THEN NULL
-          ELSE mfh.determination
-        END) unrecognized_value
+        mfh.determination unrecognized_value,
+        mfh."reviewId"
       FROM "MonitoringFindingHistories" mfh
       WHERE mfh."sourceDeletedAt" IS NULL
         AND mfh."deletedAt" IS NULL
-      GROUP BY 1
+        AND mfh.determination IS NOT NULL
+        AND TRIM(mfh.determination) <> ''
+        AND mfh.determination NOT IN (
+          'Noncompliance', 'Concern', 'Deficiency', 'Withdrawn', 'Abandoned', 'Dropped', 'DROPPED'
+        )
+      ORDER BY mfh."findingId", mfh.determination
     )
     INSERT INTO "ValidationRecords"
-      (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
+      (run_id, entity_type, entity_id, observation_name, category, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'MonitoringFindings',
       mf.id,
       'history_determination_recognized',
       COALESCE(fud.unrecognized_value, 'consistent'),
+      CASE WHEN fud."findingId" IS NOT NULL
+        THEN jsonb_build_object('review_uuid', fud."reviewId")
+        ELSE NULL
+      END,
       NOW(),
       NOW()
     FROM "MonitoringFindings" mf
@@ -238,6 +244,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
     CROSS JOIN validation_run cur
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- review_status_vs_delivery. DISTINCT ON prevents a duplicate-status fan-out.
@@ -301,6 +308,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON rgd."reviewId" = mr."reviewId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- review_grantee_multi_grant
@@ -336,6 +344,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON rgmg."reviewId" = mr."reviewId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- finding_grant_on_own_review
@@ -400,7 +409,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       AND mf."deletedAt" IS NULL
     ;
 
-    -- finding_review_history_duplicated
+    -- finding_review_history_duplicated. DISTINCT ON (not BOOL_OR) picks the
+    -- pair to report - preferring a disagreeing one, then any duplicated one
+    -- - so its reviewId can go in context.
     WITH finding_review_pairs AS (
       SELECT
         "findingId",
@@ -413,25 +424,46 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         AND "deletedAt" IS NULL
       GROUP BY 1, 2
     ),
-    finding_history_duplication AS (
+    finding_review_pair_flags AS (
       SELECT
         "findingId",
-        BOOL_OR(cnt > 1 AND (status_variants > 1 OR determination_variants > 1)) any_disagreeing,
-        BOOL_OR(cnt > 1) any_duplicated
+        "reviewId",
+        (cnt > 1 AND (status_variants > 1 OR determination_variants > 1)) disagreeing,
+        (cnt > 1) duplicated,
+        (status_variants > 1) status_disagrees,
+        (determination_variants > 1) determination_disagrees
       FROM finding_review_pairs
-      GROUP BY 1
+    ),
+    finding_history_duplication AS (
+      SELECT DISTINCT ON ("findingId")
+        "findingId",
+        "reviewId",
+        disagreeing,
+        duplicated,
+        status_disagrees,
+        determination_disagrees
+      FROM finding_review_pair_flags
+      ORDER BY "findingId", disagreeing DESC, duplicated DESC, "reviewId"
     )
     INSERT INTO "ValidationRecords"
-      (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
+      (run_id, entity_type, entity_id, observation_name, category, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'MonitoringFindings',
       mf.id,
       'finding_review_history_duplicated',
       CASE
-        WHEN fhd.any_disagreeing THEN 'duplicated_disagreeing'
-        WHEN fhd.any_duplicated THEN 'duplicated_agreeing'
+        WHEN fhd.disagreeing THEN 'duplicated_disagreeing'
+        WHEN fhd.duplicated THEN 'duplicated_agreeing'
         ELSE 'consistent'
+      END,
+      CASE WHEN fhd.duplicated
+        THEN jsonb_build_object(
+          'review_uuid', fhd."reviewId",
+          'status_disagrees', fhd.status_disagrees,
+          'determination_disagrees', fhd.determination_disagrees
+        )
+        ELSE NULL
       END,
       NOW(),
       NOW()
@@ -549,6 +581,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON s."statusId" = mr."statusId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- statuses_table_integrity
@@ -648,6 +681,7 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON rgo."reviewId" = mr."reviewId"
     WHERE mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
+      AND mr."reportDeliveryDate" IS NOT NULL
     ;
 
     -- standard_consistency
@@ -750,7 +784,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         ELSE 'consistent'
       END,
       jsonb_build_object(
-        'learned_at', GREATEST(hsl.learned_at, fsl.learned_at)
+        'learned_at', GREATEST(hsl.learned_at, fsl.learned_at),
+        'review_id', fld.latest_review_id,
+        'finding_status', kfs.name
       ),
       NOW(),
       NOW()
@@ -784,7 +820,9 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
         ELSE 'consistent'
       END,
       jsonb_build_object(
-        'learned_at', GREATEST(ool.learned_at, hsl.learned_at)
+        'learned_at', GREATEST(ool.learned_at, hsl.learned_at),
+        'review_id', fld.latest_review_id,
+        'history_status', fld.latest_history_status
       ),
       NOW(),
       NOW()
@@ -798,6 +836,177 @@ const refreshMonitoringObservations = async (transaction: Transaction): Promise<
       ON hsl.finding_history_id = fld.latest_history_id
     WHERE mf."sourceDeletedAt" IS NULL
       AND mf."deletedAt" IS NULL
+    ;
+
+    -- finding_timeseries_transitions: per-column "did this change from the
+    -- previous band" flags, shared by the finding change-count observations
+    -- below. IS DISTINCT FROM (not <>) so a change into/out of NULL still
+    -- counts as a real transition. A row in MonitoringFindings_timeseries
+    -- (built in monitoringValidationStaging.ts) bands on every audit event,
+    -- not on a value-change of any one column - see auditLogTimeseries.ts -
+    -- so counting rows/bands directly would overcount.
+    DROP TABLE IF EXISTS pg_temp.finding_timeseries_transitions;
+    CREATE TEMP TABLE finding_timeseries_transitions
+    ON COMMIT DROP
+    AS
+    SELECT
+      data_id,
+      "statusId" IS DISTINCT FROM LAG("statusId", 1, "statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
+      "correctionDeadLine" IS DISTINCT FROM LAG("correctionDeadLine", 1, "correctionDeadLine") OVER (PARTITION BY data_id ORDER BY timeband_start) deadline_changed,
+      "findingType" IS DISTINCT FROM LAG("findingType", 1, "findingType") OVER (PARTITION BY data_id ORDER BY timeband_start) type_changed,
+      source IS DISTINCT FROM LAG(source, 1, source) OVER (PARTITION BY data_id ORDER BY timeband_start) source_changed
+    FROM "MonitoringFindings_timeseries"
+    ;
+
+    -- finding_status_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_status_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE status_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- finding_correction_deadline_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_correction_deadline_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE deadline_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- finding_type_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_type_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE type_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- finding_source_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringFindings',
+      mf.id,
+      'finding_source_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringFindings" mf
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE source_changed) cnt
+      FROM finding_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mf.id
+    WHERE mf."sourceDeletedAt" IS NULL
+      AND mf."deletedAt" IS NULL
+    ;
+
+    -- review_timeseries_transitions: same reasoning as
+    -- finding_timeseries_transitions above, against MonitoringReviews_timeseries.
+    DROP TABLE IF EXISTS pg_temp.review_timeseries_transitions;
+    CREATE TEMP TABLE review_timeseries_transitions
+    ON COMMIT DROP
+    AS
+    SELECT
+      data_id,
+      "statusId" IS DISTINCT FROM LAG("statusId", 1, "statusId") OVER (PARTITION BY data_id ORDER BY timeband_start) status_changed,
+      outcome IS DISTINCT FROM LAG(outcome, 1, outcome) OVER (PARTITION BY data_id ORDER BY timeband_start) outcome_changed
+    FROM "MonitoringReviews_timeseries"
+    ;
+
+    -- review_status_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringReviews',
+      mr.id,
+      'review_status_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringReviews" mr
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE status_changed) cnt
+      FROM review_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mr.id
+    WHERE mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
+    ;
+
+    -- review_outcome_change_count
+    INSERT INTO "ValidationRecords"
+      (run_id, entity_type, entity_id, observation_name, scalar, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'MonitoringReviews',
+      mr.id,
+      'review_outcome_change_count',
+      COALESCE(t.cnt, 0),
+      NOW(),
+      NOW()
+    FROM "MonitoringReviews" mr
+    CROSS JOIN validation_run cur
+    LEFT JOIN (
+      SELECT data_id, COUNT(*) FILTER (WHERE outcome_changed) cnt
+      FROM review_timeseries_transitions
+      GROUP BY data_id
+    ) t
+      ON t.data_id = mr.id
+    WHERE mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
     ;
     `,
     { raw: true, transaction }

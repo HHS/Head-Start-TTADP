@@ -16,6 +16,8 @@ import {
   deleteReport,
   getCSVReports,
   getReports as getReportsService,
+  lockCollabReport,
+  resetReportToDraft,
 } from '../../services/collabReports';
 import { currentUserId } from '../../services/currentUser';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -120,16 +122,40 @@ export async function sendCollabReportCSV(reports, res) {
           header: 'Report ID',
         },
         {
+          key: 'creatorName',
+          header: 'Creator',
+        },
+        {
+          key: 'collaborators',
+          header: 'Collaborators',
+        },
+        {
+          key: 'approvers',
+          header: 'Managers',
+        },
+        {
+          key: 'createdAt',
+          header: 'Date created',
+        },
+        {
+          key: 'submittedAt',
+          header: 'Date submitted',
+        },
+        {
+          key: 'approvedAt',
+          header: 'Date approved',
+        },
+        {
           key: 'name',
           header: 'Activity name',
         },
         {
           key: 'startDate',
-          header: 'Start date',
+          header: 'Activity start date',
         },
         {
           key: 'endDate',
-          header: 'End date',
+          header: 'Activity end date',
         },
         {
           key: 'duration',
@@ -137,31 +163,43 @@ export async function sendCollabReportCSV(reports, res) {
         },
         {
           key: 'purpose',
-          header: 'Purpose',
+          header: 'Activity purpose',
         },
         {
-          key: 'isStateActivity',
-          header: 'Is state activity',
+          key: 'activityType',
+          header: 'Activity type',
+        },
+        {
+          key: 'statesInvolved',
+          header: 'States involved',
         },
         {
           key: 'method',
-          header: 'Method',
+          header: 'Activity method',
         },
         {
-          key: 'descriptionFormatted',
-          header: 'Description',
+          key: 'description',
+          header: 'Activity description',
+        },
+        {
+          key: 'participants',
+          header: 'Participants',
+        },
+        {
+          key: 'dataUsed',
+          header: 'Data collected/shared',
+        },
+        {
+          key: 'reportGoals',
+          header: 'Supporting goals',
         },
         {
           key: 'steps',
           header: 'Next steps',
         },
         {
-          key: 'createdAt',
-          header: 'Created date',
-        },
-        {
-          key: 'updatedAt',
-          header: 'Last updated date',
+          key: 'stepsCompleteDate',
+          header: 'Anticipated completion',
         },
       ],
     };
@@ -413,6 +451,34 @@ export async function createReport(req: Request, res: Response) {
       collaboratorAssignedNotification(report, collabsWithSettings);
     }
     res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function resetToDraft(req: Request, res: Response) {
+  try {
+    const { collabReportId } = req.params;
+    // Lock before reading, so a concurrent approval can't land between the status check and the reset
+    await lockCollabReport(collabReportId);
+    const report = await collabReportById(collabReportId);
+
+    if (!report) {
+      res.sendStatus(NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, report);
+
+    if (!authorization.canAdminReset()) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    const savedReport = await resetReportToDraft(report);
+    res.json(savedReport.toJSON());
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

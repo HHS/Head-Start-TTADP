@@ -14,6 +14,29 @@ export const parseValue = (value) => {
   }
   return parsedValue;
 };
+
+const sortTopics = (topics, sortBy, direction) => {
+  const valuesToSort = topics.map((topic) => ({
+    ...topic,
+    sortBy:
+      sortBy === 'Topic'
+        ? topic.heading
+        : parseValue(topic.data.find((item) => item.title === sortBy).value),
+  }));
+  const sortValueA = direction === 'asc' ? 1 : -1;
+  const sortValueB = direction === 'asc' ? -1 : 1;
+
+  return valuesToSort.sort((a, b) => {
+    if (a.sortBy > b.sortBy) {
+      return sortValueA;
+    }
+    if (b.sortBy > a.sortBy) {
+      return sortValueB;
+    }
+    return 0;
+  });
+};
+
 function ResourcesAssociatedWithTopics({
   data,
   loading,
@@ -43,12 +66,18 @@ function ResourcesAssociatedWithTopics({
       // Set local data.
       setLocalLoading(true);
       const topicsToUse = data.topics || [];
-      setTopicUse(topicsToUse);
+      const sortBy = sortConfig.sortBy;
+      const hasSortKey =
+        sortBy === 'Topic' ||
+        topicsToUse.some((topic) => topic.data.some((item) => item.title === sortBy));
+      setTopicUse(
+        hasSortKey ? sortTopics(topicsToUse, sortBy, sortConfig.direction) : topicsToUse
+      );
       setTopicCount(topicsToUse.length);
     } finally {
       setLocalLoading(false);
     }
-  }, [data]);
+  }, [data, sortConfig.direction, sortConfig.sortBy]);
 
   // a side effect that resets the pagination when the filters change
   useEffect(() => {
@@ -81,31 +110,7 @@ function ResourcesAssociatedWithTopics({
     }
 
     // Set the value we want to sort by.
-    const valuesToSort =
-      sortBy === 'Topic'
-        ? topicUse.map((t) => ({
-            ...t,
-            sortBy: t.heading,
-          }))
-        : topicUse.map((t) => ({
-            ...t,
-            sortBy: parseValue(t.data.find((tp) => tp.title === sortBy).value),
-          }));
-
-    // Value sort.
-    const sortValueA = direction === 'asc' ? 1 : -1;
-    const sortValueB = direction === 'asc' ? -1 : 1;
-    valuesToSort.sort((a, b) => {
-      if (a.sortBy > b.sortBy) {
-        return sortValueA;
-      }
-      if (b.sortBy > a.sortBy) {
-        return sortValueB;
-      }
-      return 0;
-    });
-
-    setTopicUse(valuesToSort);
+    setTopicUse(sortTopics(topicUse, sortBy, direction));
     setOffset(0);
     setSortConfig({ sortBy, direction, activePage: 1 });
   };

@@ -10,6 +10,7 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import NewReportButton from '../../components/NewReportButton';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import FilterContext from '../../FilterContext';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { canCreateCommunicationLog, getUserRegions } from '../../permissions';
 import UserContext from '../../UserContext';
@@ -59,7 +60,7 @@ const createDefaultFilters = (
   ];
 };
 
-export default function RegionalCommunicationLog() {
+function RegionalCommunicationLogContent() {
   const { user } = useContext(UserContext);
   const hasCentralOffice = useMemo(() => user?.homeRegionId && user.homeRegionId === 14, [user]);
   const regions = useMemo(() => getUserRegions(user), [user]);
@@ -188,5 +189,13 @@ export default function RegionalCommunicationLog() {
         </Grid>
       </Grid>
     </div>
+  );
+}
+
+export default function RegionalCommunicationLog() {
+  return (
+    <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+      <RegionalCommunicationLogContent />
+    </FilterContext.Provider>
   );
 }

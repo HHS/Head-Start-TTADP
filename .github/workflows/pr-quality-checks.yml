@@ -11,16 +11,24 @@ permissions:
   pull-requests: write
   issues: write
 
-concurrency:
-  group: pr-quality-checks-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
+# These checks are informational only, so nothing here should ever make a PR look failed.
+# Concurrency is set per job: GitHub reports checks per event, so a review run cancelling a
+# pull_request run would leave the pull_request check showing as failing.
 jobs:
   diff_size_check:
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
+    # Only pull_request events run this, so a newer push can safely cancel the older head's run.
+    concurrency:
+      group: pr-quality-diff-size-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     steps:
       - name: Comment diff size advisory
+        # The script catches its own errors; this also covers failures outside it (e.g. the action itself).
+        # The timeout is on the step so continue-on-error absorbs it; a GitHub API hang should not
+        # leave the PR pending for the six-hour default.
+        continue-on-error: true
+        timeout-minutes: 5
         uses: actions/github-script@v8
         with:
           script: |
@@ -57,8 +65,17 @@ jobs:
   review_count_check:
     if: ${{ github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
+    # Both events write the same comment, so share one group to serialize them (no duplicate
+    # comments, no stale count overwriting a newer one). Never cancel the running job, and queue
+    # pending ones instead of replacing them; a replaced job would show as a cancelled check.
+    concurrency:
+      group: pr-quality-review-count-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+      queue: max
     steps:
       - name: Comment review count advisory
+        continue-on-error: true
+        timeout-minutes: 5
         uses: actions/github-script@v8
         with:
           script: |

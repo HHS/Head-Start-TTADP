@@ -1,6 +1,7 @@
 import { useCallback, useContext, useMemo } from 'react';
 import AriaLiveContext from '../AriaLiveContext';
 import { NOOP } from '../Constants';
+import { allRegionsUserHasPermissionTo } from '../permissions';
 import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 import useUserDefaultRegionFilters from './useUserDefaultRegionFilters';
 
@@ -16,12 +17,13 @@ export default function useFilters(
   // `() => setResetPagination(true)` here to keep table pagination in sync
   // with filter mutations. See TTAHUB-5283.
   onFiltersChange = NOOP,
-  replaceInitialUrl = false
+  replaceInitialUrl = false,
+  getUserRegions = allRegionsUserHasPermissionTo
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
   const { regions, defaultRegion, hasMultipleRegions, allRegionsFilters, defaultFilters } =
-    useUserDefaultRegionFilters(user, manageRegions);
+    useUserDefaultRegionFilters(user, manageRegions, getUserRegions);
 
   const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     filterKey,

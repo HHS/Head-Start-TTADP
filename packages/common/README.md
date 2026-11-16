@@ -13,9 +13,8 @@ yarn add @ttahub/common
 ## Developers
 
 Whenever changes to this package are made, you will need to:
-
 - Bump the version in `package.json`.
-- Publish the latest version of the package to npm by running `npm publish` in this directory. There is also a yarn task in the root of the TTAHUB app you can run ```yarn publish:common```
+- Publish the latest version of the package to npm by running `npm publish` in this directory. There is also a yarn task in the root of the TTAHUB app you can run `yarn publish:common`
 
 If your PR depends on the latest version of this package, please don't forget to run `yarn upgrade @ttahub/common` (in BE and FE) and commit the changes to `package.json` (all 3: ./package.json, ./frontend/package.json, ./packages/common/package.json) and `yarn.lock` (BE and FE).
 
@@ -23,10 +22,20 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 2.4.23
+
+Merges 2.4.22 (`NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR`) with the
+TTA request scopes and `MUTUALLY_EXCLUSIVE_SCOPES` from 2.4.21.
+
+## 2.4.21
+
+Adds the TTA request scopes to `SCOPE_IDS` (`READ_WRITE_TTA_REQUESTS`, `REVIEW_TTA_REQUESTS`,
+`APPROVE_TTA_REQUESTS`, `BACKUP_APPROVE_TTA_REQUESTS`) and `MUTUALLY_EXCLUSIVE_SCOPES`, the pairs
+of scopes a user can't hold together in one region. Built on 2.4.20.
+
 ## 2.4.20
 
 Reconciles the published 2.4.15–2.4.19 releases without dropping their shared contracts:
-
 - TTA request constants and request/response declarations from 2.4.15.
 - Session-submission collaborator notifications, preference keys, and notification `sessionName` from 2.4.16.
 - Collaboration-report constants and declarations from 2.4.17 and 2.4.19.
@@ -37,36 +46,47 @@ well as the current branch. A newer version number alone does not guarantee thos
 are present in the checkout. Keep runtime constants and their declaration overlays together.
 
 # 2.4.0
-Added new FEI statuses 
+
+Added new FEI statuses
 
 # 2.3.0
+
 Include shared notification TypeScript types in `@ttahub/common` to replace `@ttahub/types` link-based usage.
 
 # 2.2.26
+
 Add additional trace IDs
 
 # 2.2.21
+
 Add additional trace IDs
 
 # 2.2.18
+
 Added indicator names.
 
 # 2.2.14
+
 Added two new topics.
 
 # 2.2.11
+
 Remove duplicate goal close reason.
 
 # 2.2.10
+
 Change the values for "why was the activity conducted?".
 
 # 2.2.9
+
 Added activity report "why was the activity conducted?" values.
 
 # 2.2.7
+
 Additional variations of disallowed ECLKC and HeadStart URLS.
 
 # 2.2.3
+
 Target population and reason changes
 
 ## 2.2.2
@@ -78,24 +98,31 @@ Change ECLKC to headstart.gov.
 Remove constants related to ElasticSearch.
 
 ## 1.4.0
+
 Add SUPPORT_TYPE
 
 ### 1.1.9/1.2.0
+
 (Sorry for the multiple versions) Update the name of the const COLLABORATOR_TRAINING_REPORTS to POC_TRAINING_REPORTS
 
 ### 1.1.8
+
 Reorder training report url param statuses so suspended is third tab and not second on TR landing
 
 ### 1.1.6/7
+
 Add suspended as an option to training report URL params and status
 
 ### 1.1.4
+
 Distinguish between training report url params and training report statuses
 
 ### 1.1.3
+
 Add "event target populations"
 
-###  1.1.2
-#### 1.1.1
-- Add COLLABORATOR_TRAINING_REPORTS permissions
+### 1.1.2
 
+#### 1.1.1
+
+- Add COLLABORATOR_TRAINING_REPORTS permissions

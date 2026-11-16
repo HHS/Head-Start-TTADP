@@ -1,11 +1,18 @@
-import { Button, Form } from '@trussworks/react-uswds';
+import { Alert, Button, Form, ModalToggleButton } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
+import Modal from '../../components/Modal';
+import { requireEmailVerification } from '../../fetchers/Admin';
 import { storageAvailable } from '../../hooks/helpers';
 import isAdmin from '../../permissions';
-import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
+import {
+  primaryApproversByRegion,
+  userGlobalPermissions,
+  userRegionalPermissions,
+  withoutExclusivePartners,
+} from './PermissionHelpers';
 import UserFeatureFlags from './UserFeatureFlags';
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
@@ -18,13 +25,34 @@ const NUMBER_FIELDS = ['homeRegionId'];
  * are not created in this component, nor anywhere in the Admin UI. New users are created
  * automatically the first time they attempt to login to the Smart Hub
  */
-function UserSection({ user, onSave, features }) {
+function UserSection({ user, users, onSave, features }) {
   const [formUser, updateUser] = useState();
   const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
+  const primaryApprovers = useMemo(() => primaryApproversByRegion(users, user.id), [users, user]);
+  const verificationModalRef = useRef(null);
+  const [verificationMessage, setVerificationMessage] = useState(null);
 
   useEffect(() => {
     updateUser(user);
+    setVerificationMessage(null);
   }, [user]);
+
+  const onRequireEmailVerification = async () => {
+    try {
+      await requireEmailVerification(user.id);
+      setVerificationMessage({
+        type: 'success',
+        text: 'This user must verify their email address again.',
+      });
+    } catch {
+      setVerificationMessage({
+        type: 'error',
+        text: 'Unable to reset email verification for this user.',
+      });
+    } finally {
+      verificationModalRef.current?.toggleModal(false);
+    }
+  };
 
   const impersonateUserId = () => {
     if (!haveStorage || !formUser || typeof formUser.id !== 'number') return;
@@ -70,7 +98,7 @@ function UserSection({ user, onSave, features }) {
       updateUser({
         ...formUser,
         permissions: [
-          ...formUser.permissions,
+          ...withoutExclusivePartners(formUser.permissions, scope, REGIONS),
           { userId: user.id, scopeId: scope, regionId: region },
           ...REGIONS.map((r) => ({ userId: user.id, scopeId: scope, regionId: r })),
         ],
@@ -79,7 +107,7 @@ function UserSection({ user, onSave, features }) {
       updateUser({
         ...formUser,
         permissions: [
-          ...formUser.permissions,
+          ...withoutExclusivePartners(formUser.permissions, scope, [region]),
           { userId: user.id, scopeId: scope, regionId: region },
         ],
       });
@@ -130,12 +158,40 @@ function UserSection({ user, onSave, features }) {
       <Button className="margin-bottom-6" onClick={impersonateUserId} disabled={isAdmin(user)}>
         Impersonate user
       </Button>
+      <ModalToggleButton
+        modalRef={verificationModalRef}
+        type="button"
+        className="usa-button--secondary margin-bottom-6"
+        opener
+      >
+        Reset email verification
+      </ModalToggleButton>
+      {verificationMessage && (
+        <Alert type={verificationMessage.type} headingLevel="h4" slim className="margin-bottom-4">
+          {verificationMessage.text}
+        </Alert>
+      )}
+      <Modal
+        modalRef={verificationModalRef}
+        modalId="reset-email-verification-modal"
+        title="Reset email verification"
+        okButtonText="Reset verification"
+        okButtonCss="usa-button usa-button--secondary"
+        onOk={onRequireEmailVerification}
+      >
+        <p>
+          Are you sure you want to reset email verification for {formUser.name || formUser.email}?
+          They will need to verify their email address again. Their current verification will be
+          cleared and cannot be restored.
+        </p>
+      </Modal>
       <UserPermissions
         userId={user.id}
         globalPermissions={userGlobalPermissions(formUser)}
         onGlobalPermissionChange={onGlobalPermissionChange}
         regionalPermissions={userRegionalPermissions(formUser)}
         onRegionalPermissionChange={onRegionalPermissionChange}
+        primaryApprovers={primaryApprovers}
       />
       <UserFeatureFlags
         onFeaturesChange={onFeaturesChange}
@@ -165,6 +221,19 @@ UserSection.propTypes = {
       })
     ),
   }).isRequired,
+  // every user, to find each region's primary TTA request approver
+  users: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      permissions: PropTypes.arrayOf(
+        PropTypes.shape({
+          regionId: PropTypes.number,
+          scopeId: PropTypes.number,
+        })
+      ),
+    })
+  ),
   features: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
@@ -174,6 +243,7 @@ UserSection.propTypes = {
 };
 
 UserSection.defaultProps = {
+  users: [],
   features: [],
 };
 

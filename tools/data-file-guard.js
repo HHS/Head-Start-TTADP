@@ -229,25 +229,26 @@ function runGit({ cwd, maxBuffer }, args) {
   }
 }
 
-// Runs the guard against `baseRef...HEAD` in the git repository at `cwd`.
-function checkRange({ baseRef, cwd = process.cwd(), maxBuffer = GIT_MAX_BUFFER } = {}) {
+// Reads the changes selected by `diffArgs` (extra `git diff` arguments such as a revision range or
+// --cached) and evaluates them. `blobRef(path)` names the blob of a changed file as it will be
+// committed, e.g. `HEAD:path` for a range or `:path` (the index) for staged changes.
+function guardChanges({ cwd, maxBuffer }, { diffArgs, blobRef }) {
   const git = (...args) => runGit({ cwd, maxBuffer }, args);
-  const range = `${baseRef}...HEAD`;
   const baseArgs = ['diff', '--no-renames', '--no-ext-diff', '--no-textconv'];
 
-  const nameStatusOutput = git(...baseArgs, '-z', '--name-status', range);
-  const numstatOutput = git(...baseArgs, '-z', '--numstat', range);
+  const nameStatusOutput = git(...baseArgs, '-z', '--name-status', ...diffArgs);
+  const numstatOutput = git(...baseArgs, '-z', '--numstat', ...diffArgs);
   const changes = parseNameStatus(nameStatusOutput).filter(({ status }) => !status.startsWith('D'));
 
-  // Size of each possible fixture as it will be in HEAD. The size is read first, and the
+  // Size of each possible fixture as it will be committed. The size is read first, and the
   // content only when the file is small enough to be a fixture, so a huge file is rejected
   // without reading it into memory.
   const blobStats = changes
     .filter(({ path }) => path.startsWith(HSES_FIXTURE_DIRECTORY) && isHsesExtractName(path))
     .map(({ path }) => {
-      const bytes = Number.parseInt(git('cat-file', '-s', `HEAD:${path}`), 10);
+      const bytes = Number.parseInt(git('cat-file', '-s', blobRef(path)), 10);
       const lines =
-        bytes > MAX_FIXTURE_BYTES ? null : countLines(git('cat-file', 'blob', `HEAD:${path}`));
+        bytes > MAX_FIXTURE_BYTES ? null : countLines(git('cat-file', 'blob', blobRef(path)));
       return { path, bytes, lines };
     });
 
@@ -258,10 +259,27 @@ function checkRange({ baseRef, cwd = process.cwd(), maxBuffer = GIT_MAX_BUFFER }
     .filter(({ path }) => isDataFile(path))
     .map(({ path }) => ({
       path,
-      diffText: git(...baseArgs, '--unified=0', range, '--', `:(literal)${path}`),
+      diffText: git(...baseArgs, '--unified=0', ...diffArgs, '--', `:(literal)${path}`),
     }));
 
   return evaluate({ nameStatusOutput, numstatOutput, blobStats, fileDiffs });
+}
+
+// Runs the guard against `baseRef...HEAD` in the git repository at `cwd`.
+function checkRange({ baseRef, cwd = process.cwd(), maxBuffer = GIT_MAX_BUFFER } = {}) {
+  return guardChanges(
+    { cwd, maxBuffer },
+    { diffArgs: [`${baseRef}...HEAD`], blobRef: (path) => `HEAD:${path}` }
+  );
+}
+
+// Runs the same guard against the changes staged in the index (what `git commit` would commit),
+// so it can run in a pre-commit hook before the data reaches a commit or a PR.
+function checkStaged({ cwd = process.cwd(), maxBuffer = GIT_MAX_BUFFER } = {}) {
+  return guardChanges(
+    { cwd, maxBuffer },
+    { diffArgs: ['--cached'], blobRef: (path) => `:${path}` }
+  );
 }
 
 module.exports = {
@@ -269,6 +287,7 @@ module.exports = {
   MAX_FIXTURE_BYTES,
   MAX_FIXTURE_LINES,
   checkRange,
+  checkStaged,
   evaluate,
   findBinaryDataFiles,
   findForbiddenPaths,

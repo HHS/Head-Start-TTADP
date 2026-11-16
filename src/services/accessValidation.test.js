@@ -3,9 +3,11 @@ import db, { Permission, User } from '../models';
 import {
   getUserReadRegions,
   getUserTrainingReportReadRegions,
+  getUserTtaRequestReadRegions,
   isCentralOffice,
   setReadRegions,
   setTrainingReportReadRegions,
+  setTtaRequestReadRegions,
   userIsPocRegionalCollaborator,
   validateUserAuthForAccess,
   validateUserAuthForAdmin,
@@ -253,6 +255,51 @@ describe('accessValidation', () => {
 
     it('Throws on error', async () => {
       await expect(getUserTrainingReportReadRegions(undefined)).rejects.toThrow();
+    });
+  });
+
+  describe('getUserTtaRequestReadRegions', () => {
+    it('returns the regions the user can read reports or has a TTA request permission in', async () => {
+      await setupUser(mockUser);
+      await Permission.bulkCreate([
+        { scopeId: READ_REPORTS, userId: mockUser.id, regionId: 1 },
+        { scopeId: SCOPES.READ_WRITE_TTA_REQUESTS, userId: mockUser.id, regionId: 2 },
+        { scopeId: SCOPES.REVIEW_TTA_REQUESTS, userId: mockUser.id, regionId: 3 },
+        { scopeId: SCOPES.APPROVE_TTA_REQUESTS, userId: mockUser.id, regionId: 4 },
+        { scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS, userId: mockUser.id, regionId: 5 },
+        // activity report write alone doesn't let them read TTA requests
+        { scopeId: READ_WRITE_REPORTS, userId: mockUser.id, regionId: 6 },
+      ]);
+
+      const regions = await getUserTtaRequestReadRegions(mockUser.id);
+
+      expect(regions.sort()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('returns an empty array if user has no permissions', async () => {
+      await setupUser(mockUser);
+
+      const regions = await getUserTtaRequestReadRegions(mockUser.id);
+      expect(regions.length).toBe(0);
+    });
+
+    it('Throws on error', async () => {
+      await expect(getUserTtaRequestReadRegions(undefined)).rejects.toThrow();
+    });
+  });
+
+  describe('setTtaRequestReadRegions', () => {
+    it('filters out regions the user cannot read TTA requests in', async () => {
+      await setupUser(mockUser);
+      await Permission.create({
+        scopeId: SCOPES.REVIEW_TTA_REQUESTS,
+        userId: mockUser.id,
+        regionId: 3,
+      });
+
+      const query = await setTtaRequestReadRegions({ 'region.in': [1, 3] }, mockUser.id);
+
+      expect(query).toStrictEqual({ 'region.in': [3] });
     });
   });
 

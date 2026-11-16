@@ -255,7 +255,7 @@ describe('session report timeline integration', () => {
       links: [
         {
           label: 'View training report',
-          to: `/training-report/${event.eventId}/session/${sessions[4].id}`,
+          to: `/training-report/view/${event.eventId}`,
         },
       ],
     });
@@ -312,7 +312,7 @@ describe('session report timeline integration', () => {
       links: [
         {
           label: 'View training report',
-          to: `/training-report/${event.eventId}/session/${sessions[0].id}`,
+          to: `/training-report/view/${event.eventId}`,
         },
       ],
     });
@@ -339,7 +339,7 @@ describe('session report timeline integration', () => {
       links: [
         {
           label: 'View training report',
-          to: `/training-report/${event.eventId}/session/${sessions[1].id}`,
+          to: `/training-report/view/${event.eventId}`,
         },
       ],
     });

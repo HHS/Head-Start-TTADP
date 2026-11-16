@@ -13,6 +13,7 @@ import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
 import parseDate from '../lib/date';
+import normalizeSortDir from '../lib/normalizeSortDir';
 import orderReportsBy from '../lib/orderReportsBy';
 import parsePositiveInteger from '../lib/parsePositiveInteger';
 import { auditLogger as logger } from '../logger';
@@ -529,6 +530,15 @@ export async function activityReportAndRecipientsById(activityReportId) {
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
 }
 
+export async function approvedActivityReportWhere(filters, regionIds, userId = 0) {
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
+  return {
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+    [Op.and]: scopes,
+    ...(regionIds === undefined ? {} : { regionId: { [Op.in]: regionIds } }),
+  };
+}
+
 /**
  * Retrieves activity reports in sorted slices
  * using sequelize.literal for several associated fields based on the following
@@ -541,17 +551,19 @@ export async function activityReportAndRecipientsById(activityReportId) {
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
 export async function activityReports(
-  { sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters },
+  {
+    sortBy = 'updatedAt',
+    sortDir: rawSortDir = 'desc',
+    offset = 0,
+    limit = REPORTS_PER_PAGE,
+    ...filters
+  },
   excludeLegacy = false,
   userId = 0,
   ids = []
 ) {
-  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
-
-  const where = {
-    calculatedStatus: REPORT_STATUSES.APPROVED,
-    [Op.and]: scopes,
-  };
+  const sortDir = normalizeSortDir(rawSortDir);
+  const where = await approvedActivityReportWhere(filters, undefined, userId);
 
   if (excludeLegacy) {
     where.legacyId = { [Op.eq]: null };
@@ -819,8 +831,9 @@ export async function activityReportsForCleanup(userId) {
  */
 export async function activityReportAlerts(
   userId,
-  { sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters }
+  { sortBy = 'startDate', sortDir: rawSortDir = 'desc', offset = 0, ...filters }
 ) {
+  const sortDir = normalizeSortDir(rawSortDir);
   const updatedFilters = await setReadRegions(filters, userId);
   const { activityReport: scopes } = await filtersToScopes(updatedFilters, { userId });
   const reports = await ActivityReport.findAndCountAll(
@@ -1152,6 +1165,37 @@ export async function createOrUpdate(newActivityReport, report, userId) {
 
 export async function setStatus(report, status, transaction = undefined) {
   await report.update({ submissionStatus: status }, { transaction });
+  return activityReportAndRecipientsById(report.id);
+}
+
+/**
+ * Resets a report awaiting approval to draft for an admin. All approvals are cleared, so the
+ * resubmitted report must be reviewed again. Approvers who are the creator or a collaborator
+ * are removed, since they can never review the report; other approvers are kept.
+ *
+ * @param {*} report - report loaded with activityReportCollaborators and approvers
+ */
+export async function adminResetReportToDraft(report) {
+  // reset first, so changing approvers doesn't recalculate a submitted report's status
+  await report.update({ submissionStatus: REPORT_STATUSES.DRAFT });
+
+  // clear prior approvals, or resubmitting could approve the report without a new review
+  await ActivityReportApprover.update(
+    { status: null },
+    { where: { activityReportId: report.id }, individualHooks: true }
+  );
+
+  const participantIds = [
+    report.userId,
+    ...(report.activityReportCollaborators || []).map((c) => c.user.id),
+  ];
+  const approverIds = (report.approvers || []).map((a) => a.user.id);
+  const remainingApproverIds = approverIds.filter((id) => !participantIds.includes(id));
+
+  if (remainingApproverIds.length !== approverIds.length) {
+    await syncApprovers(report.id, remainingApproverIds);
+  }
+
   return activityReportAndRecipientsById(report.id);
 }
 
@@ -1580,14 +1624,7 @@ export async function getAllDownloadableActivityReports(
   const regions = toNumberArray(readRegions);
   const parsedReportIds = toNumberArray(reportIds);
 
-  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
-  const where = {
-    regionId: {
-      [Op.in]: regions,
-    },
-    calculatedStatus: REPORT_STATUSES.APPROVED,
-    [Op.and]: scopes,
-  };
+  const where = await approvedActivityReportWhere(filters, regions, userId);
 
   if (parsedReportIds.length) {
     where.id = { [Op.in]: parsedReportIds };

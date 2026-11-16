@@ -133,7 +133,8 @@ describe('CollabReportsLanding', () => {
       'collab-landing-filters',
       true,
       [],
-      expect.anything()
+      expect.anything(),
+      expect.any(Function)
     );
   });
 

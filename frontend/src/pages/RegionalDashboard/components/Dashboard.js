@@ -1,6 +1,7 @@
 import { GridContainer } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React, { useMemo } from 'react';
+import FilterContext from '../../../FilterContext';
 import { expandFilters, expandMonitoringFilters } from '../../../utils';
 import ActivityReportDashboard from './ActivityReportDashboard';
 import AllReports from './AllReports';
@@ -45,15 +46,17 @@ export default function Dashboard({
   }
 
   return (
-    <GridContainer className="margin-0 padding-0">
-      <DashboardComponent
-        filtersToApply={filtersToApply}
-        resetPagination={resetPagination}
-        setResetPagination={setResetPagination}
-        filterKey={filterKey}
-        userHasOnlyOneRegion={userHasOnlyOneRegion}
-      />
-    </GridContainer>
+    <FilterContext.Provider value={{ filterKey }}>
+      <GridContainer className="margin-0 padding-0">
+        <DashboardComponent
+          filtersToApply={filtersToApply}
+          resetPagination={resetPagination}
+          setResetPagination={setResetPagination}
+          filterKey={filterKey}
+          userHasOnlyOneRegion={userHasOnlyOneRegion}
+        />
+      </GridContainer>
+    </FilterContext.Provider>
   );
 }
 

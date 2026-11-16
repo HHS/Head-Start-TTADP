@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
+import FilterContext from '../../FilterContext';
 import ResourcesAssociatedWithTopics, { parseValue } from '../ResourcesAssociatedWithTopics';
 
 const emptyData = {
@@ -74,6 +75,8 @@ const mockSortData = {
   ],
 };
 
+const savedSortFilterKey = 'resources-dashboard-sort-test';
+
 // eslint-disable-next-line react/prop-types
 const TableMock = ({ data, perPage }) => {
   const [resetPagination, setResetPagination] = React.useState(false);
@@ -104,6 +107,8 @@ const renderResourcesAssociatedWithTopics = (data, perPage = 10) => {
 describe('Resources Associated with Topics', () => {
   afterEach(() => {
     fetchMock.restore();
+    window.sessionStorage.removeItem(savedSortFilterKey);
+    window.sessionStorage.removeItem(`${savedSortFilterKey}-activityReportsTable-sorting`);
   });
 
   it('renders correctly without data', async () => {
@@ -240,6 +245,26 @@ describe('Resources Associated with Topics', () => {
       expect(tableCells[3]).toHaveTextContent(cellValues[3]);
       expect(tableCells[4]).toHaveTextContent(cellValues[4]);
       expect(tableCells[5]).toHaveTextContent(cellValues[5]);
+    });
+  });
+
+  it('applies the saved sort when topic data loads', async () => {
+    window.sessionStorage.setItem(savedSortFilterKey, '[]');
+    window.sessionStorage.setItem(
+      `${savedSortFilterKey}-activityReportsTable-sorting`,
+      JSON.stringify({ sortBy: 'Topic', direction: 'asc', activePage: 1 })
+    );
+
+    render(
+      <FilterContext.Provider value={{ filterKey: savedSortFilterKey }}>
+        <ResourcesAssociatedWithTopics data={mockSortData} loading={false} />
+      </FilterContext.Provider>
+    );
+
+    await waitFor(() => {
+      const tableCells = screen.getAllByRole('cell');
+      expect(tableCells[0]).toHaveTextContent(/firstrow/i);
+      expect(tableCells[3]).toHaveTextContent(/secondrow/i);
     });
   });
 

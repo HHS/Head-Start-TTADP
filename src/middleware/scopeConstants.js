@@ -8,5 +8,18 @@ const SCOPES = {
   READ_WRITE_TRAINING_REPORTS: 7,
   READ_TRAINING_REPORTS: 8,
   POC_TRAINING_REPORTS: 9,
+  READ_WRITE_TTA_REQUESTS: 10,
+  REVIEW_TTA_REQUESTS: 11,
+  APPROVE_TTA_REQUESTS: 12,
+  BACKUP_APPROVE_TTA_REQUESTS: 13,
 };
+
+// Scopes that give a user access to activity reports in a region. Groups only offer, and only
+// accept, grants from regions where the user has one of these
+export const REPORT_ACCESS_SCOPES = [
+  SCOPES.READ_REPORTS,
+  SCOPES.READ_WRITE_REPORTS,
+  SCOPES.APPROVE_REPORTS,
+];
+
 export default SCOPES;

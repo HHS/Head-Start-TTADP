@@ -39,6 +39,11 @@ describe('recipient record page', () => {
         userId: 2,
         scopeId: 3,
       },
+      {
+        regionId: 45,
+        userId: 2,
+        scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS,
+      },
     ],
   };
 
@@ -315,6 +320,25 @@ describe('recipient record page', () => {
       'href',
       '/recipient-tta-records/1/region/45/tta-request'
     );
+  });
+
+  it('hides the add request button without TTA request write permission in the region', async () => {
+    // still an admin, who can't create requests without the permission either
+    const reader = {
+      ...user,
+      permissions: user.permissions.filter(
+        ({ scopeId }) => scopeId !== SCOPE_IDS.READ_WRITE_TTA_REQUESTS
+      ),
+    };
+    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
+    memoryHistory.push('/recipient-tta-records/1/region/45/tta-request');
+
+    act(() => renderRecipientRecord(reader));
+
+    expect(
+      await screen.findByRole('heading', { name: 'the Mighty Recipient - Region 45' })
+    ).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Add request' })).not.toBeInTheDocument();
   });
 
   it('redirects an unflagged user away from the TTA request page', async () => {

@@ -138,6 +138,8 @@ const suspendedEvents = [
 
 const history = createMemoryHistory();
 const eventUrl = join('api', 'events');
+const firstPage = '&limit=10&offset=0';
+const paged = (events, count = events.length) => ({ count, rows: events });
 
 describe('TrainingReports', () => {
   const nonCentralOfficeUser = {
@@ -151,9 +153,9 @@ describe('TrainingReports', () => {
     ],
   };
 
-  const renderTrainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
+  const trainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
     const user = u || nonCentralOfficeUser;
-    render(
+    return (
       <Router history={history}>
         <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
           <UserContext.Provider value={{ user }}>
@@ -172,23 +174,27 @@ describe('TrainingReports', () => {
     );
   };
 
+  const renderTrainingReports = (u, passedStatus) => render(trainingReports(u, passedStatus));
+
   // Not started.
-  const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`);
+  const notStartedUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2${firstPage}`);
 
   beforeEach(async () => {
-    fetchMock.get(notStartedUrl, notStartedEvents);
+    // the active page is remembered in session storage
+    window.sessionStorage.clear();
+    fetchMock.get(notStartedUrl, paged(notStartedEvents));
 
     // In progress.
-    const inProgressUrl = join(eventUrl, `/${EVENT_STATUS.IN_PROGRESS}?region.in[]=2`);
-    fetchMock.get(inProgressUrl, inProgressEvents);
+    const inProgressUrl = join(eventUrl, `/${EVENT_STATUS.IN_PROGRESS}?region.in[]=2${firstPage}`);
+    fetchMock.get(inProgressUrl, paged(inProgressEvents));
 
     // Complete.
-    const completeUrl = join(eventUrl, `/${EVENT_STATUS.COMPLETE}?region.in[]=2`);
-    fetchMock.get(completeUrl, completeEvents);
+    const completeUrl = join(eventUrl, `/${EVENT_STATUS.COMPLETE}?region.in[]=2${firstPage}`);
+    fetchMock.get(completeUrl, paged(completeEvents));
 
     // Suspended.
-    const suspendedUrl = join(eventUrl, `/${EVENT_STATUS.SUSPENDED}?region.in[]=2`);
-    fetchMock.get(suspendedUrl, suspendedEvents);
+    const suspendedUrl = join(eventUrl, `/${EVENT_STATUS.SUSPENDED}?region.in[]=2${firstPage}`);
+    fetchMock.get(suspendedUrl, paged(suspendedEvents));
   });
 
   afterEach(async () => {
@@ -215,7 +221,9 @@ describe('TrainingReports', () => {
           EVENT_STATUS.NOT_STARTED
         );
 
-        fetchMock.get(notStartedUrl, [{ ...notStartedEvents[0] }], { overwriteRoutes: true });
+        fetchMock.get(notStartedUrl, paged([{ ...notStartedEvents[0] }]), {
+          overwriteRoutes: true,
+        });
       });
 
       await act(async () => {
@@ -229,8 +237,9 @@ describe('TrainingReports', () => {
     });
 
     it('handles success', async () => {
-      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, {
-        message: 'Success!',
+      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, () => {
+        fetchMock.get(notStartedUrl, paged([]), { overwriteRoutes: true });
+        return { message: 'Success!' };
       });
       expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
 
@@ -323,7 +332,7 @@ describe('TrainingReports', () => {
 
   it('renders the error message', async () => {
     // getEventsByStatus throws an error message.
-    fetchMock.get(join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`), 500, {
+    fetchMock.get(join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2${firstPage}`), 500, {
       overwriteRoutes: true,
     });
 
@@ -347,10 +356,265 @@ describe('TrainingReports', () => {
 
     // Not started event 2.
     expect(await screen.findByText(/not started event 2/i)).toBeInTheDocument();
-    expect(await screen.findByText(/-2/i)).toBeInTheDocument();
+    expect(await screen.findByText('-2')).toBeInTheDocument();
     expect(await screen.findByText(/not started event organizer 2/i)).toBeInTheDocument();
     expect(await screen.findByText('02/02/2021')).toBeInTheDocument();
     expect(await screen.findByText('02/03/2021')).toBeInTheDocument();
+  });
+
+  it('fetches the next page of events when paging', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 12), { overwriteRoutes: true });
+    const secondPageUrl = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    fetchMock.get(secondPageUrl, paged([inProgressEvents[0]], 12));
+
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/not started event 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1-10 of 12/i)).toBeInTheDocument();
+
+    const next = await screen.findByRole('button', { name: /next page/i });
+    act(() => userEvent.click(next));
+
+    expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
+    expect(screen.queryByText(/not started event 1/i)).toBeNull();
+    expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
+    expect(fetchMock.called(secondPageUrl)).toBe(true);
+  });
+
+  it('changes how many events are shown per page', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 30), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    fetchMock.get(notStartedPage2, paged([completeEvents[0]], 30));
+    const twentyFivePerPage = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=25&offset=0`
+    );
+    fetchMock.get(twentyFivePerPage, paged(inProgressEvents, 30));
+
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 30/i)).toBeInTheDocument();
+    const select = screen.getByLabelText('Select per page');
+
+    // a page size change starts back on page 1
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText(/11-20 of 30/i)).toBeInTheDocument();
+
+    act(() => userEvent.selectOptions(select, '25'));
+    expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1-25 of 30/i)).toBeInTheDocument();
+    expect(select).toHaveValue('25');
+    expect(fetchMock.called(twentyFivePerPage)).toBe(true);
+  });
+
+  it('shows every event when "all" is selected', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 30), { overwriteRoutes: true });
+    // no limit or offset asks the API for everything
+    const allUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`);
+    fetchMock.get(allUrl, paged(inProgressEvents, 30));
+
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 30/i)).toBeInTheDocument();
+    act(() => userEvent.selectOptions(screen.getByLabelText('Select per page'), 'all'));
+
+    expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1-30 of 30/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /next page/i })).toBeNull();
+    expect(fetchMock.called(allUrl)).toBe(true);
+  });
+
+  it('starts back on page 1 when switching status tabs', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 12), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    fetchMock.get(notStartedPage2, paged([completeEvents[0]], 12));
+    const inProgressUrl = join(eventUrl, `/${EVENT_STATUS.IN_PROGRESS}?region.in[]=2${firstPage}`);
+
+    let view;
+    act(() => {
+      view = renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 12/i)).toBeInTheDocument();
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
+
+    act(() => {
+      view.rerender(trainingReports(undefined, EVENT_STATUS.IN_PROGRESS));
+    });
+    expect(await screen.findByText(/in progress event 1/i)).toBeInTheDocument();
+    expect(fetchMock.called(inProgressUrl)).toBe(true);
+
+    act(() => {
+      view.rerender(trainingReports(undefined, EVENT_STATUS.NOT_STARTED));
+    });
+    expect(await screen.findByText(/1-10 of 12/i)).toBeInTheDocument();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(2);
+    expect(fetchMock.calls(notStartedPage2)).toHaveLength(1);
+  });
+
+  it('remembers the page when returning to the list', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 12), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    fetchMock.get(notStartedPage2, paged([completeEvents[0]], 12));
+
+    let view;
+    act(() => {
+      view = renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/1-10 of 12/i)).toBeInTheDocument();
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
+
+    // e.g. leaving for "Edit event" and coming back
+    view.unmount();
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/11-12 of 12/i)).toBeInTheDocument();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(1);
+    expect(fetchMock.calls(notStartedPage2)).toHaveLength(2);
+  });
+
+  it('goes to the last page when a remembered page is past the end', async () => {
+    const notStartedPage3 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=20`
+    );
+    fetchMock.get(notStartedPage3, paged([], 2));
+    window.sessionStorage.setItem('training-report-filters', JSON.stringify([]));
+    window.sessionStorage.setItem(
+      'training-report-filters-trainingReportsEvents-sorting',
+      JSON.stringify({ sortBy: 'eventId', direction: 'asc', activePage: 3 })
+    );
+
+    act(() => {
+      renderTrainingReports();
+    });
+
+    expect(await screen.findByText(/not started event 1/i)).toBeInTheDocument();
+    expect(fetchMock.called(notStartedPage3)).toBe(true);
+    expect(fetchMock.called(notStartedUrl)).toBe(true);
+  });
+
+  it('steps back a page when the last event on a page is deleted', async () => {
+    fetchMock.get(notStartedUrl, paged(notStartedEvents, 11), { overwriteRoutes: true });
+    const notStartedPage2 = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2&limit=10&offset=10`
+    );
+    const pageTwoEvent = {
+      ...notStartedEvents[0],
+      id: 20,
+      eventId: '-20',
+      data: { ...notStartedEvents[0].data, eventName: 'Page two event', eventId: '-20' },
+    };
+    fetchMock.get(notStartedPage2, paged([pageTwoEvent], 11));
+    fetchMock.delete('/api/events/id/-20', () => {
+      // once deleted, page two is past the end
+      fetchMock.get(notStartedPage2, paged([], 10), { overwriteRoutes: true });
+      return { message: 'Success!' };
+    });
+
+    act(() => {
+      renderTrainingReports({
+        ...nonCentralOfficeUser,
+        permissions: [
+          { regionId: 2, scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS },
+          { regionId: 2, scopeId: SCOPE_IDS.ADMIN },
+        ],
+      });
+    });
+
+    expect(await screen.findByText(/1-10 of 11/i)).toBeInTheDocument();
+    act(() => userEvent.click(screen.getByRole('button', { name: /next page/i })));
+    expect(await screen.findByText('Page two event')).toBeInTheDocument();
+
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /actions for event -20/i }));
+    });
+    await act(async () => {
+      userEvent.click(screen.getByRole('button', { name: /delete event/i }));
+    });
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /delete event/i, hidden: true }));
+    });
+
+    expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(2);
+  });
+
+  it('backfills the page and count when an event on it is deleted', async () => {
+    const pageOne = Array.from({ length: 10 }, (_, i) => ({
+      ...notStartedEvents[0],
+      id: 100 + i,
+      eventId: `-${100 + i}`,
+      data: {
+        ...notStartedEvents[0].data,
+        eventName: `Page one event ${i}`,
+        eventId: `-${100 + i}`,
+      },
+    }));
+    const nextEvent = {
+      ...notStartedEvents[0],
+      id: 200,
+      eventId: '-200',
+      data: { ...notStartedEvents[0].data, eventName: 'Backfilled event', eventId: '-200' },
+    };
+    fetchMock.get(notStartedUrl, paged(pageOne, 11), { overwriteRoutes: true });
+    fetchMock.delete('/api/events/id/-100', () => {
+      fetchMock.get(notStartedUrl, paged([...pageOne.slice(1), nextEvent], 10), {
+        overwriteRoutes: true,
+      });
+      return { message: 'Success!' };
+    });
+
+    act(() => {
+      renderTrainingReports({
+        ...nonCentralOfficeUser,
+        permissions: [
+          { regionId: 2, scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS },
+          { regionId: 2, scopeId: SCOPE_IDS.ADMIN },
+        ],
+      });
+    });
+
+    expect(await screen.findByText(/1-10 of 11/i)).toBeInTheDocument();
+
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /actions for event -100/i }));
+    });
+    await act(async () => {
+      userEvent.click(screen.getByRole('button', { name: /delete event/i }));
+    });
+    await act(async () => {
+      userEvent.click(await screen.findByRole('button', { name: /delete event/i, hidden: true }));
+    });
+
+    expect(await screen.findByText('Backfilled event')).toBeInTheDocument();
+    expect(await screen.findByText(/1-10 of 10/i)).toBeInTheDocument();
+    expect(screen.queryByText('Page one event 0')).toBeNull();
+    expect(fetchMock.calls(notStartedUrl)).toHaveLength(2);
   });
 
   describe('delete a session', () => {
@@ -506,12 +770,15 @@ describe('TrainingReports', () => {
 
     // Initial Page Load.
     // api/events/not-started?region.in[]=1&region.in[]=2
-    const initialUrl = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=1&region.in[]=2`);
-    fetchMock.get(initialUrl, notStartedEvents);
+    const initialUrl = join(
+      eventUrl,
+      `/${EVENT_STATUS.NOT_STARTED}?region.in[]=1&region.in[]=2${firstPage}`
+    );
+    fetchMock.get(initialUrl, paged(notStartedEvents));
 
     // Only Region 1.
-    const region1Url = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=1`);
-    fetchMock.get(region1Url, [notStartedEvents[1]]);
+    const region1Url = join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=1${firstPage}`);
+    fetchMock.get(region1Url, paged([notStartedEvents[1]]));
 
     // Render Training Reports.
     renderTrainingReports(user);

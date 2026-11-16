@@ -1,0 +1,55 @@
+get:
+  tags:
+    - event
+  operationId: getEventsByStatus
+  summary: Get a page of training events with a given status
+  description: >-
+    Returns the training events (Training Reports) with the given status that the
+    current user can read, along with each event's sessions. Results are ordered by
+    eventId, then start date. Standard training report filters (for example
+    `region.in[]`) may be passed as query parameters; regions are limited to the ones
+    the user can read. The "not-started" status also includes events with no status set.
+  parameters:
+    - name: status
+      in: path
+      required: true
+      description: Event status, as a URL parameter
+      schema:
+        type: string
+        enum:
+          - not-started
+          - in-progress
+          - suspended
+          - complete
+    - name: limit
+      in: query
+      required: false
+      description: >-
+        Maximum number of events to return. Must be a positive integer; any other
+        value is ignored and all matching events are returned.
+      schema:
+        type: integer
+        minimum: 1
+      example: 10
+    - name: offset
+      in: query
+      required: false
+      description: >-
+        Number of events to skip. Must be a positive integer; any other value is
+        ignored and treated as 0.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      example: 0
+  responses:
+    '200':
+      description: The requested page of events and the total number of matches
+      content:
+        application/json:
+          schema:
+            $ref: '../../../index.yaml#/components/schemas/eventsByStatusResponse'
+    '401':
+      description: Not authenticated
+    '500':
+      description: Internal server error

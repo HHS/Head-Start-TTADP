@@ -445,6 +445,81 @@ describe('RecipientSpotlightDataController', () => {
     });
   });
 
+  it('restores page size with pagination state', async () => {
+    const sortStorageKey = 'test-key-test-key/1-sorting';
+    window.sessionStorage.setItem('test-key', 'enabled');
+    window.sessionStorage.removeItem(sortStorageKey);
+    getRecipientSpotlight.mockResolvedValue({
+      ...mockRecipientData,
+      count: 75,
+    });
+
+    const firstRender = renderController();
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Recipient 1')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Show'), { target: { value: '25' } });
+
+    await waitFor(() => {
+      expect(getRecipientSpotlight).toHaveBeenLastCalledWith(
+        'indicatorCount',
+        'desc',
+        0,
+        '',
+        25,
+        null,
+        true
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    await waitFor(() => {
+      expect(getRecipientSpotlight).toHaveBeenLastCalledWith(
+        'indicatorCount',
+        'desc',
+        25,
+        '',
+        25,
+        null,
+        true
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    await waitFor(() => {
+      expect(getRecipientSpotlight).toHaveBeenLastCalledWith(
+        'indicatorCount',
+        'desc',
+        50,
+        '',
+        25,
+        null,
+        true
+      );
+    });
+
+    firstRender.unmount();
+    getRecipientSpotlight.mockClear();
+    renderController();
+
+    await waitFor(() => {
+      expect(getRecipientSpotlight).toHaveBeenCalledWith(
+        'indicatorCount',
+        'desc',
+        50,
+        '',
+        25,
+        null,
+        true
+      );
+    });
+
+    window.sessionStorage.removeItem('test-key');
+    window.sessionStorage.removeItem(sortStorageKey);
+  });
+
   it('calls setIsAppLoading when cards finish loading', async () => {
     const mockSetIsAppLoadingLocal = jest.fn();
     render(

@@ -1,7 +1,12 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import Email from 'email-templates';
 import { createTransport } from 'nodemailer';
-import { DIGEST_SUBJECT_FREQ, EMAIL_ACTIONS, EMAIL_DIGEST_FREQ } from '../../constants';
+import {
+  DIGEST_SUBJECT_FREQ,
+  EMAIL_ACTIONS,
+  EMAIL_DIGEST_FREQ,
+  USER_SETTINGS,
+} from '../../constants';
 import { auditLogger, logger } from '../../logger';
 import db, {
   ActivityRecipient,
@@ -53,7 +58,10 @@ import {
   trCollaboratorAdded,
   trEventComplete,
   trOwnerAdded,
+  trSessionChangesRequested,
   trSessionCreated,
+  trSessionSubmittedForApproval,
+  trSessionSubmittedToCollaborators,
 } from '.';
 
 const { DAILY, WEEKLY, MONTHLY } = DIGEST_SUBJECT_FREQ;
@@ -2264,9 +2272,8 @@ describe('mailer tests', () => {
       ownerId: 1,
       collaboratorIds: [2, 3],
       pocIds: [4, 5],
-      data: {
-        eventId: 'tr-1234',
-      },
+      eventId: 'tr-1234',
+      data: {},
     };
     it('trSessionCreated success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
@@ -2274,7 +2281,10 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-        expect.any(Object)
+        expect.objectContaining({
+          displayId: 'tr-1234',
+          reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/session/1`,
+        })
       );
     });
     it('trSessionCreated error', async () => {
@@ -2325,6 +2335,234 @@ describe('mailer tests', () => {
       );
     });
 
+    describe('trSessionSubmittedForApproval', () => {
+      const mockSubmittedSession = {
+        id: 7,
+        approverId: 8,
+        data: { sessionName: 'Session one' },
+      };
+      const immediately = {
+        key: EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      };
+
+      it('notifies an opted-in approver', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'approver@test.gov' });
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          8,
+          EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT
+        );
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED,
+          expect.objectContaining({
+            displayId: 'tr-1234',
+            sessionName: 'Session one',
+            emailTo: ['approver@test.gov'],
+            templatePath: 'tr_session_submitted',
+            reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/session/7`,
+          })
+        );
+      });
+
+      it('does not notify an approver who has not opted in', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(userById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify an approver opted in to a digest', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          ...immediately,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        });
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does nothing when the session has no approver', async () => {
+        await trSessionSubmittedForApproval(mockEvent, {
+          ...mockSubmittedSession,
+          approverId: null,
+        });
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify a no-send approver', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'no-send_approver@test.gov' });
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs an error when the approver does not exist', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue(null);
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+      });
+
+      it('logs an error when enqueueing the notification fails', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'approver@test.gov' });
+        notificationQueueMock.add.mockRejectedValueOnce(new Error('Redis unavailable'));
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+      });
+
+      it('returns early on CI', async () => {
+        process.env.CI = 'true';
+        await trSessionSubmittedForApproval(mockEvent, mockSubmittedSession);
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('trSessionSubmittedToCollaborators', () => {
+      const collabEvent = { ...mockEvent, ownerId: 1, collaboratorIds: [1, 2, 3, 3] };
+      const submittedSession = { id: 7, data: { sessionName: 'Session one' } };
+      const immediately = {
+        key: EMAIL_ACTIONS.SESSION_SUBMITTED_COLLABORATOR_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      };
+
+      it('emails each opted-in collaborator once, skipping the owner', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockImplementation((id) => Promise.resolve({ email: `collab${id}@test.gov` }));
+        await trSessionSubmittedToCollaborators(collabEvent, submittedSession);
+        expect(userSettingOverridesById).toHaveBeenCalledTimes(2);
+        expect(userSettingOverridesById).not.toHaveBeenCalledWith(1, expect.anything());
+        expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+        [2, 3].forEach((id) => {
+          expect(notificationQueueMock.add).toHaveBeenCalledWith(
+            EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED,
+            expect.objectContaining({
+              displayId: 'tr-1234',
+              sessionName: 'Session one',
+              emailTo: [`collab${id}@test.gov`],
+              templatePath: 'tr_session_submitted',
+              reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/view/tr-1234`,
+            })
+          );
+        });
+      });
+
+      it('skips collaborators who have not opted in to immediate emails', async () => {
+        userSettingOverridesById.mockImplementation((id) =>
+          Promise.resolve(
+            id === 2 ? immediately : { ...immediately, value: USER_SETTINGS.EMAIL.VALUES.NEVER }
+          )
+        );
+        userById.mockResolvedValue({ email: 'collab@test.gov' });
+        await trSessionSubmittedToCollaborators(collabEvent, submittedSession);
+        expect(userById).toHaveBeenCalledTimes(1);
+        expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
+      });
+
+      it('skips no-send collaborators', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'no-send_collab@test.gov' });
+        await trSessionSubmittedToCollaborators(collabEvent, submittedSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does nothing when there are no collaborators', async () => {
+        await trSessionSubmittedToCollaborators(
+          { ...collabEvent, collaboratorIds: null },
+          submittedSession
+        );
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+      });
+
+      it('returns early on CI', async () => {
+        process.env.CI = 'true';
+        await trSessionSubmittedToCollaborators(collabEvent, submittedSession);
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('trSessionChangesRequested', () => {
+      const mockNeedsActionSession = {
+        id: 7,
+        approverId: 8,
+        data: { sessionName: 'Session one', managerNotes: '<p>Fix the dates</p>' },
+      };
+      const immediately = {
+        key: EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      };
+
+      it('notifies an opted-in owner with the approver name and comments', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockImplementation((id) =>
+          Promise.resolve(
+            id === 8
+              ? { name: 'approver', fullName: 'Approver Person' }
+              : { email: 'owner@test.gov' }
+          )
+        );
+        await trSessionChangesRequested({ ...mockEvent, ownerId: 3 }, mockNeedsActionSession);
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          3,
+          EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT
+        );
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+          expect.objectContaining({
+            displayId: 'tr-1234',
+            sessionName: 'Session one',
+            approverName: 'Approver Person',
+            comments: '<p>Fix the dates</p>',
+            emailTo: ['owner@test.gov'],
+            templatePath: 'tr_session_changes_requested',
+            reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/session/7`,
+          })
+        );
+      });
+
+      it('does not notify an owner who has not opted in', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(userById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify an owner opted in to a digest', async () => {
+        userSettingOverridesById.mockResolvedValue({
+          ...immediately,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        });
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('does not notify a no-send owner', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue({ email: 'no-send_owner@test.gov' });
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs an error when the owner does not exist', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockResolvedValue(null);
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+      });
+
+      it('returns early on CI', async () => {
+        process.env.CI = 'true';
+        await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+    });
+
     it('trOwnerAdded returns if process.env.ci is true', async () => {
       process.env.CI = 'true';
       await trOwnerAdded();
@@ -2348,13 +2586,14 @@ describe('mailer tests', () => {
 
       await trOwnerAdded(
         {
+          eventId: 'tr-1234',
           data,
         },
         jsonTransport
       );
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
-        expect.any(Object)
+        expect.objectContaining({ displayId: 'tr-1234' })
       );
     });
 
@@ -2379,6 +2618,7 @@ describe('mailer tests', () => {
 
       await trOwnerAdded(
         {
+          eventId: 'tr-1234',
           data,
         },
         1
@@ -2398,9 +2638,8 @@ describe('mailer tests', () => {
         {
           collaboratorIds: [],
           pocIds: [],
-          data: {
-            eventId: 'tr-1234',
-          },
+          eventId: 'tr-1234',
+          data: {},
         },
         jsonTransport
       );
@@ -2429,13 +2668,14 @@ describe('mailer tests', () => {
           ownerId: 1,
           collaboratorIds: [2],
           pocIds: [3],
+          eventId: 'tr-1234',
           data,
         },
         jsonTransport
       );
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-        expect.any(Object)
+        expect.objectContaining({ displayId: 'tr-1234' })
       );
     });
 
@@ -2468,14 +2708,18 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify(mockEvent.data) },
+          eventId: 'tr-1234',
+          data: {},
         },
         1
       );
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add).toHaveBeenCalledWith(
         EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-        expect.any(Object)
+        expect.objectContaining({
+          displayId: 'tr-1234',
+          reportPath: expect.stringContaining('/training-report/tr-1234'),
+        })
       );
     });
     it('trCollaboratorAdded error', async () => {
@@ -2490,7 +2734,8 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify(mockEvent.data) },
+          eventId: 'tr-1234',
+          data: {},
         },
         1
       );
@@ -2503,7 +2748,8 @@ describe('mailer tests', () => {
       await trCollaboratorAdded(
         {
           id: 1,
-          data: { val: JSON.stringify(mockEvent.data) },
+          eventId: 'tr-1234',
+          data: {},
         },
         1
       );

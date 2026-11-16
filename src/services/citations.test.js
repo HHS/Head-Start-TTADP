@@ -1219,3 +1219,14 @@ describe('citations service', () => {
     });
   });
 });
+
+describe('getCitationsByGrantIds input validation', () => {
+  it.each([[['1) UNION SELECT 1--']], [['1.5']], [['-1']], [[]]])(
+    'rejects grantIds %j',
+    async (grantIds) => {
+      await expect(getCitationsByGrantIds(grantIds, '2025-01-01')).rejects.toThrow(
+        'Invalid grantIds'
+      );
+    }
+  );
+});

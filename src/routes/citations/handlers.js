@@ -3,6 +3,7 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
+import parsePositiveInteger from '../../lib/parsePositiveInteger';
 import User from '../../policies/user';
 import { getCitationsByGrantIds, textByCitation } from '../../services/citations';
 import { currentUserId } from '../../services/currentUser';
@@ -55,8 +56,20 @@ export const getCitationsByGrants = async (req, res) => {
       return;
     }
 
+    // Reject malformed input with a 400 instead of letting the service throw a 500.
+    const parsedGrantIds = [grantIds].flat().map(parsePositiveInteger);
+    if (
+      !parsedGrantIds.length ||
+      parsedGrantIds.includes(null) ||
+      typeof reportStartDate !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(reportStartDate)
+    ) {
+      res.sendStatus(httpCodes.BAD_REQUEST);
+      return;
+    }
+
     // Get the citations for the grant.
-    const citations = await getCitationsByGrantIds([grantIds].flat(), reportStartDate);
+    const citations = await getCitationsByGrantIds(parsedGrantIds, reportStartDate);
 
     // Return the citations.
     res.status(httpCodes.OK).send(citations);

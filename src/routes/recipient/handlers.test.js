@@ -12,6 +12,7 @@ import {
   recipientById,
   recipientLeadership,
   recipientsByName,
+  recipientsByTtaRequestUserId,
   recipientsByUserId,
 } from '../../services/recipient';
 import { getRecipientTimeline as getRecipientTimelineService } from '../../services/recipientTimeline';
@@ -21,6 +22,7 @@ import {
   getGoalsByIdandRecipient,
   getGoalsByRecipient,
   getRecipient,
+  getRecipientAndGrantsByTtaRequestUser,
   getRecipientAndGrantsByUser,
   getRecipientLeadership,
   getRecipientTimeline,
@@ -41,6 +43,7 @@ jest.mock('../../services/recipient', () => ({
   getGoalsByActivityRecipient: jest.fn(),
   getUserReadRegions: jest.fn(),
   updateRecipientGoalStatusById: jest.fn(),
+  recipientsByTtaRequestUserId: jest.fn(),
   recipientsByUserId: jest.fn(),
   recipientLeadership: jest.fn(),
   allArUserIdsByRecipientAndRegion: jest.fn(),
@@ -55,6 +58,7 @@ jest.mock('../../services/accessValidation');
 
 const mockUserById = {
   id: 1000,
+  flags: ['recipient_tta_request'],
   permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
 };
 
@@ -425,7 +429,7 @@ describe('getRecipientTimeline', () => {
 
     expect(getRecipientTimelineService).toHaveBeenCalledWith(
       { recipientId: 100000, regionId: 1, ...timelineQuery },
-      { canReadCommunicationLogs: true }
+      { canReadCommunicationLogs: true, canReadTtaRequests: true }
     );
     expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
   });
@@ -445,11 +449,59 @@ describe('getRecipientTimeline', () => {
 
       expect(getRecipientTimelineService).toHaveBeenCalledWith(
         { recipientId: 100000, regionId: 1, ...timelineQuery },
-        { canReadCommunicationLogs: allowed }
+        expect.objectContaining({ canReadCommunicationLogs: allowed })
       );
       expect(mockResponse.json).toHaveBeenCalledWith(responseBody);
     }
   );
+
+  it.each([
+    [SCOPES.READ_REPORTS, 1, true],
+    [SCOPES.READ_WRITE_TTA_REQUESTS, 1, true],
+    [SCOPES.REVIEW_TTA_REQUESTS, 1, true],
+    [SCOPES.APPROVE_TTA_REQUESTS, 1, true],
+    [SCOPES.BACKUP_APPROVE_TTA_REQUESTS, 1, true],
+    [SCOPES.READ_REPORTS, 2, false],
+    [SCOPES.APPROVE_REPORTS, 1, false],
+    [SCOPES.READ_WRITE_REPORTS, 1, false],
+    [SCOPES.ADMIN, 14, true],
+  ])('passes TTA request policy for scope %s in region %s', async (scopeId, regionId, allowed) => {
+    userById.mockResolvedValue({
+      id: 1000,
+      flags: ['recipient_tta_request'],
+      permissions: [{ scopeId, regionId }],
+    });
+
+    await getRecipientTimeline(req, mockResponse);
+
+    expect(getRecipientTimelineService).toHaveBeenCalledWith(
+      { recipientId: 100000, regionId: 1, ...timelineQuery },
+      expect.objectContaining({ canReadTtaRequests: allowed })
+    );
+  });
+
+  it.each([
+    [undefined, false, false],
+    [[], false, false],
+    [['tta_timeline'], false, false],
+    [['recipient_tta_request'], false, true],
+    [[], true, true],
+  ])('gates request visibility for flags %j and admin %s', async (flags, admin, allowed) => {
+    userById.mockResolvedValue({
+      id: 1000,
+      flags,
+      permissions: [
+        { scopeId: admin ? SCOPES.ADMIN : SCOPES.READ_REPORTS, regionId: admin ? 14 : 1 },
+      ],
+    });
+
+    await getRecipientTimeline(req, mockResponse);
+
+    expect(getRecipientTimelineService).toHaveBeenCalledWith(
+      { recipientId: 100000, regionId: 1, ...timelineQuery },
+      { canReadCommunicationLogs: true, canReadTtaRequests: allowed }
+    );
+  });
 
   it('rejects users without access to the requested region', async () => {
     getUserReadRegions.mockResolvedValue([2]);
@@ -557,6 +609,25 @@ describe('getRecipientAndGrantsByUser', () => {
 
     await getRecipientAndGrantsByUser(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
+});
+
+describe('getRecipientAndGrantsByTtaRequestUser', () => {
+  it('retrieves recipients and grants for the user’s TTA-request write regions', async () => {
+    const req = { session: { userId: 1000 } };
+    const recipients = [{ id: 1, name: 'test' }];
+    const mockResponse = {
+      json: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+
+    currentUserId.mockResolvedValueOnce(1000);
+    recipientsByTtaRequestUserId.mockResolvedValueOnce(recipients);
+
+    await getRecipientAndGrantsByTtaRequestUser(req, mockResponse);
+
+    expect(recipientsByTtaRequestUserId).toHaveBeenCalledWith(1000);
+    expect(mockResponse.json).toHaveBeenCalledWith(recipients);
   });
 });
 

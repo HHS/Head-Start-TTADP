@@ -1,6 +1,8 @@
 import { sequelize } from '../models';
+import normalizeSortDir from './normalizeSortDir';
 
-const orderReportsBy = (sortBy, sortDir) => {
+const orderReportsBy = (sortBy, rawSortDir) => {
+  const sortDir = normalizeSortDir(rawSortDir);
   let result = '';
   switch (sortBy) {
     case 'author':

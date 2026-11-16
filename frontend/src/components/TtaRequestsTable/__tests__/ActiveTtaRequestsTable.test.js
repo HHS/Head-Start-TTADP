@@ -52,11 +52,15 @@ const NEWEST = TWELVE_REQUESTS[11];
 
 const listOf = (rows) => ({ count: rows.length, rows });
 
-const renderTable = (rows = TWELVE_REQUESTS) => {
+const renderTable = (rows = TWELVE_REQUESTS, canCreate = true) => {
   fetchMock.get(RECIPIENT_URL, listOf(rows));
   render(
     <MemoryRouter>
-      <ActiveTtaRequestsTable recipientId={RECIPIENT_ID} regionId={REGION_ID} />
+      <ActiveTtaRequestsTable
+        recipientId={RECIPIENT_ID}
+        regionId={REGION_ID}
+        canCreate={canCreate}
+      />
     </MemoryRouter>
   );
 };
@@ -320,6 +324,16 @@ describe('ActiveTtaRequestsTable', () => {
     ).toBeNull();
   });
 
+  it("doesn't offer to start a request to someone who can't create one", async () => {
+    renderTable([], false);
+
+    expect(
+      await screen.findByRole('heading', { name: "You're all caught up!", level: 3 })
+    ).toBeVisible();
+    expect(screen.queryByText('Would you like to begin a new TTA request?')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'New TTA request' })).toBeNull();
+  });
+
   describe('with the recipient columns', () => {
     const REGION_FILTERS = [{ id: '1', topic: 'region', condition: 'is', query: '14' }];
 
@@ -327,7 +341,7 @@ describe('ActiveTtaRequestsTable', () => {
       fetchMock.get(ALL_REGIONS_URL, listOf(rows));
       render(
         <MemoryRouter>
-          <ActiveTtaRequestsTable showRecipientColumns filters={REGION_FILTERS} />
+          <ActiveTtaRequestsTable showRecipientColumns filters={REGION_FILTERS} canCreate />
         </MemoryRouter>
       );
     };

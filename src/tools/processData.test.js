@@ -18,6 +18,8 @@ import {
   MonitoringReviewStatus,
   MonitoringReviewStatusLink,
   NextStep,
+  Notification,
+  NotificationUserState,
   Objective,
   Permission,
   Recipient,
@@ -31,11 +33,13 @@ import processData, {
   convertGrantNumberCreate,
   convertGrantNumberDrop,
   convertName, // Kept as it's still used in the main code
+  deleteNotifications,
   hideRecipientsGrants,
   hideUsers,
   processCitationGrantNumbers,
   truncateAuditTables,
 } from './processData';
+import { countNonEmptyAuditTables } from './verifyProcessedData';
 
 jest.mock('../logger');
 
@@ -351,11 +355,39 @@ describe('processData', () => {
     }
   });
 
+  it('runs verify inside the transaction and rolls everything back when it fails', async () => {
+    const report = await ActivityReport.create(reportObject);
+    let emailSeenByVerify;
+    const verify = jest.fn(async () => {
+      const user = await User.findOne({ where: { id: mockUser.id } });
+      emailSeenByVerify = user.email;
+      throw new Error('verification failed');
+    });
+
+    await expect(processData(report, { verify })).rejects.toThrow('verification failed');
+
+    expect(verify).toHaveBeenCalledTimes(1);
+    // verify sees the uncommitted anonymized data...
+    expect(emailSeenByVerify).not.toBe(mockUser.email);
+    // ...and none of it is committed after the failure
+    const user = await User.findOne({ where: { id: mockUser.id } });
+    expect(user.email).toBe(mockUser.email);
+  });
+
   it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockActivityReportFile.activityReportId = report.id;
     await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
     const file = await File.create(mockFile);
+    const notification = await Notification.create({
+      userId: null,
+      type: 'systemPlannedOutage',
+      text: 'Planned outage: the TTA Hub will be closed for maintenance',
+    });
+    await NotificationUserState.create({
+      notificationId: notification.id,
+      userId: mockUser.id,
+    });
     await processData(report);
     const transformedReport = await ActivityReport.findOne({ where: { id: report.id } });
 
@@ -370,6 +402,9 @@ describe('processData', () => {
 
     const requestErrors = await RequestErrors.findAll();
     expect(requestErrors.length).toBe(0);
+
+    expect(await Notification.count()).toBe(0);
+    expect(await NotificationUserState.count()).toBe(0);
   });
 
   it('truncates audit tables', async () => {
@@ -383,8 +418,32 @@ describe('processData', () => {
       dml_txid: uuidv4(),
     });
 
+    // Run against the real database: Sequelize returns information_schema table-name queries in a
+    // dialect-specific shape that a mocked query would hide
+    expect(await countNonEmptyAuditTables()).toBeGreaterThan(0);
+
     await truncateAuditTables();
     expect(await ZALGoal.count()).toBe(0);
+    expect(await countNonEmptyAuditTables()).toBe(0);
+  });
+
+  describe('deleteNotifications', () => {
+    it('deletes all notifications and their user states', async () => {
+      const notification = await Notification.create({
+        userId: null,
+        type: 'systemPlannedOutage',
+        text: 'Planned outage: the TTA Hub will be closed for maintenance',
+      });
+      await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: mockUser.id,
+      });
+
+      await deleteNotifications();
+
+      expect(await Notification.count()).toBe(0);
+      expect(await NotificationUserState.count()).toBe(0);
+    });
   });
 
   describe('hideUsers', () => {

@@ -639,4 +639,16 @@ describe('Approved Activity Report V2 component', () => {
       'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance'
     );
   });
+  it('renders an incomplete draft with null participant counts', async () => {
+    render(
+      <ApprovedReportV2
+        data={{
+          ...report,
+          numberOfParticipants: null,
+          targetPopulations: null,
+        }}
+      />
+    );
+    expect(await screen.findByText(/TTA activity report Boat/)).toBeInTheDocument();
+  });
 });

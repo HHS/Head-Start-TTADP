@@ -21,7 +21,6 @@ export default function RecipientSpotlightDataController({
   userHasOnlyOneRegion,
 }) {
   // Page Behavior
-  const [recipientsPerPage, setRecipientsPerPage] = useState(RECIPIENTS_SPOTLIGHT_PER_PAGE);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
   const [currentFilters, setCurrentFilters] = useState(filtersToQueryString(filters));
 
@@ -38,10 +37,12 @@ export default function RecipientSpotlightDataController({
       ...defaultSort,
       activePage: 1,
       offset: 0,
+      perPage: RECIPIENTS_SPOTLIGHT_PER_PAGE,
     },
     `${filterKey}/${regionId}`
   );
 
+  const recipientsPerPage = sortConfig.perPage || RECIPIENTS_SPOTLIGHT_PER_PAGE;
   const filterQuery = filtersToQueryString(filters);
 
   // If filters is different from currentFilters, then reset the activePage and Offset
@@ -124,8 +125,8 @@ export default function RecipientSpotlightDataController({
       ...sortConfig,
       activePage: 1,
       offset: 0,
+      perPage: perPageValue,
     });
-    setRecipientsPerPage(perPageValue);
   };
 
   const exportCsv = async () => {

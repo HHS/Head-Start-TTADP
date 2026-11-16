@@ -1,3 +1,4 @@
+import { trSessionChangesRequested, trSessionSubmittedForApproval } from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
@@ -27,6 +28,10 @@ import {
 } from './handlers';
 import { checkUpdateSessionBody } from './middleware';
 
+jest.mock('../../lib/mailer', () => ({
+  trSessionChangesRequested: jest.fn(),
+  trSessionSubmittedForApproval: jest.fn(),
+}));
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
 jest.mock('../../policies/recipient');
@@ -425,6 +430,102 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
+    it('defers updateSession side effects until the transaction commits', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue(mockSession);
+      updateSession.mockResolvedValue(mockSession);
+      const work = jest.fn();
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await updateHandler(req, mockResponse);
+      const [, , runAfterCommit] = updateSession.mock.calls[updateSession.mock.calls.length - 1];
+      runAfterCommit(work);
+
+      expect(work).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toEqual([work]);
+    });
+
+    it('notifies the approver when the session becomes submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      const submittedSession = { ...mockSession, submitted: true };
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: false });
+      updateSession.mockResolvedValue(submittedSession);
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).toHaveBeenCalledWith(mockEvent, submittedSession);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
+    it('does not notify the approver when the session was already submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: true });
+      updateSession.mockResolvedValue({ ...mockSession, submitted: true });
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+    });
+
+    it('does not notify the approver when the session is not submitted', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: false });
+      updateSession.mockResolvedValue({ ...mockSession, submitted: false });
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+    });
+
+    it('emails the owner after commit when the session moves into needs action', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      const needsActionSession = { ...mockSession, data: { status: 'needs_action' } };
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, data: { status: 'submitted' } });
+      updateSession.mockResolvedValue(needsActionSession);
+      trSessionChangesRequested.mockClear();
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await updateHandler(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(trSessionChangesRequested).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toHaveLength(1);
+
+      await req.transactionCommittedCallbacks[0]();
+
+      expect(trSessionChangesRequested).toHaveBeenCalledTimes(1);
+      expect(trSessionChangesRequested).toHaveBeenCalledWith(mockEvent, needsActionSession);
+    });
+
+    it('does not email the owner when the session was already in needs action', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, data: { status: 'needs_action' } });
+      updateSession.mockResolvedValue({ ...mockSession, data: { status: 'needs_action' } });
+      trSessionChangesRequested.mockClear();
+      const req = { ...mockRequest, inTransactionWrapper: true };
+
+      await updateHandler(req, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(req.transactionCommittedCallbacks).toBeUndefined();
+      expect(trSessionChangesRequested).not.toHaveBeenCalled();
+    });
+
     it('allows update for event role only', async () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
@@ -561,6 +662,7 @@ describe('session report handlers', () => {
           participantCount: 13,
           deliveryMethod: 'hybrid',
           objectiveTopics: ['Topic 1', 'Topic 2'],
+          trainers: [{ fullName: 'Jane Trainer, SS' }, { fullName: 'John Trainer, ECS' }],
         },
         {
           id: 2,
@@ -572,6 +674,7 @@ describe('session report handlers', () => {
           participantCount: 8,
           deliveryMethod: 'virtual',
           objectiveTopics: ['Topic 3'],
+          trainers: [],
         },
       ],
     };
@@ -682,6 +785,7 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Topics');
       expect(csvOutput).toContain('Participant Count');
       expect(csvOutput).toContain('Delivery type');
+      expect(csvOutput).toContain('Trainers');
 
       expect(csvOutput).toContain('1037');
       expect(csvOutput).toContain('Event 1');
@@ -692,6 +796,7 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Topic 2');
       expect(csvOutput).toContain('13');
       expect(csvOutput).toContain('hybrid');
+      expect(csvOutput).toContain('"Jane Trainer, SS, John Trainer, ECS"');
 
       expect(csvOutput).toContain('1038');
       expect(csvOutput).toContain('Event 2');

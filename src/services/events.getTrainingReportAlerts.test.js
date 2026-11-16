@@ -540,4 +540,205 @@ describe('getTrainingReportAlerts', () => {
       expect(Array.isArray(waitingAlert.collaboratorNames)).toBe(true);
     });
   });
+
+  describe('missingSessionInfo with stored pocComplete: false', () => {
+    let owner;
+    let submitter;
+    let approver;
+    let poc;
+    let ncEvent;
+    let regionalEvent;
+    let ncSubmitted;
+    let ncNotSubmitted;
+    let ncPocSubmitted;
+    let regionalNotSubmitted;
+    let regionalSubmitted;
+
+    const oneMonthAgo = () => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      return d;
+    };
+
+    const createSession = (eventId, data, extra = {}) =>
+      SessionReportPilot.create({
+        eventId,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
+        ...extra,
+        data: {
+          sessionName: faker.string.sample(),
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          ...data,
+        },
+      });
+
+    const sessionAlertsFor = async (userId) => {
+      const alerts = await getTrainingReportAlertsForUser(userId, [regionId]);
+      return alerts.filter((a) => a.isSession);
+    };
+
+    beforeAll(async () => {
+      const uniqueId = faker.string.uuid();
+      [owner, submitter, approver, poc] = await Promise.all(
+        ['owner', 'submitter', 'approver', 'poc'].map((role) =>
+          User.create({
+            name: `NC ${role}`,
+            email: `nc-${role}-${uniqueId}@test.gov`,
+            hsesUserId: `nc-${role}-${uniqueId}`,
+            hsesUsername: `nc-${role}-${uniqueId}`,
+          })
+        )
+      );
+
+      const baseEvent = {
+        ownerId: owner.id,
+        // The NC collaborator is the one who submits in this flow.
+        collaboratorIds: [submitter.id],
+        pocIds: [poc.id],
+        regionId,
+      };
+      const baseEventData = {
+        eventName: faker.string.sample(),
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        eventSubmitted: true,
+        startDate: oneMonthAgo(),
+        endDate: new Date(),
+      };
+
+      [ncEvent, regionalEvent] = await Promise.all([
+        EventReportPilot.create({
+          ...baseEvent,
+          eventId: `R01-TR-NC-${uniqueId}`,
+          data: {
+            ...baseEventData,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
+          },
+        }),
+        EventReportPilot.create({
+          ...baseEvent,
+          eventId: `R01-TR-REG-${uniqueId}`,
+          data: {
+            ...baseEventData,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
+          },
+        }),
+      ]);
+
+      const submitted = { approverId: approver.id, submitterId: submitter.id };
+
+      [ncSubmitted, ncNotSubmitted, ncPocSubmitted, regionalNotSubmitted, regionalSubmitted] =
+        await Promise.all([
+          // pocComplete: false written by a draft save's form defaults.
+          createSession(
+            ncEvent.id,
+            {
+              facilitation: 'national_center',
+              pocComplete: false,
+              ownerComplete: true,
+              collabComplete: true,
+            },
+            submitted
+          ),
+          createSession(ncEvent.id, {
+            facilitation: 'national_center',
+            pocComplete: false,
+            ownerComplete: false,
+          }),
+          createSession(ncEvent.id, {
+            facilitation: 'national_center',
+            pocComplete: true,
+          }),
+          createSession(regionalEvent.id, {
+            facilitation: 'regional_tta_staff',
+            pocComplete: false,
+            collabComplete: true,
+          }),
+          createSession(
+            regionalEvent.id,
+            {
+              facilitation: 'regional_tta_staff',
+              pocComplete: true,
+              collabComplete: true,
+            },
+            submitted
+          ),
+        ]);
+    });
+
+    afterAll(async () => {
+      await SessionReportPilot.destroy({
+        where: { eventId: [ncEvent.id, regionalEvent.id] },
+        force: true,
+      });
+      await EventReportPilot.destroy({
+        where: { id: [ncEvent.id, regionalEvent.id] },
+        force: true,
+      });
+      await User.destroy({ where: { id: [owner.id, submitter.id, approver.id, poc.id] } });
+    });
+
+    describe('national center flow, submitted', () => {
+      it('gives the POC no alerts', async () => {
+        const alerts = await sessionAlertsFor(poc.id);
+        expect(alerts.filter((a) => a.id === ncSubmitted.id)).toEqual([]);
+      });
+
+      it('gives the owner no alerts', async () => {
+        const alerts = await sessionAlertsFor(owner.id);
+        expect(alerts.filter((a) => a.id === ncSubmitted.id)).toEqual([]);
+      });
+
+      it('gives the submitter waitingForApproval', async () => {
+        const alerts = await sessionAlertsFor(submitter.id);
+        expect(alerts.filter((a) => a.id === ncSubmitted.id).map((a) => a.alertType)).toEqual([
+          'waitingForApproval',
+        ]);
+      });
+
+      it('gives the approver waitingForApproval', async () => {
+        const alerts = await sessionAlertsFor(approver.id);
+        expect(alerts.filter((a) => a.id === ncSubmitted.id).map((a) => a.alertType)).toEqual([
+          'waitingForApproval',
+        ]);
+      });
+    });
+
+    describe('national center flow, not submitted', () => {
+      it('gives the POC no alert', async () => {
+        const alerts = await sessionAlertsFor(poc.id);
+        expect(alerts.find((a) => a.id === ncNotSubmitted.id)).toBeUndefined();
+      });
+
+      it('gives the owner missingSessionInfo', async () => {
+        const alerts = await sessionAlertsFor(owner.id);
+        expect(alerts.find((a) => a.id === ncNotSubmitted.id)?.alertType).toBe(
+          'missingSessionInfo'
+        );
+      });
+    });
+
+    it('national center flow, POC submitted: gives the POC no missingSessionInfo', async () => {
+      const alerts = await sessionAlertsFor(poc.id);
+      expect(
+        alerts.find((a) => a.id === ncPocSubmitted.id && a.alertType === 'missingSessionInfo')
+      ).toBeUndefined();
+    });
+
+    it('regional facilitation, not submitted: still gives the POC missingSessionInfo', async () => {
+      const alerts = await sessionAlertsFor(poc.id);
+      expect(alerts.find((a) => a.id === regionalNotSubmitted.id)?.alertType).toBe(
+        'missingSessionInfo'
+      );
+    });
+
+    it('regional facilitation, submitted: gives the POC no missingSessionInfo', async () => {
+      const alerts = await sessionAlertsFor(poc.id);
+      expect(
+        alerts.find((a) => a.id === regionalSubmitted.id && a.alertType === 'missingSessionInfo')
+      ).toBeUndefined();
+    });
+  });
 });

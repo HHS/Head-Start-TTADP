@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { act, render, screen } from '@testing-library/react';
-import { REPORT_STATUSES } from '@ttahub/common';
+import userEvent from '@testing-library/user-event';
+import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -67,7 +68,7 @@ const mockReport = {
   ],
 };
 
-const renderViewCollabReport = (reportId = '123') => {
+const renderViewCollabReport = (reportId = '123', user = undefined) => {
   const match = {
     params: { collabReportId: reportId },
     path: '/',
@@ -77,7 +78,7 @@ const renderViewCollabReport = (reportId = '123') => {
   return render(
     <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
       <Router history={history}>
-        <ViewCollabReport match={match} />
+        <ViewCollabReport match={match} user={user} />
       </Router>
     </AppLoadingContext.Provider>
   );
@@ -177,5 +178,109 @@ describe('ViewCollabReport', () => {
 
     // Verify redirect to error page with 404 status
     expect(history.location.pathname).toBe('/something-went-wrong/404');
+  });
+
+  describe('unlock button', () => {
+    const unlockAdmin = {
+      id: 9,
+      name: 'Unlock Admin',
+      permissions: [{ regionId: 14, scopeId: SCOPE_IDS.UNLOCK_APPROVED_REPORTS }],
+    };
+
+    it('is shown on approved reports', async () => {
+      renderViewCollabReport('123', unlockAdmin);
+
+      expect(await screen.findByRole('button', { name: /unlock report/i })).toBeVisible();
+    });
+
+    it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+      'is hidden on %s reports',
+      async (calculatedStatus) => {
+        fetchMock.restore();
+        fetchMock.get('/api/collaboration-reports/123', { ...mockReport, calculatedStatus });
+
+        renderViewCollabReport('123', unlockAdmin);
+
+        await screen.findByTestId('submitted-collab-report');
+        expect(screen.queryByRole('button', { name: /unlock report/i })).toBeNull();
+      }
+    );
+  });
+
+  describe('reset to draft button', () => {
+    const admin = {
+      id: 9,
+      name: 'Admin',
+      permissions: [{ regionId: 14, scopeId: SCOPE_IDS.ADMIN }],
+    };
+    const submitted = { ...mockReport, calculatedStatus: REPORT_STATUSES.SUBMITTED };
+
+    it.each([REPORT_STATUSES.SUBMITTED, REPORT_STATUSES.NEEDS_ACTION])(
+      'is shown to admins on %s reports',
+      async (calculatedStatus) => {
+        fetchMock.restore();
+        fetchMock.get('/api/collaboration-reports/123', { ...mockReport, calculatedStatus });
+
+        renderViewCollabReport('123', admin);
+
+        expect(await screen.findByRole('button', { name: /reset to draft/i })).toBeVisible();
+      }
+    );
+
+    it.each([REPORT_STATUSES.DRAFT, REPORT_STATUSES.APPROVED])(
+      'is hidden from admins on %s reports',
+      async (calculatedStatus) => {
+        fetchMock.restore();
+        fetchMock.get('/api/collaboration-reports/123', { ...mockReport, calculatedStatus });
+
+        renderViewCollabReport('123', admin);
+
+        await screen.findByTestId('submitted-collab-report');
+        expect(screen.queryByRole('button', { name: /reset to draft/i })).toBeNull();
+      }
+    );
+
+    it('is hidden from non-admins', async () => {
+      fetchMock.restore();
+      fetchMock.get('/api/collaboration-reports/123', submitted);
+
+      renderViewCollabReport('123', { id: 1, permissions: [{ regionId: 1, scopeId: 3 }] });
+
+      await screen.findByTestId('submitted-collab-report');
+      expect(screen.queryByRole('button', { name: /reset to draft/i })).toBeNull();
+    });
+
+    it('resets the report after confirming', async () => {
+      fetchMock.restore();
+      fetchMock.get('/api/collaboration-reports/123', submitted);
+      fetchMock.put('/api/collaboration-reports/123/reset', {
+        ...mockReport,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+      });
+
+      renderViewCollabReport('123', admin);
+
+      userEvent.click(await screen.findByRole('button', { name: /reset to draft/i }));
+      expect(fetchMock.called('/api/collaboration-reports/123/reset')).toBe(false);
+      userEvent.click(screen.getByRole('button', { name: /reset collaboration report to draft/i }));
+
+      expect(await screen.findByText('This report has been reset to draft.')).toBeVisible();
+      expect(fetchMock.called('/api/collaboration-reports/123/reset', 'PUT')).toBe(true);
+      expect(screen.queryByRole('button', { name: /^reset to draft$/i })).toBeNull();
+    });
+
+    it('shows an error when the reset fails', async () => {
+      fetchMock.restore();
+      fetchMock.get('/api/collaboration-reports/123', submitted);
+      fetchMock.put('/api/collaboration-reports/123/reset', 403);
+
+      renderViewCollabReport('123', admin);
+
+      userEvent.click(await screen.findByRole('button', { name: /reset to draft/i }));
+      userEvent.click(screen.getByRole('button', { name: /reset collaboration report to draft/i }));
+
+      expect(await screen.findByText('Unable to reset this report to draft.')).toBeVisible();
+    });
   });
 });

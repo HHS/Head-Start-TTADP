@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
-import FilterContext from '../../../FilterContext';
 import DashboardOverview from '../../../widgets/DashboardOverview';
 import StandardGoalList from '../../../widgets/StandardGoalList';
 import TopicFrequencyGraph from '../../../widgets/TopicFrequencyGraph';
@@ -13,7 +12,6 @@ export default function ActivityReportDashboard({
   filtersToApply,
   resetPagination,
   setResetPagination,
-  filterKey,
 }) {
   return (
     <>
@@ -43,16 +41,14 @@ export default function ActivityReportDashboard({
         <TopicFrequencyGraph filters={filtersToApply} />
       </Grid>
       <Grid row>
-        <FilterContext.Provider value={{ filterKey }}>
-          <ActivityReportsTable
-            filters={filtersToApply}
-            showFilter={false}
-            tableCaption="Activity reports"
-            exportIdPrefix="rd-"
-            resetPagination={resetPagination}
-            setResetPagination={setResetPagination}
-          />
-        </FilterContext.Provider>
+        <ActivityReportsTable
+          filters={filtersToApply}
+          showFilter={false}
+          tableCaption="Activity reports"
+          exportIdPrefix="rd-"
+          resetPagination={resetPagination}
+          setResetPagination={setResetPagination}
+        />
       </Grid>
     </>
   );
@@ -62,5 +58,4 @@ ActivityReportDashboard.propTypes = {
   filtersToApply: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   resetPagination: PropTypes.bool.isRequired,
   setResetPagination: PropTypes.func.isRequired,
-  filterKey: PropTypes.string.isRequired,
 };

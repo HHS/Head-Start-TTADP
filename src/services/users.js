@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES } from '@ttahub/common';
 import { Op, QueryTypes } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import SCOPES from '../middleware/scopeConstants';
@@ -15,6 +15,9 @@ import {
 import { formatNumber } from '../widgets/helpers';
 
 const { SITE_ACCESS } = SCOPES;
+
+// the admin page's stand-in for every region, which is never saved as a permission
+const ALL_REGIONS = 15;
 
 export const userAttributes = [
   'id',
@@ -128,6 +131,97 @@ export async function usersWithPermissions(regions, scopes) {
 }
 
 /**
+ * Active users (those with site access) who hold at least one of the scopes in the region,
+ * once each, ordered by name
+ *
+ * @param {number[]} scopeIds
+ * @param {number} regionId
+ */
+export async function activeUsersWithScopesInRegion(scopeIds, regionId) {
+  return User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      // site access is a second permission row, which the permissions include below can't
+      // also require
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT "userId" FROM "Permissions" WHERE "scopeId" = ${SITE_ACCESS})`
+        ),
+      },
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+        attributes: [],
+        where: { scopeId: scopeIds, regionId },
+        required: true,
+      },
+    ],
+    order: [['name', 'ASC']],
+  });
+}
+
+/**
+ * The regions where the permissions hold both scopes of a mutually exclusive pair
+ *
+ * @param {{ scopeId: number, regionId: number }[]} permissions
+ * @returns {number[]}
+ */
+export function regionsWithExclusiveScopeConflicts(permissions = []) {
+  const regionPermissions = permissions.filter((p) => p.regionId !== ALL_REGIONS);
+  const regions = new Set();
+
+  MUTUALLY_EXCLUSIVE_SCOPES.forEach(([first, second]) => {
+    regionPermissions
+      .filter((p) => p.scopeId === first)
+      .forEach(({ regionId }) => {
+        if (regionPermissions.some((p) => p.scopeId === second && p.regionId === regionId)) {
+          regions.add(regionId);
+        }
+      });
+  });
+
+  return [...regions];
+}
+
+/** the message shown when a region already has its one primary TTA request approver */
+export const primaryApproverMessage = (regionId, name) =>
+  `Region ${regionId} already has a primary COR approver: ${name}`;
+
+/**
+ * Each region has one primary TTA request approver (APPROVE_TTA_REQUESTS), though any number
+ * of backup approvers. Returns a message for each region the permissions would make the user
+ * a second primary approver in.
+ *
+ * @param {number|string} userId - the user being updated
+ * @param {{ scopeId: number, regionId: number }[]} permissions
+ * @returns {Promise<string[]>}
+ */
+export async function primaryApproverConflicts(userId, permissions = []) {
+  const regionIds = permissions
+    .filter((p) => p.scopeId === SCOPES.APPROVE_TTA_REQUESTS && p.regionId !== ALL_REGIONS)
+    .map((p) => p.regionId);
+
+  if (!regionIds.length) {
+    return [];
+  }
+
+  const existing = await Permission.findAll({
+    attributes: ['regionId'],
+    where: {
+      scopeId: SCOPES.APPROVE_TTA_REQUESTS,
+      regionId: regionIds,
+      userId: { [Op.ne]: userId },
+    },
+    include: [{ model: User, as: 'user', attributes: ['name'] }],
+    order: [['regionId', 'ASC']],
+  });
+
+  return existing.map(({ regionId, user }) => primaryApproverMessage(regionId, user.name));
+}
+
+/**
  * @param {User} user
  */
 export async function userEmailIsVerified(user) {
@@ -141,6 +235,20 @@ export async function userEmailIsVerified(user) {
 export async function userEmailIsVerifiedByUserId(userId) {
   const user = await userById(userId);
   return user ? userEmailIsVerified(user) : false;
+}
+
+/**
+ * Clears a user's email verification so they must verify their email again.
+ *
+ * @param {number} userId
+ * @returns {Promise<number>} number of validation status rows reset
+ */
+export async function requireEmailVerification(userId) {
+  const [count] = await UserValidationStatus.update(
+    { validatedAt: null, token: '' },
+    { where: { userId, type: 'email' } }
+  );
+  return count;
 }
 
 /**
@@ -189,7 +297,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
 
   const users = await User.findAll({
-    exclude: ['email', 'phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
+    attributes: {
+      exclude: ['phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
+    },
     where: {
       [Op.or]: {
         '$permissions.scopeId$': {
@@ -240,14 +350,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   if (eventId) {
     // get event report pilot that has the matching full event display id.
     const eventReportPilot = await EventReportPilot.findOne({
-      attributes: ['id', 'ownerId', 'data'],
-      where: {
-        data: {
-          eventId: {
-            [Op.eq]: eventId,
-          },
-        },
-      },
+      attributes: ['id', 'ownerId'],
+      // only events in the region the caller is authorized for
+      where: { eventId, regionId },
     });
 
     if (eventReportPilot) {
@@ -258,7 +363,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       if (!currentOwner) {
         // If the current ownerId is not in the creators array, add it.
         const owner = await userById(eventReportPilot.ownerId);
-        results.creators.push({ id: owner.id, fullName: owner.fullName });
+        if (owner) {
+          results.creators.push({ id: owner.id, fullName: owner.fullName });
+        }
       }
     }
   }

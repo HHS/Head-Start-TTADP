@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -34,7 +34,7 @@ const SUBMITTED_REQUEST = {
   ],
   goalTemplate: {
     id: 5,
-    templateName: 'The recipient will develop and implement a QIP/CAP',
+    templateName: '(Monitoring) The recipient will develop and implement a QIP/CAP',
     standard: 'Monitoring',
   },
   citations: [
@@ -86,10 +86,12 @@ describe('ViewTtaRequest', () => {
       '/tta-requests'
     );
 
-    expect(screen.getByText('Creator:').parentElement).toHaveTextContent('Avery Example, GS');
-    expect(screen.getByText('Reviewer:').parentElement).toHaveTextContent('Jordan Sample, TTAC');
-    expect(screen.getByText('Date Created:').parentElement).toHaveTextContent('06/23/2026');
-    expect(screen.getByText('Date submitted:').parentElement).toHaveTextContent('06/23/2026');
+    expect(screen.getByText('Creator:').nextElementSibling).toHaveTextContent('Avery Example, GS');
+    expect(screen.getByText('Reviewer:').nextElementSibling).toHaveTextContent(
+      'Jordan Sample, TTAC'
+    );
+    expect(screen.getByText('Date Created:').nextElementSibling).toHaveTextContent('06/23/2026');
+    expect(screen.getByText('Date submitted:').nextElementSibling).toHaveTextContent('06/23/2026');
 
     expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
     const grant = screen.getByText('Sample Recipient Agency - 14HP1234 - EHS');
@@ -102,6 +104,7 @@ describe('ViewTtaRequest', () => {
     expect(screen.getByRole('heading', { name: 'Goal and context' })).toBeVisible();
     const context = screen.getByText('Lorem ipsum dolor sit amet');
     expect(context).toBeVisible();
+    // the template name already carries the standard, so it isn't prefixed again
     const goal = screen.getByText(
       '(Monitoring) The recipient will develop and implement a QIP/CAP'
     );
@@ -123,38 +126,41 @@ describe('ViewTtaRequest', () => {
     expect(screen.queryByText('Citations addressed')).toBeNull();
   });
 
-  it('shows the creator notes as plain text with their line breaks', async () => {
+  it('shows the creator notes in the notes summary', async () => {
     fetchMock.get(URL, {
       ...SUBMITTED_REQUEST,
       creatorNotes: 'First line <b>not bold</b>\nSecond line',
     });
     renderView();
 
-    expect(await screen.findByText('Creator notes')).toBeVisible();
-    const notes = screen.getByText(/First line/);
+    const heading = await screen.findByRole('heading', { level: 2, name: 'Notes summary' });
+    const summary = heading.closest('section');
+    expect(within(summary).getByText('Draft TTA Request')).toBeVisible();
+    expect(within(summary).getByText('Avery Example, GS')).toBeVisible();
+    expect(within(summary).getByText('Creator')).toBeVisible();
+    expect(within(summary).getByText('June 23, 2026 • 17:00 UTC')).toBeVisible();
+    const notes = within(summary).getByText(/First line/);
     expect(notes.textContent).toBe('First line <b>not bold</b>\nSecond line');
     expect(notes.querySelector('b')).toBeNull();
-    expect(notes).toHaveClass('ttahub-view-tta-request--creator-notes');
-  });
 
-  it('leaves out the creator notes when there are none', async () => {
-    fetchMock.get(URL, SUBMITTED_REQUEST);
-    renderView();
-
-    await screen.findByRole('heading', { name: 'Goal and context' });
+    // the notes are no longer repeated under the goal and context
     expect(screen.queryByText('Creator notes')).toBeNull();
   });
 
-  it('shows the goal without a standard prefix when the goal has no standard', async () => {
-    fetchMock.get(URL, {
-      ...SUBMITTED_REQUEST,
-      goalTemplate: { ...SUBMITTED_REQUEST.goalTemplate, standard: null },
-    });
+  it('shows the creator submission even when there are no creator notes', async () => {
+    fetchMock.get(URL, SUBMITTED_REQUEST);
     renderView();
 
-    expect(
-      await screen.findByText('The recipient will develop and implement a QIP/CAP')
-    ).toBeVisible();
+    const heading = await screen.findByRole('heading', { level: 2, name: 'Notes summary' });
+    expect(within(heading.closest('section')).getByText('Draft TTA Request')).toBeVisible();
+  });
+
+  it('leaves out the notes summary when the request has not been submitted', async () => {
+    fetchMock.get(URL, { ...SUBMITTED_REQUEST, status: 'draft', submittedAt: null });
+    renderView();
+
+    await screen.findByRole('heading', { name: 'Goal and context' });
+    expect(screen.queryByRole('heading', { name: 'Notes summary' })).toBeNull();
   });
 
   it('sends the user to the error page when the request cannot load', async () => {

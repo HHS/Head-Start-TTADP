@@ -38,7 +38,7 @@ export interface SelectOption {
   value: number | string;
 }
 
-export interface Approver {
+export interface Reviewer {
   id: number;
   name: string;
 }

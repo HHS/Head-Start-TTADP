@@ -1,4 +1,5 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { EventEmitter } from 'events';
 import { NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
 import { setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -14,12 +15,14 @@ import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { syncApprovers, upsertApprover } from '../../services/activityReportApprovers';
+import { streamActivityReportExportCsv } from '../../services/activityReportExports';
 import {
   activityReportAlerts,
   activityReportAndRecipientsById,
   activityReportByLegacyId,
   activityReports,
   activityReportsForCleanup,
+  adminResetReportToDraft,
   assertApproversAreNotParticipants,
   createOrUpdate,
   getAllDownloadableActivityReportAlerts,
@@ -41,6 +44,7 @@ import { userSettingOverridesById } from '../../services/userSettings';
 import { userById, usersWithPermissions } from '../../services/users';
 import {
   createReport,
+  downloadActivityReportExport,
   downloadAllAlerts,
   downloadAllReports,
   downloadReports,
@@ -73,6 +77,7 @@ jest.mock('../../services/activityReports', () => ({
   possibleRecipients: jest.fn(),
   review: jest.fn(),
   setStatus: jest.fn(),
+  adminResetReportToDraft: jest.fn(),
   activityReports: jest.fn(),
   activityReportAlerts: jest.fn(),
   activityReportByLegacyId: jest.fn(),
@@ -109,6 +114,9 @@ jest.mock('../../services/notifications', () => ({
 }));
 
 jest.mock('../../services/accessValidation');
+jest.mock('../../services/activityReportExports', () => ({
+  streamActivityReportExportCsv: jest.fn(),
+}));
 
 jest.mock('../../goalServices/goals', () => ({
   copyGoalsToGrants: jest.fn(),
@@ -143,6 +151,78 @@ const mockRequest = {
     userId: 1,
   },
 };
+
+describe('downloadActivityReportExport', () => {
+  let response;
+
+  beforeEach(() => {
+    response = Object.assign(new EventEmitter(), {
+      writeHead: jest.fn(),
+      write: jest.fn().mockReturnValue(true),
+      end: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    });
+    getUserReadRegions.mockResolvedValue([1, 2]);
+    setReadRegions.mockResolvedValue({ 'region.in': [1], 'recipient.in': [42] });
+    streamActivityReportExportCsv.mockImplementation(async (_options, callbacks) => {
+      await callbacks.onStart({ outputName: 'goals_export' });
+      await callbacks.onChunk('goal_id\n1');
+    });
+  });
+
+  it('resolves full-table filters with the current user policy', async () => {
+    const query = { 'region.in': [1], 'recipient.in': [42] };
+    await downloadActivityReportExport(
+      { ...mockRequest, query, body: { dataSet: 'goals', exportAll: true } },
+      response
+    );
+    expect(setReadRegions).toHaveBeenCalledWith(query, 1);
+    expect(streamActivityReportExportCsv).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dataSet: 'goals',
+        filters: query,
+        userId: 1,
+        regionIds: [1, 2],
+      }),
+      expect.any(Object)
+    );
+    expect(response.writeHead).toHaveBeenCalledWith(
+      200,
+      expect.objectContaining({ 'Content-Disposition': 'attachment; filename="goals_export.csv"' })
+    );
+    expect(response.write).toHaveBeenCalledWith('goal_id\n1');
+    expect(response.end).toHaveBeenCalled();
+  });
+
+  it('keeps selected-row downloads scoped to the supplied IDs', async () => {
+    await downloadActivityReportExport(
+      { ...mockRequest, query: {}, body: { dataSet: 'objectives', reportIds: [10, 11] } },
+      response
+    );
+    const options = streamActivityReportExportCsv.mock.calls.at(-1)[0];
+    expect(options).toMatchObject({
+      dataSet: 'objectives',
+      reportIds: [10, 11],
+      regionIds: [1, 2],
+    });
+    expect(options).not.toHaveProperty('filters');
+  });
+
+  it('surfaces export capacity errors before starting the response', async () => {
+    streamActivityReportExportCsv.mockRejectedValueOnce(
+      Object.assign(new Error('Please try again.'), { statusCode: 429 })
+    );
+    await downloadActivityReportExport(
+      { ...mockRequest, query: {}, body: { dataSet: 'goals', reportIds: [10] } },
+      response
+    );
+    expect(response.status).toHaveBeenCalledWith(429);
+    expect(response.json).toHaveBeenCalledWith({ error: 'Please try again.' });
+    expect(response.writeHead).not.toHaveBeenCalled();
+  });
+});
+
 const mockManager = {
   id: 1843,
   hsesUserId: '1843',
@@ -3066,6 +3146,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
         isApproverAndCreator: () => false,
+        canAdminReset: () => false,
       }));
       const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
@@ -3084,6 +3165,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => false,
         isApproverAndCreator: () => false,
+        canAdminReset: () => false,
       }));
       await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -3095,6 +3177,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         isApproverAndCreator: () => true,
         canReset: () => false,
+        canAdminReset: () => false,
       }));
       const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
@@ -3107,6 +3190,33 @@ describe('Activity Report handlers', () => {
         objectivesWithoutGoals: [],
       };
       expect(mockResponse.json).toHaveBeenCalledWith(jsonResponse);
+    });
+
+    it('lets admins reset a report awaiting approval', async () => {
+      const result = { status: 'draft', displayId: 'mockreport-1', objectivesWithoutGoals: [] };
+      activityReportAndRecipientsById.mockResolvedValue([report]);
+      ActivityReport.mockImplementation(() => ({
+        isApproverAndCreator: () => false,
+        canReset: () => false,
+        canAdminReset: () => true,
+      }));
+      adminResetReportToDraft.mockResolvedValue([{ dataValues: { ...result } }, [], [], []]);
+      setStatus.mockClear();
+      lockActivityReport.mockClear();
+      activityReportAndRecipientsById.mockClear();
+      await resetToDraft(request, mockResponse);
+      expect(lockActivityReport).toHaveBeenCalledWith(1);
+      expect(lockActivityReport.mock.invocationCallOrder[0]).toBeLessThan(
+        activityReportAndRecipientsById.mock.invocationCallOrder[0]
+      );
+      expect(adminResetReportToDraft).toHaveBeenCalledWith(report);
+      expect(setStatus).not.toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        ...result,
+        activityRecipients: [],
+        goalsAndObjectives: [],
+        objectivesWithoutGoals: [],
+      });
     });
   });
 
@@ -3422,6 +3532,60 @@ describe('Activity Report handlers', () => {
   });
 
   describe('saveOtherEntityObjectivesForReport', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({ id: 1, regionId: 1 });
+    });
+    afterEach(() => jest.restoreAllMocks());
+
+    it.each([
+      [1, 2, true],
+      [2, 2, false],
+      [2, 1, true],
+    ])(
+      'rejects submitted region %s, report region %s and permission %s before writing',
+      async (region, reportRegionId, permission) => {
+        User.mockImplementation(() => ({ canWriteInRegion: (id) => permission && id === 1 }));
+        ActivityReportModel.findByPk.mockResolvedValue({ id: 1, regionId: reportRegionId });
+        await saveOtherEntityObjectivesForReport(
+          { body: { activityReportId: 1, region, objectivesWithoutGoals: [] } },
+          mockResponse
+        );
+        expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+        expect(saveObjectivesForReport).not.toHaveBeenCalled();
+        expect(getObjectivesByReportId).not.toHaveBeenCalled();
+        expect(mockResponse.json).not.toHaveBeenCalled();
+      }
+    );
+
+    it('rejects a missing report before writing', async () => {
+      ActivityReportModel.findByPk.mockResolvedValue(null);
+      await saveOtherEntityObjectivesForReport(
+        { body: { activityReportId: 1, region: 1 } },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+      expect(saveObjectivesForReport).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a null entity id', [{ title: 'a', ids: [10], recipientIds: [null] }]],
+      ['an object without entity ids', [{ title: 'a', ids: [10] }]],
+      ['a supplied goal id', [{ title: 'a', ids: [10], recipientIds: [1], goalId: 10 }]],
+      ['a non array payload', 'objectives'],
+      ['a missing payload', undefined],
+    ])('rejects %s without writing', async (_label, objectivesWithoutGoals) => {
+      User.mockImplementation(() => ({ canWriteInRegion: () => true }));
+      await saveOtherEntityObjectivesForReport(
+        { body: { activityReportId: 1, region: 1, objectivesWithoutGoals } },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
+      expect(saveObjectivesForReport).not.toHaveBeenCalled();
+      expect(getObjectivesByReportId).not.toHaveBeenCalled();
+      expect(mockResponse.json).not.toHaveBeenCalled();
+    });
+
     it('handles unauthorized', async () => {
       User.mockImplementation(() => ({
         canWriteInRegion: () => false,
@@ -3453,6 +3617,7 @@ describe('Activity Report handlers', () => {
       // Mock found report.
       const foundReport = {
         id: 1,
+        regionId: 1,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       };

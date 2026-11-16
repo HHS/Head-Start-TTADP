@@ -4,6 +4,12 @@
   max-width: 500px;
 }
 
+/* the cap above lets a long tag claim more than its row, which pushes react-select's input
+   onto a blank line below it; leaving room for the tag's margins keeps the input beside it */
+.usa-form-group.ttahub-form-item .ttahub-multi-select [class$="-multiValue"] {
+  max-width: calc(100% - 8px);
+}
+
 .smart-hub--form-required {
   color: $error-dark;
 }

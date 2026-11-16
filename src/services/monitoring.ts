@@ -35,8 +35,8 @@ const {
   Role,
 } = db;
 
-const MIN_DELIVERY_DATE = '2025-01-21';
-const REVIEW_STATUS_COMPLETE = 'Complete';
+export const MIN_DELIVERY_DATE = '2025-01-21';
+export const REVIEW_STATUS_COMPLETE = 'Complete';
 
 /**
  * Map finding type based on determination and original type.
