@@ -1002,7 +1002,8 @@ jobs:
           command: |
             mkdir -p reports/migrations
             TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-            echo "export MIGRATION_TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+            # %q quotes the name: CIRCLE_JOB contains parentheses, e.g. "deploy (dev-pink)".
+            printf 'export MIGRATION_TASK_NAME=%q\n' "${TASK_NAME}" >> "$BASH_ENV"
             echo "Running database migrations as task ${TASK_NAME}"
 
             set +e
