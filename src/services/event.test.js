@@ -366,6 +366,38 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('emails a POC once when overlapping saves both add them', async () => {
+      const created = await createAnEvent(98_989);
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+      const request = {
+        ownerId: 98_989,
+        pocIds: [98_989, 11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: {
+          status: 'active',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+          owner: { id: 98_989, name: 'test' },
+        },
+      };
+      const deferred = [];
+      const save = () =>
+        db.sequelize.transaction(() =>
+          updateEvent(created.id, structuredClone(request), (work) => {
+            deferred.push(work);
+          })
+        );
+
+      await Promise.all([save(), save()]);
+      await Promise.all(deferred.map((work) => work()));
+
+      const emailed = trPocAddedSpy.mock.calls.flatMap(([, newPocIds]) => newPocIds);
+      expect(emailed).toEqual([11_111]);
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('does not email POCs on events without National Centers', async () => {
       const created = await createAnEvent(98_989);
       const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();

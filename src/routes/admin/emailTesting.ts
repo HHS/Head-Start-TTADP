@@ -5,7 +5,6 @@ import { sendEmailDigests } from '../../lib/cron';
 import { auditLogger } from '../../logger';
 import { currentUserId } from '../../services/currentUser';
 import { notifyRecentMonitoringDeliveries } from '../../services/monitoringDeliveryNotifications';
-import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'ADMIN:EMAIL_TESTING';
 
@@ -68,7 +67,10 @@ export async function runMonitoringDeliveries(req: Request, res: Response) {
 
 const router = express.Router();
 
-router.post('/digests/:frequency', transactionWrapper(runDigests));
-router.post('/monitoring-deliveries', transactionWrapper(runMonitoringDeliveries));
+// No request transaction: queued Redis jobs can't roll back with it, one failed query would abort
+// it for every later user, and handleError needs a usable connection to record a failure that
+// happens partway through the run.
+router.post('/digests/:frequency', runDigests);
+router.post('/monitoring-deliveries', runMonitoringDeliveries);
 
 export default router;

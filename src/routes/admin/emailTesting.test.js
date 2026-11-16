@@ -2,7 +2,7 @@ import { isNonProductionEnvironment } from '../../envParser';
 import { handleError } from '../../lib/apiErrorHandler';
 import { sendEmailDigests } from '../../lib/cron';
 import { notifyRecentMonitoringDeliveries } from '../../services/monitoringDeliveryNotifications';
-import { runDigests, runMonitoringDeliveries } from './emailTesting';
+import router, { runDigests, runMonitoringDeliveries } from './emailTesting';
 
 jest.mock('../../lib/cron', () => ({
   sendEmailDigests: jest.fn(),
@@ -41,6 +41,11 @@ describe('admin email testing', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     isNonProductionEnvironment.mockReturnValue(true);
+  });
+
+  it('runs both endpoints outside a request transaction', () => {
+    const handlers = router.stack.map(({ route }) => route.stack.map(({ handle }) => handle));
+    expect(handlers).toEqual([[runDigests], [runMonitoringDeliveries]]);
   });
 
   describe('runDigests', () => {
@@ -87,6 +92,7 @@ describe('admin email testing', () => {
 
       await runDigests(req, mockResponse);
 
+      expect(mockResponse.status).not.toHaveBeenCalledWith(200);
       expect(handleError).toHaveBeenCalledWith(req, mockResponse, error, {
         namespace: 'ADMIN:EMAIL_TESTING:DIGESTS',
       });

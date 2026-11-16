@@ -452,5 +452,18 @@ describe('cron', () => {
 
       await expect(sendEmailDigests('MONTHLY')).rejects.toThrow('boom');
     });
+
+    it('rejects when a digest fails after earlier digests were queued', async () => {
+      digestForSetting
+        .mockResolvedValueOnce([{}, {}])
+        .mockRejectedValueOnce(new Error('Redis down'));
+
+      await expect(sendEmailDigests('DAILY', { includeTrainingReport: true })).rejects.toThrow(
+        'Redis down'
+      );
+      expect(digestForSetting).toHaveBeenCalledTimes(2);
+      expect(recipientApprovedDigest).not.toHaveBeenCalled();
+      expect(trainingReportTaskDueNotifications).not.toHaveBeenCalled();
+    });
   });
 });

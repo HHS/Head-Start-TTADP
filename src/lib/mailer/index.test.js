@@ -33,6 +33,7 @@ import {
   creatorReportSubmittedForReviewDigest,
   creatorReportSubmittedForReviewNotification,
   DIGEST_CONFIG,
+  digestForSetting,
   filterAndDeduplicateEmails,
   frequencyToInterval,
   notificationQueue as notificationDigestQueueMock,
@@ -2327,6 +2328,67 @@ describe('mailer tests', () => {
         });
         await User.destroy({ where: { id: specialistIds } });
       }
+    });
+
+    describe('digest enqueueing', () => {
+      const config = {
+        settingKey: 'emailWhenAppointedCollaborator',
+        reportFetcher: () => Promise.resolve([]),
+        actionType: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+        logKey: 'TestDigest',
+        freq: EMAIL_DIGEST_FREQ.DAILY,
+        subjectFreq: DAILY,
+      };
+
+      it('digestForSetting resolves only after the queue accepts each job', async () => {
+        let accepted = false;
+        notificationQueueMock.add.mockImplementationOnce(async () => {
+          await new Promise((resolve) => {
+            setImmediate(resolve);
+          });
+          accepted = true;
+        });
+
+        const result = await digestForSetting(config);
+
+        expect(accepted).toBe(true);
+        expect(result).toHaveLength(1);
+      });
+
+      it('digestForSetting rejects and logs when the queue rejects asynchronously', async () => {
+        notificationQueueMock.add.mockImplementationOnce(() =>
+          Promise.reject(new Error('Redis down'))
+        );
+
+        await expect(digestForSetting(config)).rejects.toThrow('Redis down');
+        expect(logger.info).toHaveBeenCalledWith(
+          expect.stringContaining('error Error: Redis down')
+        );
+      });
+
+      it('recipientApprovedDigest rejects and logs when the queue rejects asynchronously', async () => {
+        const originalQuery = db.sequelize.query.bind(db.sequelize);
+        const querySpy = jest
+          .spyOn(db.sequelize, 'query')
+          .mockImplementation((sql, ...rest) =>
+            typeof sql === 'string' && sql.includes('programSpecialistEmail')
+              ? Promise.resolve([{ userId: mockUser.id, reportId: mockReport.id }])
+              : originalQuery(sql, ...rest)
+          );
+        userSettingOverridesById.mockImplementationOnce(() => Promise.resolve({ value: 'today' }));
+        notificationQueueMock.add.mockImplementationOnce(() =>
+          Promise.reject(new Error('Redis down'))
+        );
+
+        try {
+          await expect(recipientApprovedDigest('today', DAILY)).rejects.toThrow('Redis down');
+          expect(logger.info).toHaveBeenCalledWith(
+            expect.stringContaining('RecipientApprovedDigest')
+          );
+        } finally {
+          querySpy.mockRestore();
+        }
+      });
     });
   });
 
