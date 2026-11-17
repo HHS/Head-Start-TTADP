@@ -300,6 +300,31 @@ const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, reg
  */
 
 /**
+ * Check if user can approve a TTA request, or send it back to its reviewer, as the API's TTA
+ * request policy allows: any primary or backup COR in its region, while it awaits approval
+ * @param {object} user - user object
+ * @param {object} ttaRequest - the saved request, with its status and region
+ * @returns {boolean} - True if the user can approve the request
+ */
+const canApproveTtaRequest = (user, ttaRequest) => {
+  if (!user || !ttaRequest) {
+    return false;
+  }
+
+  const { permissions } = user;
+  return (
+    ttaRequest.status === TTA_REQUEST_STATUSES.AWAITING_APPROVAL &&
+    !!permissions &&
+    permissions.some(
+      (p) =>
+        (p.scopeId === SCOPE_IDS.APPROVE_TTA_REQUESTS ||
+          p.scopeId === SCOPE_IDS.BACKUP_APPROVE_TTA_REQUESTS) &&
+        p.regionId === ttaRequest.regionId
+    )
+  );
+};
+
+/**
  * Check if user can change a submitted TTA request's details as its reviewer, as the API's TTA
  * request policy allows: while it is submitted to them and they can still review in its region
  * @param {object} user - user object
@@ -360,14 +385,15 @@ const canSeeBehindFeatureFlag = (user, flag) => {
 };
 
 export {
+  canApproveTtaRequest,
   canChangeGoalStatus,
   canChangeObjectiveStatus,
   canCreateCommunicationLog,
   canCreateTtaRequest,
   canEditOrCreateGoals,
+  canEditOrCreateSessionReports,
   canEditTtaRequest,
   canReviewerEditTtaRequest,
-  canEditOrCreateSessionReports,
   canSeeBehindFeatureFlag,
   getRegionWithReadWrite,
   getUserRegions,

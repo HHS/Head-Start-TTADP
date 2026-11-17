@@ -148,6 +148,7 @@ export const TTA_REQUEST_STATUSES: {
   readonly SUBMITTED: 'submitted';
   readonly NEEDS_ACTION: 'needs_action';
   readonly AWAITING_APPROVAL: 'awaiting_approval';
+  readonly APPROVED: 'approved';
 };
 
 export const TTA_REQUEST_STEPS: {
@@ -160,6 +161,7 @@ export const TTA_REQUEST_NOTE_ACTIONS: {
   readonly SUBMITTED: 'submitted';
   readonly NEEDS_ACTION: 'needs_action';
   readonly SENT_FOR_APPROVAL: 'sent_for_approval';
+  readonly APPROVED: 'approved';
 };
 
 export const TTA_REQUEST_MAX_ASSIGNED_STAFF: 5;

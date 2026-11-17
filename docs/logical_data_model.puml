@@ -1382,6 +1382,14 @@ class TtaRequestCitations{
  findingType : text
 }
 
+class TtaRequestGoals{
+ * id : integer : <generated>
+ * goalId : integer : REFERENCES "Goals".id
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class TtaRequestGrants{
  * id : integer : <generated>
  * grantId : integer : REFERENCES "Grants".id
@@ -3117,6 +3125,20 @@ class ZALTtaRequestCitations{
  session_sig : text
 }
 
+class ZALTtaRequestGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALTtaRequestGrants{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3290,6 +3312,8 @@ class ZALZAFilter{
 
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
+!issue='associations need to be defined both directions'
+Goals "1" --[#d54309,plain,thickness=2]-- "1" TtaRequestGoals : goal
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
 Users "1" --[#black,plain,thickness=2]-- "1" TtaRequests : creator, lastUpdatedBy, reviewer
@@ -3445,6 +3469,7 @@ Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromT
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : ttaRequest, approvers
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestAssignedStaff : ttaRequest, assignedStaffLinks
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestCitations : ttaRequest, citations
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGoals : ttaRequest, requestGoals
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequest, requestGrants
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : ttaRequest, notes
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestReviewers : ttaRequest, reviewers
@@ -3508,6 +3533,8 @@ GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
+!issue='associations need to be defined both directions'
+Goals "n" }--[#d54309,dotted,thickness=2]--{ "n" TtaRequests : goals
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, grants

@@ -7,6 +7,7 @@ import filtersToScopes from '../../scopes';
 import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
+  approveTtaRequest as approveTtaRequestService,
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
   lockTtaRequest,
@@ -285,6 +286,44 @@ export async function reviewTtaRequest(req: Request, res: Response) {
     // the service rejects a review before it writes anything, so there is nothing for the
     // wrapper to roll back, unlike a submission
     if (respondWithServiceError(res, error)) {
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function approveTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
+    const existing = await ttaRequestById(Number(ttaRequestId));
+
+    if (!existing) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
+
+    if (!authorization.canApprove()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await approveTtaRequestService(existing, req.body, userId);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
+  } catch (error) {
+    // Errors that set their own statusCode are deliberate client responses
+    if (error?.statusCode) {
+      const responseBody = error.responseBody ?? { error: error.message };
+      // goals may have been created or reopened before the error, so the wrapper must roll
+      // them back before it sends the response
+      if ((req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper) {
+        throw Object.assign(error, { responseBody });
+      }
+      res.status(error.statusCode).json(responseBody);
       return;
     }
     await handleErrors(req, res, error, logContext);

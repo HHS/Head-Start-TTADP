@@ -7,6 +7,7 @@ import filtersToScopes from '../../scopes';
 import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
+  approveTtaRequest as approveTtaRequestService,
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
   lockTtaRequest,
@@ -20,6 +21,7 @@ import {
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
 import {
+  approveTtaRequest,
   createTtaRequest,
   getTtaRequest,
   getTtaRequestApprovers,
@@ -33,6 +35,7 @@ import {
 } from './handlers';
 
 jest.mock('../../services/ttaRequests', () => ({
+  approveTtaRequest: jest.fn(),
   createTtaRequest: jest.fn(),
   getTtaRequests: jest.fn(),
   lockTtaRequest: jest.fn(),
@@ -583,6 +586,98 @@ describe('TTA request handlers', () => {
       (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(submitted));
       (reviewTtaRequestService as jest.Mock).mockRejectedValue(new Error('boom'));
       await reviewTtaRequest(req as Request, res as Response);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+  });
+
+  describe('approveTtaRequest', () => {
+    const COR_ID = 321;
+    const cor = {
+      id: COR_ID,
+      permissions: [{ scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS, regionId: 1 }],
+    };
+    const awaiting = {
+      ...draft,
+      reviewerId: 789,
+      status: TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+    };
+
+    beforeEach(() => {
+      req.params = { ttaRequestId: '1' };
+      req.body = { status: 'approved', note: 'Approved' };
+      (currentUserId as jest.Mock).mockResolvedValue(COR_ID);
+      (userById as jest.Mock).mockResolvedValue(cor);
+    });
+
+    it('approves the request', async () => {
+      const existing = mockRequestModel(awaiting);
+      const approved = { ...awaiting, status: TTA_REQUEST_STATUSES.APPROVED };
+      (ttaRequestById as jest.Mock).mockResolvedValue(existing);
+      (approveTtaRequestService as jest.Mock).mockResolvedValue(approved);
+      await approveTtaRequest(req as Request, res as Response);
+      expect(lockTtaRequest).toHaveBeenCalledWith(1);
+      expect(approveTtaRequestService).toHaveBeenCalledWith(existing, req.body, COR_ID);
+      expect(json).toHaveBeenCalledWith(approved);
+    });
+
+    it('inside the transaction wrapper, responds only once the approval has committed', async () => {
+      const approved = { ...awaiting, status: TTA_REQUEST_STATUSES.APPROVED };
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(awaiting));
+      (approveTtaRequestService as jest.Mock).mockResolvedValue(approved);
+      (req as WrappedRequest).inTransactionWrapper = true;
+      await approveTtaRequest(req as Request, res as Response);
+      expect(json).not.toHaveBeenCalled();
+
+      await commit(req);
+      expect(json).toHaveBeenCalledWith(approved);
+    });
+
+    it('returns 404 when the request does not exist', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(null);
+      await approveTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(404);
+    });
+
+    it('returns 403 for someone who is not a COR in the region', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(awaiting));
+      (userById as jest.Mock).mockResolvedValue(stranger);
+      await approveTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(approveTtaRequestService).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when the request is not awaiting approval', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(
+        mockRequestModel({ ...awaiting, status: TTA_REQUEST_STATUSES.SUBMITTED })
+      );
+      await approveTtaRequest(req as Request, res as Response);
+      expect(sendStatus).toHaveBeenCalledWith(403);
+      expect(approveTtaRequestService).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the service rejects the approval', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(awaiting));
+      (approveTtaRequestService as jest.Mock).mockRejectedValue(serviceError(400, 'no goal'));
+      await approveTtaRequest(req as Request, res as Response);
+      expect(status).toHaveBeenCalledWith(400);
+      expect(json).toHaveBeenCalledWith({ error: 'no goal' });
+    });
+
+    it('rethrows rejected data inside the transaction wrapper so the goals roll back', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(awaiting));
+      (approveTtaRequestService as jest.Mock).mockRejectedValue(serviceError(400, 'no goal'));
+      (req as WrappedRequest).inTransactionWrapper = true;
+      await expect(approveTtaRequest(req as Request, res as Response)).rejects.toMatchObject({
+        statusCode: 400,
+        responseBody: { error: 'no goal' },
+      });
+      expect(status).not.toHaveBeenCalled();
+    });
+
+    it('hands unexpected errors to handleErrors', async () => {
+      (ttaRequestById as jest.Mock).mockResolvedValue(mockRequestModel(awaiting));
+      (approveTtaRequestService as jest.Mock).mockRejectedValue(new Error('boom'));
+      await approveTtaRequest(req as Request, res as Response);
       expect(handleErrors).toHaveBeenCalled();
     });
   });

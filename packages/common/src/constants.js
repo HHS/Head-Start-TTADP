@@ -183,6 +183,7 @@ const TTA_REQUEST_STATUSES = {
   SUBMITTED: 'submitted',
   NEEDS_ACTION: 'needs_action',
   AWAITING_APPROVAL: 'awaiting_approval',
+  APPROVED: 'approved',
 };
 
 exports.TTA_REQUEST_STATUSES = TTA_REQUEST_STATUSES;
@@ -201,6 +202,7 @@ const TTA_REQUEST_NOTE_ACTIONS = {
   SUBMITTED: 'submitted',
   NEEDS_ACTION: 'needs_action',
   SENT_FOR_APPROVAL: 'sent_for_approval',
+  APPROVED: 'approved',
 };
 
 exports.TTA_REQUEST_NOTE_ACTIONS = TTA_REQUEST_NOTE_ACTIONS;

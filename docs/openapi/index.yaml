@@ -523,6 +523,20 @@ components:
             standard:
               type: string
               nullable: true
+        goals:
+          type: array
+          description: The goals created or reused for the request when its COR approved it, one per grant
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              status:
+                type: string
+              grantId:
+                type: integer
         grants:
           type: array
           items:
@@ -549,6 +563,7 @@ components:
             - submitted
             - needs_action
             - awaiting_approval
+            - approved
         userId:
           type: integer
         lastUpdatedById:

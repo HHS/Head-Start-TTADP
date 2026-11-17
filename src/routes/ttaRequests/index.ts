@@ -7,6 +7,7 @@ import {
 import { nameTransactionByBase } from '../../middleware/newRelicMiddleware';
 import transactionWrapper from '../transactionWrapper';
 import {
+  approveTtaRequest,
   createTtaRequest,
   getTtaRequest,
   getTtaRequestApprovers,
@@ -19,6 +20,7 @@ import {
   submitTtaRequest,
 } from './handlers';
 import {
+  checkApproveTtaRequestBody,
   checkCreateTtaRequestBody,
   checkReviewTtaRequestBody,
   checkSubmitTtaRequestBody,
@@ -89,6 +91,14 @@ router.put(
   checkTtaRequestIdParam,
   checkReviewTtaRequestBody,
   transactionWrapper(reviewTtaRequest)
+);
+
+// approveTtaRequest
+router.put(
+  '/:ttaRequestId/approve',
+  checkTtaRequestIdParam,
+  checkApproveTtaRequestBody,
+  transactionWrapper(approveTtaRequest)
 );
 
 // saveTtaRequest

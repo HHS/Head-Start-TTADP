@@ -57,6 +57,22 @@ describe('TtaRequestSubmittedAlert', () => {
     );
   });
 
+  it('says the request was sent back to its reviewer by the COR', () => {
+    renderAlert({ message: { ...MESSAGE, status: 'submitted', sentBackToReviewer: true } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'You sent request R14-REQ-14322 back to its reviewer for changes on 06/23/2026 at 11:00 am EDT.'
+    );
+  });
+
+  it('says the request was approved by the COR', () => {
+    renderAlert({ message: { ...MESSAGE, status: 'approved' } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'You approved request R14-REQ-14322 on 06/23/2026 at 11:00 am EDT.'
+    );
+  });
+
   it('links to the view under the list it is shown on', () => {
     renderAlert(
       { message: MESSAGE },

@@ -1,18 +1,19 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Route, Router } from 'react-router-dom';
+import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
 import ViewTtaRequest from '..';
 
 const URL = '/api/tta-requests/14322';
 const REVIEW_URL = '/api/tta-requests/14322/review';
+const APPROVE_URL = '/api/tta-requests/14322/approve';
 const STAFF_URL = '/api/tta-requests/region/14/assignable-staff';
 const APPROVERS_URL = '/api/tta-requests/region/14/approvers';
 
@@ -27,6 +28,13 @@ const REVIEWER = {
   name: 'Jordan Sample',
   fullName: 'Jordan Sample, TTAC',
   permissions: [{ regionId: 14, scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS }],
+};
+
+const COR = {
+  id: 21,
+  name: 'Chandler Bing',
+  fullName: 'Chandler Bing, COR',
+  permissions: [{ regionId: 14, scopeId: SCOPE_IDS.BACKUP_APPROVE_TTA_REQUESTS }],
 };
 
 const STAFF = [
@@ -690,6 +698,158 @@ describe('ViewTtaRequest', () => {
 
     await waitFor(() => {
       expect(history.location.pathname).toBe('/something-went-wrong/403');
+    });
+  });
+
+  describe('as the approving COR', () => {
+    const AWAITING_REQUEST = {
+      ...SUBMITTED_REQUEST,
+      status: 'awaiting_approval',
+      reviewer: { ...REVIEWER, name: 'Monica Geller' },
+      assignedStaff: [STAFF[1]],
+      notes: [
+        creatorSubmission(1, null),
+        {
+          id: 2,
+          step: 'reviewer',
+          action: 'sent_for_approval',
+          note: 'Adding Chandler because you are out',
+          createdAt: '2026-06-23T18:00:00.000Z',
+          user: { id: 2, name: 'Monica Geller', fullName: 'Monica Geller, TTAC' },
+        },
+      ],
+    };
+
+    it('asks the COR to review the request, naming the reviewer', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      renderView({}, COR);
+
+      expect(await screen.findByRole('heading', { name: 'TTA Request summary' })).toBeVisible();
+      expect(
+        screen.getByText(
+          /Monica Geller is asking for a review of this TTA request. Please view all information, then select an approval status./
+        )
+      ).toBeVisible();
+    });
+
+    it('shows everything on the request read only, with its notes', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      renderView({}, COR);
+
+      await screen.findByRole('heading', { name: 'TTA Request summary' });
+      expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
+      expect(screen.getByRole('heading', { name: 'TTA assignment' })).toBeVisible();
+      expect(screen.getByText('Monica Geller, ECS')).toBeVisible();
+      expect(screen.getByRole('heading', { name: 'Review and submit' })).toBeVisible();
+      expect(screen.getByRole('heading', { name: 'Notes summary' })).toBeVisible();
+      expect(screen.getByText('Adding Chandler because you are out')).toBeVisible();
+      // the COR can't change the request, nor what the reviewer decided
+      expect(screen.queryByRole('button', { name: 'Edit request' })).toBeNull();
+      expect(screen.queryByLabelText(/assign staff/i)).toBeNull();
+      expect(screen.getByLabelText(/add cor notes/i)).toBeVisible();
+    });
+
+    it('requires an approval status', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      fetchMock.put(APPROVE_URL, AWAITING_REQUEST);
+      renderView({}, COR);
+
+      userEvent.click(await screen.findByRole('button', { name: 'Submit' }));
+
+      expect(await screen.findByText('Choose an approval status')).toBeVisible();
+      expect(fetchMock.called(APPROVE_URL)).toBe(false);
+    });
+
+    it('lets the COR send the request back to the reviewer', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      fetchMock.put(APPROVE_URL, { ...AWAITING_REQUEST, status: 'submitted' });
+      const history = renderView({}, COR);
+
+      userEvent.selectOptions(
+        await screen.findByLabelText(/choose approval status/i),
+        'needs_action'
+      );
+      userEvent.type(screen.getByLabelText(/add cor notes/i), 'Assign a second specialist');
+      userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests'));
+      expect(JSON.parse(fetchMock.lastOptions(APPROVE_URL).body)).toEqual({
+        status: 'needs_action',
+        note: 'Assign a second specialist',
+      });
+      expect(history.location.state.message).toMatchObject({
+        reportId: 14322,
+        displayId: 'R14-REQ-14322',
+        status: 'submitted',
+        sentBackToReviewer: true,
+      });
+    });
+
+    it('lets the COR approve the request', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      fetchMock.put(APPROVE_URL, { ...AWAITING_REQUEST, status: 'approved' });
+      const history = renderView({}, COR);
+
+      userEvent.selectOptions(await screen.findByLabelText(/choose approval status/i), 'approved');
+      userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+      await waitFor(() => expect(history.location.pathname).toBe('/tta-requests'));
+      expect(JSON.parse(fetchMock.lastOptions(APPROVE_URL).body)).toEqual({
+        status: 'approved',
+        note: '',
+      });
+      expect(history.location.state.message).toMatchObject({
+        status: 'approved',
+        sentBackToReviewer: false,
+      });
+    });
+
+    it('says so when the approval cannot be saved', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      fetchMock.put(APPROVE_URL, 500);
+      renderView({}, COR);
+
+      userEvent.selectOptions(await screen.findByLabelText(/choose approval status/i), 'approved');
+      userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+      expect(await screen.findByText(/error submitting your approval/i)).toBeVisible();
+    });
+
+    it('says why the server rejected the approval', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      fetchMock.put(APPROVE_URL, {
+        status: 400,
+        body: { error: 'A request needs a goal before it can be approved' },
+      });
+      renderView({}, COR);
+
+      userEvent.selectOptions(await screen.findByLabelText(/choose approval status/i), 'approved');
+      userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+      expect(
+        await screen.findByText('A request needs a goal before it can be approved')
+      ).toBeVisible();
+    });
+
+    it('does not offer an approval to someone who is not a COR in the region', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      renderView(
+        {},
+        { ...COR, permissions: [{ regionId: 1, scopeId: SCOPE_IDS.APPROVE_TTA_REQUESTS }] }
+      );
+
+      await screen.findByRole('heading', { name: 'Notes summary' });
+      expect(screen.queryByLabelText(/choose approval status/i)).toBeNull();
+    });
+
+    it('does not offer an approval once the request has been approved', async () => {
+      fetchMock.get(URL, { ...AWAITING_REQUEST, status: 'approved' });
+      renderView({}, COR);
+
+      await screen.findByRole('heading', { name: 'Notes summary' });
+      expect(screen.queryByLabelText(/choose approval status/i)).toBeNull();
+      // the review that sent it to the COR still shows
+      expect(screen.getByRole('heading', { name: 'Review and submit' })).toBeVisible();
     });
   });
 });

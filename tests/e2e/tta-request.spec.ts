@@ -2,12 +2,14 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { query } from '../utils/common';
 
 // Seeded users (see src/seeders/20201124160449-users.js): the creator writes TTA requests in
-// region 1, the reviewer reviews them there, and a backup COR approves them there. None has
+// region 1, the reviewer reviews them there, and a backup COR approves them there; the COR is
+// an admin, so needs no feature flag. None has
 // these TTA request permissions in the seed data, so the spec grants them and takes back only
 // what it granted. The reviewer is a GS whose home region is 1, so they can assign themselves.
 const CREATOR = { id: 5, name: 'Cucumber User', fullName: 'Cucumber User, GS' };
 const REVIEWER = { id: 10, name: 'adam', fullName: 'adam, GS', withRole: 'adam (GS)' };
-const BACKUP_COR = { id: 1, name: 'Hermione Granger' };
+// the COR's roles vary between environments, so their name with roles is matched loosely
+const BACKUP_COR = { id: 1, name: 'Hermione Granger', fullName: /^Hermione Granger(, .+)?$/ };
 const REGION_ID = 1;
 const READ_WRITE_TTA_REQUESTS = 10;
 const REVIEW_TTA_REQUESTS = 11;
@@ -42,6 +44,8 @@ const granted: Grant[] = [];
 let addedFlag = false;
 let monitoringGoalId: number | null = null;
 let ttaRequestId: number | null = null;
+// the goals the COR's approval created, rather than reused, so cleanup removes only those
+let createdGoalIds: number[] = [];
 
 const rowsOf = async (response: Awaited<ReturnType<typeof query>>) => {
   const [rows] = await response.json();
@@ -72,10 +76,15 @@ const noteEntries = (page: Page): Locator =>
 
 async function expectNote(
   entry: Locator,
-  { phase, author, role, note }: { phase: string; author: string; role: string; note: string }
+  {
+    phase,
+    author,
+    role,
+    note,
+  }: { phase: string; author: string | RegExp; role: string; note: string }
 ) {
   await expect(entry.getByText(phase, { exact: true })).toBeVisible();
-  await expect(entry.getByText(author, { exact: true })).toBeVisible();
+  await expect(entry.getByText(author, { exact: true }).first()).toBeVisible();
   await expect(entry.getByText(role, { exact: true })).toBeVisible();
   await expect(entry.getByText(note, { exact: true })).toBeVisible();
   await expect(entry).toContainText(NOTE_DATE);
@@ -151,9 +160,25 @@ test.describe('TTA request review', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    // its grants, citations, approvers, notes and assigned staff cascade with it
     if (ttaRequestId) {
+      createdGoalIds = (
+        await rowsOf(
+          await query(
+            request,
+            `SELECT g.id FROM "Goals" g
+             JOIN "TtaRequestGoals" trg ON trg."goalId" = g.id
+             WHERE trg."ttaRequestId" = ${ttaRequestId} AND g."createdVia" = 'ttaRequest';`
+          )
+        )
+      ).map(({ id }) => Number(id));
+      // its grants, citations, approvers, notes, assigned staff and goal links cascade with it
       await query(request, `DELETE FROM "TtaRequests" WHERE id = ${ttaRequestId};`);
+    }
+    if (createdGoalIds.length) {
+      const ids = createdGoalIds.join(', ');
+      await query(request, `DELETE FROM "GoalStatusChanges" WHERE "goalId" IN (${ids});`);
+      await query(request, `DELETE FROM "GoalCollaborators" WHERE "goalId" IN (${ids});`);
+      await query(request, `DELETE FROM "Goals" WHERE id IN (${ids});`);
     }
     for (const { userId, scopeId } of granted) {
       // eslint-disable-next-line no-await-in-loop
@@ -176,7 +201,10 @@ test.describe('TTA request review', () => {
 
   test.setTimeout(120000);
 
-  test('the creator resubmits a request the reviewer sent back for changes', async ({ page }) => {
+  test('a request goes through review and COR approval, creating its goal on the RTR', async ({
+    page,
+    request,
+  }) => {
     let displayId = '';
     // the goal the reviewer switches the request to
     let reviewerGoal = '';
@@ -421,6 +449,121 @@ test.describe('TTA request review', () => {
 
       await expect(page.getByLabel('Choose review status')).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Edit request' })).toHaveCount(0);
+    });
+
+    await test.step('the COR reviews the request read only and sends it back', async () => {
+      await actAs(page, BACKUP_COR.id);
+      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+
+      await expect(page.getByRole('heading', { name: 'TTA Request summary' })).toBeVisible();
+      await expect(
+        page.getByText(
+          `${REVIEWER.name} is asking for a review of this TTA request. Please view all information, then select an approval status.`
+        )
+      ).toBeVisible();
+
+      // everything on the request is read only, as the reviewer left it
+      await expect(readOnlyValue(page, 'Recipient grant')).toContainText(OTHER_GRANT);
+      await expect(readOnlyValue(page, "Recipient's Goal")).toHaveText(reviewerGoal);
+      await expect(page.locator('h2:text-is("TTA assignment") + dl dd')).toHaveText(
+        REVIEWER.fullName
+      );
+      await expect(page.getByRole('button', { name: 'Edit request' })).toHaveCount(0);
+      await expect(page.getByLabel('Assign staff')).toHaveCount(0);
+
+      await expect(noteEntries(page)).toHaveCount(4);
+      await expectNote(noteEntries(page).nth(3), {
+        phase: 'TTA Request review - sent to COR for approval',
+        author: REVIEWER.fullName,
+        role: 'Reviewer',
+        note: 'Over to you',
+      });
+
+      await page.getByLabel('Choose approval status').selectOption('needs_action');
+      await page.getByLabel('Add COR notes').fill('Please confirm the assigned specialist');
+      await page.getByRole('button', { name: 'Submit', exact: true }).click();
+
+      await expect(page.getByRole('alert')).toContainText(
+        `You sent request ${displayId} back to its reviewer for changes on`
+      );
+      await expect(requestRow(page, displayId)).toContainText('Submitted');
+    });
+
+    await test.step('the reviewer sees the COR note and sends it to the COR again', async () => {
+      await actAs(page, REVIEWER.id);
+      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+
+      // the request is back with the reviewer, so they review it again
+      await expect(page.getByLabel('Choose review status')).toBeVisible();
+      await expect(noteEntries(page)).toHaveCount(5);
+      await expectNote(noteEntries(page).nth(4), {
+        phase: 'TTA Request approval - needs action',
+        author: BACKUP_COR.fullName,
+        role: 'Approver',
+        note: 'Please confirm the assigned specialist',
+      });
+
+      await page.getByLabel('Choose review status').selectOption('approved');
+      await chooseOption(page, 'approver', `${BACKUP_COR.name} (backup)`);
+      await page.getByLabel('Add TTAC or Manager notes').fill('Specialist confirmed');
+      await page.getByRole('button', { name: 'Submit', exact: true }).click();
+
+      await expect(page.getByRole('alert')).toContainText(
+        `You sent request ${displayId} to the COR for approval on`
+      );
+      await expect(requestRow(page, displayId)).toContainText('Awaiting approval');
+    });
+
+    await test.step('the COR approves the request', async () => {
+      await actAs(page, BACKUP_COR.id);
+      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+
+      await expect(noteEntries(page)).toHaveCount(6);
+      await page.getByLabel('Choose approval status').selectOption('approved');
+      await page.getByLabel('Add COR notes').fill('Approved');
+      await page.getByRole('button', { name: 'Submit', exact: true }).click();
+
+      await expect(page.getByRole('alert')).toContainText(`You approved request ${displayId} on`);
+      // an approved request is no longer active
+      await expect(requestRow(page, displayId)).toHaveCount(0);
+
+      // read only for everyone now, with the approval the last note
+      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+      await expect(page.getByLabel('Choose approval status')).toHaveCount(0);
+      await expect(noteEntries(page)).toHaveCount(7);
+      await expectNote(noteEntries(page).nth(6), {
+        phase: 'TTA Request approval - approved',
+        author: BACKUP_COR.fullName,
+        role: 'Approver',
+        note: 'Approved',
+      });
+    });
+
+    await test.step("the request's goal is on the recipient's RTR", async () => {
+      const [goal] = await rowsOf(
+        await query(
+          request,
+          `SELECT g.id, g.name, g.status, gr."recipientId"
+           FROM "TtaRequestGoals" trg
+           JOIN "Goals" g ON g.id = trg."goalId"
+           JOIN "Grants" gr ON gr.id = g."grantId"
+           JOIN "TtaRequests" tr ON tr.id = trg."ttaRequestId"
+           WHERE trg."ttaRequestId" = ${ttaRequestId}
+             AND gr.number = '${OTHER_GRANT}'
+             AND g."goalTemplateId" = tr."goalTemplateId";`
+        )
+      );
+      expect(goal).toBeDefined();
+      expect(goal.name).toBe(reviewerGoal);
+
+      await page.goto(`/recipient-tta-records/${goal.recipientId}/region/${REGION_ID}/rttapa`);
+      const card = page
+        .getByTestId('goalCard')
+        .filter({ has: page.locator(`#goal-select-${goal.id}`) });
+      await expect(card).toBeVisible();
+      await expect(card).toContainText(`Goal G-${goal.id}`);
+      await expect(card).toContainText(reviewerGoal);
+      await expect(card).toContainText(OTHER_GRANT);
     });
   });
 });
