@@ -55,7 +55,7 @@
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0017-python-analytics-processing.md",
-        "note": "Shown as the Similarity API container in docs/boundary_diagram.md."
+        "note": "No longer shown in docs/boundary_diagram.md. The application is stopped in production and remains authorized by this ADR."
       },
       "notes": "Stopped in production and no longer bound to the production database service. See disposition INV-2026-0001."
     },
