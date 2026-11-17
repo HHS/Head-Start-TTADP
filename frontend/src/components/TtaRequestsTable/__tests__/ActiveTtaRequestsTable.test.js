@@ -253,6 +253,38 @@ describe('ActiveTtaRequestsTable', () => {
     expect(within(firstRow).queryByRole('link', { name: 'Submitted' })).toBeNull();
   });
 
+  it('shows a submitted request as needing action to its reviewer', async () => {
+    renderTable(
+      [apiRequest(1, { status: 'submitted', submittedAt: '2026-06-02T16:00:00.000Z' })],
+      true,
+      { id: 2 }
+    );
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByText('Needs action')).toBeVisible();
+    expect(within(firstRow).queryByText('Submitted')).toBeNull();
+    expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+  });
+
+  it('shows a submitted request as submitted to anyone other than its reviewer', async () => {
+    renderTable(
+      [apiRequest(1, { status: 'submitted', submittedAt: '2026-06-02T16:00:00.000Z' })],
+      true,
+      { id: 3 }
+    );
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByText('Submitted')).toBeVisible();
+    expect(within(firstRow).queryByText('Needs action')).toBeNull();
+  });
+
   it('shows a request awaiting approval, linked to its read-only view', async () => {
     renderTable([apiRequest(1, { status: 'awaiting_approval' })]);
     await waitForRows();
@@ -276,7 +308,7 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
     );
-    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+    expect(within(firstRow).getByRole('link', { name: 'Pending changes' })).toHaveAttribute(
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
     );
@@ -292,8 +324,8 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/view/101`
     );
-    expect(within(firstRow).getByText('Needs action')).toBeVisible();
-    expect(within(firstRow).queryByRole('link', { name: 'Needs action' })).toBeNull();
+    expect(within(firstRow).getByText('Pending changes')).toBeVisible();
+    expect(within(firstRow).queryByRole('link', { name: 'Pending changes' })).toBeNull();
   });
 
   it('links a request sent back for changes into the form for an admin', async () => {
@@ -309,7 +341,7 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
     );
-    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+    expect(within(firstRow).getByRole('link', { name: 'Pending changes' })).toHaveAttribute(
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
     );

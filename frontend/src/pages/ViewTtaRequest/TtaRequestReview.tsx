@@ -253,7 +253,7 @@ export default function TtaRequestReview({
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <h1 className="font-serif-2xl margin-top-0 margin-bottom-1">TTA Request summary</h1>
+        <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
         <IndicatesRequiredField />
         <Alert type="info" headingLevel="h4" slim className="margin-bottom-4">
           {nameWithRole(ttaRequest.creator)} is asking for a review of this TTA request. Please view
@@ -268,6 +268,7 @@ export default function TtaRequestReview({
         ) : (
           <TtaRequestDetails
             ttaRequest={ttaRequest}
+            headingLevel={3}
             onEdit={
               !isEditing && canReviewerEditTtaRequest(user, ttaRequest)
                 ? () => setIsEditing(true)
@@ -275,7 +276,7 @@ export default function TtaRequestReview({
             }
           />
         )}
-        <h2 className="font-serif-lg margin-top-4 margin-bottom-3">TTA assignment</h2>
+        <h3 className="margin-top-4 margin-bottom-2">TTA assignment</h3>
         <FormItem label="Assign staff" name="assignedStaff" required={sendingToCor}>
           <div className="maxw-mobile-lg">
             <MultiSelect
@@ -301,7 +302,7 @@ export default function TtaRequestReview({
             />
           </div>
         </FormItem>
-        <h2 className="font-serif-lg margin-top-4 margin-bottom-3">Review and submit</h2>
+        <h3 className="margin-top-4 margin-bottom-2">Review and submit</h3>
         <dl className="margin-top-0 margin-bottom-3">
           <dt className="text-bold">Date submitted</dt>
           <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>

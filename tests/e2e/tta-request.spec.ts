@@ -245,17 +245,17 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('alert')).toContainText(
         `You sent request ${displayId} back to its creator for changes on`
       );
-      await expect(requestRow(page, displayId)).toContainText('Needs action');
+      await expect(requestRow(page, displayId)).toContainText('Pending changes');
       // the reviewer is an admin, and an admin can also edit a request sent back for changes
       await expect(
-        requestRow(page, displayId).getByRole('link', { name: 'Needs action' })
+        requestRow(page, displayId).getByRole('link', { name: 'Pending changes' })
       ).toBeVisible();
     });
 
     await test.step('the creator sees who asked for changes and why', async () => {
       await actAs(page, CREATOR.id);
       await page.goto('/tta-requests');
-      await requestRow(page, displayId).getByRole('link', { name: 'Needs action' }).click();
+      await requestRow(page, displayId).getByRole('link', { name: 'Pending changes' }).click();
 
       // the creator edits the request in its form, rather than seeing it read only
       await expect(page).toHaveURL(new RegExp(`/tta-requests/${ttaRequestId}$`));
@@ -302,6 +302,9 @@ test.describe('TTA request review', () => {
 
     await test.step('the reviewer sees every note in the order it was left', async () => {
       await actAs(page, REVIEWER.id);
+      // the resubmitted request is waiting on the reviewer again
+      await page.goto('/tta-requests');
+      await expect(requestRow(page, displayId)).toContainText('Needs action');
       await page.goto(`/tta-requests/view/${ttaRequestId}`);
 
       await expect(noteEntries(page)).toHaveCount(3);

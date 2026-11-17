@@ -17,6 +17,8 @@ interface TtaRequestDetailsProps {
   ttaRequest: TtaRequestResponse;
   /** set when the details can be edited in place, as the reviewer can */
   onEdit?: (() => void) | null;
+  /** the section titles' heading level, so they fit the outline of the page they are on */
+  headingLevel?: 2 | 3;
 }
 
 /**
@@ -25,6 +27,7 @@ interface TtaRequestDetailsProps {
 export default function TtaRequestDetails({
   ttaRequest,
   onEdit = null,
+  headingLevel = 2,
 }: TtaRequestDetailsProps): React.ReactElement {
   const { citations } = ttaRequest;
 
@@ -32,6 +35,7 @@ export default function TtaRequestDetails({
     <>
       <ReadOnlyContent
         title="Who is the request for?"
+        titleHeadingLevel={headingLevel}
         spacing={{ section: 0, row: 3 }}
         titleAction={
           onEdit ? (
@@ -59,6 +63,7 @@ export default function TtaRequestDetails({
       />
       <ReadOnlyContent
         title="Goal and context"
+        titleHeadingLevel={headingLevel}
         spacing={{ title: 2, section: 1 }}
         sections={[
           {

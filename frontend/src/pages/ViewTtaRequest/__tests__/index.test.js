@@ -258,8 +258,20 @@ describe('ViewTtaRequest', () => {
     renderView({}, REVIEWER);
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'TTA Request summary' })
+      await screen.findByRole('heading', { level: 2, name: 'TTA Request summary' })
     ).toBeVisible();
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Training and Technical Assistance (TTA) Request',
+      })
+    ).toBeVisible();
+    // the sections sit under the summary, as they do on the request form
+    ['Who is the request for?', 'Goal and context', 'TTA assignment', 'Review and submit'].forEach(
+      (name) => {
+        expect(screen.getByRole('heading', { level: 3, name })).toBeVisible();
+      }
+    );
     expect(screen.getByText(/indicates required field/i)).toBeVisible();
     expect(
       screen.getByText(/Avery Example \(GS\) is asking for a review of this TTA request/)
