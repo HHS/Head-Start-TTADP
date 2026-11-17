@@ -49,6 +49,7 @@ export default function ReadOnlyContent({
   displayStatus,
   spacing,
   titleAction,
+  titleHeadingLevel,
 }) {
   const {
     title: titleSpacing,
@@ -59,7 +60,11 @@ export default function ReadOnlyContent({
   return (
     <div className={`ttahub-read-only-content-section-container ${className}`}>
       <div className={`display-flex${titleAction ? ' flex-justify flex-align-baseline' : ''}`}>
-        <h2 className={`font-serif-xl margin-bottom-${titleSpacing} margin-top-0`}>{title}</h2>
+        {createElement(
+          `h${titleHeadingLevel}`,
+          { className: `font-serif-xl margin-bottom-${titleSpacing} margin-top-0` },
+          title
+        )}
         {displayStatus && <Status statusKey={displayStatus} />}
         {titleAction}
       </div>
@@ -133,6 +138,8 @@ ReadOnlyContent.propTypes = {
   displayStatus: PropTypes.string,
   // shown at the end of the title's line, e.g. a link to edit what is shown
   titleAction: PropTypes.node,
+  // the title's heading level, so it fits the outline of the page it is on
+  titleHeadingLevel: PropTypes.oneOf([2, 3, 4]),
   // USWDS spacing units; any omitted key keeps its default
   spacing: PropTypes.shape({
     title: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -146,4 +153,5 @@ ReadOnlyContent.defaultProps = {
   displayStatus: '',
   spacing: {},
   titleAction: null,
+  titleHeadingLevel: 2,
 };

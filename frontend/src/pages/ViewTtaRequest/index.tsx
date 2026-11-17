@@ -13,6 +13,7 @@ import { getTtaRequest } from '../../fetchers/ttaRequests';
 import useFetch from '../../hooks/useFetch';
 import { canApproveTtaRequest } from '../../permissions';
 import UserContext from '../../UserContext';
+import TtaRequestFormHeading from '../TtaRequestForm/TtaRequestFormHeading';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
 import TtaRequestApproval from './TtaRequestApproval';
 import TtaRequestAssignmentSummary from './TtaRequestAssignmentSummary';
@@ -77,8 +78,8 @@ export default function ViewTtaRequest({
         <Helmet>
           <title>TTA Request {displayId}</title>
         </Helmet>
-        <BackLink to={backLinkTo}>Back to TTA Requests</BackLink>
-        <Container className="width-tablet margin-top-2" paddingX={3} paddingY={3}>
+        <TtaRequestFormHeading backLinkTo={backLinkTo} />
+        <Container className="width-tablet" paddingX={3} paddingY={3}>
           {canReview ? (
             <TtaRequestReview ttaRequest={ttaRequest} backLinkTo={backLinkTo}>
               {notesSummary}

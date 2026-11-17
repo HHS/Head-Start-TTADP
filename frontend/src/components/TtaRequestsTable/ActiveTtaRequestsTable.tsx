@@ -37,10 +37,13 @@ const NO_REQUESTS: ActiveTtaRequestsResponse = { count: 0, rows: [] };
 const STATUS_LABELS: Record<string, string> = {
   [TTA_REQUEST_STATUSES.DRAFT]: 'Draft',
   [TTA_REQUEST_STATUSES.SUBMITTED]: 'Submitted',
-  [TTA_REQUEST_STATUSES.NEEDS_ACTION]: 'Needs action',
+  [TTA_REQUEST_STATUSES.NEEDS_ACTION]: 'Pending changes',
   [TTA_REQUEST_STATUSES.AWAITING_APPROVAL]: 'Awaiting approval',
   [TTA_REQUEST_STATUSES.APPROVED]: 'Approved',
 };
+
+// how a submitted request reads to its reviewer, the one it is waiting on
+const REVIEWER_SUBMITTED_LABEL = 'Needs action';
 
 // a value a request doesn't have (yet) is left blank, which the table shows as a dash
 const BLANK = '';
@@ -162,7 +165,14 @@ const toTableRow = (
   userId: number | null,
   userIsAdmin: boolean
 ): TtaRequestsTableRow => {
-  const status = STATUS_LABELS[request.status] ?? request.status;
+  // a submitted request is waiting on its reviewer, so it reads as theirs to act on
+  const awaitsUserReview =
+    request.status === TTA_REQUEST_STATUSES.SUBMITTED &&
+    userId !== null &&
+    request.reviewer?.id === userId;
+  const status = awaitsUserReview
+    ? REVIEWER_SUBMITTED_LABEL
+    : (STATUS_LABELS[request.status] ?? request.status);
   const isEditable =
     request.status === TTA_REQUEST_STATUSES.DRAFT ||
     (request.status === TTA_REQUEST_STATUSES.NEEDS_ACTION &&

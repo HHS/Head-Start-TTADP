@@ -94,7 +94,7 @@ export default function TtaRequestApproval({
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <h1 className="font-serif-2xl margin-top-0 margin-bottom-1">TTA Request summary</h1>
+        <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
         <IndicatesRequiredField />
         <Alert type="info" headingLevel="h4" slim className="margin-bottom-4">
           {requester} is asking for a review of this TTA request. Please view all information, then
