@@ -230,9 +230,11 @@ describe('monitoring details added email (TTAHUB-6004)', () => {
       const message = JSON.parse(email.message);
       expect(email.envelope.to).toStrictEqual([digestUser.email]);
       expect(message.subject).toBe(`TTA Hub ${subjectFreq} digest: new monitoring reports`);
-      expect(message.text).toContain(`Below are your report notifications for ${freq}.`);
+      expect(message.text).toContain(`Below are your monitoring notifications for ${freq}.`);
+      expect(message.text).not.toContain('Select the report number');
+      expect(message.text).not.toContain("That's it!");
       expect(message.text).toContain(
-        'New monitoring reports were added in your region for these recipients:'
+        'New monitoring reports were added in your region for the following recipients:'
       );
       expect(message.html).toContain(
         `href="${process.env.TTA_SMART_HUB_URI}/recipient-tta-records/1/region/3/monitoring"`
