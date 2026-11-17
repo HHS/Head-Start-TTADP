@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Package a skill from .github/skills/ as a zip for upload to Claude Desktop.
+#
+# Usage: bin/package-desktop-skill [skill-name]   (default: write-jira-tickets)
+# Output: dist/<skill-name>.zip, with the skill folder at the zip root.
+set -euo pipefail
+
+SKILL_NAME="${1:-write-jira-tickets}"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SRC="$REPO_ROOT/.github/skills/$SKILL_NAME"
+OUT_DIR="$REPO_ROOT/dist"
+OUT="$OUT_DIR/$SKILL_NAME.zip"
+
+if [ ! -f "$SRC/SKILL.md" ]; then
+  echo "No SKILL.md found at $SRC" >&2
+  exit 1
+fi
+
+STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
+
+cp -R "$SRC" "$STAGE/$SKILL_NAME"
+# README is for humans installing the skill, not for Claude.
+rm -f "$STAGE/$SKILL_NAME/README.md"
+
+# Bundle the engineer handoff form from its single source of truth.
+if [ "$SKILL_NAME" = "write-jira-tickets" ]; then
+  mkdir -p "$STAGE/$SKILL_NAME/references"
+  cp "$REPO_ROOT/templates/spec-handoff-template.md" \
+    "$STAGE/$SKILL_NAME/references/handoff-template.md"
+fi
+
+mkdir -p "$OUT_DIR"
+rm -f "$OUT"
+(cd "$STAGE" && zip -rq "$OUT" "$SKILL_NAME" -x '*.DS_Store')
+
+echo "Built $OUT"
+unzip -l "$OUT"
