@@ -1,6 +1,6 @@
 {
-  "baselineDate": "2026-10-16",
-  "generatedAt": "2026-10-16T21:01:28.567Z",
+  "baselineDate": "2026-11-12",
+  "generatedAt": "2026-11-12T17:19:11.482Z",
   "scope": "frontend",
   "scanner": {
     "name": "yarn-audit",
@@ -16,20 +16,42 @@
       "title": "React Draft Wysiwyg Cross-Site Scripting (XSS) via the Embedded Button",
       "sourceSeverity": "low",
       "severity": "low",
-      "firstDetected": "2026-10-16",
-      "lastObserved": "2026-10-16",
+      "firstDetected": "2026-11-12",
+      "lastObserved": "2026-11-12",
       "advisoryId": 1103748,
       "advisoryUrl": "https://github.com/advisories/GHSA-fq5x-7292-2p5r",
       "vulnerableVersions": "<=1.15.0",
-      "patchedVersions": "<0.0.0",
-      "recommendation": "None",
-      "cves": ["CVE-2025-3191"],
-      "cwe": ["CWE-79"],
-      "cvss": {
-        "score": 6.1,
-        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
-      },
-      "paths": ["react-draft-wysiwyg"]
+      "patchedVersions": null,
+      "recommendation": null,
+      "cves": [],
+      "cwe": [],
+      "cvss": null,
+      "paths": [
+        "frontend"
+      ]
+    },
+    {
+      "id": "SCA-FRONTEND-GHSA-qr28-fpjm-wq7f-decode-uri-component-0.2.2",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-qr28-fpjm-wq7f",
+      "module": "decode-uri-component",
+      "affectedVersion": "0.2.2",
+      "title": "decode-uri-component vulnerable to denial of service via quadratic replacement of percent-encoded runs",
+      "sourceSeverity": "high",
+      "severity": "high",
+      "firstDetected": "2026-11-12",
+      "lastObserved": "2026-11-12",
+      "advisoryId": 1243857,
+      "advisoryUrl": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f",
+      "vulnerableVersions": "<=0.5.0",
+      "patchedVersions": null,
+      "recommendation": null,
+      "cves": [],
+      "cwe": [],
+      "cvss": null,
+      "paths": [
+        "query-string@7.1.3"
+      ]
     },
     {
       "id": "SCA-FRONTEND-GHSA-vcc3-ghjq-m6fr-decode-uri-component-0.2.2",
@@ -40,23 +62,18 @@
       "title": "decode-uri-component: Denial of service via exponential decoding of malformed percent-encoded input",
       "sourceSeverity": "moderate",
       "severity": "moderate",
-      "firstDetected": "2026-10-16",
-      "lastObserved": "2026-10-16",
+      "firstDetected": "2026-11-12",
+      "lastObserved": "2026-11-12",
       "advisoryId": 1147955,
       "advisoryUrl": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
       "vulnerableVersions": "<=0.4.2",
-      "patchedVersions": ">=0.5.0",
-      "recommendation": "Upgrade to version 0.5.0 or later",
-      "cves": ["CVE-2026-45822"],
-      "cwe": ["CWE-400", "CWE-405", "CWE-407", "CWE-1176"],
-      "cvss": {
-        "score": 0,
-        "vectorString": null
-      },
+      "patchedVersions": null,
+      "recommendation": null,
+      "cves": [],
+      "cwe": [],
+      "cvss": null,
       "paths": [
-        "query-string>decode-uri-component",
-        "react-admin>ra-core>query-string>decode-uri-component",
-        "react-admin>ra-i18n-polyglot>ra-core>query-string>decode-uri-component"
+        "query-string@7.1.3"
       ]
     }
   ]

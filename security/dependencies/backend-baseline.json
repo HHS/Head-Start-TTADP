@@ -1,10 +1,34 @@
 {
-  "baselineDate": "2026-10-16",
-  "generatedAt": "2026-10-16T21:01:28.567Z",
+  "baselineDate": "2026-11-17",
+  "generatedAt": "2026-11-17T21:16:32.365Z",
   "scope": "backend",
   "scanner": {
     "name": "yarn-audit",
     "sourceFile": "yarn-audit-known-issues"
   },
-  "findings": []
+  "findings": [
+    {
+      "id": "SCA-BACKEND-GHSA-fc5q-39xc-vjpf-picomatch-4.0.4",
+      "scope": "backend",
+      "scannerFindingId": "GHSA-fc5q-39xc-vjpf",
+      "module": "picomatch",
+      "affectedVersion": "4.0.4",
+      "title": "picomatch vulnerable to ReDoS through single-branch repeated extglobs",
+      "sourceSeverity": "high",
+      "severity": "high",
+      "firstDetected": "2026-11-17",
+      "lastObserved": "2026-11-17",
+      "advisoryId": 1247710,
+      "advisoryUrl": "https://github.com/advisories/GHSA-fc5q-39xc-vjpf",
+      "vulnerableVersions": "<=4.0.7",
+      "patchedVersions": null,
+      "recommendation": null,
+      "cves": [],
+      "cwe": [],
+      "cvss": null,
+      "paths": [
+        "tinyglobby@0.2.17"
+      ]
+    }
+  ]
 }
