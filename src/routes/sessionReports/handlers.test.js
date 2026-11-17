@@ -588,6 +588,60 @@ describe('session report handlers', () => {
       expect(updateSession).not.toHaveBeenCalled();
     });
 
+    describe('creating a missing session on a Regional PD event with National Centers', () => {
+      const ncEvent = {
+        ...mockEvent,
+        data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+      };
+
+      beforeEach(() => {
+        EventReport.mockImplementation(() => ({
+          canCreateSession: () => true,
+          canEditSession: () => true,
+        }));
+        findEventBySmartsheetId.mockResolvedValue(ncEvent);
+      });
+
+      it.each([undefined, '', 'invalid'])(
+        'returns 400 without writing when facilitation is %p',
+        async (facilitation) => {
+          findSessionById.mockResolvedValue(null);
+          await updateHandler(
+            { ...mockRequest, body: { ...mockRequest.body, data: { facilitation } } },
+            mockResponse
+          );
+          expect(mockResponse.status).toHaveBeenCalledWith(400);
+          expect(mockStatusSend).toHaveBeenCalledWith({
+            message:
+              'Select who is providing the training: national_center, regional_tta_staff, or both',
+          });
+          expect(updateSession).not.toHaveBeenCalled();
+        }
+      );
+
+      it('creates the session when facilitation is valid', async () => {
+        findSessionById.mockResolvedValue(null);
+        updateSession.mockResolvedValue(mockSession);
+        await updateHandler(
+          {
+            ...mockRequest,
+            body: { ...mockRequest.body, data: { facilitation: 'regional_tta_staff' } },
+          },
+          mockResponse
+        );
+        expect(updateSession).toHaveBeenCalled();
+        expect(mockResponse.status).toHaveBeenCalledWith(201);
+      });
+
+      it('does not require facilitation when updating an existing session', async () => {
+        findSessionById.mockResolvedValue(mockSession);
+        updateSession.mockResolvedValue(mockSession);
+        await updateHandler(mockRequest, mockResponse);
+        expect(updateSession).toHaveBeenCalled();
+        expect(mockResponse.status).toHaveBeenCalledWith(201);
+      });
+    });
+
     it('returns 404 when the event is not found', async () => {
       findEventBySmartsheetId.mockResolvedValue(null);
       findSessionById.mockResolvedValue(mockSession);
