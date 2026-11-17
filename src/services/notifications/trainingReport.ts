@@ -2,7 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import runInSavepoint from '../../lib/runInSavepoint';
 import db from '../../models';
 import Users from '../../policies/user';
-import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from '../eventFlow';
+import { getNewPocIds } from '../eventFlow';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
@@ -23,14 +23,7 @@ export async function createNotificationForNewPocs(
   previousPocIds: number[] | null | undefined,
   currentPocIds: number[] | null | undefined
 ): Promise<void> {
-  if (event.data?.eventOrganizer !== REGIONAL_PD_WITH_NATIONAL_CENTERS) {
-    return;
-  }
-
-  const previous = new Set(previousPocIds ?? []);
-  const newPocIds = [...new Set(currentPocIds ?? [])].filter(
-    (pocId) => !previous.has(pocId) && pocId !== event.ownerId
-  );
+  const newPocIds = getNewPocIds(event, previousPocIds, currentPocIds);
 
   if (!newPocIds.length) {
     return;

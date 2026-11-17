@@ -126,23 +126,31 @@ describe('TrainingReportForm', () => {
       regionId: 1,
       pocIds: [7],
     });
-    fetchMock.get(
-      /\/api\/users\/training-report-users\?regionId=1(&eventId=.*)?$/,
-      {
-        pointOfContact: [{ id: 7, fullName: 'Current POC' }],
-        collaborators: [],
-        creators: [{ id: 1, fullName: 'Ted User' }],
-      },
-      { overwriteRoutes: true, delay: 100 }
-    );
+    // hold the users response so the test controls when fresh users arrive
+    let resolveUsers;
+    const usersResponse = new Promise((resolve) => {
+      resolveUsers = resolve;
+    });
+    fetchMock.get(/\/api\/users\/training-report-users\?regionId=1(&eventId=.*)?$/, usersResponse, {
+      overwriteRoutes: true,
+    });
 
     act(() => {
       renderTrainingReportForm('R01-PD-1234', admin);
     });
 
-    await waitFor(() => expect(fetchMock.called(/\/api\/events\/id/)).toBe(true));
+    // the selects only render once the event has loaded
+    await waitFor(() => expect(document.querySelector('#pocIds')).toBeInTheDocument());
     expect(document.querySelector('#pocIds')).toBeDisabled();
     expect(document.querySelector('#ownerId')).toBeDisabled();
+
+    await act(async () => {
+      resolveUsers({
+        pointOfContact: [{ id: 7, fullName: 'Current POC' }],
+        collaborators: [],
+        creators: [{ id: 1, fullName: 'Ted User' }],
+      });
+    });
 
     expect(await screen.findByText('Current POC')).toBeInTheDocument();
     expect(document.querySelector('#pocIds')).not.toBeDisabled();
@@ -160,18 +168,28 @@ describe('TrainingReportForm', () => {
         eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
       },
     });
-    fetchMock.get(
-      '/api/users/trainers/regional/region/1',
-      [{ id: 3, fullName: 'Saved Collaborator' }],
-      { overwriteRoutes: true, delay: 100 }
-    );
+    // hold the trainers response so the test controls when options arrive
+    let resolveTrainers;
+    const trainersResponse = new Promise((resolve) => {
+      resolveTrainers = resolve;
+    });
+    fetchMock.get('/api/users/trainers/regional/region/1', trainersResponse, {
+      overwriteRoutes: true,
+    });
 
     act(() => {
       renderTrainingReportForm('R01-PD-1234');
     });
 
-    await waitFor(() => expect(fetchMock.called(/\/api\/events\/id/)).toBe(true));
+    // trainers are only requested once the event's region is known
+    await waitFor(() =>
+      expect(fetchMock.called('/api/users/trainers/regional/region/1')).toBe(true)
+    );
     expect(document.querySelector('#collaboratorIds')).toBeDisabled();
+
+    await act(async () => {
+      resolveTrainers([{ id: 3, fullName: 'Saved Collaborator' }]);
+    });
 
     expect(await screen.findByText('Saved Collaborator')).toBeInTheDocument();
     expect(document.querySelector('#collaboratorIds')).not.toBeDisabled();
