@@ -30,7 +30,7 @@ build/temp/
 *.log
 *.lock
 
-# nodejs-buildpack v1.9.6 installs and checks Yarn Classic before it detects Yarn 4 from
+# nodejs-buildpack (v1.9.6 through v1.9.8) installs and checks Yarn Classic before it detects Yarn 4 from
 
 # .yarnrc.yml, and Classic's `yarn --version --loglevel notice` check fails once yarnPath hands
 

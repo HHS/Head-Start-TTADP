@@ -5,7 +5,7 @@
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`24.22.1`).
+2. Install Node using the version in `.nvmrc` (`24.22.3`).
 3. Install a global `yarn` command for that Node version: `npm install -g yarn@1.22.22`. The repository pins Yarn 4 (`packageManager: yarn@4.18.1`) and commits that release under `.yarn/releases/`; `yarnPath` in `.yarnrc.yml` makes the global `yarn` hand off to it, so `yarn --version` in the repository prints `4.18.1`.
 4. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
 5. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
