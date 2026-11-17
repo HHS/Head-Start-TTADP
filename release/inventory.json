@@ -640,7 +640,7 @@
         "type": "repositoryFile",
         "value": "yarn.lock"
       },
-      "sha256": "732d2ca7372bc7086ca032ad8f77c74b8c443bd265cd56104532695688b6fcbf",
+      "sha256": "0587909f3a9e579faa4b588210c84d91c5e2d180959f1f13b38a559ed5f0b7cf",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
@@ -658,7 +658,7 @@
         "type": "repositoryFile",
         "value": "frontend/yarn.lock"
       },
-      "sha256": "371e2917f1cb320fe4743caa7d8c3b4f844ad8f3f9ab7f6db21ff82928ca4aab",
+      "sha256": "6a61944393636533dfc37801eb0f547069d7fc7f78e5d8fb30138dc087c5868a",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
