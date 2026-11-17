@@ -139,6 +139,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      approvedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       displayId: {
         type: DataTypes.VIRTUAL,
         get() {

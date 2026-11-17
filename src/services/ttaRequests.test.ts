@@ -1232,6 +1232,7 @@ describe('ttaRequests service', () => {
       );
 
       expect(result.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(result.approvedAt).toBeNull();
       // the reviewer reviews it again
       expect(result.reviewers.map(({ userId, status }) => ({ userId, status }))).toEqual([
         { userId: reviewer.id, status: null },
@@ -1259,6 +1260,7 @@ describe('ttaRequests service', () => {
       );
 
       expect(result.status).toBe(TTA_REQUEST_STATUSES.APPROVED);
+      expect(result.approvedAt).toBeTruthy();
       expect(result.approvers.map(({ userId, status }) => ({ userId, status }))).toEqual([
         { userId: backupCor.id, status: APPROVER_STATUSES.APPROVED },
       ]);
@@ -1355,6 +1357,47 @@ describe('ttaRequests service', () => {
       expect(resent.approvers.map(({ userId, status }) => ({ userId, status }))).toEqual([
         { userId: backupCor.id, status: null },
       ]);
+    });
+
+    it('lists approved requests apart from the active ones, with their assigned staff', async () => {
+      const awaiting = await awaitingApproval();
+      await approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id);
+
+      const { ttaRequest: scopes } = await filtersToScopes(
+        { 'region.in': ['1'] },
+        { userId: reviewer.id }
+      );
+      const [{ rows: active }, { rows: approved }, { rows: recipientApproved }] = await Promise.all(
+        [
+          getTtaRequests(scopes, reviewer.id),
+          getTtaRequests(scopes, reviewer.id, null, 'approved'),
+          getTtaRequests(scopes, reviewer.id, recipient.id, 'approved'),
+        ]
+      );
+
+      expect(active.find((row) => row.id === awaiting.id)).toBeUndefined();
+      const row = approved.find(({ id }) => id === awaiting.id);
+      expect(row.status).toBe(TTA_REQUEST_STATUSES.APPROVED);
+      expect(row.approvedAt).toBeTruthy();
+      expect(row.assignedStaff.map(({ id }) => id)).toEqual([staffMember.id]);
+      expect(recipientApproved.map(({ id }) => id)).toContain(awaiting.id);
+    });
+
+    it('keeps the COR on the request when it is sent back to the reviewer and the creator', async () => {
+      const awaiting = await awaitingApproval();
+      const returned = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.NEEDS_ACTION },
+        backupCor.id
+      );
+      const backToCreator = await reviewTtaRequest(
+        returned,
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION },
+        reviewer.id
+      );
+
+      expect(backToCreator.status).toBe(TTA_REQUEST_STATUSES.NEEDS_ACTION);
+      expect(backToCreator.approvers.map(({ userId }) => userId)).toEqual([backupCor.id]);
     });
 
     it('rejects approving a request without a goal, without writing anything', async () => {

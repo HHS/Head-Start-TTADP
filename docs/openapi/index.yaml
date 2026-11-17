@@ -482,10 +482,17 @@ components:
           enum:
             - draft
             - submitted
+            - needs_action
+            - awaiting_approval
+            - approved
         createdAt:
           type: string
           format: date-time
         submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvedAt:
           type: string
           format: date-time
           nullable: true
@@ -523,9 +530,9 @@ components:
             standard:
               type: string
               nullable: true
-        goals:
+        assignedStaff:
           type: array
-          description: The goals created or reused for the request when its COR approved it, one per grant
+          description: The staff assigned to the request; only on the approved lists
           items:
             type: object
             properties:
@@ -533,10 +540,6 @@ components:
                 type: integer
               name:
                 type: string
-              status:
-                type: string
-              grantId:
-                type: integer
         grants:
           type: array
           items:
@@ -595,6 +598,10 @@ components:
           type: string
           format: date-time
           nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -635,6 +642,20 @@ components:
             standard:
               type: string
               nullable: true
+        goals:
+          type: array
+          description: The goals created or reused for the request when its COR approved it, one per grant
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              status:
+                type: string
+              grantId:
+                type: integer
         grants:
           type: array
           items:

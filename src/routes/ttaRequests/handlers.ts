@@ -13,6 +13,7 @@ import {
   lockTtaRequest,
   reviewTtaRequest as reviewTtaRequestService,
   submitTtaRequest as submitTtaRequestService,
+  type TtaRequestList,
   ttaRequestApprovingCors,
   ttaRequestAssignableStaff,
   ttaRequestById,
@@ -41,21 +42,23 @@ function respondOnceCommitted(req: Request, respond: () => void) {
   respond();
 }
 
-export async function getTtaRequests(req: Request, res: Response) {
+/** the regions' requests the user can read, as the list's table shows them */
+async function listTtaRequests(req: Request, res: Response, list: TtaRequestList) {
   try {
     const userId = await currentUserId(req, res);
     // filter the query so that only regions the user has permission to are included
     const query = await setTtaRequestReadRegions(req.query, userId);
     const { ttaRequest: scopes } = await filtersToScopes(query, { userId });
 
-    const ttaRequests = await getTtaRequestsService(scopes, userId);
+    const ttaRequests = await getTtaRequestsService(scopes, userId, null, list);
     res.json(ttaRequests);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
 
-export async function getTtaRequestsByRecipient(req: Request, res: Response) {
+/** one recipient's requests in a region, as the recipient record's table shows them */
+async function listTtaRequestsByRecipient(req: Request, res: Response, list: TtaRequestList) {
   try {
     const { regionId, recipientId } = req.params;
     const userId = await currentUserId(req, res);
@@ -69,12 +72,23 @@ export async function getTtaRequestsByRecipient(req: Request, res: Response) {
 
     const { ttaRequest: scopes } = await filtersToScopes({ 'region.in': [regionId] }, { userId });
 
-    const ttaRequests = await getTtaRequestsService(scopes, userId, Number(recipientId));
+    const ttaRequests = await getTtaRequestsService(scopes, userId, Number(recipientId), list);
     res.json(ttaRequests);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
+
+export const getTtaRequests = (req: Request, res: Response) => listTtaRequests(req, res, 'active');
+
+export const getApprovedTtaRequests = (req: Request, res: Response) =>
+  listTtaRequests(req, res, 'approved');
+
+export const getTtaRequestsByRecipient = (req: Request, res: Response) =>
+  listTtaRequestsByRecipient(req, res, 'active');
+
+export const getApprovedTtaRequestsByRecipient = (req: Request, res: Response) =>
+  listTtaRequestsByRecipient(req, res, 'approved');
 
 export async function getTtaRequestReviewers(req: Request, res: Response) {
   try {

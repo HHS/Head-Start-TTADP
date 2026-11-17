@@ -15,6 +15,13 @@ export const getTtaRequests = async (filters) => {
   return ttaRequests.json();
 };
 
+export const getApprovedTtaRequests = async (filters) => {
+  const ttaRequests = await get(
+    `${join(ttaRequestsUrl, 'approved')}?${filtersToQueryString(filters)}`
+  );
+  return ttaRequests.json();
+};
+
 export const getTtaRequestReviewers = async (regionId) => {
   const reviewers = await get(
     join(ttaRequestsUrl, 'region', regionId.toString(DECIMAL_BASE), 'reviewers')
@@ -81,4 +88,18 @@ export const approveTtaRequest = async (ttaRequestId, data) => {
     data
   );
   return ttaRequest.json();
+};
+
+export const getApprovedTtaRequestsByRecipient = async (regionId, recipientId) => {
+  const ttaRequests = await get(
+    join(
+      ttaRequestsUrl,
+      'region',
+      regionId.toString(DECIMAL_BASE),
+      'recipient',
+      recipientId.toString(DECIMAL_BASE),
+      'approved'
+    )
+  );
+  return ttaRequests.json();
 };

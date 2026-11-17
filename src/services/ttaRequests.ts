@@ -189,32 +189,41 @@ export async function ttaRequestById(id: number) {
   });
 }
 
+/** the requests still moving through review, and the ones the COR has approved */
+export type TtaRequestList = 'active' | 'approved';
+
+const ACTIVE_STATUSES = [
+  TTA_REQUEST_STATUSES.SUBMITTED,
+  TTA_REQUEST_STATUSES.NEEDS_ACTION,
+  TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+];
+
 /**
- * The requests the scopes allow, optionally for one recipient: the user's own drafts,
- * since drafts are private to their creator until they are submitted, and anyone's
- * requests that have been submitted, including those sent back for changes.
+ * The requests the scopes allow, optionally for one recipient. The active list has the user's
+ * own drafts, since drafts are private to their creator until they are submitted, and anyone's
+ * requests that have been submitted, including those sent back for changes. The approved list
+ * has the requests the COR has approved, with the staff assigned to them.
  */
 export async function getTtaRequests(
   scopes: WhereOptions[],
   userId: number,
-  recipientId: number | null = null
+  recipientId: number | null = null,
+  list: TtaRequestList = 'active'
 ) {
+  const approved = list === 'approved';
+
   return TtaRequest.findAndCountAll({
     where: {
       [Op.and]: [
         ...scopes,
-        {
-          [Op.or]: [
-            { userId, status: TTA_REQUEST_STATUSES.DRAFT },
-            {
-              status: [
-                TTA_REQUEST_STATUSES.SUBMITTED,
-                TTA_REQUEST_STATUSES.NEEDS_ACTION,
-                TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+        approved
+          ? { status: TTA_REQUEST_STATUSES.APPROVED }
+          : {
+              [Op.or]: [
+                { userId, status: TTA_REQUEST_STATUSES.DRAFT },
+                { status: ACTIVE_STATUSES },
               ],
             },
-          ],
-        },
         ...(recipientId ? [{ recipientId }] : []),
       ],
     },
@@ -226,6 +235,7 @@ export async function getTtaRequests(
       'status',
       'createdAt',
       'submittedAt',
+      'approvedAt',
     ],
     include: [
       {
@@ -256,8 +266,18 @@ export async function getTtaRequests(
         attributes: ['id', 'stateCode'],
         through: { attributes: [] },
       },
+      ...(approved
+        ? [
+            {
+              model: User,
+              as: 'assignedStaff',
+              attributes: ['id', 'name'],
+              through: { attributes: [] },
+            },
+          ]
+        : []),
     ],
-    order: [['createdAt', 'DESC']],
+    order: [[approved ? 'approvedAt' : 'createdAt', 'DESC']],
     distinct: true,
   });
 }
@@ -734,9 +754,9 @@ export async function approveTtaRequest(
   });
 
   await TtaRequest.update(
-    {
-      status: approved ? TTA_REQUEST_STATUSES.APPROVED : TTA_REQUEST_STATUSES.SUBMITTED,
-    },
+    approved
+      ? { status: TTA_REQUEST_STATUSES.APPROVED, approvedAt: new Date() }
+      : { status: TTA_REQUEST_STATUSES.SUBMITTED },
     { where: { id: existing.id } }
   );
 

@@ -487,6 +487,34 @@ describe('ViewTtaRequest', () => {
     expect(history.location.state.message).toMatchObject({ status: 'awaiting_approval' });
   });
 
+  it('keeps the COR picked on an earlier review once the request comes back', async () => {
+    mockReviewerFetches({
+      ...SUBMITTED_REQUEST,
+      assignedStaff: [STAFF[1]],
+      approvers: [
+        {
+          id: 1,
+          userId: 21,
+          status: 'needs_action',
+          user: { id: 21, name: 'Chandler Bing' },
+        },
+      ],
+    });
+    fetchMock.put(REVIEW_URL, { ...SUBMITTED_REQUEST, status: 'awaiting_approval' });
+    const history = renderView({}, REVIEWER);
+
+    userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
+    // the COR reads as the list of CORs has them once it loads
+    expect(await screen.findByText('Chandler Bing (backup)')).toBeVisible();
+    userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(history.location.pathname).toBe('/tta-requests'));
+    expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body)).toMatchObject({
+      status: 'approved',
+      approverId: 21,
+    });
+  });
+
   it('requires an approving COR when sending the request to one', async () => {
     mockReviewerFetches();
     fetchMock.put(REVIEW_URL, SUBMITTED_REQUEST);

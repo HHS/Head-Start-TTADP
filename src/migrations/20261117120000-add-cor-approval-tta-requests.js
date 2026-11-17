@@ -20,6 +20,14 @@ module.exports = {
         { transaction }
       );
 
+      // when the COR approved the request, which the approved requests table lists them by
+      await queryInterface.addColumn(
+        'TtaRequests',
+        'approvedAt',
+        { type: Sequelize.DATE, allowNull: true },
+        { transaction }
+      );
+
       // the goals a request created, or reused, when its COR approved it; one per grant
       await queryInterface.createTable(
         'TtaRequestGoals',
@@ -70,6 +78,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
 
       await removeTables(queryInterface, transaction, ['TtaRequestGoals']);
+      await queryInterface.removeColumn('TtaRequests', 'approvedAt', { transaction });
 
       // Postgres can't drop an enum value, so rebuild the request types without the new ones. An
       // approved request goes back to awaiting its COR, and the approval goes with it. The goals

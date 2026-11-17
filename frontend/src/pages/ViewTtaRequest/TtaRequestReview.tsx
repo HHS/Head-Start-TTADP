@@ -127,6 +127,13 @@ export default function TtaRequestReview({
   // the request's details as the form holds them, with the grants it was submitted for
   const details = useMemo(() => toFormValues(ttaRequest), [ttaRequest]);
 
+  // the COR picked on an earlier review stays picked, through the COR or the creator sending
+  // the request back, until the reviewer picks another
+  const currentApprover = ttaRequest.approvers?.[0] ?? null;
+  const currentApproverOption: SelectOption | null = currentApprover
+    ? { value: currentApprover.userId, label: currentApprover.user?.name ?? '' }
+    : null;
+
   const hookForm = useForm<ReviewFormValues>({
     mode: 'onBlur',
     // a part of the form that isn't shown - the details before they are edited, or the COR
@@ -136,6 +143,7 @@ export default function TtaRequestReview({
       ...details,
       // the staff assigned on an earlier review are assigned again unless the reviewer changes them
       assignedStaff: (ttaRequest.assignedStaff ?? []).map(staffOption),
+      approver: currentApproverOption,
       status: '',
       note: '',
     },
@@ -152,6 +160,15 @@ export default function TtaRequestReview({
     clearErrors,
   } = hookForm;
   const sendingToCor = watch('status') === APPROVER_STATUSES.APPROVED;
+
+  // once the CORs have loaded, the one already picked reads as they list it, e.g. as a backup
+  useEffect(() => {
+    const picked = getValues('approver');
+    const listed = picked && approverOptions.find(({ value }) => value === picked.value);
+    if (listed && listed.label !== picked.label) {
+      setValue('approver', listed);
+    }
+  }, [approverOptions, getValues, setValue]);
 
   // whether staff must be assigned follows the review status, so an error shown for the
   // last status is checked again against the new one. The COR is only asked for when sending
@@ -331,7 +348,7 @@ export default function TtaRequestReview({
             name="approver"
             control={control}
             rules={{ required: 'Select an approving COR' }}
-            defaultValue={null}
+            defaultValue={currentApproverOption}
             render={({ value, onChange, onBlur }) => (
               <FormItem label="Approving COR" name="approver" htmlFor="approver">
                 <Select

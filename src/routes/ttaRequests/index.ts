@@ -9,6 +9,8 @@ import transactionWrapper from '../transactionWrapper';
 import {
   approveTtaRequest,
   createTtaRequest,
+  getApprovedTtaRequests,
+  getApprovedTtaRequestsByRecipient,
   getTtaRequest,
   getTtaRequestApprovers,
   getTtaRequestAssignableStaff,
@@ -36,6 +38,17 @@ const router = express.Router();
 
 // getTtaRequests
 router.get('/', transactionWrapper(getTtaRequests));
+
+// getApprovedTtaRequests; before the request routes, which would take it for a request id
+router.get('/approved', transactionWrapper(getApprovedTtaRequests));
+
+// getApprovedTtaRequestsByRecipient
+router.get(
+  '/region/:regionId/recipient/:recipientId/approved',
+  checkRegionIdParam,
+  checkRecipientIdParam,
+  transactionWrapper(getApprovedTtaRequestsByRecipient)
+);
 
 // getTtaRequestsByRecipient
 router.get(

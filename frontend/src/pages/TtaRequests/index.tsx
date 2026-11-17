@@ -8,10 +8,7 @@ import TtaRequestSubmittedAlert from '../../components/TtaRequestSubmittedAlert'
 import ActiveTtaRequestsTable from '../../components/TtaRequestsTable/ActiveTtaRequestsTable';
 import ApprovedTtaRequestsTable from '../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
 import useFilters from '../../hooks/useFilters';
-import {
-  allRegionsUserHasTtaRequestPermissionTo,
-  hasTtaRequestReadWrite,
-} from '../../permissions';
+import { allRegionsUserHasTtaRequestPermissionTo, hasTtaRequestReadWrite } from '../../permissions';
 import UserContext from '../../UserContext';
 import { showFilterWithMyRegions } from '../regionHelpers';
 
@@ -98,7 +95,7 @@ export default function TtaRequests(): React.ReactElement {
             {/* these tables span every recipient the user can see, so they name each one */}
             <ActiveTtaRequestsTable showRecipientColumns filters={filters} canCreate={canCreate} />
             <div className="margin-top-3">
-              <ApprovedTtaRequestsTable showRecipientColumns />
+              <ApprovedTtaRequestsTable showRecipientColumns filters={filters} />
             </div>
           </div>
         </Grid>

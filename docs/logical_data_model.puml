@@ -1430,6 +1430,7 @@ class TtaRequests{
  * createdAt : timestamp with time zone
  * status : enum : 'draft'::"enum_TtaRequests_status"
  * updatedAt : timestamp with time zone
+ approvedAt : timestamp with time zone
  context : text
  creatorNotes : text
  deletedAt : timestamp with time zone

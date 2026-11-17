@@ -94,9 +94,17 @@ async function expectNote(
 const readOnlyValue = (page: Page, label: string): Locator =>
   page.locator(`div:text-is("${label}") + div`);
 
-/** the request's row in the Active TTA requests table */
-const requestRow = (page: Page, displayId: string) =>
-  page.getByRole('row').filter({ has: page.getByRole('link', { name: displayId, exact: true }) });
+/** the TTA requests table with this title, Active or Approved */
+const requestsTable = (page: Page, title: string) =>
+  page
+    .locator('.ttahub-tta-requests-table')
+    .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+/** the request's row in the TTA requests table with this title */
+const requestRow = (page: Page, displayId: string, table = 'Active TTA requests') =>
+  requestsTable(page, table)
+    .getByRole('row')
+    .filter({ has: page.getByRole('link', { name: displayId, exact: true }) });
 
 test.describe('TTA request review', () => {
   test.beforeAll(async ({ request }) => {
@@ -489,7 +497,7 @@ test.describe('TTA request review', () => {
       await expect(requestRow(page, displayId)).toContainText('Submitted');
     });
 
-    await test.step('the reviewer sees the COR note and sends it to the COR again', async () => {
+    await test.step('the reviewer sees the COR note and sends it back to the creator', async () => {
       await actAs(page, REVIEWER.id);
       await page.goto(`/tta-requests/view/${ttaRequestId}`);
 
@@ -503,9 +511,44 @@ test.describe('TTA request review', () => {
         note: 'Please confirm the assigned specialist',
       });
 
+      // the COR the reviewer picked is still picked after the COR sent the request back
       await page.getByLabel('Choose review status').selectOption('approved');
-      await chooseOption(page, 'approver', `${BACKUP_COR.name} (backup)`);
-      await page.getByLabel('Add TTAC or Manager notes').fill('Specialist confirmed');
+      await expect(page.getByText(`${BACKUP_COR.name} (backup)`)).toBeVisible();
+
+      // but the creator has to confirm the specialist first
+      await page.getByLabel('Choose review status').selectOption('needs_action');
+      await page.getByLabel('Add TTAC or Manager notes').fill('Please confirm the specialist');
+      await page.getByRole('button', { name: 'Submit', exact: true }).click();
+
+      await expect(page.getByRole('alert')).toContainText(
+        `You sent request ${displayId} back to its creator for changes on`
+      );
+      await expect(requestRow(page, displayId)).toContainText('Needs action');
+    });
+
+    await test.step('the creator resubmits the request', async () => {
+      await actAs(page, CREATOR.id);
+      await page.goto(`/tta-requests/${ttaRequestId}`);
+      await expect(page.getByRole('button', { name: 'Update request' })).toBeVisible();
+
+      await page.getByLabel('Add creator notes').fill('Specialist confirmed');
+      await page.getByRole('button', { name: 'Update request' }).click();
+
+      await expect(
+        page.getByRole('alert').filter({ hasText: `You submitted request ${displayId}` })
+      ).toBeVisible();
+      await expect(requestRow(page, displayId)).toContainText('Submitted');
+    });
+
+    await test.step('the COR is still picked after the creator round trip', async () => {
+      await actAs(page, REVIEWER.id);
+      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+      await expect(noteEntries(page)).toHaveCount(7);
+
+      // the reviewer needn't pick the COR again
+      await page.getByLabel('Choose review status').selectOption('approved');
+      await expect(page.getByText(`${BACKUP_COR.name} (backup)`)).toBeVisible();
+      await page.getByLabel('Add TTAC or Manager notes').fill('Over to you again');
       await page.getByRole('button', { name: 'Submit', exact: true }).click();
 
       await expect(page.getByRole('alert')).toContainText(
@@ -518,20 +561,24 @@ test.describe('TTA request review', () => {
       await actAs(page, BACKUP_COR.id);
       await page.goto(`/tta-requests/view/${ttaRequestId}`);
 
-      await expect(noteEntries(page)).toHaveCount(6);
+      await expect(noteEntries(page)).toHaveCount(8);
       await page.getByLabel('Choose approval status').selectOption('approved');
       await page.getByLabel('Add COR notes').fill('Approved');
       await page.getByRole('button', { name: 'Submit', exact: true }).click();
 
       await expect(page.getByRole('alert')).toContainText(`You approved request ${displayId} on`);
-      // an approved request is no longer active
+      // an approved request moves from the active table to the approved one
+      const approvedRow = requestRow(page, displayId, 'Approved TTA requests');
+      await expect(approvedRow).toBeVisible();
+      await expect(approvedRow).toContainText(REVIEWER.name);
+      await expect(approvedRow).toContainText(/\d{2}\/\d{2}\/\d{4}/);
       await expect(requestRow(page, displayId)).toHaveCount(0);
 
       // read only for everyone now, with the approval the last note
       await page.goto(`/tta-requests/view/${ttaRequestId}`);
       await expect(page.getByLabel('Choose approval status')).toHaveCount(0);
-      await expect(noteEntries(page)).toHaveCount(7);
-      await expectNote(noteEntries(page).nth(6), {
+      await expect(noteEntries(page)).toHaveCount(9);
+      await expectNote(noteEntries(page).nth(8), {
         phase: 'TTA Request approval - approved',
         author: BACKUP_COR.fullName,
         role: 'Approver',
@@ -564,6 +611,27 @@ test.describe('TTA request review', () => {
       await expect(card).toContainText(`Goal G-${goal.id}`);
       await expect(card).toContainText(reviewerGoal);
       await expect(card).toContainText(OTHER_GRANT);
+    });
+
+    await test.step("the request is in the recipient record's approved table", async () => {
+      const [{ recipientId }] = await rowsOf(
+        await query(request, `SELECT "recipientId" FROM "TtaRequests" WHERE id = ${ttaRequestId};`)
+      );
+      await page.goto(`/recipient-tta-records/${recipientId}/region/${REGION_ID}/tta-request`);
+
+      const approvedRow = requestRow(page, displayId, 'Approved TTA requests');
+      await expect(approvedRow).toBeVisible();
+      await expect(approvedRow).toContainText(REVIEWER.name);
+      await expect(requestRow(page, displayId)).toHaveCount(0);
+
+      // an approved request opens read only, under the recipient's record
+      await approvedRow.getByRole('link', { name: displayId, exact: true }).click();
+      await expect(page).toHaveURL(
+        new RegExp(
+          `/recipient-tta-records/${recipientId}/region/${REGION_ID}/tta-request/view/${ttaRequestId}$`
+        )
+      );
+      await expect(page.getByLabel('Choose approval status')).toHaveCount(0);
     });
   });
 });
