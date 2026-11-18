@@ -25,6 +25,7 @@ import {
   updateEvent,
 } from '../../services/event';
 import { userById } from '../../services/users';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -150,7 +151,7 @@ export const createHandler = async (req, res) => {
       return res.sendStatus(403);
     }
 
-    const event = await createEvent(req.body);
+    const event = await createEvent(req.body, (work) => onTransactionCommitted(req, work));
     return res.status(httpCodes.CREATED).send(event);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
@@ -196,7 +197,9 @@ export const updateHandler = async (req, res) => {
       }
     }
 
-    const event = await updateEvent(eventToUpdate.id, req.body);
+    const event = await updateEvent(eventToUpdate.id, req.body, (work) =>
+      onTransactionCommitted(req, work)
+    );
 
     return res.status(httpCodes.CREATED).send(event);
   } catch (error) {
