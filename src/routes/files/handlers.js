@@ -1,4 +1,4 @@
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'fs';
 import httpCodes from 'http-codes';
@@ -11,7 +11,6 @@ import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import CommunicationLogPolicy from '../../policies/communicationLog';
 import EventPolicy from '../../policies/event';
-import Users from '../../policies/user';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { logById } from '../../services/communicationLog';
@@ -70,6 +69,14 @@ const hasReportAuthorization = async (user, reportId) => {
   return true;
 };
 
+const reportIsApproved = async (reportId) => {
+  const report = await ActivityReport.findOne({
+    where: { id: reportId },
+    attributes: ['calculatedStatus'],
+  });
+  return report?.calculatedStatus === REPORT_STATUSES.APPROVED;
+};
+
 const reportIsInAnEditableState = async (user, reportId) => {
   const report = await ActivityReport.findOne({
     where: { id: reportId },
@@ -105,28 +112,6 @@ const removeFileIfOrphaned = async (req, fileId) => {
   });
 };
 
-const deleteOnlyFile = async (req, res) => {
-  const { fileId } = req.params;
-  const userId = await currentUserId(req, res);
-
-  const user = await userById(userId);
-  const policy = new Users(user);
-  if (!policy.canWriteInAtLeastOneRegion()) {
-    return res.status(400).send({ error: 'Write permissions required' });
-  }
-
-  try {
-    const file = await getFileById(fileId);
-    if (!file) {
-      return res.status(404).send({ error: 'File not found' });
-    }
-    await removeFileIfOrphaned(req, fileId);
-    return res.status(204).send();
-  } catch (error) {
-    return handleErrors(req, res, error, logContext);
-  }
-};
-
 const deleteHandler = async (req, res) => {
   const { reportId, fileId, eventSessionId, communicationLogId, sessionAttachmentId } = req.params;
 
@@ -148,6 +133,13 @@ const deleteHandler = async (req, res) => {
     if (reportId) {
       if (!(await hasReportAuthorization(user, reportId))) {
         res.sendStatus(403);
+        return;
+      }
+      // The ActivityReportFile beforeDestroy hook enforced this; unlinking now skips hooks.
+      if (await reportIsApproved(reportId)) {
+        res
+          .status(httpCodes.BAD_REQUEST)
+          .send({ error: 'File cannot be removed from approved report' });
         return;
       }
       const rf = (file.reportFiles || []).find(
@@ -576,4 +568,4 @@ async function deleteActivityReportObjectiveFile(req, res) {
   }
 }
 
-export { deleteActivityReportObjectiveFile, deleteHandler, deleteOnlyFile, uploadHandler };
+export { deleteActivityReportObjectiveFile, deleteHandler, uploadHandler };

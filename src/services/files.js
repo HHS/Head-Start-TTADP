@@ -23,10 +23,14 @@ const deleteFile = async (id) =>
     where: { id },
     individualHooks: false,
   });
+// The unlink helpers below skip model hooks. Those hooks delete the File themselves and queue
+// its S3 delete before the transaction commits; the file delete routes instead remove the
+// File (and queue the S3 delete after commit) through removeFileIfOrphaned in
+// routes/files/handlers. Only those routes should call these helpers.
 const deleteActivityReportFile = async (id) =>
   ActivityReportFile.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 // TODO GH - need to pass hookMetadata
 const deleteActivityReportObjectiveFile = async (id) =>
@@ -37,19 +41,19 @@ const deleteActivityReportObjectiveFile = async (id) =>
 const deleteCommunicationLogFile = async (id) =>
   CommunicationLogFile.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 const deleteSessionFile = async (id) =>
   SessionReportPilotFile.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 
 // eslint-disable-next-line max-len
 const deleteSessionSupportingAttachment = async (id) =>
   SessionReportPilotSupportingAttachment.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 
 const getFileById = async (id) =>

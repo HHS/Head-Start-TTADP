@@ -292,6 +292,26 @@ describe('deleteHandler authorization and orphan cleanup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     userById.mockResolvedValue({ id: 1 });
+    jest.spyOn(ActivityReport, 'findOne').mockResolvedValue({ calculatedStatus: 'draft' });
+  });
+
+  it('refuses to remove a file from an approved report', async () => {
+    const res = mockRes();
+    getFileById.mockResolvedValue({
+      id: 1,
+      key: 'key',
+      ...noReferences,
+      reportFiles: [{ id: 9, activityReportId: 1 }],
+    });
+    ActivityReportPolicy.mockImplementation(() => ({ canUpdate: () => true }));
+    ActivityReport.findOne.mockResolvedValue({ calculatedStatus: 'approved' });
+
+    await runInTransaction(deleteHandler, { params: { reportId: 1, fileId: 1 } }, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(deleteActivityReportFile).not.toHaveBeenCalled();
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(addDeleteFileToQueue).not.toHaveBeenCalled();
   });
 
   it.each([
