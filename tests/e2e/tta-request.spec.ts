@@ -524,7 +524,7 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('alert')).toContainText(
         `You sent request ${displayId} back to its reviewer for changes on`
       );
-      await expect(requestRow(page, displayId)).toContainText('Submitted');
+      await expect(requestRow(page, displayId)).toContainText('TTAC/Manager review pending');
     });
 
     await test.step('the reviewer sees the COR note and sends it back to the creator', async () => {
@@ -567,7 +567,7 @@ test.describe('TTA request review', () => {
       await expect(
         page.getByRole('alert').filter({ hasText: `You submitted request ${displayId}` })
       ).toBeVisible();
-      await expect(requestRow(page, displayId)).toContainText('Submitted');
+      await expect(requestRow(page, displayId)).toContainText('TTAC/Manager review pending');
     });
 
     await test.step('the COR is still picked after the creator round trip', async () => {
@@ -584,7 +584,7 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('alert')).toContainText(
         `You sent request ${displayId} to the COR for approval on`
       );
-      await expect(requestRow(page, displayId)).toContainText('Awaiting approval');
+      await expect(requestRow(page, displayId)).toContainText('COR approval pending');
     });
 
     await test.step('the COR approves the request', async () => {
