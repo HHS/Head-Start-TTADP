@@ -871,6 +871,29 @@ describe('ViewTtaRequest', () => {
       ).toBeVisible();
     });
 
+    it('says which activity reports keep the goal from being reused', async () => {
+      fetchMock.get(URL, AWAITING_REQUEST);
+      fetchMock.put(APPROVE_URL, {
+        status: 409,
+        body: {
+          code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+          blockingActivityReports: [
+            { displayId: 'R14-AR-1234', creatorName: 'Report Creator', href: null },
+          ],
+        },
+      });
+      renderView({}, COR);
+
+      userEvent.selectOptions(await screen.findByLabelText(/choose approval status/i), 'approved');
+      userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+      expect(
+        await screen.findByText(
+          /already exists on a draft or submitted activity report: R14-AR-1234 created by Report Creator/i
+        )
+      ).toBeVisible();
+    });
+
     it('does not offer an approval to someone who is not a COR in the region', async () => {
       fetchMock.get(URL, AWAITING_REQUEST);
       renderView(

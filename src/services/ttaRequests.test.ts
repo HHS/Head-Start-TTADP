@@ -1,5 +1,6 @@
 import {
   APPROVER_STATUSES,
+  REPORT_STATUSES,
   TTA_REQUEST_NOTE_ACTIONS,
   TTA_REQUEST_STATUSES,
   TTA_REQUEST_STEPS,
@@ -12,6 +13,7 @@ import {
   createGrant,
   createRecipient,
   createRegion,
+  createReport,
   createUser,
 } from '../testUtils';
 import { getCitationsByGrantIds } from './citations';
@@ -35,6 +37,9 @@ jest.mock('./citations', () => ({
 }));
 
 const {
+  ActivityRecipient,
+  ActivityReport,
+  ActivityReportGoal,
   Goal,
   Grant,
   GoalTemplate,
@@ -1306,8 +1311,8 @@ describe('ttaRequests service', () => {
       expect(result.goals.map(({ id }) => id)).toEqual([existing.id]);
     });
 
-    it("reopens a grant's closed goal from the template", async () => {
-      const existing = await Goal.create({
+    it("leaves a grant's closed goal from the template closed and creates a new one", async () => {
+      const closed = await Goal.create({
         name: goalTemplate.templateName,
         grantId: grantOne.id,
         goalTemplateId: goalTemplate.id,
@@ -1316,11 +1321,98 @@ describe('ttaRequests service', () => {
       });
       const awaiting = await awaitingApproval();
 
-      await approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id);
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
 
-      await existing.reload();
-      expect(existing.status).toBe('Not Started');
-      expect(await TtaRequestGoal.count({ where: { ttaRequestId: awaiting.id } })).toBe(1);
+      await closed.reload();
+      expect(closed.status).toBe('Closed');
+      const created = (await templateGoals()).filter(({ id }) => id !== closed.id);
+      expect(created).toHaveLength(1);
+      expect(created[0].status).toBe('Not Started');
+      expect(created[0].createdVia).toBe('ttaRequest');
+      expect(result.goals.map(({ id }) => id)).toEqual([created[0].id]);
+    });
+
+    it("reuses a grant's open goal from the template over a closed one", async () => {
+      await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'Closed',
+        createdVia: 'rtr',
+      });
+      const open = await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'In Progress',
+        createdVia: 'rtr',
+      });
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+
+      expect(await templateGoals()).toHaveLength(2);
+      expect(result.goals.map(({ id }) => id)).toEqual([open.id]);
+    });
+
+    describe('when the open goal is only on a report that is not yet approved', () => {
+      let report;
+      let draftGoal;
+
+      beforeEach(async () => {
+        draftGoal = await Goal.create({
+          name: goalTemplate.templateName,
+          grantId: grantOne.id,
+          goalTemplateId: goalTemplate.id,
+          status: 'Not Started',
+          createdVia: 'activityReport',
+          onApprovedAR: false,
+        });
+        report = await createReport({
+          userId: creator.id,
+          regionId: 1,
+          activityRecipients: [{ grantId: grantOne.id }],
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        });
+        await ActivityReportGoal.create({ activityReportId: report.id, goalId: draftGoal.id });
+      });
+
+      afterEach(async () => {
+        await ActivityReportGoal.destroy({
+          where: { activityReportId: report.id },
+          individualHooks: true,
+        });
+        await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
+        await ActivityReport.destroy({ where: { id: report.id }, force: true });
+      });
+
+      it('rejects the approval with a conflict naming the report', async () => {
+        const awaiting = await awaitingApproval();
+
+        await expect(
+          approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id)
+        ).rejects.toMatchObject({
+          statusCode: 409,
+          responseBody: {
+            code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+            blockingActivityReports: [
+              expect.objectContaining({ displayId: expect.stringContaining(`-AR-${report.id}`) }),
+            ],
+          },
+        });
+
+        expect(await TtaRequestGoal.count({ where: { ttaRequestId: awaiting.id } })).toBe(0);
+        expect((await templateGoals()).map(({ id }) => id)).toEqual([draftGoal.id]);
+      });
     });
 
     it('lets another COR in the region act in place of the one picked', async () => {

@@ -19,6 +19,25 @@ export const APPROVAL_ERROR =
 
 export const APPROVAL_STATUS_REQUIRED = 'Choose an approval status';
 
+interface BlockingActivityReport {
+  displayId: string;
+  creatorName: string;
+}
+
+/**
+ * A grant's goal from the template that is only on activity reports not yet approved can't be
+ * reused until those reports are approved or drop it, so the COR is told which ones they are.
+ */
+const blockedByReportsMessage = (reports: BlockingActivityReport[] = []) => {
+  const listed = reports.map(
+    ({ displayId, creatorName }) => `${displayId} created by ${creatorName}`
+  );
+  const where = listed.length
+    ? `${listed.length === 1 ? 'a draft or submitted activity report' : 'draft or submitted activity reports'}: ${listed.join(', ')}`
+    : 'a draft or submitted activity report';
+  return `This goal already exists on ${where}. The request can be approved once the goal is on an approved report or removed from the draft.`;
+};
+
 const APPROVAL_STATUSES = [
   { value: APPROVER_STATUSES.NEEDS_ACTION, label: 'Needs action' },
   { value: APPROVER_STATUSES.APPROVED, label: 'Approved' },
@@ -82,6 +101,10 @@ export default function TtaRequestApproval({
       });
     } catch (e) {
       // an approval the server rejects says why, which retrying would not change
+      if (e instanceof HTTPError && e.status === 409) {
+        setError(blockedByReportsMessage(e.data?.blockingActivityReports));
+        return;
+      }
       const validationMessage =
         e instanceof HTTPError && e.status === 400 && e.data?.error ? e.data.error : null;
       setError(validationMessage || APPROVAL_ERROR);

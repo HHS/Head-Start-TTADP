@@ -44,8 +44,8 @@ const granted: Grant[] = [];
 let addedFlag = false;
 let monitoringGoalId: number | null = null;
 let ttaRequestId: number | null = null;
-// the goals the COR's approval created, rather than reused, so cleanup removes only those
-let createdGoalIds: number[] = [];
+// the goals the request's grants already had, so cleanup removes only the ones its approval created
+let existingGoalIds: number[] = [];
 
 const rowsOf = async (response: Awaited<ReturnType<typeof query>>) => {
   const [rows] = await response.json();
@@ -165,20 +165,32 @@ test.describe('TTA request review', () => {
       );
       monitoringGoalId = Number(goal.id);
     }
+
+    existingGoalIds = (
+      await rowsOf(
+        await query(
+          request,
+          `SELECT g.id FROM "Goals" g
+           JOIN "Grants" gr ON gr.id = g."grantId"
+           WHERE gr.number IN ('${GRANT}', '${OTHER_GRANT}');`
+        )
+      )
+    ).map(({ id }) => Number(id));
   });
 
   test.afterAll(async ({ request }) => {
+    let createdGoalIds: number[] = [];
     if (ttaRequestId) {
       createdGoalIds = (
         await rowsOf(
           await query(
             request,
-            `SELECT g.id FROM "Goals" g
-             JOIN "TtaRequestGoals" trg ON trg."goalId" = g.id
-             WHERE trg."ttaRequestId" = ${ttaRequestId} AND g."createdVia" = 'ttaRequest';`
+            `SELECT "goalId" AS id FROM "TtaRequestGoals" WHERE "ttaRequestId" = ${ttaRequestId};`
           )
         )
-      ).map(({ id }) => Number(id));
+      )
+        .map(({ id }) => Number(id))
+        .filter((id) => !existingGoalIds.includes(id));
       // its grants, citations, approvers, notes, assigned staff and goal links cascade with it
       await query(request, `DELETE FROM "TtaRequests" WHERE id = ${ttaRequestId};`);
     }
@@ -526,7 +538,7 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('alert')).toContainText(
         `You sent request ${displayId} back to its creator for changes on`
       );
-      await expect(requestRow(page, displayId)).toContainText('Needs action');
+      await expect(requestRow(page, displayId)).toContainText('Pending changes');
     });
 
     await test.step('the creator resubmits the request', async () => {

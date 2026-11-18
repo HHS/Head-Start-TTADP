@@ -732,6 +732,7 @@ components:
                   - submitted
                   - needs_action
                   - sent_for_approval
+                  - approved
               note:
                 type: string
                 nullable: true

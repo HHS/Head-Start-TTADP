@@ -13,16 +13,18 @@ import type {
   TtaRequestPayload,
   TtaRequestReviewPayload,
 } from '@ttahub/common/src/ttaRequests';
+import { uniqBy } from 'lodash';
 import moment from 'moment';
 import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { GOAL_STATUS } from '../constants';
-import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { getCitationsByGrantIds } from './citations';
+import { getBlockingActivityReportsForGoals, isHiddenActivityReportGoal } from './goalTemplates';
+import { standardGoalConflict } from './standardGoals';
 import { activeUsersWithScopesInRegion, usersByRoles } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
@@ -666,9 +668,13 @@ export async function reviewTtaRequest(
 
 /**
  * The goals an approved request is for: one on each of its grants, from its goal template.
- * A grant only ever has one goal from a template, so one it already has is reused, and
- * reopened if it was closed; otherwise a new one is created. Either way it is linked to the
- * request. The request's citations stay on it, to be picked on later Activity Reports.
+ * A grant only ever has one open goal from a template, so one it already has is reused;
+ * otherwise a new one is created. A closed goal is never reopened. Either way it is linked to
+ * the request. The request's citations stay on it, to be picked on later Activity Reports.
+ *
+ * A goal that is only on Activity Reports that are not yet approved is hidden from the
+ * recipient record and can be removed with them, so the request can't be approved until
+ * those reports are approved or drop the goal.
  */
 async function createGoalsForApprovedRequest(ttaRequestId: number, userId: number) {
   const ttaRequest = await TtaRequest.findByPk(ttaRequestId, {
@@ -690,31 +696,46 @@ async function createGoalsForApprovedRequest(ttaRequestId: number, userId: numbe
     throw dataError('A request needs at least one grant before it can be approved');
   }
 
+  // Other requests for the same grants may be approved at the same time, and each would find
+  // no goal and create one. Locking the grants (in order, so two approvals can't deadlock) makes
+  // them take turns for the rest of the caller's transaction.
+  await Grant.unscoped().findAll({
+    attributes: ['id'],
+    where: { id: grantIds },
+    order: [['id', 'ASC']],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
+  });
+
+  const openGoals = await Goal.findAll({
+    attributes: ['id', 'grantId', 'createdVia', 'onApprovedAR'],
+    where: {
+      grantId: grantIds,
+      goalTemplateId: goalTemplate.id,
+      status: { [Op.ne]: GOAL_STATUS.CLOSED },
+    },
+  });
+
+  if (openGoals.some(isHiddenActivityReportGoal)) {
+    const reportsByGoalId = await getBlockingActivityReportsForGoals(openGoals, userId);
+    const blockingActivityReports = uniqBy(
+      openGoals.flatMap((goal) => reportsByGoalId.get(goal.id) || []),
+      'displayId'
+    );
+    throw standardGoalConflict('STANDARD_GOAL_ON_ACTIVITY_REPORT', blockingActivityReports);
+  }
+
   // each grant has its own goal from the template, so they can be found or created together
   await Promise.all(
     grantIds.map(async (grantId) => {
-      let goal = await Goal.findOne({
-        attributes: ['id', 'status'],
-        where: { grantId, goalTemplateId: goalTemplate.id },
-      });
-
-      if (!goal) {
-        goal = await Goal.create({
+      const goal =
+        openGoals.find((openGoal) => openGoal.grantId === grantId) ||
+        (await Goal.create({
           name: goalTemplate.templateName,
           grantId,
           goalTemplateId: goalTemplate.id,
           status: GOAL_STATUS.NOT_STARTED,
           createdVia: 'ttaRequest',
-        });
-      } else if (goal.status === GOAL_STATUS.CLOSED) {
-        await changeGoalStatus({
-          goalId: goal.id,
-          userId,
-          newStatus: GOAL_STATUS.NOT_STARTED,
-          reason: 'TTA request approved',
-          context: 'TTA request approved',
-        });
-      }
+        }));
 
       await TtaRequestGoal.findOrCreate({ where: { ttaRequestId, goalId: goal.id } });
     })

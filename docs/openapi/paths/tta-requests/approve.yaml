@@ -7,9 +7,10 @@ put:
     request is awaiting approval. Needs action sends the request back to its
     reviewer, whose review is pending again, and sets the status to submitted.
     Approved sets the status to approved and creates a goal from the request's
-    goal template on each of its grants, reusing a grant's existing goal from the
-    template and reopening it if it was closed. Either way the COR becomes the
-    request's approver and their decision and note are added to its notes.
+    goal template on each of its grants, reusing a grant's open goal from the
+    template; a closed goal is never reopened, so a new one is created instead.
+    Either way the COR becomes the request's approver and their decision and
+    note are added to its notes.
   parameters:
     - name: ttaRequestId
       in: path
@@ -48,3 +49,22 @@ put:
       description: Not awaiting approval, or no primary or backup COR permission in the region
     '404':
       description: TTA request not found
+    '409':
+      description: >-
+        A grant's open goal from the template is only on Activity Reports that
+        are not yet approved, so it can't be reused until they are approved or
+        drop the goal
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                  - STANDARD_GOAL_ON_ACTIVITY_REPORT
+              blockingActivityReports:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
