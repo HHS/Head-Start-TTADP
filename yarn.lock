@@ -3941,10 +3941,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ttahub/common@npm:2.4.25":
-  version: 2.4.25
-  resolution: "@ttahub/common@npm:2.4.25"
-  checksum: 10c0/02fa8d1779c46c4bc582e788493f47c63f5eda5ba42c0f4f89d23a150f25ba8dc66deafc987633c1253b40cfa163c5d7214e8578b2aab745b005fe6650e97ef1
+"@ttahub/common@npm:2.4.27":
+  version: 2.4.27
+  resolution: "@ttahub/common@npm:2.4.27"
+  checksum: 10c0/20ac06a01d68b1e9d131ddb4ed80299a2078c22f9d16077fbf424d93985c32b09800baa8308116469f3c79c59b5904478158f12c8a1b3b1b03f79fd16989b176
   languageName: node
   linkType: hard
 
@@ -7950,7 +7950,7 @@ __metadata:
     "@opentelemetry/api": "npm:^1.10.0"
     "@playwright/test": "npm:^1.65.0"
     "@redocly/cli": "npm:^2.78.0"
-    "@ttahub/common": "npm:2.4.25"
+    "@ttahub/common": "npm:2.4.27"
     "@types/ioredis-mock": "npm:^8.2.8"
     "@types/jest": "npm:^29.5.12"
     "@types/lodash": "npm:^4.17.27"

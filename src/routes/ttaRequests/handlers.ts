@@ -10,18 +10,35 @@ import {
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
   lockTtaRequest,
+  reviewTtaRequest as reviewTtaRequestService,
   submitTtaRequest as submitTtaRequestService,
+  ttaRequestApprovingCors,
+  ttaRequestAssignableStaff,
   ttaRequestById,
   ttaRequestReviewers,
   updateTtaRequest,
 } from '../../services/ttaRequests';
 import { userById } from '../../services/users';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
 
 const logContext = {
   namespace,
 };
+
+/**
+ * The form reads the request, or the list it is in, again as soon as it has a write's
+ * response, so inside the transaction wrapper the response waits until the write has
+ * committed; sent before, those reads could still see the request as it was
+ */
+function respondOnceCommitted(req: Request, respond: () => void) {
+  if ((req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper) {
+    onTransactionCommitted(req, respond);
+    return;
+  }
+  respond();
+}
 
 export async function getTtaRequests(req: Request, res: Response) {
   try {
@@ -77,6 +94,44 @@ export async function getTtaRequestReviewers(req: Request, res: Response) {
   }
 }
 
+export async function getTtaRequestAssignableStaff(req: Request, res: Response) {
+  try {
+    const { regionId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, Number(regionId));
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const staff = await ttaRequestAssignableStaff(Number(regionId));
+    res.json(staff);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getTtaRequestApprovers(req: Request, res: Response) {
+  try {
+    const { regionId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, Number(regionId));
+
+    if (!authorization.canGet()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const approvers = await ttaRequestApprovingCors(Number(regionId));
+    res.json(approvers);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
 export async function getTtaRequest(req: Request, res: Response) {
   try {
     const { ttaRequestId } = req.params;
@@ -116,7 +171,7 @@ export async function createTtaRequest(req: Request, res: Response) {
     }
 
     const ttaRequest = await createTtaRequestService(data, userId);
-    res.status(httpCodes.CREATED).json(ttaRequest);
+    respondOnceCommitted(req, () => res.status(httpCodes.CREATED).json(ttaRequest));
   } catch (error) {
     if (respondWithServiceError(res, error)) {
       return;
@@ -145,8 +200,18 @@ export async function saveTtaRequest(req: Request, res: Response) {
       return;
     }
 
-    const ttaRequest = await updateTtaRequest(existing, req.body, userId);
-    res.json(ttaRequest);
+    // the reviewer edits the request's details, its grants among them, but not who it is for,
+    // who reviews it or the creator's notes
+    const {
+      recipientId: _recipientId,
+      reviewerId: _reviewerId,
+      creatorNotes: _creatorNotes,
+      ...details
+    } = req.body;
+    const data = authorization.canReviewerEdit() ? details : req.body;
+
+    const ttaRequest = await updateTtaRequest(existing, data, userId);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
   } catch (error) {
     if (respondWithServiceError(res, error)) {
       return;
@@ -170,14 +235,14 @@ export async function submitTtaRequest(req: Request, res: Response) {
     const user = await userById(userId);
     const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
 
-    // only the creator's draft can be submitted, as only it can be saved
-    if (!authorization.canUpdate()) {
+    // only the creator's draft, or a request sent back to them, can be submitted
+    if (!authorization.canSubmit()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
     const ttaRequest = await submitTtaRequestService(existing, req.body, userId);
-    res.json(ttaRequest);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
   } catch (error) {
     // Errors that set their own statusCode are deliberate client responses
     if (error?.statusCode) {
@@ -188,6 +253,38 @@ export async function submitTtaRequest(req: Request, res: Response) {
         throw Object.assign(error, { responseBody });
       }
       res.status(error.statusCode).json(responseBody);
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function reviewTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
+    const existing = await ttaRequestById(Number(ttaRequestId));
+
+    if (!existing) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
+
+    if (!authorization.canReview()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await reviewTtaRequestService(existing, req.body, userId);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
+  } catch (error) {
+    // the service rejects a review before it writes anything, so there is nothing for the
+    // wrapper to roll back, unlike a submission
+    if (respondWithServiceError(res, error)) {
       return;
     }
     await handleErrors(req, res, error, logContext);

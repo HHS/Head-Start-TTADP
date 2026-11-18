@@ -46,6 +46,28 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'ttaRequestId',
         as: 'citations',
       });
+      TtaRequest.hasMany(models.TtaRequestReviewer, {
+        foreignKey: 'ttaRequestId',
+        as: 'reviewers',
+      });
+      TtaRequest.hasMany(models.TtaRequestApprover, {
+        foreignKey: 'ttaRequestId',
+        as: 'approvers',
+      });
+      TtaRequest.hasMany(models.TtaRequestNote, {
+        foreignKey: 'ttaRequestId',
+        as: 'notes',
+      });
+      TtaRequest.hasMany(models.TtaRequestAssignedStaff, {
+        foreignKey: 'ttaRequestId',
+        as: 'assignedStaffLinks',
+      });
+      TtaRequest.belongsToMany(models.User, {
+        through: models.TtaRequestAssignedStaff,
+        foreignKey: 'ttaRequestId',
+        otherKey: 'userId',
+        as: 'assignedStaff',
+      });
     }
   }
 

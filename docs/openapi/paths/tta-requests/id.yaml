@@ -28,10 +28,14 @@ get:
 put:
   tags:
     - tta request
-  summary: Save changes to a draft TTA request
+  summary: Save changes to a TTA request
   description: >-
-    Available only to the request's creator, while it is a draft and they can
-    write in its region. Only the fields in the body change; grantIds and
+    Available to the request's creator while it is a draft or sent back to
+    them for changes and they can write in its region, and to an admin once it
+    is sent back. The request's reviewer can also save it while it is submitted
+    to them and they can review in its region; recipientId, reviewerId and
+    creatorNotes are ignored for them, though they can change the grants among
+    the recipient's. Only the fields in the body change; grantIds and
     citations replace the current lists when sent. Changing the recipient
     without sending grantIds clears the grants. regionId is ignored.
   parameters:
