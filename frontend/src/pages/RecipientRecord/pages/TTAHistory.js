@@ -21,6 +21,7 @@ import ApprovedARAndTRByGoalCategory from '../../../widgets/ApprovedARAndTRByGoa
 import { TTAHistoryOverview } from '../../../widgets/DashboardOverview';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+import TTAHoursProvidedOverTime from '../../../widgets/TTAHoursProvidedOverTime';
 import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
@@ -206,6 +207,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             <TargetPopulationsTable filters={filtersToApply} />
           </Grid>
         </Grid>
+        <TTAHoursProvidedOverTime filters={filtersToApply} />
         <ApprovedARAndTRByGoalCategory filters={filtersToApply} />
         <FilterContext.Provider value={{ filterKey }}>
           <ActivityReportsTable

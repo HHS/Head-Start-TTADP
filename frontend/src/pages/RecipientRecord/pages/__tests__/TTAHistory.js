@@ -70,16 +70,18 @@ describe('Recipient Record - TTA History', () => {
 
     fetchMock.get(
       `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
-      200
+      []
     );
     fetchMock.get(
       `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
-      200
+      { topics: [] }
     );
     fetchMock.get(
       `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
       []
     );
+    fetchMock.get((url) => url.startsWith('/api/widgets/ttaHoursProvidedOverTime?'), []);
+    fetchMock.get((url) => url.startsWith('/api/widgets/ttaMonitoringReviewPeriods?'), []);
 
     fetchMock.get(
       '/api/feeds/item?tag=ttahub-tta-history-filters',
@@ -106,6 +108,17 @@ describe('Recipient Record - TTA History', () => {
     act(() => renderTTAHistory());
     const trSessionsLabel = await screen.findByText('Training report sessions');
     expect(trSessionsLabel).toBeTruthy();
+  });
+
+  it('places TTA hours below both activity report widgets', async () => {
+    renderTTAHistory();
+    const topics = await screen.findByRole('heading', { name: /topics in activity reports/i });
+    const target = await screen.findByRole('heading', {
+      name: /target populations in activity reports/i,
+    });
+    const hours = await screen.findByRole('heading', { name: 'TTA hours provided over time' });
+    expect(topics.compareDocumentPosition(hours) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(target.compareDocumentPosition(hours) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('renders the activity reports table', async () => {

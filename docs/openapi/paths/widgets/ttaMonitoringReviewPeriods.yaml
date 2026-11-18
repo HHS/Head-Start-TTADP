@@ -1,0 +1,21 @@
+get:
+  tags:
+    - widgets
+  operationId: ttaMonitoringReviewPeriods
+  description: Gets delivered monitoring review periods for the scoped recipient's grants.
+  responses:
+    200:
+      description: Monitoring review periods with known start and end dates
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date

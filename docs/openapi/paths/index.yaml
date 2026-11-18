@@ -74,6 +74,8 @@
   $ref: './widgets/ttaHistoryOverview.yaml'
 '/widgets/ttaHoursProvidedOverTime':
   $ref: './widgets/ttaHoursProvidedOverTime.yaml'
+'/widgets/ttaMonitoringReviewPeriods':
+  $ref: './widgets/ttaMonitoringReviewPeriods.yaml'
 '/widgets/monitoringOverview':
   $ref: './widgets/monitoringOverview.yaml'
 '/widgets/monitoringTta':

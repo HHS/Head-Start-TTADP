@@ -1,0 +1,67 @@
+.tta-hours-periods {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #dfe1e2;
+}
+.tta-hours-period {
+  background: none;
+  border: 0;
+  border-bottom: 4px solid transparent;
+  padding: 1rem;
+  cursor: pointer;
+  color: #1b1b1b;
+}
+.tta-hours-period-active {
+  border-bottom-color: #336a90;
+  font-weight: bold;
+}
+.tta-hours-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.tta-hours-legend-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  height: 3rem;
+  border: 1px solid #dfe1e2;
+  font-weight: bold;
+}
+.tta-hours-monitoring-key {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid #b50909;
+}
+.tta-hours-scroll {
+  overflow-x: auto;
+}
+.tta-hours-grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  min-width: 750px;
+}
+.tta-hours-grid tbody th {
+  width: 5rem;
+  font-weight: normal;
+  text-align: right;
+  padding-right: 0.5rem;
+  white-space: nowrap;
+}
+.tta-hours-grid tbody td {
+  height: 3rem;
+  border: 1px solid #c9c9c9;
+  text-align: center;
+  font-weight: bold;
+}
+.tta-hours-grid tbody td.tta-hours-monitoring {
+  border: 3px solid #b50909;
+}
+.tta-hours-grid tfoot td {
+  text-align: center;
+  padding-top: 0.35rem;
+}
