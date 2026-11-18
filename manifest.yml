@@ -28,6 +28,9 @@ applications:
       ITAMS_MD_USERNAME: ((ITAMS_MD_USERNAME))
       JWT_SECRET: ((JWT_SECRET))
       LOG_JSON_FORMAT: "true"
+      # The buildpack provides Yarn 1 at runtime (see .cfignore). Without this, Yarn 1 refuses to
+      # run `yarn start:be` and `yarn db:migrate:prod` because package.json pins yarn@4.
+      SKIP_YARN_COREPACK_CHECK: "1"
       LOG_LEVEL: ((LOG_LEVEL))
       MONITORING_GATE_HALT_CHECKS: ((MONITORING_GATE_HALT_CHECKS))
       NEW_RELIC_APP_NAME: tta-smarthub-((env))
