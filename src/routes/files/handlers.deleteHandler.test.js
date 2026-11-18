@@ -7,7 +7,14 @@ import EventPolicy from '../../policies/event';
 import { logById } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
 import * as Files from '../../services/files';
-import { deleteFile, getFileById } from '../../services/files';
+import {
+  deleteActivityReportFile,
+  deleteCommunicationLogFile,
+  deleteFile,
+  deleteSessionSupportingAttachment,
+  getFileById,
+} from '../../services/files';
+import { addDeleteFileToQueue } from '../../services/s3Queue';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { deleteActivityReportObjectiveFile, deleteHandler } from './handlers';
@@ -47,6 +54,29 @@ jest.mock('../../lib/s3', () => ({
   uploadFile: jest.fn(),
 }));
 jest.mock('../../lib/apiErrorHandler', () => jest.fn());
+jest.mock('../../services/s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
+}));
+
+const noReferences = {
+  reportFiles: [],
+  reportObjectiveFiles: [],
+  sessionFiles: [],
+  communicationLogFiles: [],
+  supportingAttachments: [],
+  importFile: null,
+};
+
+// Mimics transactionWrapper: flags the request and runs post-commit callbacks.
+const runInTransaction = async (handler, req, res) => {
+  const wrappedReq = { ...req, inTransactionWrapper: true, transactionCommittedCallbacks: [] };
+  await handler(wrappedReq, res);
+  for (const callback of wrappedReq.transactionCommittedCallbacks) {
+    // eslint-disable-next-line no-await-in-loop
+    await callback();
+  }
+  return wrappedReq;
+};
 
 describe('deleteHandler', () => {
   const mockReq = {
@@ -250,39 +280,171 @@ describe('deleteHandler', () => {
     expect(mockRes.status).toHaveBeenCalledWith(204);
     expect(mockRes.send).toHaveBeenCalled();
   });
+});
 
-  it('deletes file from S3 if no associated records', async () => {
-    getFileById.mockResolvedValue({
-      reports: [],
-      reportObjectiveFiles: [],
-      objectiveFiles: [],
-      objectiveTemplateFiles: [],
-      sessionFiles: [],
-    });
-
-    await deleteHandler(mockReq, mockRes);
-
-    expect(deleteFileFromS3).toHaveBeenCalled();
-    expect(deleteFile).toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
+describe('deleteHandler authorization and orphan cleanup', () => {
+  const mockRes = () => ({
+    status: jest.fn().mockReturnThis(),
+    send: jest.fn(),
+    sendStatus: jest.fn(),
   });
 
-  it('handles file with associated records correctly', async () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    userById.mockResolvedValue({ id: 1 });
+  });
+
+  it.each([
+    ['objective', { objectiveId: 1, fileId: 1 }],
+    ['objective template', { objectiveTemplateId: 1, fileId: 1 }],
+    ['no parent', { fileId: 1 }],
+  ])('refuses a delete with an %s parent and deletes nothing', async (_label, params) => {
+    const res = mockRes();
+    getFileById.mockResolvedValue({ id: 1, key: 'key', ...noReferences });
+
+    const req = await runInTransaction(deleteHandler, { params }, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(getFileById).not.toHaveBeenCalled();
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    expect(deleteFileFromS3).not.toHaveBeenCalled();
+    expect(req.transactionCommittedCallbacks).toHaveLength(0);
+  });
+
+  it('returns 404 when the file does not exist', async () => {
+    const res = mockRes();
+    getFileById.mockResolvedValue(null);
+
+    await runInTransaction(deleteHandler, { params: { reportId: 1, fileId: 1 } }, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(deleteFile).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 for an unauthorized report delete and deletes nothing', async () => {
+    const res = mockRes();
     getFileById.mockResolvedValue({
-      reports: [{ id: 1 }],
-      reportObjectiveFiles: [{ id: 1 }],
-      objectiveFiles: [{ id: 1 }],
-      objectiveTemplateFiles: [{ id: 1 }],
-      sessionFiles: [],
+      id: 1,
+      key: 'key',
+      ...noReferences,
+      reportFiles: [{ id: 9, activityReportId: 1 }],
     });
+    ActivityReportPolicy.mockImplementation(() => ({ canUpdate: () => false }));
 
-    await deleteHandler(mockReq, mockRes);
+    await runInTransaction(deleteHandler, { params: { reportId: 1, fileId: 1 } }, res);
 
-    expect(deleteFileFromS3).toHaveBeenCalled();
-    expect(deleteFile).toHaveBeenCalled();
-    expect(mockRes.status).toHaveBeenCalledWith(204);
-    expect(mockRes.send).toHaveBeenCalled();
+    expect(res.sendStatus).toHaveBeenCalledWith(403);
+    expect(deleteActivityReportFile).not.toHaveBeenCalled();
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['another report', { reportFiles: [{ id: 2, activityReportId: 2 }] }],
+    ['an activity report objective', { reportObjectiveFiles: [{ id: 3 }] }],
+    ['a session', { sessionFiles: [{ id: 4, sessionReportPilotId: 4 }] }],
+    ['a communication log', { communicationLogFiles: [{ id: 5, communicationLogId: 5 }] }],
+    ['a supporting attachment', { supportingAttachments: [{ id: 6, sessionReportPilotId: 6 }] }],
+    ['an import', { importFile: { id: 7, importId: 7 } }],
+  ])('keeps a file that is still linked to %s', async (_label, remaining) => {
+    const res = mockRes();
+    getFileById
+      .mockResolvedValueOnce({
+        id: 1,
+        key: 'key',
+        ...noReferences,
+        ...remaining,
+        reportFiles: [{ id: 9, activityReportId: 1 }, ...(remaining.reportFiles || [])],
+      })
+      .mockResolvedValueOnce({ id: 1, key: 'key', ...noReferences, ...remaining });
+    ActivityReportPolicy.mockImplementation(() => ({ canUpdate: () => true }));
+
+    await runInTransaction(deleteHandler, { params: { reportId: 1, fileId: 1 } }, res);
+
+    expect(deleteActivityReportFile).toHaveBeenCalledWith(9);
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(204);
+  });
+
+  it('removes the file and queues its S3 delete after commit when the last reference goes', async () => {
+    const res = mockRes();
+    getFileById
+      .mockResolvedValueOnce({
+        id: 1,
+        key: 'key',
+        ...noReferences,
+        reportFiles: [{ id: 9, activityReportId: 1 }],
+      })
+      .mockResolvedValueOnce({ id: 1, key: 'key', ...noReferences });
+    ActivityReportPolicy.mockImplementation(() => ({ canUpdate: () => true }));
+
+    const req = { params: { reportId: 1, fileId: 1 } };
+    const wrappedReq = { ...req, inTransactionWrapper: true, transactionCommittedCallbacks: [] };
+    await deleteHandler(wrappedReq, res);
+
+    expect(deleteActivityReportFile).toHaveBeenCalledWith(9);
+    expect(deleteFile).toHaveBeenCalledWith(1);
+    // Nothing touches S3 until the transaction commits.
+    expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    expect(deleteFileFromS3).not.toHaveBeenCalled();
+    expect(wrappedReq.transactionCommittedCallbacks).toHaveLength(1);
+
+    await wrappedReq.transactionCommittedCallbacks[0]();
+
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(1, 'key');
+    expect(res.status).toHaveBeenCalledWith(204);
+  });
+
+  it('removes the file when the last communication log reference goes', async () => {
+    const res = mockRes();
+    getFileById
+      .mockResolvedValueOnce({
+        id: 1,
+        key: 'key',
+        ...noReferences,
+        communicationLogFiles: [{ id: 5, communicationLogId: 5 }],
+      })
+      .mockResolvedValueOnce({ id: 1, key: 'key', ...noReferences });
+    logById.mockResolvedValue({ id: 5 });
+    CommunicationLogPolicy.mockImplementation(() => ({ canUploadFileToLog: () => true }));
+
+    await runInTransaction(deleteHandler, { params: { communicationLogId: 5, fileId: 1 } }, res);
+
+    expect(deleteCommunicationLogFile).toHaveBeenCalledWith(5);
+    expect(deleteFile).toHaveBeenCalledWith(1);
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(1, 'key');
+  });
+
+  it('keeps a supporting attachment file that is still linked to a communication log', async () => {
+    const res = mockRes();
+    getFileById
+      .mockResolvedValueOnce({
+        id: 1,
+        key: 'key',
+        ...noReferences,
+        supportingAttachments: [{ id: 6, sessionReportPilotId: 6 }],
+        communicationLogFiles: [{ id: 5, communicationLogId: 5 }],
+      })
+      .mockResolvedValueOnce({
+        id: 1,
+        key: 'key',
+        ...noReferences,
+        communicationLogFiles: [{ id: 5, communicationLogId: 5 }],
+      });
+    findSessionById.mockResolvedValue({ eventId: 1 });
+    jest
+      // eslint-disable-next-line global-require
+      .spyOn(require('../../services/event'), 'findEventBySmartsheetId')
+      .mockResolvedValueOnce({ id: 1 });
+    EventPolicy.mockImplementation(() => ({ canUploadFile: () => true }));
+
+    await runInTransaction(deleteHandler, { params: { sessionAttachmentId: 6, fileId: 1 } }, res);
+
+    expect(deleteSessionSupportingAttachment).toHaveBeenCalledWith(6);
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(addDeleteFileToQueue).not.toHaveBeenCalled();
   });
 });
 

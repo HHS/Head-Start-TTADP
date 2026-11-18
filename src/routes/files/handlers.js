@@ -5,7 +5,7 @@ import httpCodes from 'http-codes';
 import { v4 as uuidv4 } from 'uuid';
 import { FILE_STATUSES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
-import { deleteFileFromS3, getSignedDownloadUrl, uploadFile } from '../../lib/s3';
+import { getSignedDownloadUrl, uploadFile } from '../../lib/s3';
 import { auditLogger, logger } from '../../logger';
 import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -29,11 +29,13 @@ import {
   deleteSessionFile,
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
+  fileHasReferences,
   getFileById,
   markFilesQueuedForScan,
   queueFilesForScan,
   updateStatus,
 } from '../../services/files';
+import { addDeleteFileToQueue } from '../../services/s3Queue';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { onTransactionCommitted } from '../transactionWrapper';
@@ -77,6 +79,32 @@ const reportIsInAnEditableState = async (user, reportId) => {
   return authorization.reportHasEditableStatus();
 };
 
+/**
+ * Deletes the file if nothing references it any more. The file is reloaded so references
+ * removed earlier in this transaction aren't counted. The S3 object is only queued for
+ * deletion once the transaction commits, so a rollback can't leave a File row whose S3
+ * object is gone.
+ */
+const removeFileIfOrphaned = async (req, fileId) => {
+  const file = await getFileById(fileId);
+  if (!file || fileHasReferences(file)) {
+    return;
+  }
+
+  await deleteFile(file.id);
+
+  const { id, key } = file;
+  onTransactionCommitted(req, async () => {
+    try {
+      await addDeleteFileToQueue(id, key);
+    } catch (err) {
+      auditLogger.error(
+        `${logContext.namespace}:removeFileIfOrphaned Failed to queue S3 delete for file ${id}: ${err.message}`
+      );
+    }
+  });
+};
+
 const deleteOnlyFile = async (req, res) => {
   const { fileId } = req.params;
   const userId = await currentUserId(req, res);
@@ -88,21 +116,11 @@ const deleteOnlyFile = async (req, res) => {
   }
 
   try {
-    //
     const file = await getFileById(fileId);
     if (!file) {
       return res.status(404).send({ error: 'File not found' });
     }
-    if (
-      file.reports.length +
-        file.reportObjectiveFiles.length +
-        file.objectiveFiles.length +
-        file.objectiveTemplateFiles.length ===
-      0
-    ) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
-    }
+    await removeFileIfOrphaned(req, fileId);
     return res.status(204).send();
   } catch (error) {
     return handleErrors(req, res, error, logContext);
@@ -112,18 +130,27 @@ const deleteOnlyFile = async (req, res) => {
 const deleteHandler = async (req, res) => {
   const { reportId, fileId, eventSessionId, communicationLogId, sessionAttachmentId } = req.params;
 
+  if (!reportId && !eventSessionId && !communicationLogId && !sessionAttachmentId) {
+    res.status(httpCodes.BAD_REQUEST).send({ error: 'A recognized parent id is required' });
+    return;
+  }
+
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
   try {
     const file = await getFileById(fileId);
+    if (!file) {
+      res.status(httpCodes.NOT_FOUND).send({ error: 'File not found' });
+      return;
+    }
 
     if (reportId) {
       if (!(await hasReportAuthorization(user, reportId))) {
         res.sendStatus(403);
         return;
       }
-      const rf = file.reportFiles.find(
+      const rf = (file.reportFiles || []).find(
         (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE)
       );
       if (rf) {
@@ -140,7 +167,7 @@ const deleteHandler = async (req, res) => {
         return;
       }
 
-      const sof = file.sessionFiles.find(
+      const sof = (file.sessionFiles || []).find(
         (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE)
       );
       if (sof) {
@@ -155,7 +182,7 @@ const deleteHandler = async (req, res) => {
         return;
       }
 
-      const clf = file.communicationLogFiles.find(
+      const clf = (file.communicationLogFiles || []).find(
         (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE)
       );
       if (clf) {
@@ -172,7 +199,7 @@ const deleteHandler = async (req, res) => {
         return;
       }
 
-      const sof = file.supportingAttachments.find(
+      const sof = (file.supportingAttachments || []).find(
         (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE)
       );
       if (sof) {
@@ -180,26 +207,7 @@ const deleteHandler = async (req, res) => {
       }
     }
 
-    const reportLength = file.reports ? file.reports.length : 0;
-    const reportObjectiveLength = file.reportObjectiveFiles ? file.reportObjectiveFiles.length : 0;
-    const objectiveLength = file.objectiveFiles ? file.objectiveFiles.length : 0;
-    const objectiveTemplateFilesLength = file.objectiveTemplateFiles
-      ? file.objectiveTemplateFiles.length
-      : 0;
-    const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
-
-    const canDelete =
-      reportLength +
-        reportObjectiveLength +
-        objectiveLength +
-        objectiveTemplateFilesLength +
-        sessionLength ===
-      0;
-
-    if (canDelete) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
-    }
+    await removeFileIfOrphaned(req, fileId);
 
     res.status(204).send();
   } catch (error) {

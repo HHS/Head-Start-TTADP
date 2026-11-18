@@ -3,8 +3,6 @@ import {
   checkCommunicationLogIdParam,
   checkFileIdParam,
   checkIdParam,
-  checkObjectiveIdParam,
-  checkObjectiveTemplateIdParam,
   checkReportIdParam,
   checkSessionAttachmentIdParam,
 } from '../../middleware/checkIdParamMiddleware';
@@ -47,18 +45,6 @@ router.delete(
   checkSessionAttachmentIdParam,
   checkFileIdParam,
   transactionWrapper(deleteHandler, `${context} /ssa/:sessionAttachmentId/:fileId?`)
-);
-router.delete(
-  '/o/:objectiveId?/:fileId?',
-  checkObjectiveIdParam,
-  checkFileIdParam,
-  transactionWrapper(deleteHandler, `${context} /o/:objectiveId?/:fileId?`)
-);
-router.delete(
-  '/ot/:objectiveTemplateId?/:fileId?',
-  checkObjectiveTemplateIdParam,
-  checkFileIdParam,
-  transactionWrapper(deleteHandler, `${context} /ot/:objectiveTemplateId?/:fileId?`)
 );
 router.delete(
   '/report/:reportId?/file/:fileId?',

@@ -1,4 +1,3 @@
-import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import { logById } from '../../services/communicationLog';
@@ -10,6 +9,7 @@ import {
   deleteSessionSupportingAttachment,
   getFileById,
 } from '../../services/files';
+import { addDeleteFileToQueue } from '../../services/s3Queue';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { deleteHandler, deleteOnlyFile } from './handlers';
@@ -27,6 +27,7 @@ jest.mock('../../services/event', () => ({
 }));
 
 jest.mock('../../services/files', () => ({
+  ...jest.requireActual('../../services/files'),
   getFileById: jest.fn(),
   deleteFile: jest.fn(),
   createActivityReportFileMetaData: jest.fn(),
@@ -50,6 +51,10 @@ jest.mock('../../services/users', () => ({
 
 jest.mock('../../lib/s3', () => ({
   deleteFileFromS3: jest.fn(),
+}));
+
+jest.mock('../../services/s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
 }));
 
 jest.mock('../../services/objectives', () => ({
@@ -181,6 +186,7 @@ describe('file handlers, additional tests', () => {
         inTransactionWrapper: true,
         params: {
           fileId: '123',
+          communicationLogId: '456',
         },
         user: {
           id: 1,
@@ -279,19 +285,25 @@ describe('file handlers, additional tests', () => {
         ],
       });
 
-      getFileById.mockResolvedValueOnce({
+      const file = {
         id: 123,
         key: 'key',
-        reports: [],
+        reportFiles: [],
         reportObjectiveFiles: [],
-        objectiveFiles: [],
-        objectiveTemplateFiles: [],
-      });
+        sessionFiles: [],
+        communicationLogFiles: [],
+        supportingAttachments: [],
+        importFile: null,
+      };
+      getFileById.mockResolvedValue(file);
 
-      await deleteOnlyFile(mockRequest, mockResponse);
+      const request = { ...mockRequest, inTransactionWrapper: true };
+      await deleteOnlyFile(request, mockResponse);
 
-      expect(deleteFile).toHaveBeenCalled();
-      expect(deleteFileFromS3).toHaveBeenCalled();
+      expect(deleteFile).toHaveBeenCalledWith(123);
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+      await request.transactionCommittedCallbacks[0]();
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(123, 'key');
 
       expect(mockResponse.status).toHaveBeenCalledWith(204);
     });
@@ -317,19 +329,21 @@ describe('file handlers, additional tests', () => {
         ],
       });
 
-      getFileById.mockResolvedValueOnce({
+      getFileById.mockResolvedValue({
         id: 123,
         key: 'key',
-        reports: [{}],
-        reportObjectiveFiles: [{}],
-        objectiveFiles: [],
-        objectiveTemplateFiles: [],
+        reportFiles: [],
+        reportObjectiveFiles: [],
+        sessionFiles: [],
+        communicationLogFiles: [{ id: 1 }],
+        supportingAttachments: [],
+        importFile: null,
       });
 
       await deleteOnlyFile(mockRequest, mockResponse);
 
       expect(deleteFile).not.toHaveBeenCalled();
-      expect(deleteFileFromS3).not.toHaveBeenCalled();
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
 
       expect(mockResponse.status).toHaveBeenCalledWith(204);
     });
@@ -355,13 +369,15 @@ describe('file handlers, additional tests', () => {
         ],
       });
 
-      getFileById.mockResolvedValueOnce({
+      getFileById.mockResolvedValue({
         id: 123,
         key: 'key',
-        reports: [],
+        reportFiles: [],
         reportObjectiveFiles: [],
-        objectiveFiles: [],
-        objectiveTemplateFiles: [],
+        sessionFiles: [],
+        communicationLogFiles: [],
+        supportingAttachments: [],
+        importFile: null,
       });
 
       deleteFile.mockRejectedValueOnce(new Error('error'));
