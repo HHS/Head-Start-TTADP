@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { getAccessToken, getUserInfo } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 
 jest.mock('./services/currentUser', () => ({
@@ -92,6 +93,41 @@ describe('TTA Hub server', () => {
     );
 
     expect(resp.status).toBe(302);
+  });
+
+  describe('post-login redirect', () => {
+    const loginWithReferrerPath = (referrerPath) => {
+      process.env.TTA_SMART_HUB_URI = 'http://localhost:3000';
+      getAccessToken.mockImplementation(async (req) => {
+        req.session.claims = { sub: 'user-123' };
+        req.session.referrerPath = referrerPath;
+        return 'fake-access-token';
+      });
+      getUserInfo.mockResolvedValue({ sub: 'user-123', email: 'user@example.com' });
+
+      return request(app).get('/oauth2-client/login/oauth2/code/').query({ code: 'abc' });
+    };
+
+    test('returns the user to the page they started login from', async () => {
+      const resp = await loginWithReferrerPath('/cli/authorize?code=WDJBMJHT');
+
+      expect(resp.status).toBe(302);
+      expect(resp.headers.location).toBe('http://localhost:3000/cli/authorize?code=WDJBMJHT');
+    });
+
+    test('sends the user home when there is no referrer path', async () => {
+      const resp = await loginWithReferrerPath('');
+
+      expect(resp.status).toBe(302);
+      expect(resp.headers.location).toBe('http://localhost:3000/');
+    });
+
+    test('sends the user home instead of back to the logout page', async () => {
+      const resp = await loginWithReferrerPath('/logout?reason=timeout');
+
+      expect(resp.status).toBe(302);
+      expect(resp.headers.location).toBe('http://localhost:3000/');
+    });
   });
 
   test('parses bracket-notation query arrays with more than 20 entries as arrays', () => {
