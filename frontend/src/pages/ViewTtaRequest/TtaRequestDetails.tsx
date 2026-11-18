@@ -30,8 +30,8 @@ export default function TtaRequestDetails({
   headingLevel = 2,
 }: TtaRequestDetailsProps): React.ReactElement {
   const { citations } = ttaRequest;
-  // as on the activity report: H3s are set in sans, H2s take the default serif heading style
-  const titleClassName = headingLevel === 3 ? 'font-sans-lg text-bold' : '';
+  // as on the activity report: H3s are set in sans, H2s in serif
+  const titleClassName = headingLevel === 3 ? 'font-sans-lg text-bold' : 'font-serif-xl';
 
   return (
     <>

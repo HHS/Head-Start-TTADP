@@ -253,7 +253,7 @@ export default function TtaRequestReview({
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
+        <h2 className="font-serif-xl margin-top-0 margin-bottom-1">TTA Request summary</h2>
         <IndicatesRequiredField />
         <Alert type="info" headingLevel="h4" slim className="margin-bottom-4">
           {nameWithRole(ttaRequest.creator)} is asking for a review of this TTA request. Please view

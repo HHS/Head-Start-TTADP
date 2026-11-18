@@ -147,14 +147,27 @@ describe('ViewTtaRequest', () => {
       '/tta-requests'
     );
 
-    expect(screen.getByText('Creator:').nextElementSibling).toHaveTextContent('Avery Example, GS');
-    expect(screen.getByText('Reviewer:').nextElementSibling).toHaveTextContent(
-      'Jordan Sample, TTAC'
+    // the header reads as the activity report's does
+    expect(screen.getByText('Creator:').parentElement).toHaveTextContent(
+      'Creator: Avery Example, GS'
     );
-    expect(screen.getByText('Date Created:').nextElementSibling).toHaveTextContent('06/23/2026');
-    expect(screen.getByText('Date submitted:').nextElementSibling).toHaveTextContent('06/23/2026');
+    expect(screen.getByText('Reviewer:').parentElement).toHaveTextContent(
+      'Reviewer: Jordan Sample, TTAC'
+    );
+    expect(screen.getByText('Date created:').parentElement).toHaveTextContent(
+      'Date created: 06/23/2026'
+    );
+    expect(screen.getByText('Date created:').parentElement).toHaveClass('no-print');
+    expect(screen.getByText('Date submitted:').parentElement).toHaveTextContent(
+      'Date submitted: 06/23/2026'
+    );
+    // not yet sent to a COR
+    expect(screen.queryByText('Approver:')).toBeNull();
 
-    expect(screen.getByRole('heading', { name: 'Who is the request for?' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 2, name: 'TTA Request summary' })).toBeVisible();
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'Who is the request for?' })
+    ).toBeVisible();
     const grant = screen.getByText('Sample Recipient Agency - 14HP1234 - EHS');
     expect(grant).toBeVisible();
     // the grants are not bulleted
@@ -162,7 +175,7 @@ describe('ViewTtaRequest', () => {
     expect(screen.getByText('Yes')).toBeVisible();
     expect(screen.getByText('TTA Staff')).toBeVisible();
 
-    expect(screen.getByRole('heading', { name: 'Goal and context' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 3, name: 'Goal and context' })).toBeVisible();
     const context = screen.getByText('Lorem ipsum dolor sit amet');
     expect(context).toBeVisible();
     // the template name already carries the standard, so it isn't prefixed again
@@ -288,8 +301,26 @@ describe('ViewTtaRequest', () => {
     expect(screen.queryByRole('button', { name: 'Copy URL Link' })).toBeNull();
   });
 
-  it('still offers printing to anyone else', async () => {
-    fetchMock.get(URL, SUBMITTED_REQUEST);
+  it('leaves out the share and print buttons until the COR approves the request', async () => {
+    fetchMock.get(URL, {
+      ...SUBMITTED_REQUEST,
+      status: 'awaiting_approval',
+      approvers: [{ id: 1, userId: 30, status: null, user: { id: 30, name: 'Casey COR' } }],
+    });
+    renderView({}, CREATOR);
+
+    await screen.findByRole('heading', { level: 1, name: 'TTA Request R14-REQ-14322' });
+    expect(screen.getByText('Approver:').parentElement).toHaveTextContent('Approver: Casey COR');
+    expect(screen.queryByRole('button', { name: 'Print to PDF' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Copy URL Link' })).toBeNull();
+  });
+
+  it('offers printing once the COR has approved the request', async () => {
+    fetchMock.get(URL, {
+      ...SUBMITTED_REQUEST,
+      status: 'awaiting_approval',
+      approvers: [{ id: 1, userId: 30, status: 'approved', user: { id: 30, name: 'Casey COR' } }],
+    });
     renderView({}, CREATOR);
 
     expect(await screen.findByRole('button', { name: 'Print to PDF' })).toBeVisible();

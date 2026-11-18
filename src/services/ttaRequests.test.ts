@@ -1129,10 +1129,16 @@ describe('ttaRequests service', () => {
         { userId: reviewer.id }
       );
       const { rows } = await getTtaRequests(scopes, reviewer.id);
+      const listed = rows.find((row) => row.id === submitted.id)?.toJSON();
 
-      expect(rows.find((row) => row.id === submitted.id)?.status).toBe(
-        TTA_REQUEST_STATUSES.AWAITING_APPROVAL
-      );
+      expect(listed?.status).toBe(TTA_REQUEST_STATUSES.AWAITING_APPROVAL);
+      expect(listed?.approvers).toEqual([
+        expect.objectContaining({
+          userId: backupCor.id,
+          status: null,
+          user: expect.objectContaining({ id: backupCor.id, name: backupCor.name }),
+        }),
+      ]);
     });
 
     it('lists requests sent back for changes', async () => {

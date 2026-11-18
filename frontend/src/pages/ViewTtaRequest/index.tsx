@@ -1,4 +1,4 @@
-import { TTA_REQUEST_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import React, { useCallback, useContext } from 'react';
 import { Helmet } from 'react-helmet';
@@ -16,6 +16,8 @@ import TtaRequestFormHeading from '../TtaRequestForm/TtaRequestFormHeading';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
 import TtaRequestDetails from './TtaRequestDetails';
 import TtaRequestReview from './TtaRequestReview';
+// the read-only view is laid out as the activity report's is
+import '../ApprovedActivityReport/index.scss';
 
 const formatDate = (date: string | null | undefined) =>
   date ? moment(date).format(DATE_DISPLAY_FORMAT) : '';
@@ -84,40 +86,44 @@ export default function ViewTtaRequest({
     );
   }
 
+  // it is only finished, and so worth sharing or printing, once its COR has approved it
+  const approver = ttaRequest.approvers?.[0];
+  const isApproved = approver?.status === APPROVER_STATUSES.APPROVED;
+  const userName = (stepUser?: { name: string; fullName?: string } | null) =>
+    stepUser?.fullName ?? stepUser?.name;
+
   return (
     <div className="maxw-widescreen">
       <Helmet>
         <title>TTA Request {displayId}</title>
       </Helmet>
       <BackLink to={backLinkTo}>Back to TTA Requests</BackLink>
-      <div>
-        <ApprovedReportSpecialButtons />
-      </div>
-      <Container className="width-tablet margin-top-2" paddingX={3} paddingY={3}>
-        <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-top-0 margin-bottom-4">TTA Request {displayId}</h1>
-        <dl className="margin-top-0 margin-bottom-4">
-          <div className="display-flex margin-bottom-1">
-            <dt className="text-bold margin-right-1">Creator:</dt>
-            <dd className="margin-0">{ttaRequest.creator?.fullName ?? ttaRequest.creator?.name}</dd>
-          </div>
-          <div className="display-flex margin-bottom-1">
-            <dt className="text-bold margin-right-1">Reviewer:</dt>
-            <dd className="margin-0">
-              {ttaRequest.reviewer?.fullName ?? ttaRequest.reviewer?.name}
-            </dd>
-          </div>
-          <div className="display-flex margin-bottom-1">
-            <dt className="text-bold margin-right-1">Date Created:</dt>
-            <dd className="margin-0">{formatDate(ttaRequest.createdAt)}</dd>
-          </div>
-          {ttaRequest.submittedAt && (
-            <div className="display-flex margin-bottom-1">
-              <dt className="text-bold margin-right-1">Date submitted:</dt>
-              <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>
-            </div>
+      {isApproved && <ApprovedReportSpecialButtons />}
+      <Container className="ttahub-activity-report-view margin-top-2">
+        <h1 className="landing">TTA Request {displayId}</h1>
+        <div className="ttahub-activity-report-view-creator-data margin-bottom-4">
+          <p>
+            <strong>Creator:</strong> {userName(ttaRequest.creator)}
+          </p>
+          <p>
+            <strong>Reviewer:</strong> {userName(ttaRequest.reviewer)}
+          </p>
+          {approver && (
+            <p>
+              <strong>Approver:</strong> {userName(approver.user)}
+            </p>
           )}
-        </dl>
-        <TtaRequestDetails ttaRequest={ttaRequest} />
+          <p className="no-print">
+            <strong>Date created:</strong> {formatDate(ttaRequest.createdAt)}
+          </p>
+          {ttaRequest.submittedAt && (
+            <p>
+              <strong>Date submitted:</strong> {formatDate(ttaRequest.submittedAt)}
+            </p>
+          )}
+        </div>
+        <h2 className="font-serif-xl margin-top-0 margin-bottom-1">TTA Request summary</h2>
+        <TtaRequestDetails ttaRequest={ttaRequest} headingLevel={3} />
         {/* laid out as the reviewer saw it, see TtaRequestReview */}
         {!!ttaRequest.assignedStaff?.length && (
           <>
