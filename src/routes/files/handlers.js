@@ -5,7 +5,7 @@ import httpCodes from 'http-codes';
 import { v4 as uuidv4 } from 'uuid';
 import { FILE_STATUSES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
-import { deleteFileFromS3, getSignedDownloadUrl, uploadFile } from '../../lib/s3';
+import { getSignedDownloadUrl, uploadFile } from '../../lib/s3';
 import { auditLogger, logger } from '../../logger';
 import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -24,17 +24,15 @@ import {
   createSessionSupportingAttachmentMetaData,
   deleteActivityReportFile,
   deleteCommunicationLogFile,
-  deleteFile,
   deleteSessionFile,
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
-  fileHasReferences,
   getFileById,
   markFilesQueuedForScan,
   queueFilesForScan,
+  removeOrphanedFiles,
   updateStatus,
 } from '../../services/files';
-import { addDeleteFileToQueue } from '../../services/s3Queue';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { onTransactionCommitted } from '../transactionWrapper';
@@ -86,47 +84,6 @@ const reportIsInAnEditableState = async (user, reportId) => {
   return authorization.reportHasEditableStatus();
 };
 
-/**
- * Deletes the file if nothing references it any more. The file is reloaded so references
- * removed earlier in this transaction aren't counted. The S3 object is only queued for
- * deletion once the transaction commits, so a rollback can't leave a File row whose S3
- * object is gone.
- */
-const removeFileIfOrphaned = async (req, fileId) => {
-  const file = await getFileById(fileId);
-  if (!file || fileHasReferences(file)) {
-    return;
-  }
-
-  await deleteFile(file.id);
-
-  const { id, key } = file;
-  onTransactionCommitted(req, async () => {
-    try {
-      await addDeleteFileToQueue(id, key);
-      return;
-    } catch (err) {
-      auditLogger.error(
-        `${logContext.namespace}:removeFileIfOrphaned Failed to queue S3 delete for file ${id}, deleting directly: ${err.message}`
-      );
-    }
-    // The File row is already gone and no job exists for Bull to retry, so delete the
-    // object directly rather than leave it orphaned in S3.
-    try {
-      await deleteFileFromS3(key);
-    } catch (err) {
-      auditLogger.alertError(
-        `${logContext.namespace}:removeFileIfOrphaned S3 object for deleted file ${id} was not removed and needs manual cleanup: ${err.message}`,
-        's3_orphaned_file',
-        err
-      );
-    }
-  });
-};
-
-// Each parent branch checks the user's access to the parent, then requires that parent to
-// link to the file. Without that link the user's access says nothing about the file, so the
-// request is refused with a 404 and nothing is unlinked or cleaned up.
 const deleteHandler = async (req, res) => {
   const { reportId, fileId, eventSessionId, communicationLogId, sessionAttachmentId } = req.params;
 
@@ -145,6 +102,7 @@ const deleteHandler = async (req, res) => {
       return;
     }
 
+    let unlinked = 0;
     if (reportId) {
       if (!(await hasReportAuthorization(user, reportId))) {
         res.sendStatus(403);
@@ -160,11 +118,9 @@ const deleteHandler = async (req, res) => {
       const rf = (file.reportFiles || []).find(
         (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE)
       );
-      if (!rf) {
-        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
-        return;
+      if (rf) {
+        unlinked = await deleteActivityReportFile(rf.id);
       }
-      await deleteActivityReportFile(rf.id);
     } else if (eventSessionId) {
       const session = await findSessionById(eventSessionId);
       const event = await findEventBySmartsheetId(session.eventId);
@@ -179,11 +135,9 @@ const deleteHandler = async (req, res) => {
       const sof = (file.sessionFiles || []).find(
         (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE)
       );
-      if (!sof) {
-        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
-        return;
+      if (sof) {
+        unlinked = await deleteSessionFile(sof.id);
       }
-      await deleteSessionFile(sof.id);
     } else if (communicationLogId) {
       const communicationLog = await logById(communicationLogId);
       const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
@@ -196,11 +150,9 @@ const deleteHandler = async (req, res) => {
       const clf = (file.communicationLogFiles || []).find(
         (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE)
       );
-      if (!clf) {
-        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
-        return;
+      if (clf) {
+        unlinked = await deleteCommunicationLogFile(clf.id);
       }
-      await deleteCommunicationLogFile(clf.id);
     } else if (sessionAttachmentId) {
       // Session Supporting Attachments.
       const session = await findSessionById(sessionAttachmentId);
@@ -215,14 +167,17 @@ const deleteHandler = async (req, res) => {
       const sof = (file.supportingAttachments || []).find(
         (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE)
       );
-      if (!sof) {
-        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
-        return;
+      if (sof) {
+        unlinked = await deleteSessionSupportingAttachment(sof.id);
       }
-      await deleteSessionSupportingAttachment(sof.id);
     }
 
-    await removeFileIfOrphaned(req, fileId);
+    // Delete the file if that was its last link. The S3 delete is queued only after commit.
+    if (unlinked) {
+      await removeOrphanedFiles([file.id], {
+        afterCommit: (callback) => onTransactionCommitted(req, callback),
+      });
+    }
 
     res.status(204).send();
   } catch (error) {

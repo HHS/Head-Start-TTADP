@@ -34,39 +34,4 @@ const cleanupOrphanResources = async (sequelize, resourceId) =>
       },
     }),
   ]);
-const cleanupOrphanFiles = async (sequelize, fileId) =>
-  Promise.all([
-    sequelize.models.File.destroy({
-      where: {
-        id: {
-          [Op.in]: sequelize.literal(`(
-            SELECT DISTINCT
-                f.id
-            FROM "Files" f
-            LEFT JOIN "ActivityReportFiles" arf
-            ON f.id = arf."fileId"
-            LEFT JOIN "ActivityReportObjectiveFiles" arof
-            ON f.id = arof."fileId"
-            LEFT JOIN "SessionReportPilotFiles" srpf
-            ON f.id = srpf."fileId"
-            LEFT JOIN "CommunicationLogFiles" clf
-            ON f.id = clf."fileId"
-            LEFT JOIN "SessionReportPilotSupportingAttachments" srpsa
-            ON f.id = srpsa."fileId"
-            LEFT JOIN "ImportFiles" imf
-            ON f.id = imf."fileId"
-            WHERE f.id = ${fileId}
-            AND arf.id IS NULL
-            AND arof.id IS NULL
-            AND srpf.id IS NULL
-            AND clf.id IS NULL
-            AND srpsa.id IS NULL
-            AND imf.id IS NULL
-            GROUP BY 1
-        )`),
-        },
-      },
-    }),
-  ]);
-
-export { cleanupOrphanFiles, cleanupOrphanResources };
+export { cleanupOrphanResources };

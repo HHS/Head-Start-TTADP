@@ -11,6 +11,7 @@ import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
+import { removeOrphanedFiles } from './files';
 import {
   archiveSessionNeedsActionNotifications,
   createNotificationForSessionSubmittedCollaborators,
@@ -173,17 +174,16 @@ export const validateFields = (request, requiredFields: string[]) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
-  // Delete files.
-  await SessionReportPilotFile.destroy(
-    { where: { sessionReportPilotId: id } },
-    { individualHooks: true }
-  );
+  const where = { sessionReportPilotId: id };
+  const [sessionFiles, supportingAttachments] = await Promise.all([
+    SessionReportPilotFile.findAll({ attributes: ['fileId'], where, raw: true }),
+    SessionReportPilotSupportingAttachment.findAll({ attributes: ['fileId'], where, raw: true }),
+  ]);
 
-  // Delete supporting attachments.
-  await SessionReportPilotSupportingAttachment.destroy(
-    { where: { sessionReportPilotId: id } },
-    { individualHooks: true }
-  );
+  // Delete file links and supporting attachments, then any files nothing else uses.
+  await SessionReportPilotFile.destroy({ where });
+  await SessionReportPilotSupportingAttachment.destroy({ where });
+  await removeOrphanedFiles([...sessionFiles, ...supportingAttachments].map((f) => f.fileId));
 
   await runInSavepoint(
     () => archiveSessionNeedsActionNotifications(id),

@@ -11,54 +11,26 @@ import {
   ImportFile,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
+  sequelize,
 } from '../models';
+import { addDeleteFileToQueue } from './s3Queue';
 import addToScanQueue from './scanQueue';
 
 const { UPLOADING, QUEUED, QUEUEING_FAILED } = FILE_STATUSES;
-// Deletes only the File row. Hooks are skipped so the File afterDestroy hook doesn't queue
-// an S3 delete before the transaction commits; callers must queue the S3 delete themselves
-// once the transaction has committed (see removeFileIfOrphaned in routes/files/handlers).
-const deleteFile = async (id) =>
-  File.destroy({
-    where: { id },
-    individualHooks: false,
-  });
-// The unlink helpers below skip model hooks. Those hooks delete the File themselves and queue
-// its S3 delete before the transaction commits; the file delete routes instead remove the
-// File (and queue the S3 delete after commit) through removeFileIfOrphaned in
-// routes/files/handlers. Only those routes should call these helpers.
-const deleteActivityReportFile = async (id) =>
-  ActivityReportFile.destroy({
-    where: { id },
-    individualHooks: false,
-  });
-// TODO GH - need to pass hookMetadata
+// The unlink helpers below remove one link row. They don't remove the File; callers follow
+// them with removeOrphanedFiles, which deletes the File if nothing else references it.
+const deleteActivityReportFile = async (id) => ActivityReportFile.destroy({ where: { id } });
 const deleteActivityReportObjectiveFile = async (id) =>
-  ActivityReportObjectiveFile.destroy({
-    where: { id },
-    individualHooks: true,
-  });
-const deleteCommunicationLogFile = async (id) =>
-  CommunicationLogFile.destroy({
-    where: { id },
-    individualHooks: false,
-  });
-const deleteSessionFile = async (id) =>
-  SessionReportPilotFile.destroy({
-    where: { id },
-    individualHooks: false,
-  });
-
-// eslint-disable-next-line max-len
+  ActivityReportObjectiveFile.destroy({ where: { id } });
+const deleteCommunicationLogFile = async (id) => CommunicationLogFile.destroy({ where: { id } });
+const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({ where: { id } });
 const deleteSessionSupportingAttachment = async (id) =>
-  SessionReportPilotSupportingAttachment.destroy({
-    where: { id },
-    individualHooks: false,
-  });
+  SessionReportPilotSupportingAttachment.destroy({ where: { id } });
 
-const getFileById = async (id) =>
+const getFileById = async (id, transaction = undefined) =>
   File.findOne({
     where: { id },
+    transaction,
     include: [
       {
         model: ActivityReport,
@@ -131,6 +103,111 @@ const fileHasReferences = (file) =>
     }
     return value !== null;
   });
+
+/**
+ * Promote the callback to each parent only after its savepoint commits.
+ * @param {() => Promise<void>} callback
+ * @param {import('sequelize').Transaction} transaction
+ */
+const runAfterOutermostCommit = (callback, transaction) =>
+  transaction.afterCommit(() =>
+    transaction.parent ? runAfterOutermostCommit(callback, transaction.parent) : callback()
+  );
+
+/**
+ * Deletes each file that nothing references any more and queues its S3 object for deletion
+ * once the transaction commits, so a rollback can't leave a File row whose object is gone.
+ * Call this after removing a file's link rows; model hooks no longer clean up files.
+ * @param {number[]} fileIds - files whose links were just removed; duplicates/nulls ignored
+ * @param {object} [options]
+ * @param {import('sequelize').Transaction} [options.transaction] - defaults to the CLS one
+ * @param {(callback: () => Promise<void>) => void} [options.afterCommit] - registers the S3
+ *   delete; defaults to the outermost transaction's afterCommit
+ * @returns {Promise<number[]>} ids of the files that were deleted
+ */
+const removeOrphanedFiles = async (
+  fileIds,
+  { transaction = sequelize.constructor._cls?.get('transaction'), afterCommit } = {}
+) => {
+  const ids = [...new Set((fileIds || []).filter((id) => id !== null && id !== undefined))];
+  if (!ids.length) return [];
+  if (!transaction) {
+    return sequelize.transaction((tx) =>
+      removeOrphanedFiles(ids, { transaction: tx, afterCommit })
+    );
+  }
+
+  // FK inserts take KEY SHARE on the File. Lock first, then read references in a fresh
+  // statement so a link committed while we waited isn't mistaken for an orphan.
+  const candidates = await File.findAll({
+    attributes: ['id'],
+    where: { id: ids },
+    order: [['id', 'ASC']],
+    lock: transaction.LOCK.UPDATE,
+    transaction,
+    raw: true,
+  });
+  const removed = [];
+
+  for (const { id } of candidates) {
+    // eslint-disable-next-line no-await-in-loop
+    const file = await getFileById(id, transaction);
+    if (file && !fileHasReferences(file)) {
+      // eslint-disable-next-line no-await-in-loop
+      await File.destroy({ where: { id: file.id }, transaction });
+      removed.push(file.id);
+
+      const { key } = file;
+      const queueS3Delete = async () => {
+        try {
+          // Sequelize v6 invokes afterCommit even if COMMIT fails. Check committed state
+          // on the primary before deleting anything from object storage.
+          const retained = await File.findOne({
+            attributes: ['id'],
+            where: { key },
+            transaction: null,
+            useMaster: true,
+            raw: true,
+          });
+          if (!retained) await addDeleteFileToQueue(file.id, key);
+        } catch (err) {
+          auditLogger.error(
+            `SERVICE:FILES:removeOrphanedFiles Failed to queue S3 delete for file ${file.id}: ${err.message}`
+          );
+        }
+      };
+      if (afterCommit) {
+        afterCommit(queueS3Delete);
+      } else {
+        runAfterOutermostCommit(queueS3Delete, transaction);
+      }
+    }
+  }
+
+  return removed;
+};
+
+/**
+ * Ids of the files linked to the activity report objectives matching `where`. Collect these
+ * before removing the objectives so their files can be passed to removeOrphanedFiles.
+ */
+const fileIdsForActivityReportObjectives = async (where, transaction = undefined) =>
+  (
+    await ActivityReportObjectiveFile.findAll({
+      attributes: ['fileId'],
+      include: [
+        {
+          attributes: [],
+          model: ActivityReportObjective,
+          as: 'activityReportObjective',
+          required: true,
+          where,
+        },
+      ],
+      raw: true,
+      transaction,
+    })
+  ).map((aroFile) => aroFile.fileId);
 const getActivityReportFilesById = async (reportId) =>
   ActivityReportFile.findAll({
     where: { activityReportId: reportId },
@@ -306,10 +383,11 @@ const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objec
   const aroFileIdsToDelete = aroFilesToDelete.map((aroFile) => aroFile.id);
 
   // Delete ARO files.
-  await ActivityReportObjectiveFile.destroy({
+  const unlinked = await ActivityReportObjectiveFile.destroy({
     where: { id: aroFileIdsToDelete },
-    individualHooks: true,
   });
+
+  if (unlinked) await removeOrphanedFiles([parseInt(fileId, DECIMAL_BASE)]);
 };
 
 /**
@@ -351,16 +429,17 @@ export {
   deleteActivityReportFile,
   deleteActivityReportObjectiveFile,
   deleteCommunicationLogFile,
-  deleteFile,
   deleteSessionFile,
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
   fileHasReferences,
+  fileIdsForActivityReportObjectives,
   getActivityReportFilesById,
   getActivityReportObjectiveFilesById,
   getFileById,
   markFilesQueuedForScan,
   queueFilesForScan,
+  removeOrphanedFiles,
   updateStatus,
   updateStatusByKey,
 };

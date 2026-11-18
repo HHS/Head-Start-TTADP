@@ -12,6 +12,7 @@ import db, {
 import { createGoal, createGrant, createRecipient, createUser, destroyGoal } from '../testUtils';
 import * as eventService from './event';
 import { createEvent, destroyEvent } from './event';
+import { removeOrphanedFiles } from './files';
 import {
   archiveSessionNeedsActionNotifications,
   createNotificationForSessionSubmittedCollaborators,
@@ -34,6 +35,10 @@ import {
 } from './sessionReports';
 
 jest.mock('bull');
+jest.mock('./files', () => ({
+  ...jest.requireActual('./files'),
+  removeOrphanedFiles: jest.fn(),
+}));
 jest.mock('../lib/mailer', () => ({
   trEventComplete: jest.fn(),
   trPocAdded: jest.fn(),
@@ -830,6 +835,10 @@ describe('session reports service', () => {
 
     it('should delete files and attachments associated with the session report pilot', async () => {
       const id = 1;
+      jest.spyOn(SessionReportPilotFile, 'findAll').mockResolvedValueOnce([{ fileId: 3 }]);
+      jest
+        .spyOn(SessionReportPilotSupportingAttachment, 'findAll')
+        .mockResolvedValueOnce([{ fileId: 4 }]);
       const destroyMock = jest
         .spyOn(SessionReportPilotFile, 'destroy')
         .mockResolvedValue(undefined);
@@ -839,18 +848,14 @@ describe('session reports service', () => {
 
       await destroySession(id);
 
-      expect(destroyMock).toHaveBeenCalledWith(
-        {
-          where: { sessionReportPilotId: id },
-        },
-        { individualHooks: true }
-      );
-      expect(destroyAttachmentMock).toHaveBeenCalledWith(
-        {
-          where: { sessionReportPilotId: id },
-        },
-        { individualHooks: true }
-      );
+      expect(destroyMock).toHaveBeenCalledWith({ where: { sessionReportPilotId: id } });
+      expect(destroyAttachmentMock).toHaveBeenCalledWith({
+        where: { sessionReportPilotId: id },
+      });
+      // Files no longer linked anywhere are cleaned up explicitly.
+      expect(removeOrphanedFiles).toHaveBeenCalledWith([3, 4]);
+      destroyMock.mockRestore();
+      destroyAttachmentMock.mockRestore();
     });
     it('should delete session', async () => {
       // Verify the session record is present
