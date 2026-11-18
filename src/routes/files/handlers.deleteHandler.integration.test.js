@@ -74,6 +74,29 @@ describe('deleteHandler with the database', () => {
       mockRes()
     );
 
+  it('refuses to delete an unrelated file through a log the user owns', async () => {
+    const unrelated = await File.create({
+      originalFileName: 'unrelated.txt',
+      key: `unrelated-${Date.now()}.txt`,
+      status: FILE_STATUSES.APPROVED,
+      fileSize: 10,
+    });
+    const res = mockRes();
+
+    try {
+      await transactionWrapper(deleteHandler)(
+        { params: { communicationLogId: String(logA.id), fileId: String(unrelated.id) } },
+        res
+      );
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(await File.findByPk(unrelated.id)).not.toBeNull();
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    } finally {
+      await File.destroy({ where: { id: unrelated.id }, individualHooks: false });
+    }
+  });
+
   it('keeps a file that is still linked elsewhere and queues no S3 delete', async () => {
     await remove(logA.id);
 

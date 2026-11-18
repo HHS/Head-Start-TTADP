@@ -112,6 +112,9 @@ const removeFileIfOrphaned = async (req, fileId) => {
   });
 };
 
+// Each parent branch checks the user's access to the parent, then requires that parent to
+// link to the file. Without that link the user's access says nothing about the file, so the
+// request is refused with a 404 and nothing is unlinked or cleaned up.
 const deleteHandler = async (req, res) => {
   const { reportId, fileId, eventSessionId, communicationLogId, sessionAttachmentId } = req.params;
 
@@ -145,9 +148,11 @@ const deleteHandler = async (req, res) => {
       const rf = (file.reportFiles || []).find(
         (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE)
       );
-      if (rf) {
-        await deleteActivityReportFile(rf.id);
+      if (!rf) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteActivityReportFile(rf.id);
     } else if (eventSessionId) {
       const session = await findSessionById(eventSessionId);
       const event = await findEventBySmartsheetId(session.eventId);
@@ -162,9 +167,11 @@ const deleteHandler = async (req, res) => {
       const sof = (file.sessionFiles || []).find(
         (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE)
       );
-      if (sof) {
-        await deleteSessionFile(sof.id);
+      if (!sof) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteSessionFile(sof.id);
     } else if (communicationLogId) {
       const communicationLog = await logById(communicationLogId);
       const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
@@ -177,9 +184,11 @@ const deleteHandler = async (req, res) => {
       const clf = (file.communicationLogFiles || []).find(
         (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE)
       );
-      if (clf) {
-        await deleteCommunicationLogFile(clf.id);
+      if (!clf) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteCommunicationLogFile(clf.id);
     } else if (sessionAttachmentId) {
       // Session Supporting Attachments.
       const session = await findSessionById(sessionAttachmentId);
@@ -194,9 +203,11 @@ const deleteHandler = async (req, res) => {
       const sof = (file.supportingAttachments || []).find(
         (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE)
       );
-      if (sof) {
-        await deleteSessionSupportingAttachment(sof.id);
+      if (!sof) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteSessionSupportingAttachment(sof.id);
     }
 
     await removeFileIfOrphaned(req, fileId);

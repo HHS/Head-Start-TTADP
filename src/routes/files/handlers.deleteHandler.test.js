@@ -332,6 +332,41 @@ describe('deleteHandler authorization and orphan cleanup', () => {
     expect(req.transactionCommittedCallbacks).toHaveLength(0);
   });
 
+  it.each([
+    ['report', { reportId: 1, fileId: 1 }, deleteActivityReportFile],
+    ['session', { eventSessionId: 1, fileId: 1 }, Files.deleteSessionFile],
+    ['communication log', { communicationLogId: 1, fileId: 1 }, deleteCommunicationLogFile],
+    [
+      'supporting attachment',
+      { sessionAttachmentId: 1, fileId: 1 },
+      deleteSessionSupportingAttachment,
+    ],
+  ])(
+    'returns 404 and cleans up nothing when the authorized %s does not link to the file',
+    async (_label, params, unlink) => {
+      const res = mockRes();
+      // An unrelated, unreferenced file: the user can access the parent, but not this file.
+      getFileById.mockResolvedValue({ id: 1, key: 'key', ...noReferences });
+      ActivityReportPolicy.mockImplementation(() => ({ canUpdate: () => true }));
+      EventPolicy.mockImplementation(() => ({ canUploadFile: () => true }));
+      CommunicationLogPolicy.mockImplementation(() => ({ canUploadFileToLog: () => true }));
+      findSessionById.mockResolvedValue({ eventId: 1 });
+      jest
+        // eslint-disable-next-line global-require
+        .spyOn(require('../../services/event'), 'findEventBySmartsheetId')
+        .mockResolvedValue({ id: 1 });
+      logById.mockResolvedValue({ id: 1 });
+
+      const req = await runInTransaction(deleteHandler, { params }, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(unlink).not.toHaveBeenCalled();
+      expect(deleteFile).not.toHaveBeenCalled();
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toHaveLength(0);
+    }
+  );
+
   it('returns 404 when the file does not exist', async () => {
     const res = mockRes();
     getFileById.mockResolvedValue(null);
