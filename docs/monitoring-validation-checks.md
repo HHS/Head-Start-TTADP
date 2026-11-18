@@ -145,7 +145,7 @@ Three weekly, national-only measures (`import_lag_days`, `source_lag_days`, `com
 
 ## Check definitions
 
-Severity, message logic, and window for each check that can reach Slack. See [Windows](./monitoring-data-validation.md#conventions) in the process doc for what `since previous cycle` means mechanically.
+Severity, message logic, and window for each check that can reach Slack. **Window** after each entry refers to the re-alert suppression rule. See [Windows](./monitoring-data-validation.md#conventions) in the process doc for what each window form means mechanically.
 
 ### Gate
 
@@ -155,7 +155,7 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 ### Threshold
 
-**`reviews_created_region_zero`** — alert when a region created zero reviews over the last four complete weeks, and the cross-region four-week average exceeds 5 (so a quiet season doesn't false-alarm). Window: none (recomputed fresh every run over its own rolling 4-week data window).
+**`reviews_created_region_zero`** — alert when a region created zero reviews over the last four complete weeks, and the cross-region four-week average exceeds 5 (so a quiet season doesn't false-alarm). Window: since previous cycle, per region (see Conventions in the process doc).
 
 **`findings_delivered_month_spike`** — alert when the last complete month delivered >50% as many findings as the entire twelve months before it. Window: none (recomputed fresh every run over its own rolling 13-month data window).
 
@@ -163,7 +163,7 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 **`finding_closure_month_spike`** — alert when the last complete month closed >50% as many findings as the entire twelve months before it. Window: none (recomputed fresh every run over its own rolling 13-month data window).
 
-**`finding_closure_stalled`** — alert when zero findings closed nationally in each of the last 2 complete months while more than 20 Citations are currently `active`. Window: none (recomputed fresh every run over its own rolling 2-month data window plus the current live Citations count).
+**`finding_closure_stalled`** — alert when zero findings closed nationally in each of the last 2 complete months while more than 20 Citations are currently `active`. Window: since previous cycle, national singleton (see Conventions in the process doc).
 
 **`import_lag_zscore_elevated`** — alert when the last complete week's `import_lag_elevated_z` exceeds +2. Window: none (recomputed fresh every run over its own rolling 53-week data window: the current week plus 52 trailing weeks).
 

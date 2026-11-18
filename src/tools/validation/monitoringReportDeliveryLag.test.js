@@ -12,6 +12,7 @@ import {
   Recipient,
   sequelize,
   ValidationAlert,
+  ValidationRecord,
   ValidationRun,
   ValidationTimeSeries,
 } from '../../models';
@@ -264,7 +265,7 @@ describe('report delivery lag measures and checks', () => {
       await runValidation({
         processName: PROCESS_COUNTING,
         logLabel: 'Test Report Delivery Lag Counting',
-        steps: [updateMonitoringTimeSeries],
+        steps: [refreshMonitoringValidationStaging, updateMonitoringTimeSeries],
         cycle: CYCLE,
       });
     });
@@ -379,6 +380,7 @@ describe('report delivery lag measures and checks', () => {
       ).map((r) => r.id);
       if (runIds.length) {
         await ValidationAlert.destroy({ where: { run_id: runIds }, force: true });
+        await ValidationRecord.destroy({ where: { run_id: runIds }, force: true });
         await ValidationRun.destroy({ where: { id: runIds }, force: true });
       }
     });
@@ -471,6 +473,7 @@ describe('report delivery lag measures and checks', () => {
       ).map((r) => r.id);
       if (runIds.length) {
         await ValidationAlert.destroy({ where: { run_id: runIds }, force: true });
+        await ValidationRecord.destroy({ where: { run_id: runIds }, force: true });
         await ValidationRun.destroy({ where: { id: runIds }, force: true });
       }
     });
@@ -595,6 +598,7 @@ describe('report delivery lag measures and checks', () => {
       ).map((r) => r.id);
       if (runIds.length) {
         await ValidationAlert.destroy({ where: { run_id: runIds }, force: true });
+        await ValidationRecord.destroy({ where: { run_id: runIds }, force: true });
         await ValidationRun.destroy({ where: { id: runIds }, force: true });
       }
     });

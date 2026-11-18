@@ -147,6 +147,9 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     -- live id for the same findingId - import jitter can source-delete and
     -- reinsert a finding under a new id with nothing about the finding
     -- itself changed, which would otherwise make it look newly flagged.
+    --
+    -- Also anti-joined by threshold checks with no real backing entity
+    -- (entity_type 'ValidationThresholdCheck') - see threshold_flagged below.
     DROP TABLE IF EXISTS pg_temp.previously_flagged;
     CREATE TEMP TABLE previously_flagged
     ON COMMIT DROP
@@ -166,6 +169,20 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     WHERE prev.run_id = cyc.prev_cycle_run_id
     ;
 
+    -- threshold_flagged: (check_name, entity_id, category, detail) rows for
+    -- every threshold check below with no real backing entity - entity_id is
+    -- a region_id, or 0 for a single national condition; detail carries
+    -- whatever a check's own message/context needs so it isn't recomputed
+    -- twice. Shared across checks so the ValidationRecords marker insert at
+    -- the end of this file is written once, not once per check.
+    DROP TABLE IF EXISTS pg_temp.threshold_flagged;
+    CREATE TEMP TABLE threshold_flagged (
+      check_name TEXT,
+      entity_id INTEGER,
+      category TEXT,
+      detail JSONB
+    ) ON COMMIT DROP;
+
     -- reviews_created_region_zero
     WITH region_totals AS (
     SELECT
@@ -180,27 +197,43 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     SELECT AVG(total) avg_total
     FROM region_totals
     )
+    INSERT INTO threshold_flagged (check_name, entity_id, category, detail)
+    SELECT
+      'reviews_created_region_zero',
+      rt.region_id,
+      'zero_reviews',
+      jsonb_build_object('cross_region_avg', ROUND(cr.avg_total, 2))
+    FROM region_totals rt
+    CROSS JOIN cross_region cr
+    WHERE cr.avg_total > 5
+      AND rt.total = 0
+    ;
+
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
       'reviews_created_region_zero',
-      'Region ' || rt.region_id
+      'Region ' || tf.entity_id
         || ' created no monitoring reviews in the last four complete weeks',
       jsonb_build_object(
         'feature_set', 'monitoring_reviews',
         'stat_name', 'reviews_created',
-        'region_id', rt.region_id,
+        'region_id', tf.entity_id,
         'window_weeks', 4,
         'value', 0,
-        'cross_region_avg', ROUND(cr.avg_total, 2)
+        'cross_region_avg', tf.detail->'cross_region_avg'
       ),
       NOW(),
       NOW()
-    FROM region_totals rt
-    CROSS JOIN cross_region cr
+    FROM threshold_flagged tf
     CROSS JOIN validation_run cur
-    WHERE cr.avg_total > 5
-      AND rt.total = 0
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = 'ValidationThresholdCheck'
+      AND pf.entity_id = tf.entity_id
+      AND pf.observation_name = tf.check_name
+      AND pf.category IS NOT DISTINCT FROM tf.category
+    WHERE tf.check_name = 'reviews_created_region_zero'
+      AND pf.entity_id IS NULL
     ;
 
     -- findings_delivered_month_spike
@@ -310,7 +343,8 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
 
     -- finding_closure_stalled. Backlog checked live against Citations.active,
     -- not a stored measure - it's a gate on this one check, not a value
-    -- worth trending.
+    -- worth trending. entity_id is 0: a single national condition, not
+    -- split per entity.
     WITH recent_closures AS (
     SELECT COALESCE(SUM(total), 0) total
     FROM monthly_closures mc
@@ -323,6 +357,18 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     WHERE active
       AND "deletedAt" IS NULL
     )
+    INSERT INTO threshold_flagged (check_name, entity_id, category, detail)
+    SELECT
+      'finding_closure_stalled',
+      0,
+      'stalled',
+      jsonb_build_object('open_backlog', ob.total)
+    FROM recent_closures rc
+    CROSS JOIN open_backlog ob
+    WHERE rc.total = 0
+      AND ob.total > 20
+    ;
+
     INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
     SELECT
       cur.run_id,
@@ -333,15 +379,19 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
         'stat_name', 'closure_count',
         'window_months', 2,
         'value', 0,
-        'open_backlog', ob.total
+        'open_backlog', tf.detail->'open_backlog'
       ),
       NOW(),
       NOW()
-    FROM recent_closures rc
-    CROSS JOIN open_backlog ob
+    FROM threshold_flagged tf
     CROSS JOIN validation_run cur
-    WHERE rc.total = 0
-      AND ob.total > 20
+    LEFT JOIN previously_flagged pf
+      ON pf.entity_type = 'ValidationThresholdCheck'
+      AND pf.entity_id = tf.entity_id
+      AND pf.observation_name = tf.check_name
+      AND pf.category IS NOT DISTINCT FROM tf.category
+    WHERE tf.check_name = 'finding_closure_stalled'
+      AND pf.entity_id IS NULL
     ;
 
     -- import_lag_zscore_elevated / source_lag_zscore_elevated /
@@ -506,6 +556,95 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     CROSS JOIN validation_params vp
     WHERE rw.n >= 2
       AND rw.n = rw.n_elevated
+    ;
+
+    -- citation_new_values_unlikely. The trailing rate is smoothed
+    -- ((k + 1) / (n + 2)) on purpose: a year with no new values must still
+    -- give a nonzero rate, or ln(p) fails.
+    WITH weeks AS (
+    SELECT
+      period_start,
+      MAX(value) FILTER (WHERE stat_name = 'citations_delivered') n,
+      MAX(value) FILTER (WHERE stat_name = 'citations_with_new_value') k
+    FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
+    WHERE feature_set = 'monitoring_citations'
+      AND period_type = 'week'
+      AND region_id = 0
+      AND stat_name IN ('citations_delivered', 'citations_with_new_value')
+      AND period_start >= (vp.last_complete_week - INTERVAL '52 weeks')::date
+      AND period_start <= vp.last_complete_week
+    GROUP BY 1
+    ),
+    latest AS (
+    SELECT w.n::int n, w.k::int k
+    FROM weeks w
+    CROSS JOIN validation_params vp
+    WHERE w.period_start = vp.last_complete_week
+      AND w.k >= 3
+    ),
+    rate AS (
+    SELECT (SUM(w.k) + 1)::float8 / (SUM(w.n) + 2) p
+    FROM weeks w
+    CROSS JOIN validation_params vp
+    WHERE w.period_start < vp.last_complete_week
+      AND w.k IS NOT NULL
+    ),
+    ln_factorial AS (
+    SELECT i, SUM(ln(GREATEST(i, 1)::float8)) OVER (ORDER BY i) lf
+    FROM latest l
+    CROSS JOIN generate_series(0, l.n) i
+    ),
+    tail AS (
+    SELECT SUM(exp(fn.lf - fj.lf - fnj.lf + fj.i * ln(r.p) + (l.n - fj.i) * ln(1 - r.p))) p_tail
+    FROM latest l
+    CROSS JOIN rate r
+    JOIN ln_factorial fj
+      ON fj.i >= l.k
+    JOIN ln_factorial fn
+      ON fn.i = l.n
+    JOIN ln_factorial fnj
+      ON fnj.i = l.n - fj.i
+    ),
+    new_values AS (
+    SELECT c.citation
+    FROM "Citations" c
+    WHERE c."deletedAt" IS NULL
+      AND c.initial_report_delivery_date IS NOT NULL
+    GROUP BY c.citation
+    HAVING date_trunc('week', MIN(c.initial_report_delivery_date))::date
+      = (SELECT last_complete_week FROM validation_params)
+    ),
+    examples AS (
+    SELECT string_agg(citation, ', ' ORDER BY citation) list
+    FROM (SELECT citation FROM new_values ORDER BY citation LIMIT 2) e
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'citation_new_values_unlikely',
+      l.k || ' of ' || l.n
+        || ' citations delivered in the last complete week cite a value not seen before (e.g. '
+        || COALESCE(ex.list, 'unknown') || ')',
+      jsonb_build_object(
+        'feature_set', 'monitoring_citations',
+        'stat_name', 'citations_with_new_value',
+        'period_start', vp.last_complete_week,
+        'value', l.k,
+        'citations_delivered', l.n,
+        'trailing_rate', ROUND(r.p::numeric, 4),
+        'probability', t.p_tail,
+        'distinct_new_values', (SELECT COUNT(*) FROM new_values)
+      ),
+      NOW(),
+      NOW()
+    FROM latest l
+    CROSS JOIN rate r
+    CROSS JOIN tail t
+    CROSS JOIN examples ex
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE t.p_tail < 0.001
     ;
 
     -- finding_category_missing. IS NOT DISTINCT FROM, not =, in the
@@ -1493,6 +1632,21 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     FROM sample s
     CROSS JOIN validation_run cur
     WHERE s.cnt > 0
+    ;
+
+    -- Marker rows for every threshold check above that populated
+    -- threshold_flagged - feeds next cycle's previously_flagged anti-join.
+    INSERT INTO "ValidationRecords" (run_id, entity_type, entity_id, observation_name, category, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'ValidationThresholdCheck',
+      tf.entity_id,
+      tf.check_name,
+      tf.category,
+      NOW(),
+      NOW()
+    FROM threshold_flagged tf
+    CROSS JOIN validation_run cur
     ;
     `,
     { raw: true, transaction }
