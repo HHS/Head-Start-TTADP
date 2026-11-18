@@ -249,11 +249,13 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/view/101`
     );
-    expect(within(firstRow).getByText('Submitted')).toBeVisible();
-    expect(within(firstRow).queryByRole('link', { name: 'Submitted' })).toBeNull();
+    expect(within(firstRow).getByText('TTAC/Manager review pending')).toBeVisible();
+    expect(
+      within(firstRow).queryByRole('link', { name: 'TTAC/Manager review pending' })
+    ).toBeNull();
   });
 
-  it('shows a submitted request as needing action to its reviewer', async () => {
+  it('shows a submitted request as needing action to its reviewer, linked to its review', async () => {
     renderTable(
       [apiRequest(1, { status: 'submitted', submittedAt: '2026-06-02T16:00:00.000Z' })],
       true,
@@ -263,15 +265,18 @@ describe('ActiveTtaRequestsTable', () => {
 
     const firstRow = screen.getAllByRole('row')[1];
 
-    expect(within(firstRow).getByText('Needs action')).toBeVisible();
-    expect(within(firstRow).queryByText('Submitted')).toBeNull();
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+    expect(within(firstRow).queryByText('TTAC/Manager review pending')).toBeNull();
     expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
       'href',
       `${RECIPIENT_PATH}/tta-request/view/101`
     );
   });
 
-  it('shows a submitted request as submitted to anyone other than its reviewer', async () => {
+  it('shows a submitted request as pending review to anyone other than its reviewer', async () => {
     renderTable(
       [apiRequest(1, { status: 'submitted', submittedAt: '2026-06-02T16:00:00.000Z' })],
       true,
@@ -281,7 +286,7 @@ describe('ActiveTtaRequestsTable', () => {
 
     const firstRow = screen.getAllByRole('row')[1];
 
-    expect(within(firstRow).getByText('Submitted')).toBeVisible();
+    expect(within(firstRow).getByText('TTAC/Manager review pending')).toBeVisible();
     expect(within(firstRow).queryByText('Needs action')).toBeNull();
   });
 
@@ -291,7 +296,7 @@ describe('ActiveTtaRequestsTable', () => {
 
     const firstRow = screen.getAllByRole('row')[1];
 
-    expect(within(firstRow).getByText('Awaiting approval')).toBeVisible();
+    expect(within(firstRow).getByText('COR approval pending')).toBeVisible();
     expect(within(firstRow).getByRole('link', { name: 'R14-REQ-101' })).toHaveAttribute(
       'href',
       `${RECIPIENT_PATH}/tta-request/view/101`
@@ -308,9 +313,54 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
     );
-    expect(within(firstRow).getByRole('link', { name: 'Pending changes' })).toHaveAttribute(
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
+    );
+  });
+
+  it('shows the approver and links a request awaiting approval to its COR', async () => {
+    renderTable(
+      [
+        apiRequest(1, {
+          status: 'awaiting_approval',
+          approvers: [{ id: 1, userId: 5, status: null, user: { id: 5, name: 'Chandler Bing' } }],
+        }),
+      ],
+      true,
+      { id: 5 }
+    );
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByText('Chandler Bing')).toBeVisible();
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
+    );
+  });
+
+  it('links a request the COR sent back to its reviewer', async () => {
+    renderTable(
+      [
+        apiRequest(1, {
+          status: 'awaiting_approval',
+          approvers: [
+            { id: 1, userId: 5, status: 'needs_action', user: { id: 5, name: 'Chandler Bing' } },
+          ],
+        }),
+      ],
+      true,
+      { id: 2 }
+    );
+    await waitForRows();
+
+    const firstRow = screen.getAllByRole('row')[1];
+
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
+      'href',
+      `${RECIPIENT_PATH}/tta-request/view/101`
     );
   });
 

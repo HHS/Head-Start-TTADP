@@ -2,13 +2,27 @@
 
 This guide is the source of truth for local command usage. For common operations, prefer Yarn scripts.
 
+The repository uses Yarn 4 (`yarn@4.18.1`, committed under `.yarn/releases/` and selected by `yarnPath` in `.yarnrc.yml`) with the `node-modules` linker. Yarn 4 runs package scripts only after `node_modules` exists, so on a fresh clone run `yarn install` before `yarn deps` or other scripts.
+
+### Yarn 1 to Yarn 4 equivalents
+
+| Yarn 1 | Yarn 4 |
+| --- | --- |
+| `yarn install --frozen-lockfile` | `yarn install --immutable` |
+| `yarn install --production` | `yarn workspaces focus --production` |
+| `yarn upgrade <pkg>` | `yarn up <pkg>` |
+| `yarn audit` | `yarn npm audit` |
+| `yarn publish` | `yarn npm publish` |
+| `yarn cache dir` | `yarn config get cacheFolder` |
+| `"**/child"` in `resolutions` | `"parent/child"` or `"child"` |
+
 ## Common Yarn Commands (Recommended)
 
 | Description | Command |
 | --- | --- |
 | Install dependencies (frozen lockfile) | `yarn deps` |
 | Install dependencies (non-frozen) | `yarn deps:install` |
-| Audit dependencies | `yarn deps:audit` |
+| Audit production dependencies against `yarn-audit-known-issues` | `yarn deps:audit` |
 | Start backend dev watcher | `yarn server` |
 | Start frontend dev server | `yarn start:fe` |
 | Start worker dev watcher | `yarn start:worker:watch` |

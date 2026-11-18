@@ -572,7 +572,7 @@
         "type": "repositoryFile",
         "value": "manifest.yml"
       },
-      "sha256": "2ef6090e18d9a7c3b3a30bb1340eeb2eeab2e78ec940e84869a014c2c46a6afc",
+      "sha256": "4957e2125e8669b6ad4be9d28ddcc654198cda4ca29da9744c0c88cc4bb54c5c",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
@@ -640,7 +640,7 @@
         "type": "repositoryFile",
         "value": "yarn.lock"
       },
-      "sha256": "0587909f3a9e579faa4b588210c84d91c5e2d180959f1f13b38a559ed5f0b7cf",
+      "sha256": "fa0243f47219502373b77c746412dabcde4a258e593a6a09ebcded497b1d5a8e",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
@@ -658,7 +658,7 @@
         "type": "repositoryFile",
         "value": "frontend/yarn.lock"
       },
-      "sha256": "6a61944393636533dfc37801eb0f547069d7fc7f78e5d8fb30138dc087c5868a",
+      "sha256": "88c2b6ffdfa01ba2058672ac75a9b5862e3b46019ad164f55784747475be6dc1",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",

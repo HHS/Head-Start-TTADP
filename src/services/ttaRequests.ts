@@ -251,6 +251,13 @@ export async function getTtaRequests(
         attributes: ['id', 'name'],
       },
       {
+        // the COR the reviewer sent the request to, which the status reads by
+        model: TtaRequestApprover,
+        as: 'approvers',
+        attributes: ['id', 'userId', 'status'],
+        include: [{ model: User, as: 'user', attributes: ['id', 'name'] }],
+      },
+      {
         model: Recipient,
         as: 'recipient',
         attributes: ['id', 'name'],

@@ -10,6 +10,7 @@ import isAdmin from '../../permissions';
 import UserContext from '../../UserContext';
 import AddTtaRequestButton from '../AddTtaRequestButton';
 import TtaRequestsTable, { recipientRecordUrl, type TtaRequestsTableRow } from './index';
+import ttaRequestStatusLabel from './statusLabel';
 
 /** a request as the TTA request list endpoints return it */
 export interface ActiveTtaRequest {
@@ -24,6 +25,13 @@ export interface ActiveTtaRequest {
   recipient: { id: number; name: string } | null;
   goalTemplate: { id: number; templateName: string; standard: string | null } | null;
   grants: { id: number; stateCode: string | null }[];
+  /** the COR the reviewer sent the request to, once they have */
+  approvers?: {
+    id: number;
+    userId: number;
+    status: string | null;
+    user: { id: number; name: string } | null;
+  }[];
 }
 
 interface ActiveTtaRequestsResponse {
@@ -32,18 +40,6 @@ interface ActiveTtaRequestsResponse {
 }
 
 const NO_REQUESTS: ActiveTtaRequestsResponse = { count: 0, rows: [] };
-
-/** how each status reads in the table */
-const STATUS_LABELS: Record<string, string> = {
-  [TTA_REQUEST_STATUSES.DRAFT]: 'Draft',
-  [TTA_REQUEST_STATUSES.SUBMITTED]: 'Submitted',
-  [TTA_REQUEST_STATUSES.NEEDS_ACTION]: 'Pending changes',
-  [TTA_REQUEST_STATUSES.AWAITING_APPROVAL]: 'Awaiting approval',
-  [TTA_REQUEST_STATUSES.APPROVED]: 'Approved',
-};
-
-// how a submitted request reads to its reviewer, the one it is waiting on
-const REVIEWER_SUBMITTED_LABEL = 'Needs action';
 
 // a value a request doesn't have (yet) is left blank, which the table shows as a dash
 const BLANK = '';
@@ -153,9 +149,11 @@ const stateCodes = (request: ActiveTtaRequest) =>
 
 /*
   The request id and the status open a request the user can edit - their draft, or one sent
-  back for changes to them as its creator, or to any admin - in its form; any other request's id opens it read only, which
-  is where its reviewer reviews it. The recipient name opens that recipient's record. Approver and assigned
-  staff only exist once a request has been approved, so until then they are blank.
+  back for changes to them as its creator, or to any admin - in its form; any other request's
+  id opens it read only, which is where its reviewer reviews it. The status reads as the status
+  matrix has it for the viewing user (see statusLabel). The recipient name opens that
+  recipient's record. Assigned staff only exist once a request has been approved, so until
+  then they are blank.
 */
 const toTableRow = (
   request: ActiveTtaRequest,
@@ -165,14 +163,7 @@ const toTableRow = (
   userId: number | null,
   userIsAdmin: boolean
 ): TtaRequestsTableRow => {
-  // a submitted request is waiting on its reviewer, so it reads as theirs to act on
-  const awaitsUserReview =
-    request.status === TTA_REQUEST_STATUSES.SUBMITTED &&
-    userId !== null &&
-    request.reviewer?.id === userId;
-  const status = awaitsUserReview
-    ? REVIEWER_SUBMITTED_LABEL
-    : (STATUS_LABELS[request.status] ?? request.status);
+  const { label: status, needsAction } = ttaRequestStatusLabel(request, userId);
   const isEditable =
     request.status === TTA_REQUEST_STATUSES.DRAFT ||
     (request.status === TTA_REQUEST_STATUSES.NEEDS_ACTION &&
@@ -198,16 +189,19 @@ const toTableRow = (
       { title: COLUMNS.GOAL, value: request.goalTemplate?.standard ?? BLANK },
       ...(showRecipientColumns ? [{ title: COLUMNS.STATE, value: stateCodes(request) }] : []),
       { title: COLUMNS.REVIEWER, value: request.reviewer?.name ?? BLANK },
-      { title: COLUMNS.APPROVER, value: BLANK },
+      { title: COLUMNS.APPROVER, value: request.approvers?.[0]?.user?.name ?? BLANK },
       { title: COLUMNS.ASSIGNED_STAFF, value: BLANK },
-      // only what the user can edit is clickable, it takes them back into the request
-      isEditable
+      /*
+        only what the user can act on is clickable: what they can edit takes them back into
+        the request's form, and what awaits their action takes them to where they review it
+      */
+      isEditable || needsAction
         ? {
             title: COLUMNS.STATUS,
             value: status,
             isUrl: true,
             isInternalLink: true,
-            link: requestUrl(request.id),
+            link: isEditable ? requestUrl(request.id) : viewUrl(request.id),
           }
         : { title: COLUMNS.STATUS, value: status },
     ],

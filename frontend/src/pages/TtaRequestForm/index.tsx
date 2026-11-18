@@ -358,7 +358,7 @@ function TtaRequestFormBody({
               Please review any notes below and resubmit for review.
             </Alert>
           )}
-          <h2 className="margin-top-0 margin-bottom-1">TTA Request summary</h2>
+          <h2 className="font-serif-xl margin-top-0 margin-bottom-1">TTA Request summary</h2>
           <IndicatesRequiredField />
           <form onSubmit={hookForm.handleSubmit(onSubmit)}>
             <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />

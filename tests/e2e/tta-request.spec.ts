@@ -268,7 +268,7 @@ test.describe('TTA request review', () => {
       expect(displayId).toMatch(/^R01-REQ-\d+$/);
       ttaRequestId = Number(displayId.split('-').pop());
 
-      await expect(requestRow(page, displayId)).toContainText('Submitted');
+      await expect(requestRow(page, displayId)).toContainText('TTAC/Manager review pending');
     });
 
     await test.step('the reviewer sends it back for changes', async () => {
@@ -303,7 +303,8 @@ test.describe('TTA request review', () => {
     await test.step('the creator sees who asked for changes and why', async () => {
       await actAs(page, CREATOR.id);
       await page.goto('/tta-requests');
-      await requestRow(page, displayId).getByRole('link', { name: 'Pending changes' }).click();
+      // the request is waiting on the creator now, so it reads as theirs to act on
+      await requestRow(page, displayId).getByRole('link', { name: 'Needs action' }).click();
 
       // the creator edits the request in its form, rather than seeing it read only
       await expect(page).toHaveURL(new RegExp(`/tta-requests/${ttaRequestId}$`));
@@ -345,15 +346,16 @@ test.describe('TTA request review', () => {
       await expect(
         page.getByRole('alert').filter({ hasText: `You submitted request ${displayId}` })
       ).toBeVisible();
-      await expect(requestRow(page, displayId)).toContainText('Submitted');
+      await expect(requestRow(page, displayId)).toContainText('TTAC/Manager review pending');
     });
 
     await test.step('the reviewer sees every note in the order it was left', async () => {
       await actAs(page, REVIEWER.id);
       // the resubmitted request is waiting on the reviewer again
       await page.goto('/tta-requests');
-      await expect(requestRow(page, displayId)).toContainText('Needs action');
-      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+      // its status links the reviewer to where they review it
+      await requestRow(page, displayId).getByRole('link', { name: 'Needs action' }).click();
+      await expect(page).toHaveURL(new RegExp(`/tta-requests/view/${ttaRequestId}$`));
 
       await expect(noteEntries(page)).toHaveCount(3);
       await expectNote(noteEntries(page).nth(0), {
@@ -438,12 +440,25 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('alert')).toContainText(
         `You sent request ${displayId} to the COR for approval on`
       );
-      await expect(requestRow(page, displayId)).toContainText('Awaiting approval');
+      await expect(requestRow(page, displayId)).toContainText('COR approval pending');
     });
 
     await test.step('the creator sees the request read only while it awaits approval', async () => {
       await actAs(page, CREATOR.id);
       await page.goto(`/tta-requests/view/${ttaRequestId}`);
+
+      // the COR it was sent to is in the header, and until they approve it there is nothing
+      // finished to share or print
+      await expect(page.getByText('Approver:').locator('..')).toContainText(BACKUP_COR.name);
+      await expect(page.getByRole('button', { name: 'Print to PDF' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Copy URL Link' })).toHaveCount(0);
+
+      await expect(
+        page.getByRole('heading', { level: 2, name: 'TTA Request summary' })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 3, name: 'Who is the request for?' })
+      ).toBeVisible();
 
       // each section is the list right after its heading, as the reviewer laid it out
       const assignment = page.locator('h2:text-is("TTA assignment") + dl');

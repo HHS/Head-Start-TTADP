@@ -550,6 +550,31 @@ components:
               stateCode:
                 type: string
                 nullable: true
+        approvers:
+          type: array
+          description: The COR the reviewer sent the request to, once they have
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              userId:
+                type: integer
+              status:
+                type: string
+                nullable: true
+                enum:
+                  - needs_action
+                  - approved
+                  - null
+              user:
+                type: object
+                nullable: true
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
     ttaRequest:
       type: object
       description: A TTA request

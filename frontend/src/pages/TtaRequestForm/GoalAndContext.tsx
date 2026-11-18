@@ -65,7 +65,7 @@ export default function GoalAndContext({ regionId }: GoalAndContextProps): React
 
   return (
     <>
-      <h3 className="margin-top-4 margin-bottom-2">Goal and context</h3>
+      <h3 className="font-sans-lg text-bold margin-top-4 margin-bottom-2">Goal and context</h3>
       <Alert
         type={hasNoCitations ? 'warning' : 'info'}
         headingLevel="h4"
