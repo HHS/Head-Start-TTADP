@@ -69,6 +69,9 @@ ApproverStatusList.propTypes = {
     PropTypes.shape({
       approver: PropTypes.string,
       status: PropTypes.string,
+      user: PropTypes.shape({
+        fullName: PropTypes.string,
+      }),
     })
   ).isRequired,
 };

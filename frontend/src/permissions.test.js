@@ -1,8 +1,10 @@
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import {
   allRegionsUserHasTtaRequestPermissionTo,
   canCreateCommunicationLog,
   canCreateTtaRequest,
+  canEditTtaRequest,
+  canReviewerEditTtaRequest,
   hasTtaRequestReadWrite,
 } from './permissions';
 
@@ -296,5 +298,105 @@ describe('canCreateTtaRequest', () => {
     expect(canCreateTtaRequest(user, 14)).toBe(false);
     expect(canCreateTtaRequest(writer, null)).toBe(false);
     expect(canCreateTtaRequest(null, 1)).toBe(false);
+  });
+});
+
+describe('canEditTtaRequest', () => {
+  const creator = {
+    id: 1,
+    permissions: [{ scopeId: SCOPE_IDS.READ_WRITE_TTA_REQUESTS, regionId: 3 }],
+  };
+  const request = { creator: { id: 1 }, regionId: 3, status: TTA_REQUEST_STATUSES.NEEDS_ACTION };
+
+  it.each([TTA_REQUEST_STATUSES.DRAFT, TTA_REQUEST_STATUSES.NEEDS_ACTION])(
+    'is true for the creator with write permission in its region while it is %s',
+    (status) => {
+      expect(canEditTtaRequest(creator, { ...request, status })).toBe(true);
+    }
+  );
+
+  it('is false for anyone but the creator', () => {
+    expect(canEditTtaRequest({ ...creator, id: 2 }, request)).toBe(false);
+  });
+
+  it('is false for the creator without write permission in its region', () => {
+    expect(canEditTtaRequest(creator, { ...request, regionId: 4 })).toBe(false);
+    expect(canEditTtaRequest({ ...creator, permissions: undefined }, request)).toBe(false);
+  });
+
+  it('is true for an admin once the request is sent back for changes', () => {
+    const admin = { id: 2, permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }] };
+    expect(canEditTtaRequest(admin, request)).toBe(true);
+  });
+
+  it.each([TTA_REQUEST_STATUSES.DRAFT, TTA_REQUEST_STATUSES.SUBMITTED])(
+    "is false for an admin while someone else's request is %s",
+    (status) => {
+      const admin = { id: 2, permissions: [{ scopeId: SCOPE_IDS.ADMIN, regionId: 14 }] };
+      expect(canEditTtaRequest(admin, { ...request, status })).toBe(false);
+    }
+  );
+
+  it('is false once the request has been submitted', () => {
+    expect(canEditTtaRequest(creator, { ...request, status: TTA_REQUEST_STATUSES.SUBMITTED })).toBe(
+      false
+    );
+  });
+
+  it('is false for the reviewer, who edits the request on the review', () => {
+    const reviewer = {
+      id: 5,
+      permissions: [{ scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 3 }],
+    };
+    expect(
+      canEditTtaRequest(reviewer, {
+        ...request,
+        reviewer: { id: 5 },
+        status: TTA_REQUEST_STATUSES.SUBMITTED,
+      })
+    ).toBe(false);
+  });
+
+  it('is false without a user or request', () => {
+    expect(canEditTtaRequest(undefined, request)).toBe(false);
+    expect(canEditTtaRequest(creator, null)).toBe(false);
+  });
+});
+
+describe('canReviewerEditTtaRequest', () => {
+  const reviewer = {
+    id: 5,
+    permissions: [{ scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 3 }],
+  };
+  const request = {
+    creator: { id: 1 },
+    reviewer: { id: 5 },
+    regionId: 3,
+    status: TTA_REQUEST_STATUSES.SUBMITTED,
+  };
+
+  it('is true for the reviewer who can review in its region while it is submitted', () => {
+    expect(canReviewerEditTtaRequest(reviewer, request)).toBe(true);
+  });
+
+  it('is false for anyone but the reviewer', () => {
+    expect(canReviewerEditTtaRequest({ ...reviewer, id: 6 }, request)).toBe(false);
+  });
+
+  it.each([
+    TTA_REQUEST_STATUSES.DRAFT,
+    TTA_REQUEST_STATUSES.NEEDS_ACTION,
+    TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+  ])('is false while the request is %s', (status) => {
+    expect(canReviewerEditTtaRequest(reviewer, { ...request, status })).toBe(false);
+  });
+
+  it('is false without the review permission in its region', () => {
+    expect(canReviewerEditTtaRequest(reviewer, { ...request, regionId: 4 })).toBe(false);
+  });
+
+  it('is false without a user or request', () => {
+    expect(canReviewerEditTtaRequest(null, request)).toBe(false);
+    expect(canReviewerEditTtaRequest(reviewer, null)).toBe(false);
   });
 });
