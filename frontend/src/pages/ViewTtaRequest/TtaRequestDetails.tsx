@@ -30,12 +30,15 @@ export default function TtaRequestDetails({
   headingLevel = 2,
 }: TtaRequestDetailsProps): React.ReactElement {
   const { citations } = ttaRequest;
+  // as on the activity report: H3s are set in sans, H2s take the default serif heading style
+  const titleClassName = headingLevel === 3 ? 'font-sans-lg text-bold' : '';
 
   return (
     <>
       <ReadOnlyContent
         title="Who is the request for?"
         titleHeadingLevel={headingLevel}
+        titleClassName={titleClassName}
         spacing={{ section: 0, row: 3 }}
         titleAction={
           onEdit ? (
@@ -64,6 +67,7 @@ export default function TtaRequestDetails({
       <ReadOnlyContent
         title="Goal and context"
         titleHeadingLevel={headingLevel}
+        titleClassName={titleClassName}
         spacing={{ title: 2, section: 1 }}
         sections={[
           {

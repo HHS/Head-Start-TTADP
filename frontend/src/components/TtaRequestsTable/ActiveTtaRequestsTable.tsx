@@ -36,7 +36,7 @@ const NO_REQUESTS: ActiveTtaRequestsResponse = { count: 0, rows: [] };
 /** how each status reads in the table */
 const STATUS_LABELS: Record<string, string> = {
   [TTA_REQUEST_STATUSES.DRAFT]: 'Draft',
-  [TTA_REQUEST_STATUSES.SUBMITTED]: 'Submitted',
+  [TTA_REQUEST_STATUSES.SUBMITTED]: 'TTAC/Manager review pending',
   [TTA_REQUEST_STATUSES.NEEDS_ACTION]: 'Pending changes',
   [TTA_REQUEST_STATUSES.AWAITING_APPROVAL]: 'Awaiting approval',
 };
@@ -199,14 +199,17 @@ const toTableRow = (
       { title: COLUMNS.REVIEWER, value: request.reviewer?.name ?? BLANK },
       { title: COLUMNS.APPROVER, value: BLANK },
       { title: COLUMNS.ASSIGNED_STAFF, value: BLANK },
-      // only what the user can edit is clickable, it takes them back into the request
-      isEditable
+      /*
+        only what the user can act on is clickable: what they can edit takes them back into
+        the request's form, and what awaits their review takes them to where they review it
+      */
+      isEditable || awaitsUserReview
         ? {
             title: COLUMNS.STATUS,
             value: status,
             isUrl: true,
             isInternalLink: true,
-            link: requestUrl(request.id),
+            link: isEditable ? requestUrl(request.id) : viewUrl(request.id),
           }
         : { title: COLUMNS.STATUS, value: status },
     ],

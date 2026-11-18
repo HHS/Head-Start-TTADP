@@ -276,7 +276,7 @@ export default function TtaRequestReview({
             }
           />
         )}
-        <h3 className="margin-top-4 margin-bottom-2">TTA assignment</h3>
+        <h3 className="font-sans-lg text-bold margin-top-4 margin-bottom-2">TTA assignment</h3>
         <FormItem label="Assign staff" name="assignedStaff" required={sendingToCor}>
           <div className="maxw-mobile-lg">
             <MultiSelect
@@ -302,7 +302,7 @@ export default function TtaRequestReview({
             />
           </div>
         </FormItem>
-        <h3 className="margin-top-4 margin-bottom-2">Review and submit</h3>
+        <h3 className="font-sans-lg text-bold margin-top-4 margin-bottom-2">Review and submit</h3>
         <dl className="margin-top-0 margin-bottom-3">
           <dt className="text-bold">Date submitted</dt>
           <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>

@@ -50,6 +50,7 @@ export default function ReadOnlyContent({
   spacing,
   titleAction,
   titleHeadingLevel,
+  titleClassName,
 }) {
   const {
     title: titleSpacing,
@@ -62,7 +63,7 @@ export default function ReadOnlyContent({
       <div className={`display-flex${titleAction ? ' flex-justify flex-align-baseline' : ''}`}>
         {createElement(
           `h${titleHeadingLevel}`,
-          { className: `font-serif-xl margin-bottom-${titleSpacing} margin-top-0` },
+          { className: `${titleClassName} margin-bottom-${titleSpacing} margin-top-0` },
           title
         )}
         {displayStatus && <Status statusKey={displayStatus} />}
@@ -140,6 +141,8 @@ ReadOnlyContent.propTypes = {
   titleAction: PropTypes.node,
   // the title's heading level, so it fits the outline of the page it is on
   titleHeadingLevel: PropTypes.oneOf([2, 3, 4]),
+  // the title's type style, for pages that follow a different heading scale
+  titleClassName: PropTypes.string,
   // USWDS spacing units; any omitted key keeps its default
   spacing: PropTypes.shape({
     title: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -154,4 +157,5 @@ ReadOnlyContent.defaultProps = {
   spacing: {},
   titleAction: null,
   titleHeadingLevel: 2,
+  titleClassName: 'font-serif-xl',
 };

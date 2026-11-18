@@ -88,7 +88,7 @@ export default function SubmitForReview({
 
   return (
     <>
-      <h3 className="margin-top-4 margin-bottom-2">Submit for review</h3>
+      <h3 className="font-sans-lg text-bold margin-top-4 margin-bottom-2">Submit for review</h3>
       {notes.length > 0 && (
         <div className="margin-bottom-3">
           <TtaRequestNotesSummary notes={notes} />

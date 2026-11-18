@@ -220,7 +220,7 @@ test.describe('TTA request review', () => {
       expect(displayId).toMatch(/^R01-REQ-\d+$/);
       ttaRequestId = Number(displayId.split('-').pop());
 
-      await expect(requestRow(page, displayId)).toContainText('Submitted');
+      await expect(requestRow(page, displayId)).toContainText('TTAC/Manager review pending');
     });
 
     await test.step('the reviewer sends it back for changes', async () => {
@@ -297,15 +297,16 @@ test.describe('TTA request review', () => {
       await expect(
         page.getByRole('alert').filter({ hasText: `You submitted request ${displayId}` })
       ).toBeVisible();
-      await expect(requestRow(page, displayId)).toContainText('Submitted');
+      await expect(requestRow(page, displayId)).toContainText('TTAC/Manager review pending');
     });
 
     await test.step('the reviewer sees every note in the order it was left', async () => {
       await actAs(page, REVIEWER.id);
       // the resubmitted request is waiting on the reviewer again
       await page.goto('/tta-requests');
-      await expect(requestRow(page, displayId)).toContainText('Needs action');
-      await page.goto(`/tta-requests/view/${ttaRequestId}`);
+      // its status links the reviewer to where they review it
+      await requestRow(page, displayId).getByRole('link', { name: 'Needs action' }).click();
+      await expect(page).toHaveURL(new RegExp(`/tta-requests/view/${ttaRequestId}$`));
 
       await expect(noteEntries(page)).toHaveCount(3);
       await expectNote(noteEntries(page).nth(0), {
