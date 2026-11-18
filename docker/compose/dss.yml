@@ -36,7 +36,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD:-something_secret}@db:5432/${POSTGRES_DB:-ttasmarthub}
       SESSION_SECRET: ${SESSION_SECRET:-notasecret}
       BYPASS_SOCKETS: "true"
-      YARN_CACHE_FOLDER: /yarn-cache
+      YARN_GLOBAL_FOLDER: /yarn-cache
       NEW_RELIC_ENABLED: "false"
       FONTAWESOME_NPM_AUTH_TOKEN: ${FONTAWESOME_NPM_AUTH_TOKEN:-}
     depends_on:

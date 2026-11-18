@@ -74,6 +74,11 @@ export const flushRedis = async () => {
   return result.json();
 };
 
+export const runEmailDigests = async (frequency) => {
+  const result = await post(join('/', 'api', 'admin', 'digests', frequency));
+  return result.json();
+};
+
 export const deleteNationalCenter = async (id) => {
   const result = await destroy(join('/', 'api', 'admin', 'national-center', String(id)));
   return result.json();
