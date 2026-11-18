@@ -1,4 +1,5 @@
 import { DECIMAL_BASE } from '@ttahub/common';
+import { Op } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
 import { auditLogger } from '../logger';
 import {
@@ -8,6 +9,7 @@ import {
   ActivityReportObjectiveFile,
   CommunicationLogFile,
   File,
+  FileDeletion,
   ImportFile,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
@@ -157,22 +159,29 @@ const removeOrphanedFiles = async (
       await File.destroy({ where: { id: file.id }, transaction });
       removed.push(file.id);
 
-      const { key } = file;
+      // Outbox row, written in this transaction: if enqueueing fails after commit, the cron
+      // sweep (requeuePendingFileDeletions) still finds it, so the S3 cleanup isn't lost.
+      // eslint-disable-next-line no-await-in-loop
+      const deletion = await FileDeletion.create(
+        { fileId: file.id, key: file.key },
+        { transaction }
+      );
+
       const queueS3Delete = async () => {
         try {
-          // Sequelize v6 invokes afterCommit even if COMMIT fails. Check committed state
-          // on the primary before deleting anything from object storage.
-          const retained = await File.findOne({
+          // Sequelize v6 invokes afterCommit even if COMMIT fails. The outbox row only
+          // exists if the delete committed, so check for it on the primary first.
+          const committed = await FileDeletion.findOne({
             attributes: ['id'],
-            where: { key },
+            where: { id: deletion.id },
             transaction: null,
             useMaster: true,
             raw: true,
           });
-          if (!retained) await addDeleteFileToQueue(file.id, key);
+          if (committed) await addDeleteFileToQueue(file.id, file.key, deletion.id);
         } catch (err) {
           auditLogger.error(
-            `SERVICE:FILES:removeOrphanedFiles Failed to queue S3 delete for file ${file.id}: ${err.message}`
+            `SERVICE:FILES:removeOrphanedFiles Failed to queue S3 delete for file ${file.id} (deletion ${deletion.id}); the retry sweep will requeue it: ${err.message}`
           );
         }
       };
@@ -419,6 +428,61 @@ const queueFilesForScan = async (files) =>
     })
   );
 
+/**
+ * Re-enqueues S3 deletes whose outbox row is still pending: the enqueue after commit failed,
+ * or every attempt of the S3 job failed. Each pass counts as an attempt; rows that run out
+ * of attempts stay pending and are reported so someone can look at them.
+ * @param {object} [options]
+ * @param {number} [options.olderThanMinutes] - skip rows touched more recently than this,
+ *   so jobs that are still queued or retrying aren't duplicated
+ * @param {number} [options.maxAttempts] - stop re-enqueueing a row after this many passes
+ * @param {number} [options.limit] - rows handled per pass
+ * @returns {Promise<{ requeued: number, exhausted: number }>}
+ */
+const requeuePendingFileDeletions = async ({
+  olderThanMinutes = 60,
+  maxAttempts = 10,
+  limit = 500,
+} = {}) => {
+  const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+  const pending = await FileDeletion.findAll({
+    where: {
+      completedAt: null,
+      updatedAt: { [Op.lt]: cutoff },
+      attempts: { [Op.lt]: maxAttempts },
+    },
+    order: [['id', 'ASC']],
+    limit,
+  });
+
+  let requeued = 0;
+  for (const deletion of pending) {
+    // Bumps updatedAt too, so the next pass waits before trying this row again.
+    // eslint-disable-next-line no-await-in-loop
+    await deletion.update({ attempts: deletion.attempts + 1 });
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await addDeleteFileToQueue(deletion.fileId, deletion.key, deletion.id);
+      requeued += 1;
+    } catch (err) {
+      auditLogger.error(
+        `SERVICE:FILES:requeuePendingFileDeletions Failed to queue S3 delete for file ${deletion.fileId} (deletion ${deletion.id}): ${err.message}`
+      );
+    }
+  }
+
+  const exhausted = await FileDeletion.count({
+    where: { completedAt: null, attempts: { [Op.gte]: maxAttempts } },
+  });
+  if (exhausted) {
+    auditLogger.error(
+      `SERVICE:FILES:requeuePendingFileDeletions ${exhausted} S3 file deletions are still pending after ${maxAttempts} attempts`
+    );
+  }
+
+  return { requeued, exhausted };
+};
+
 export {
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
@@ -440,6 +504,7 @@ export {
   markFilesQueuedForScan,
   queueFilesForScan,
   removeOrphanedFiles,
+  requeuePendingFileDeletions,
   updateStatus,
   updateStatusByKey,
 };

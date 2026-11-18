@@ -215,7 +215,11 @@ describe('cacheFiles', () => {
     expect(await File.findByPk(onlyHere.id)).toBeNull();
     expect(await File.findByPk(shared.id)).not.toBeNull();
     // Files linked by earlier tests are also unlinked here, so check by file.
-    expect(addDeleteFileToQueue).toHaveBeenCalledWith(onlyHere.id, onlyHere.key);
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(
+      onlyHere.id,
+      onlyHere.key,
+      expect.any(Number)
+    );
     expect(addDeleteFileToQueue).not.toHaveBeenCalledWith(shared.id, expect.anything());
   });
 });

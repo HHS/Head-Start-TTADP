@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { FILE_STATUSES } from '../constants';
-import db, { CommunicationLog, CommunicationLogFile, File, User } from '../models';
+import db, { CommunicationLog, CommunicationLogFile, File, FileDeletion, User } from '../models';
 import { createUser } from '../testUtils';
 import {
   createFileMetaData,
@@ -8,6 +8,7 @@ import {
   markFilesQueuedForScan,
   queueFilesForScan,
   removeOrphanedFiles,
+  requeuePendingFileDeletions,
   updateStatusByKey,
 } from './files';
 import { addDeleteFileToQueue } from './s3Queue';
@@ -245,6 +246,7 @@ describe('files service', () => {
 
     afterAll(async () => {
       await CommunicationLogFile.destroy({ where: { fileId: createdFileIds } });
+      await FileDeletion.destroy({ where: { fileId: createdFileIds } });
       await File.destroy({ where: { id: createdFileIds } });
       await CommunicationLog.destroy({ where: { id: log.id } });
       await User.destroy({ where: { id: user.id } });
@@ -260,7 +262,7 @@ describe('files service', () => {
 
       expect(await File.findByPk(file.id)).toBeNull();
       expect(addDeleteFileToQueue).toHaveBeenCalledTimes(1);
-      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
     });
 
     it('keeps a file that is still referenced', async () => {
@@ -332,7 +334,7 @@ describe('files service', () => {
         expect(addDeleteFileToQueue).not.toHaveBeenCalled();
       });
 
-      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
     });
 
     it('does not queue a delete when a savepoint rolls back but its parent commits', async () => {
@@ -355,7 +357,7 @@ describe('files service', () => {
       await removeOrphanedFiles([file.id]);
 
       expect(await File.findByPk(file.id)).toBeNull();
-      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
     });
 
     it('hands the S3 delete to a caller-supplied afterCommit', async () => {
@@ -367,7 +369,104 @@ describe('files service', () => {
       expect(addDeleteFileToQueue).not.toHaveBeenCalled();
       expect(callbacks).toHaveLength(1);
       await callbacks[0]();
-      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
+    });
+
+    it('records a pending outbox row in the same transaction and queues with its id', async () => {
+      const file = await makeFile();
+
+      await db.sequelize.transaction(async () => {
+        await removeOrphanedFiles([file.id]);
+      });
+
+      const deletion = await FileDeletion.findOne({ where: { fileId: file.id } });
+      expect(deletion).toMatchObject({ key: file.key, attempts: 0, completedAt: null });
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, deletion.id);
+    });
+
+    it('leaves no outbox row when the transaction rolls back', async () => {
+      const file = await makeFile();
+
+      await expect(
+        db.sequelize.transaction(async () => {
+          await removeOrphanedFiles([file.id]);
+          throw new Error('roll back');
+        })
+      ).rejects.toThrow('roll back');
+
+      expect(await FileDeletion.count({ where: { fileId: file.id } })).toBe(0);
+    });
+
+    it('keeps the outbox row pending when enqueueing fails after commit', async () => {
+      const file = await makeFile();
+      addDeleteFileToQueue.mockRejectedValueOnce(new Error('redis unavailable'));
+
+      await expect(removeOrphanedFiles([file.id])).resolves.toEqual([file.id]);
+
+      expect(await File.findByPk(file.id)).toBeNull();
+      const deletion = await FileDeletion.findOne({ where: { fileId: file.id } });
+      expect(deletion.completedAt).toBeNull();
+    });
+  });
+
+  describe('requeuePendingFileDeletions', () => {
+    const fileIdBase = 2_000_000_000 - faker.number.int({ min: 0, max: 100_000 });
+    const hoursAgo = (hours) => new Date(Date.now() - hours * 60 * 60 * 1000);
+    let rows;
+
+    const makeDeletion = async (offset, values, updatedAt) => {
+      const deletion = await FileDeletion.create({
+        fileId: fileIdBase + offset,
+        key: `requeue-${faker.string.uuid()}.txt`,
+        ...values,
+      });
+      // Sequelize sets updatedAt itself, so backdate it directly.
+      await db.sequelize.query(
+        'UPDATE "FileDeletions" SET "updatedAt" = :updatedAt WHERE id = :id',
+        {
+          replacements: { updatedAt, id: deletion.id },
+        }
+      );
+      return deletion;
+    };
+
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      rows = {
+        stale: await makeDeletion(0, {}, hoursAgo(2)),
+        recent: await makeDeletion(1, {}, new Date()),
+        completed: await makeDeletion(2, { completedAt: new Date() }, hoursAgo(2)),
+        exhausted: await makeDeletion(3, { attempts: 10 }, hoursAgo(2)),
+      };
+    });
+
+    afterEach(async () => {
+      await FileDeletion.destroy({ where: { id: Object.values(rows).map((r) => r.id) } });
+    });
+
+    const callsFor = (deletion) =>
+      addDeleteFileToQueue.mock.calls.filter(([, , id]) => id === deletion.id);
+
+    it('requeues only stale pending rows and counts an attempt', async () => {
+      const { exhausted } = await requeuePendingFileDeletions();
+
+      expect(callsFor(rows.stale)).toEqual([[rows.stale.fileId, rows.stale.key, rows.stale.id]]);
+      expect(callsFor(rows.recent)).toEqual([]);
+      expect(callsFor(rows.completed)).toEqual([]);
+      expect(callsFor(rows.exhausted)).toEqual([]);
+      expect((await rows.stale.reload()).attempts).toBe(1);
+      expect(exhausted).toBeGreaterThanOrEqual(1);
+    });
+
+    it('keeps a row pending and counts the attempt when enqueueing fails', async () => {
+      addDeleteFileToQueue.mockRejectedValue(new Error('redis unavailable'));
+
+      await requeuePendingFileDeletions();
+
+      const stale = await rows.stale.reload();
+      expect(stale.attempts).toBe(1);
+      expect(stale.completedAt).toBeNull();
+      addDeleteFileToQueue.mockReset();
     });
   });
 });

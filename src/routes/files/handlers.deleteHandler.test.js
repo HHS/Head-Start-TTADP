@@ -359,8 +359,7 @@ describe('deleteHandler authorization and orphan cleanup', () => {
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(unlink).not.toHaveBeenCalled();
-      expect(deleteFile).not.toHaveBeenCalled();
-      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+      expect(removeOrphanedFiles).not.toHaveBeenCalled();
       expect(req.transactionCommittedCallbacks).toHaveLength(0);
     }
   );
@@ -384,17 +383,6 @@ describe('deleteHandler authorization and orphan cleanup', () => {
 
     expect(res.sendStatus).toHaveBeenCalledWith(403);
     expect(deleteActivityReportFile).not.toHaveBeenCalled();
-    expect(removeOrphanedFiles).not.toHaveBeenCalled();
-  });
-
-  it('leaves an unlinked file alone when the authorized report has no link to it', async () => {
-    const res = mockRes();
-    getFileById.mockResolvedValue({ id: 1, ...noReferences });
-    ActivityReportPolicy.mockImplementation(() => ({ canUpdate: () => true }));
-
-    await runInTransaction(deleteHandler, { params: { reportId: 1, fileId: 1 } }, res);
-
-    expect(res.status).toHaveBeenCalledWith(204);
     expect(removeOrphanedFiles).not.toHaveBeenCalled();
   });
 

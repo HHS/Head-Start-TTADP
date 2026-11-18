@@ -202,7 +202,7 @@ describe('communicationLog services', () => {
     expect(await File.findByPk(file.id)).toBeNull();
     expect(await File.findByPk(sharedFile.id)).not.toBeNull();
     expect(addDeleteFileToQueue).toHaveBeenCalledTimes(1);
-    expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, 'test-key');
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, 'test-key', expect.any(Number));
     await CommunicationLogFile.destroy({ where: { communicationLogId: otherLog.id } });
     await File.destroy({ where: { id: sharedFile.id } });
     await CommunicationLog.destroy({ where: { id: otherLog.id } });
