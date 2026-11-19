@@ -132,6 +132,50 @@ describe('TTA hours provided over time', () => {
     );
   });
 
+  it.each([
+    ['a range filter', filters],
+    [
+      'separate bounds',
+      [
+        { topic: 'startDate', condition: 'is on or after', query: '01/01/2026' },
+        { topic: 'startDate', condition: 'is on or before', query: '02/15/2026' },
+        ...filters.slice(1),
+      ],
+    ],
+  ])('shows monitoring with no hours for %s', async (_description, selectedFilters) => {
+    fetchWidget.mockImplementation((widget) =>
+      Promise.resolve(
+        widget === 'ttaHoursProvidedOverTime'
+          ? []
+          : [{ startDate: '2026-01-06', endDate: '2026-01-10' }]
+      )
+    );
+
+    render(<TTAHoursProvidedOverTime filters={selectedFilters} />);
+
+    expect(
+      await screen.findByLabelText('January 2026, week 1: 0.0 hours, monitoring review')
+    ).toHaveClass('tta-hours-monitoring');
+    expect(screen.getByLabelText('January 2026, week 2: 0.0 hours, monitoring review')).toHaveClass(
+      'tta-hours-monitoring'
+    );
+    expect(screen.getByLabelText('February 2026, week 3: 0.0 hours')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'March 2026' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [[]],
+    [[{ topic: 'startDate', condition: 'is on or after', query: '01/01/2026' }]],
+    [[{ topic: 'startDate', condition: 'is on or before', query: '02/15/2026' }]],
+  ])('does not show months without hours and complete bounds: %p', async (selectedFilters) => {
+    fetchWidget.mockResolvedValue([]);
+    render(<TTAHoursProvidedOverTime filters={selectedFilters} />);
+
+    await waitFor(() => expect(fetchWidget).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('columnheader', { name: /2026/ })).not.toBeInTheDocument();
+  });
+
   it('offers the drawer, screenshot, and deferred table view', async () => {
     render(<TTAHoursProvidedOverTime filters={filters} />);
     await waitFor(() => expect(fetchWidget).toHaveBeenCalledTimes(2));

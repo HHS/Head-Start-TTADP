@@ -24,7 +24,6 @@ function dateRange(filters: Filter[], hours: HoursRow[]) {
   const dates = hours
     .map((row) => moment(row.startDate, 'YYYY-MM-DD', true))
     .filter((date) => date.isValid());
-  if (!dates.length) return null;
 
   let lowerBound = null;
   let upperBound = null;
@@ -61,6 +60,8 @@ function dateRange(filters: Filter[], hours: HoursRow[]) {
         }
       });
     });
+
+  if (!dates.length && (!lowerBound || !upperBound)) return null;
 
   return {
     start: lowerBound || moment.min(dates),
