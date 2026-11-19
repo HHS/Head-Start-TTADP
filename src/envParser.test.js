@@ -112,6 +112,9 @@ describe('envParser', () => {
 
     it.each([
       'https://ttahub.ohs.acf.hhs.gov',
+      'https://tta-smarthub-prod1.app.cloud.gov',
+      'https://tta-smarthub-prod.app.cloud.gov',
+      'https://some-other-app.app.cloud.gov',
       'https://app.cloud.gov.example.com',
       'not a url',
       '',

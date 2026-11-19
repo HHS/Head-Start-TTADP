@@ -344,6 +344,19 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
   },
+  // Misc-1a: one notification per user per recipient/monitoring report. entityId is the
+  // DeliveredReview id; the recipient is in the text, so a review that covers several
+  // recipients produces one notification for each. (TTAHUB-6003)
+  [NOTIFICATION_TYPES.MONITORING_DATA_RECEIVED]: {
+    textFn: ({ recipientName }) => `A new monitoring report for ${recipientName} is available.`,
+    actionable: false,
+    linkFn: ({ recipientId, regionId }) =>
+      `/recipient-tta-records/${recipientId}/region/${regionId}/monitoring`,
+    linkText: () => 'View details',
+    archiveLabel: () => 'View details',
+    displayId: () => null,
+    settingsKey: 'inAppWhenMonitoringDetailsAdded',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,
@@ -425,6 +438,7 @@ const EMAIL_ACTIONS = {
   PLANNED_OUTAGE: 'emailWhenPlannedOutage',
   UNPLANNED_OUTAGE: 'emailWhenUnplannedOutage',
   MONITORING_DETAILS_ADDED: 'emailWhenMonitoringDetailsAdded',
+  MONITORING_DETAILS_ADDED_DIGEST: 'monitoringDetailsAddedDigest',
   ADDED_AS_CO_OWNER: 'emailWhenAddedAsCoOwner',
   SHARED_MY_GROUP: 'emailWhenSharedMyGroup',
 };

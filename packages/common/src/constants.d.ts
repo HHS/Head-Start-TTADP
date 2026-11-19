@@ -146,7 +146,34 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
 export const TTA_REQUEST_STATUSES: {
   readonly DRAFT: 'draft';
   readonly SUBMITTED: 'submitted';
+  readonly NEEDS_ACTION: 'needs_action';
+  readonly AWAITING_APPROVAL: 'awaiting_approval';
 };
+
+export const TTA_REQUEST_STEPS: {
+  readonly CREATOR: 'creator';
+  readonly REVIEWER: 'reviewer';
+  readonly APPROVER: 'approver';
+};
+
+export const TTA_REQUEST_NOTE_ACTIONS: {
+  readonly SUBMITTED: 'submitted';
+  readonly NEEDS_ACTION: 'needs_action';
+  readonly SENT_FOR_APPROVAL: 'sent_for_approval';
+};
+
+export const TTA_REQUEST_MAX_ASSIGNED_STAFF: 5;
+
+export const TTA_REQUEST_ASSIGNABLE_ROLES: readonly [
+  'HS',
+  'SS',
+  'ECS',
+  'GS',
+  'FES',
+  'TTAC',
+  'ECM',
+  'GSM',
+];
 
 export const TTA_REQUEST_ORIGINATORS: readonly [
   'Central Office',

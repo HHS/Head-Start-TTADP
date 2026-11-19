@@ -831,7 +831,7 @@ describe('session report handlers', () => {
       expect(csvOutput).toContain('Topic 2');
       expect(csvOutput).toContain('13');
       expect(csvOutput).toContain('hybrid');
-      expect(csvOutput).toContain('"Jane Trainer, SS, John Trainer, ECS"');
+      expect(csvOutput).toContain('"Jane Trainer, SS; John Trainer, ECS"');
 
       expect(csvOutput).toContain('1038');
       expect(csvOutput).toContain('Event 2');

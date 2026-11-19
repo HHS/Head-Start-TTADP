@@ -120,10 +120,16 @@
   $ref: './tta-requests/id.yaml'
 '/tta-requests/{ttaRequestId}/submit':
   $ref: './tta-requests/submit.yaml'
+'/tta-requests/{ttaRequestId}/review':
+  $ref: './tta-requests/review.yaml'
 '/tta-requests/region/{regionId}/recipient/{recipientId}':
   $ref: './tta-requests/recipient.yaml'
 '/tta-requests/region/{regionId}/reviewers':
   $ref: './tta-requests/reviewers.yaml'
+'/tta-requests/region/{regionId}/assignable-staff':
+  $ref: './tta-requests/assignable-staff.yaml'
+'/tta-requests/region/{regionId}/approvers':
+  $ref: './tta-requests/approvers.yaml'
 
 '/notifications/count':
   $ref: './notifications-count.yaml'

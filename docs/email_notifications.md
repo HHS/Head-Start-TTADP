@@ -140,6 +140,7 @@ Triggered synchronously by an application event, processed once per job.
 | `RECIPIENT_REPORT_APPROVED` | `programSpecialistRecipientReportApprovedNotification` | `notifyRecipientReportApproved` | `recipient_report_approved` |
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `collaboratorReportSubmittedForReviewNotification` | `notifyCollaboratorReportSubmittedForReview` | `collaborator_report_submitted_for_review` |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `creatorReportSubmittedForReviewNotification` | `notifyCreatorReportSubmittedForReview` | `creator_report_submitted_for_review` (uses "Revised Activity Report ..." wording when resubmitted from `needs_action`) |
+| `MONITORING_DETAILS_ADDED` | `monitoringDetailsAddedNotification` | `notifyMonitoringDetailsAdded` | `monitoring_details_added` (one email per user per recipient/monitoring report; sent to TTAC/ECM/GSM users whose home region matches, after the monitoring fact table refresh — see `src/services/monitoringDeliveryNotifications.ts`) |
 
 All instant handlers share the same shape:
 
@@ -154,7 +155,11 @@ export const notifyXxx = (job, transport = defaultTransport) => {
 
 ### Digest notifications
 
-Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. All digest jobs are processed by the single `notifyDigest` handler using the shared `digest` / `digest_empty` templates.
+Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. All digest jobs are processed by the single `notifyDigest` handler using the shared `digest` / `digest_empty` templates. Each digest type adds a `when` case with its intro line to `digest/html.pug` and its subject to `digest/subject.pug` (and to `digest_empty` unless it sets `skipEmpty`).
+
+Optional `DIGEST_CONFIG` fields:
+- `reportLink` — `(report) => path` for each listed item's link; defaults to `/activity-reports/:id`.
+- `skipEmpty` — when `true`, users whose fetcher returns nothing are not enqueued (no `digest_empty` email).
 
 **Standard digests** (auto-discovered by cron via `DIGEST_CONFIG`):
 
@@ -169,10 +174,11 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 | `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
 | `ADDED_AS_COLLABORATOR_TRAINING_REPORT` | `TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST` | `emailWhenAddedAsCollaboratorTrainingReport` |
 | `SESSION_REVIEW_REQUESTED_TRAINING_REPORT` | `TRAINING_REPORT_SESSION_SUBMITTED_DIGEST` | `emailWhenSessionReviewRequestedTrainingReport` |
+| `MONITORING_DETAILS_ADDED` | `MONITORING_DETAILS_ADDED_DIGEST` | `emailWhenMonitoringDetailsAdded` (lists recipients with monitoring reports the Hub detected in the user's home region, from `MonitoringReportDeliveries`; TTAC/ECM/GSM users only; `skipEmpty`) |
 
-Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`. Their fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the session digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
+Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the session digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 
-**Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `runDigestJob`.
+**Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `sendEmailDigests`.
 
 #### Cron schedule
 
@@ -181,6 +187,10 @@ Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry 
 | Daily | 4:01 PM ET, Mon–Fri | `today` | Also sends TR task-due alerts |
 | Weekly | 4:05 PM ET, Fridays | `this week` | — |
 | Monthly | 4:10 PM ET, 28th–31st | `this month` | Skips non-last-day-of-month |
+
+#### Running digests manually
+
+`POST /api/admin/email-testing/digests/:frequency` (`daily`, `weekly` or `monthly`) runs `sendEmailDigests` on demand. It is admin-only and returns 403 unless `isNonProductionEnvironment()` (`src/envParser.js`) recognizes `TTA_SMART_HUB_URI` as a local, dev or staging host. Manual monthly runs skip the last-day-of-month check, and manual daily runs also send TR task-due alerts when `SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true'`. The run is not atomic: if it fails partway, digests already queued still go out.
 
 ### Training report notifications
 
@@ -562,3 +572,12 @@ To configure your local docker environment for testing emails:
 - Verify your email, assign yourself a role that displays the email prefs in account management (TTAC, ECM, etc), or use impersonation
 - Test via mailpit at `http://localhost:8025/`
 - You can modify the cron frequency in `src/lib/cron.js`
+
+### Running email jobs on demand (non-production only)
+
+Admins can use **Admin → Email testing** (`/admin/email-testing`) to run email jobs right away. Emails go to the users who would normally get them, based on their settings. Both endpoints return 403 in production (`isNonProductionEnvironment()`).
+
+- **Run daily/weekly/monthly digests** (`POST /api/admin/email-testing/digests/:frequency`) runs the digest cron for that frequency, including the monitoring digest.
+- **Run monitoring deliveries** (`POST /api/admin/email-testing/monitoring-deliveries`) runs the monitoring delivery notifications (in-app and immediate email) as if the daily refresh had just loaded every report delivered yesterday or today (`notifyRecentMonitoringDeliveries`). Unlike the nightly run, it does not skip reports that were already sent, so several people can test on the same day: immediate emails are resent each run, while existing in-app notifications are not duplicated. Deliveries are still recorded in `MonitoringReportDeliveries` so the daily digest includes them.
+
+Locally, emails are only delivered when `SEND_NON_PRODUCTION_NOTIFICATIONS=true` (for example to mailpit, as above).

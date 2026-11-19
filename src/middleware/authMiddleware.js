@@ -139,7 +139,33 @@ export async function login(req, res) {
   }
 }
 
+/**
+ * Reports which piece of login state the callback needs but the session no longer has
+ * (session expired, cookie not sent, callback URL revisited after login).
+ * Only reads the session; never returns or logs the values themselves.
+ * @param {{ session?: { pkce?: { codeVerifier?: string, state?: string, nonce?: string } } }} req
+ * @returns {'missing_session' | 'missing_pkce' | 'missing_code_verifier' | 'missing_state' | 'missing_nonce' | undefined}
+ */
+export function getMissingLoginState(req) {
+  if (!req.session) return 'missing_session';
+  const { pkce } = req.session;
+  if (!pkce) return 'missing_pkce';
+  if (!pkce.codeVerifier) return 'missing_code_verifier';
+  if (!pkce.state) return 'missing_state';
+  if (!pkce.nonce) return 'missing_nonce';
+  return undefined;
+}
+
 export async function getAccessToken(req) {
+  // Runs before OIDC discovery and before any pkce property is read.
+  const missingLoginState = getMissingLoginState(req);
+  if (missingLoginState) {
+    auditLogger.error(`${namespace} OIDC callback missing login state. Possible lost session.`, {
+      reason: missingLoginState,
+    });
+    return undefined;
+  }
+
   try {
     const currentUrl = new URL(req.originalUrl, `${req.protocol}://${req.get('host')}`);
 
@@ -179,11 +205,6 @@ export async function getAccessToken(req) {
       expectedNonce: req.session.pkce.nonce,
       idTokenExpected: true,
     };
-
-    if (!req.session?.pkce?.codeVerifier) {
-      auditLogger.error('OIDC callback missing PKCE code verifier. Possible lost session.');
-      return undefined;
-    }
 
     const tokens = await client.authorizationCodeGrant(issuerConfig, currentUrl, options);
 
