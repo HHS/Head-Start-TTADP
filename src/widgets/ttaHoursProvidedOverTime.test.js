@@ -253,7 +253,7 @@ describe('ttaHoursProvidedOverTime', () => {
       },
       {
         startDate: '2025-11-15',
-        duration: 3,
+        duration: 2.96,
         goals: [],
         deliveryMethods: ['virtual'],
         activityReports: [],
