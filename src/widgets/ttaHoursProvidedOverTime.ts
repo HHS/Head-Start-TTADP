@@ -236,7 +236,7 @@ export default async function ttaHoursProvidedOverTime(
     .sort((a, b) => a.startDate.localeCompare(b.startDate))
     .map((row) => ({
       startDate: row.startDate,
-      duration: Math.round(row.duration * 10) / 10,
+      duration: row.duration,
       goals: [...row.goals].sort(),
       deliveryMethods: [...row.deliveryMethods].sort(),
       activityReports: row.activityReports,
