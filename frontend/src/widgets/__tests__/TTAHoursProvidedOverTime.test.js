@@ -34,6 +34,8 @@ describe('TTA hours provided over time', () => {
               { startDate: '2026-01-02', duration: 2 },
               { startDate: '2026-01-07', duration: 1.5 },
               { startDate: '2025-12-29', duration: 7 },
+              { startDate: '2026-02-10', duration: 4 },
+              { startDate: '2026-03-02', duration: 6 },
             ]
           : [{ startDate: '2026-01-06', endDate: '2026-01-10' }]
       )
@@ -67,6 +69,63 @@ describe('TTA hours provided over time', () => {
     await screen.findByLabelText('January 2026, week 1: 3.5 hours, monitoring review');
     expect(screen.getByLabelText('February 2026, week 3: 0.0 hours')).toBeInTheDocument();
     expect(screen.queryByLabelText('December 2025, week 5: 7.0 hours')).not.toBeInTheDocument();
+    expect(fetchWidget).toHaveBeenCalledWith(
+      'ttaHoursProvidedOverTime',
+      'region.in[]=1&recipientId.ctn[]=401'
+    );
+  });
+
+  it('uses an on-or-after filter as an inclusive lower bound', async () => {
+    const lowerBoundFilters = [
+      { topic: 'startDate', condition: 'is on or after', query: '01/07/2026' },
+      ...filters.slice(1),
+    ];
+    render(<TTAHoursProvidedOverTime filters={lowerBoundFilters} />);
+
+    expect(
+      await screen.findByLabelText('January 2026, week 1: 1.5 hours, monitoring review')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'March 2026' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'December 2025' })).not.toBeInTheDocument();
+    expect(fetchWidget).toHaveBeenCalledWith(
+      'ttaHoursProvidedOverTime',
+      'region.in[]=1&recipientId.ctn[]=401'
+    );
+  });
+
+  it('uses an on-or-before filter as an inclusive upper bound', async () => {
+    const upperBoundFilters = [
+      { topic: 'startDate', condition: 'is on or before', query: '01/07/2026' },
+      ...filters.slice(1),
+    ];
+    render(<TTAHoursProvidedOverTime filters={upperBoundFilters} />);
+
+    expect(
+      await screen.findByLabelText('January 2026, week 1: 3.5 hours, monitoring review')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'December 2025' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'February 2026' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('January 2026, week 2: 0.0 hours')).not.toHaveClass(
+      'tta-hours-monitoring'
+    );
+    expect(fetchWidget).toHaveBeenCalledWith(
+      'ttaHoursProvidedOverTime',
+      'region.in[]=1&recipientId.ctn[]=401'
+    );
+  });
+
+  it('combines on-or-after and on-or-before filters', async () => {
+    const boundedFilters = [
+      { topic: 'startDate', condition: 'is on or after', query: '01/07/2026' },
+      { topic: 'startDate', condition: 'is on or before', query: '02/15/2026' },
+      ...filters.slice(1),
+    ];
+    render(<TTAHoursProvidedOverTime filters={boundedFilters} />);
+
+    expect(await screen.findByLabelText('February 2026, week 2: 4.0 hours')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'January 2026' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'March 2026' })).not.toBeInTheDocument();
     expect(fetchWidget).toHaveBeenCalledWith(
       'ttaHoursProvidedOverTime',
       'region.in[]=1&recipientId.ctn[]=401'

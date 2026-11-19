@@ -17,24 +17,50 @@ type HoursRow = { startDate: string; duration: number };
 type MonitoringReview = { startDate: string; endDate: string };
 
 function dateRange(filters: Filter[], hours: HoursRow[]) {
-  const dateFilter = filters.find((filter) => filter.topic === 'startDate');
-  const query = Array.isArray(dateFilter?.query) ? dateFilter.query[0] : dateFilter?.query;
-  if (typeof query === 'string') {
-    const [startDate, endDate, ...extra] = query.split('-');
-    const start = moment(startDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
-    const end = moment(endDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
-    if (!extra.length && start.isValid() && end.isValid() && !end.isBefore(start)) {
-      return { start, end };
-    }
-  }
-
   const dates = hours
     .map((row) => moment(row.startDate, 'YYYY-MM-DD', true))
     .filter((date) => date.isValid());
   if (!dates.length) return null;
+
+  let lowerBound = null;
+  let upperBound = null;
+  filters
+    .filter((filter) => filter.topic === 'startDate')
+    .forEach((filter) => {
+      const queries = Array.isArray(filter.query) ? filter.query : [filter.query];
+      queries.forEach((query) => {
+        if (typeof query !== 'string') return;
+
+        if (filter.condition === 'is on or after') {
+          const date = moment(query, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+          if (date.isValid()) {
+            lowerBound = lowerBound ? moment.max(lowerBound, date) : date;
+          }
+          return;
+        }
+
+        if (filter.condition === 'is on or before') {
+          const date = moment(query, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+          if (date.isValid()) {
+            upperBound = upperBound ? moment.min(upperBound, date) : date;
+          }
+          return;
+        }
+
+        const [startDate, endDate, ...extra] = query.split('-');
+        if (extra.length) return;
+        const start = moment(startDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+        const end = moment(endDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+        if (start.isValid() && end.isValid()) {
+          lowerBound = lowerBound ? moment.max(lowerBound, start) : start;
+          upperBound = upperBound ? moment.min(upperBound, end) : end;
+        }
+      });
+    });
+
   return {
-    start: moment.min(dates),
-    end: moment.max(dates),
+    start: lowerBound || moment.min(dates),
+    end: upperBound || moment.max(dates),
   };
 }
 
@@ -42,6 +68,7 @@ function monthsInRange(range: ReturnType<typeof dateRange>) {
   if (!range) return [];
   const start = range.start.clone().startOf('month');
   const count = range.end.clone().startOf('month').diff(start, 'months') + 1;
+  if (count < 1) return [];
   return Array.from({ length: count }, (_, index) => start.clone().add(index, 'months'));
 }
 
@@ -169,7 +196,9 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                           );
                           const monitoring = data.reviews.some(
                             (review: MonitoringReview) =>
-                              review.startDate <= lastDate && review.endDate >= firstDate
+                              firstDate <= lastDate &&
+                              review.startDate <= lastDate &&
+                              review.endDate >= firstDate
                           );
                           const color = COLOR_SCALE[colorLevel(hours)];
                           return (
