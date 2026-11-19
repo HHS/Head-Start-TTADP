@@ -474,6 +474,41 @@ describe('session report handlers', () => {
       expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
     });
 
+    it('notifies the new approver when a submitted session is reassigned', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      const reassignedSession = { ...mockSession, submitted: true, approverId: 2 };
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({ ...mockSession, submitted: true, approverId: 1 });
+      updateSession.mockResolvedValue(reassignedSession);
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).toHaveBeenCalledWith(mockEvent, reassignedSession);
+    });
+
+    it('does not notify a new approver while the session needs action', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        submitted: true,
+        approverId: 1,
+        data: { status: 'needs_action' },
+      });
+      updateSession.mockResolvedValue({
+        ...mockSession,
+        submitted: true,
+        approverId: 2,
+        data: { status: 'needs_action' },
+      });
+      trSessionSubmittedForApproval.mockClear();
+      await updateHandler(mockRequest, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+    });
+
     it('does not notify the approver when the session is not submitted', async () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,

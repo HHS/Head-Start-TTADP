@@ -13,9 +13,11 @@ import { createGoal, createGrant, createRecipient, createUser, destroyGoal } fro
 import { createEvent, destroyEvent } from './event';
 import {
   archiveSessionNeedsActionNotifications,
+  archiveSessionSubmittedNotifications,
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
   createSessionNeedsActionNotificationForCollaborators,
+  createSessionSubmittedNotification,
 } from './notifications/trainingReport';
 import {
   createSession,
@@ -41,9 +43,11 @@ jest.mock('../lib/mailer', () => ({
 jest.mock('./notifications/trainingReport', () => ({
   ...jest.requireActual('./notifications/trainingReport'),
   archiveSessionNeedsActionNotifications: jest.fn(),
+  archiveSessionSubmittedNotifications: jest.fn(),
   createNotificationForSessionSubmittedCollaborators: jest.fn(),
   createSessionNeedsActionNotification: jest.fn(),
   createSessionNeedsActionNotificationForCollaborators: jest.fn(),
+  createSessionSubmittedNotification: jest.fn(),
 }));
 
 describe('session reports service', () => {
@@ -367,6 +371,47 @@ describe('session reports service', () => {
       expect(archiveSessionNeedsActionNotifications).toHaveBeenCalledWith(created.id);
     });
 
+    it('archives the approver notification when changes are requested or the session is approved', async () => {
+      const created = await createSubmittedSession();
+
+      await requestChanges(created.id);
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledTimes(1);
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledWith(created.id);
+
+      await resubmit(created.id);
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledTimes(1);
+
+      await updateSession(created.id, {
+        eventId: needsActionEventId,
+        data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+      });
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledTimes(2);
+
+      await destroySession(created.id);
+    });
+
+    it('records when the session is resubmitted', async () => {
+      const created = await createSubmittedSession();
+      await requestChanges(created.id);
+      const before = new Date();
+
+      await resubmit(created.id);
+
+      const saved = await SessionReportPilot.findByPk(created.id);
+      expect(saved.submittedAt.getTime()).toBeGreaterThanOrEqual(before.getTime() - 1000);
+
+      await destroySession(created.id);
+    });
+
+    it('archives the approver notification when the session is deleted', async () => {
+      const created = await createSubmittedSession();
+      jest.clearAllMocks();
+
+      await destroySession(created.id);
+
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledWith(created.id);
+    });
+
     it('still saves the session when the notification fails', async () => {
       createSessionNeedsActionNotification.mockRejectedValueOnce(new Error('boom'));
       const created = await createSubmittedSession();
@@ -441,6 +486,44 @@ describe('session reports service', () => {
         expect.objectContaining({ eventId: submitEventId, collaboratorIds }),
         expect.objectContaining({ id: created.id })
       );
+
+      await destroySession(created.id);
+    });
+
+    it('notifies the approver and records when the session is submitted for the first time', async () => {
+      const created = await createReadySession();
+
+      await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { collabComplete: true },
+      });
+
+      expect(createSessionSubmittedNotification).toHaveBeenCalledTimes(1);
+      expect(createSessionSubmittedNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: submitEventId }),
+        expect.objectContaining({
+          id: created.id,
+          approverId: approver.id,
+          data: expect.objectContaining({ sessionName: 'Opening session' }),
+        })
+      );
+      const saved = await SessionReportPilot.findByPk(created.id);
+      expect(saved.submittedAt).toBeInstanceOf(Date);
+
+      await destroySession(created.id);
+    });
+
+    it('does not notify the approver or record a submission on later saves', async () => {
+      const created = await createReadySession({ collabComplete: true });
+
+      await updateSession(created.id, {
+        eventId: submitEventId,
+        data: { sessionName: 'Renamed', collabComplete: true },
+      });
+
+      expect(createSessionSubmittedNotification).not.toHaveBeenCalled();
+      const saved = await SessionReportPilot.findByPk(created.id);
+      expect(saved.submittedAt).toBeNull();
 
       await destroySession(created.id);
     });
@@ -686,8 +769,74 @@ describe('session reports service', () => {
       await destroySession(created.id);
     });
 
+    it('archives the former approver notification when facilitation resets a submitted session', async () => {
+      const created = await createSubmittedNcSession();
+      jest.clearAllMocks();
+
+      await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { facilitation: 'regional_tta_staff' },
+      });
+
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledWith(created.id);
+
+      await destroySession(created.id);
+    });
+
+    it('hands a submitted session to a new approver without resetting it', async () => {
+      const [created, newApprover] = await Promise.all([
+        createSubmittedNcSession(),
+        createUser({}),
+      ]);
+      jest.clearAllMocks();
+      const before = new Date();
+
+      const updated = await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { approverId: newApprover.id },
+      });
+
+      expect(updated.submitted).toBe(true);
+      expect(updated.data).toMatchObject(completeData);
+      expect(archiveSessionSubmittedNotifications).toHaveBeenCalledWith(created.id);
+      expect(createSessionSubmittedNotification).toHaveBeenCalledTimes(1);
+      expect(createSessionSubmittedNotification).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ id: created.id, approverId: newApprover.id })
+      );
+      // the new approver's digest picks it up
+      const saved = await SessionReportPilot.findByPk(created.id);
+      expect(saved.submittedAt.getTime()).toBeGreaterThanOrEqual(before.getTime() - 1000);
+
+      await destroySession(created.id);
+      await db.User.destroy({ where: { id: newApprover.id } });
+    });
+
+    it('does not ask a new approver to review a session that needs action', async () => {
+      const [created, newApprover] = await Promise.all([
+        createSubmittedNcSession(),
+        createUser({}),
+      ]);
+      await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { status: REPORT_STATUSES.NEEDS_ACTION },
+      });
+      jest.clearAllMocks();
+
+      await updateSession(created.id, {
+        eventId: ncEventId,
+        data: { approverId: newApprover.id },
+      });
+
+      expect(createSessionSubmittedNotification).not.toHaveBeenCalled();
+
+      await destroySession(created.id);
+      await db.User.destroy({ where: { id: newApprover.id } });
+    });
+
     it('keeps flags and the approver when facilitation is unchanged', async () => {
       const created = await createSubmittedNcSession();
+      jest.clearAllMocks();
 
       const updated = await updateSession(created.id, {
         eventId: ncEventId,
@@ -697,6 +846,7 @@ describe('session reports service', () => {
       expect(updated.approverId).toBe(approver.id);
       expect(updated.submitted).toBe(true);
       expect(updated.data).toMatchObject(completeData);
+      expect(archiveSessionSubmittedNotifications).not.toHaveBeenCalled();
 
       await destroySession(created.id);
     });

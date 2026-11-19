@@ -13,9 +13,11 @@ import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
 import {
   archiveSessionNeedsActionNotifications,
+  archiveSessionSubmittedNotifications,
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
   createSessionNeedsActionNotificationForCollaborators,
+  createSessionSubmittedNotification,
 } from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
 import type {
@@ -188,6 +190,12 @@ export async function destroySession(id: number): Promise<void> {
   await runInSavepoint(
     () => archiveSessionNeedsActionNotifications(id),
     `Error archiving session needs action notifications for session ${id}:`
+  );
+
+  // deleted before approval, so the approver no longer needs to act
+  await runInSavepoint(
+    () => archiveSessionSubmittedNotifications(id),
+    `Error archiving session submitted notifications for session ${id}:`
   );
 
   // Delete session.
@@ -398,6 +406,7 @@ export async function updateSession(
     submitterId?: number;
     startDate?: Date | null;
     endDate?: Date | null;
+    submittedAt?: Date;
     data: Cast;
   };
 
@@ -434,6 +443,27 @@ export async function updateSession(
     newData.hasBeenSubmitted = true;
   }
 
+  const wasNeedsAction = existingData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const isNeedsAction = newData.status === REPORT_STATUSES.NEEDS_ACTION;
+  const wasComplete = existingData.status === TRAINING_REPORT_STATUSES.COMPLETE;
+  const isComplete = newData.status === TRAINING_REPORT_STATUSES.COMPLETE;
+
+  // submitted, or resubmitted after changes were requested. A session reset by a facilitation
+  // change can leave needs action before it is complete, so being submitted again counts too.
+  const isSubmission = isSubmitted && !isNeedsAction && (wasNeedsAction || !wasSubmitted);
+
+  const newApproverId = update.approverId !== undefined ? update.approverId : session.approverId;
+  const approverChanged = newApproverId !== session.approverId;
+  // an admin handed a session awaiting review to a different approver; the work is still
+  // done, so it stays submitted and the new approver is asked to review it
+  const isReassigned =
+    wasSubmitted && isSubmitted && approverChanged && !isNeedsAction && !isComplete;
+
+  if (isSubmission || isReassigned) {
+    // read by the TR-21 digest
+    update.submittedAt = new Date();
+  }
+
   update.data = cast(JSON.stringify(newData), 'jsonb');
 
   await SessionReportPilot.update(update, {
@@ -442,6 +472,17 @@ export async function updateSession(
   });
 
   if (isFirstSubmission) {
+    // TR-3a: the approver needs to review the session
+    await runInSavepoint(
+      () =>
+        createSessionSubmittedNotification(event, {
+          id,
+          approverId: newApproverId,
+          data: newData as { sessionName?: string },
+        }),
+      `Error creating session submitted approver notification for session ${id}:`
+    );
+
     await runInSavepoint(
       () =>
         createNotificationForSessionSubmittedCollaborators(event, {
@@ -456,8 +497,31 @@ export async function updateSession(
     await runAfterCommit(() => trSessionSubmittedToCollaborators(event, { id, data: newData }));
   }
 
-  const wasNeedsAction = existingData.status === REPORT_STATUSES.NEEDS_ACTION;
-  const isNeedsAction = newData.status === REPORT_STATUSES.NEEDS_ACTION;
+  // a facilitation reset or approver change can leave the status untouched, so the former
+  // approver's alert must be archived on those too
+  const isWithdrawn = wasSubmitted && (!isSubmitted || approverChanged);
+
+  if ((isNeedsAction && !wasNeedsAction) || (isComplete && !wasComplete) || isWithdrawn) {
+    // the approver approved the session, requested changes, or can no longer review it,
+    // so they no longer need to act
+    await runInSavepoint(
+      () => archiveSessionSubmittedNotifications(id),
+      `Error archiving session submitted notifications for session ${id}:`
+    );
+  }
+
+  if (isReassigned) {
+    // TR-3a for the new approver, created after the former approver's alert is archived
+    await runInSavepoint(
+      () =>
+        createSessionSubmittedNotification(event, {
+          id,
+          approverId: newApproverId,
+          data: newData as { sessionName?: string },
+        }),
+      `Error creating session submitted approver notification for session ${id}:`
+    );
+  }
 
   if (isNeedsAction && !wasNeedsAction) {
     // the approver requested changes: TR-4a for the owner, TR-4c for collaborators
@@ -474,10 +538,8 @@ export async function updateSession(
       () => createSessionNeedsActionNotificationForCollaborators(event, needsActionSession),
       `Error creating session needs action collaborator notifications for session ${id}:`
     );
-  } else if (isSubmitted && !isNeedsAction && (wasNeedsAction || !wasSubmitted)) {
-    // resubmitted, so the owner no longer needs to act. A session reset by a facilitation
-    // change can leave needs action before it is complete, so also archive once it is
-    // submitted again.
+  } else if (isSubmission) {
+    // resubmitted, so the owner no longer needs to act
     await runInSavepoint(
       () => archiveSessionNeedsActionNotifications(id),
       `Error archiving session needs action notifications for session ${id}:`
