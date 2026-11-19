@@ -347,18 +347,25 @@ export async function updateSession(
   request,
   runAfterCommit: (work: () => Promise<void>) => void | Promise<void> = (work) => work()
 ) {
+  validateFields(request, ['eventId', 'data']);
+
   const session = await SessionReportPilot.findOne({
     where: { id },
   });
 
   if (!session) {
-    return createSession(request);
+    // request.eventId is the event's display (Smartsheet) ID, the same ID callers authorize
+    // against, so resolve it here rather than letting createSession treat it as a database ID.
+    const targetEvent = await findEventBySmartsheetId(String(request.eventId));
+    if (!targetEvent) {
+      throw new Error(`Event with display ID ${request.eventId} not found`);
+    }
+    return createSession({ ...request, eventId: targetEvent.id });
   }
 
-  validateFields(request, ['eventId', 'data']);
-
+  // A session's event is fixed at creation; the client-supplied eventId is never
+  // used to move a session to another event.
   const {
-    eventId,
     data: { approverId, goalTemplates, submitterId, trainers, ...data },
   } = request;
 
@@ -379,13 +386,15 @@ export async function updateSession(
   // approver chosen from the old candidate list must not carry over.
   const newData = facilitationChanged ? resetSessionCompletion(mergedData) : mergedData;
 
-  const event = await findEventBySmartsheetId(eventId);
+  const event = await findEventByDbId(session.eventId as number);
+  if (!event) {
+    throw new Error(`Event with database ID ${session.eventId} for session ${id} not found`);
+  }
 
   const hasStartDate = Object.hasOwn(cleanIncomingData, 'startDate');
   const hasEndDate = Object.hasOwn(cleanIncomingData, 'endDate');
 
   const update = {
-    eventId: event.id,
     startDate: hasStartDate
       ? (parseDate(incomingStartDate as string | null | undefined) as Date | null)
       : (session.get('startDate') as unknown as Date | null),
@@ -393,7 +402,6 @@ export async function updateSession(
       ? (parseDate(incomingEndDate as string | null | undefined) as Date | null)
       : (session.get('endDate') as unknown as Date | null),
   } as {
-    eventId: number;
     approverId?: number | null;
     submitterId?: number;
     startDate?: Date | null;
