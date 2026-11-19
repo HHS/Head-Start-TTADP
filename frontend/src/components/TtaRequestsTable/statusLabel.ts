@@ -24,21 +24,16 @@ export interface StatusLabel {
   needsAction: boolean;
 }
 
-const label = (
-  text: string,
-  needsAction: boolean = text === STATUS_LABELS.NEEDS_ACTION
-): StatusLabel => ({
+const label = (text: string): StatusLabel => ({
   label: text,
-  needsAction,
+  needsAction: text === STATUS_LABELS.NEEDS_ACTION,
 });
 
 /**
  * How a request's status reads to the user viewing it, per the TTA request status matrix.
  * The stored status says where the request is in its workflow; the label says what that
- * means to the viewer: whoever the request is waiting on sees "Needs action", and everyone
- * else sees whose review is pending. A reviewer who sent the request back to its creator also
- * sees "Needs action", though there is nothing for them to act on until it is resubmitted; a
- * COR who sent it back to its reviewer sees "Pending changes".
+ * means to the viewer: whoever the request is waiting on sees "Needs action", whoever is
+ * waiting on them sees "Pending changes", and everyone else sees whose review is pending.
  * Anyone not on the request reads it as its COR would before the request reaches them.
  */
 export default function ttaRequestStatusLabel(
@@ -59,11 +54,7 @@ export default function ttaRequestStatusLabel(
       if (isCreator) {
         return label(STATUS_LABELS.NEEDS_ACTION);
       }
-      // the reviewer sent it back, so it reads as needing action but isn't theirs to act on
-      if (isReviewer) {
-        return label(STATUS_LABELS.NEEDS_ACTION, false);
-      }
-      return label(STATUS_LABELS.REVIEW_PENDING);
+      return label(isReviewer ? STATUS_LABELS.PENDING_CHANGES : STATUS_LABELS.REVIEW_PENDING);
     case TTA_REQUEST_STATUSES.AWAITING_APPROVAL: {
       // the COR has sent it back to its reviewer for changes
       if (approver?.status === APPROVER_STATUSES.NEEDS_ACTION) {

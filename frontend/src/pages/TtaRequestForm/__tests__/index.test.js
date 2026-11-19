@@ -529,9 +529,9 @@ describe('TtaRequestForm', () => {
       expect(entries[1]).toHaveTextContent('Please add the agenda details we discussed.');
 
       expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('');
-      expect(screen.getByText('Needs action').closest('li')).toHaveTextContent(
-        'Needs action from Ross Geller (TTAC)'
-      );
+      // the banner says who asked for changes, so there is no review status list as well
+      expect(screen.queryByText('Review status')).toBeNull();
+      expect(screen.queryByText(/needs action from/i)).toBeNull();
       expect(screen.getByRole('button', { name: 'Update request' })).toBeVisible();
       expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull();
     });

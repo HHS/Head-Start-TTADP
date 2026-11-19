@@ -24,7 +24,6 @@ import useFetch from '../../hooks/useFetch';
 import { canEditTtaRequest } from '../../permissions';
 import UserContext from '../../UserContext';
 import { shouldUpdateFormData } from '../../utils/formRichTextEditorHelper';
-import ApproverStatusList from '../ActivityReport/Pages/components/ApproverStatusList';
 import {
   AUTOSAVE_INTERVAL,
   DATE_DISPLAY_SAVED_FORMAT,
@@ -308,8 +307,8 @@ function TtaRequestFormBody({
   // their report; the form's defaults would otherwise be saved over it. An id that can't be a
   // request's has nothing to fetch.
   const notes = useMemo(() => toNotesSummary(savedRequest?.notes), [savedRequest]);
-  // the reviewer whose review the request is waiting on, and where they stand, named with
-  // their role as the banner names them
+  // the reviewers and where they stand, named with their role, so the banner can name the one
+  // who sent the request back
   const reviewers = useMemo(
     () =>
       (savedRequest?.reviewers ?? []).map((reviewer) => ({
@@ -365,12 +364,6 @@ function TtaRequestFormBody({
             <WhoIsTheRequestFor recipientOptions={recipientOptions} recipient={recipient} />
             <GoalAndContext regionId={effectiveRegionId} />
             <SubmitForReview regionId={effectiveRegionId} notes={notes} />
-            {needsAction && (
-              <div className="margin-top-4">
-                <p className="text-bold margin-top-0 margin-bottom-1">Review status</p>
-                <ApproverStatusList approverStatus={reviewers} />
-              </div>
-            )}
             {saveError && (
               <Alert
                 type="error"
