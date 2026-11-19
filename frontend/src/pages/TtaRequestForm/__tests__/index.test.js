@@ -256,6 +256,10 @@ describe('TtaRequestForm', () => {
       expect(fetchMock.called('begin:/api/tta-requests/region/14/reviewers')).toBe(true);
     });
     expect(fetchMock.called('begin:/api/goal-templates')).toBe(true);
+    // monitoring is offered even to grants without a monitoring goal
+    expect(fetchMock.lastUrl('begin:/api/goal-templates')).toContain(
+      'includeMonitoringWithoutGoal=true'
+    );
   });
 
   it('surfaces every required field when an empty form is submitted', async () => {

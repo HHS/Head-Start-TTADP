@@ -20,9 +20,6 @@ const RECIPIENT = 'Agency 2 in region 1, Inc.';
 const GRANT = '09HP01111';
 // the recipient's other grant, which the reviewer switches the request to
 const OTHER_GRANT = '09HP01112';
-// the monitoring goal is only offered for a grant that already has one, and this grant has no
-// monitoring report, so it has no citations to choose
-const MONITORING_TEMPLATE_STANDARD = 'Monitoring';
 
 /** the background the reviewer rewrites the request's context to */
 const REVIEWER_CONTEXT = 'Enrollment help, with the agenda attached. Reviewer clarified scope.';
@@ -42,7 +39,6 @@ const PERMISSIONS: Grant[] = [
 // what this spec added, so cleanup leaves anything that was already there
 const granted: Grant[] = [];
 let addedFlag = false;
-let monitoringGoalId: number | null = null;
 let ttaRequestId: number | null = null;
 // the goals the request's grants already had, so cleanup removes only the ones its approval created
 let existingGoalIds: number[] = [];
@@ -143,29 +139,6 @@ test.describe('TTA request review', () => {
       addedFlag = true;
     }
 
-    const monitoringGoals = await rowsOf(
-      await query(
-        request,
-        `SELECT 1 FROM "Goals" g
-         JOIN "Grants" gr ON gr.id = g."grantId"
-         JOIN "GoalTemplates" gt ON gt.id = g."goalTemplateId"
-         WHERE gr.number = '${GRANT}' AND gt.standard = '${MONITORING_TEMPLATE_STANDARD}';`
-      )
-    );
-    if (!monitoringGoals.length) {
-      const [goal] = await rowsOf(
-        await query(
-          request,
-          `INSERT INTO "Goals" ("name", "status", "grantId", "goalTemplateId", "createdAt", "updatedAt")
-           SELECT gt."templateName", 'Not Started', gr.id, gt.id, NOW(), NOW()
-           FROM "Grants" gr, "GoalTemplates" gt
-           WHERE gr.number = '${GRANT}' AND gt.standard = '${MONITORING_TEMPLATE_STANDARD}'
-           RETURNING id;`
-        )
-      );
-      monitoringGoalId = Number(goal.id);
-    }
-
     existingGoalIds = (
       await rowsOf(
         await query(
@@ -213,9 +186,6 @@ test.describe('TTA request review', () => {
         request,
         `UPDATE "Users" SET flags = array_remove(flags, '${FEATURE_FLAG}') WHERE id = ${CREATOR.id};`
       );
-    }
-    if (monitoringGoalId) {
-      await query(request, `DELETE FROM "Goals" WHERE id = ${monitoringGoalId};`);
     }
   });
 

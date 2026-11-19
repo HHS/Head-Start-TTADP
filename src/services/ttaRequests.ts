@@ -13,18 +13,17 @@ import type {
   TtaRequestPayload,
   TtaRequestReviewPayload,
 } from '@ttahub/common/src/ttaRequests';
-import { uniqBy } from 'lodash';
 import moment from 'moment';
 import { Op, Transaction, type WhereOptions } from 'sequelize';
-import { GOAL_STATUS } from '../constants';
+import { CREATION_METHOD, GOAL_STATUS } from '../constants';
+import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { getCitationsByGrantIds } from './citations';
-import { getBlockingActivityReportsForGoals, isHiddenActivityReportGoal } from './goalTemplates';
-import { standardGoalConflict } from './standardGoals';
+import { isHiddenActivityReportGoal } from './goalTemplates';
 import { activeUsersWithScopesInRegion, usersByRoles } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
@@ -42,6 +41,7 @@ const {
   Grant,
   Program,
   Recipient,
+  GoalStatusChange,
   GoalTemplate,
   Role,
   User,
@@ -570,6 +570,8 @@ export async function submitTtaRequest(
     throw dataError('The reviewer must be able to review TTA requests in the request region');
   }
 
+  await checkGoalTemplate(existing.regionId, saved.goalTemplateId);
+
   if (saved.goalTemplate?.standard === TTA_REQUEST_MONITORING_STANDARD && !saved.citations.length) {
     const grantIds = saved.grants.map((grant) => grant.id);
     const activeCitations = grantIds.length
@@ -674,38 +676,81 @@ export async function reviewTtaRequest(
 }
 
 /**
- * The goals an approved request is for: one on each of its grants, from its goal template.
- * A grant only ever has one open goal from a template, so one it already has is reused;
- * otherwise a new one is created. A closed goal is never reopened. Either way it is linked to
- * the request. The request's citations stay on it, to be picked on later Activity Reports.
- *
- * A goal that is only on Activity Reports that are not yet approved is hidden from the
- * recipient record and can be removed with them, so the request can't be approved until
- * those reports are approved or drop the goal.
+ * A request's goal template has to be one the form offers for its grants: a curated template
+ * for every region or for the request's region. The form only lists those, so any other id was
+ * crafted or left over, and the request can't go on with it.
  */
-async function createGoalsForApprovedRequest(ttaRequestId: number, userId: number) {
-  const ttaRequest = await TtaRequest.findByPk(ttaRequestId, {
-    attributes: ['id', 'goalTemplateId'],
-    include: [
-      { model: GoalTemplate, as: 'goalTemplate', attributes: ['id', 'templateName'] },
-      { model: TtaRequestGrant, as: 'requestGrants', attributes: ['grantId'] },
-    ],
-  });
-
-  if (!ttaRequest.goalTemplate) {
+async function checkGoalTemplate(regionId: number, goalTemplateId: number | null) {
+  if (!goalTemplateId) {
     throw dataError('A request needs a goal before it can be approved');
   }
 
-  const { goalTemplate } = ttaRequest;
+  const goalTemplate = await GoalTemplate.findOne({
+    attributes: ['id', 'templateName', 'standard'],
+    where: {
+      id: goalTemplateId,
+      creationMethod: CREATION_METHOD.CURATED,
+      regionId: { [Op.or]: [null, regionId] },
+    },
+  });
+
+  if (!goalTemplate) {
+    throw dataError('The goal must be one that can be used in the request region');
+  }
+
+  return goalTemplate;
+}
+
+/**
+ * The status a suspended goal goes back to: the one it had before it was last suspended, or
+ * In Progress, as approving an Activity Report would set it, when there is no record of that.
+ */
+async function statusBeforeSuspension(goalId: number) {
+  const suspension = await GoalStatusChange.findOne({
+    attributes: ['oldStatus'],
+    where: { goalId, newStatus: GOAL_STATUS.SUSPENDED },
+    order: [
+      ['createdAt', 'DESC'],
+      ['id', 'DESC'],
+    ],
+  });
+
+  return [GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS].includes(suspension?.oldStatus)
+    ? suspension.oldStatus
+    : GOAL_STATUS.IN_PROGRESS;
+}
+
+/**
+ * The goals an approved request is for: one on each of its grants, from its goal template.
+ * A grant only ever has one open goal from a template, so one it already has is reused;
+ * otherwise a new one is created in Not Started. A closed goal is never reopened. Either way it
+ * is linked to the request. The request's citations stay on it, to be picked on later Activity
+ * Reports.
+ *
+ * A goal that is only on Activity Reports that are not yet approved is hidden from the
+ * recipient record and removed with them; the request takes it over, so it shows on the
+ * recipient record and stays if those reports drop it. A suspended goal goes back to the status
+ * it had before it was suspended.
+ *
+ * Monitoring goals only come from the recipient's monitoring reports, so a request for the
+ * monitoring goal is linked to the ones its grants have and never creates one.
+ */
+async function createGoalsForApprovedRequest(ttaRequestId: number, userId: number) {
+  const ttaRequest = await TtaRequest.findByPk(ttaRequestId, {
+    attributes: ['id', 'regionId', 'goalTemplateId'],
+    include: [{ model: TtaRequestGrant, as: 'requestGrants', attributes: ['grantId'] }],
+  });
+
+  const goalTemplate = await checkGoalTemplate(ttaRequest.regionId, ttaRequest.goalTemplateId);
   const grantIds: number[] = ttaRequest.requestGrants.map(({ grantId }) => grantId);
 
   if (!grantIds.length) {
     throw dataError('A request needs at least one grant before it can be approved');
   }
 
-  // Other requests for the same grants may be approved at the same time, and each would find
-  // no goal and create one. Locking the grants (in order, so two approvals can't deadlock) makes
-  // them take turns for the rest of the caller's transaction.
+  // Other requests and reports for the same grants may be saved at the same time, and each
+  // would find no goal and create one. Locking the grants (in order, so two approvals can't
+  // deadlock) makes approvals take turns for the rest of the caller's transaction.
   await Grant.unscoped().findAll({
     attributes: ['id'],
     where: { id: grantIds },
@@ -714,7 +759,7 @@ async function createGoalsForApprovedRequest(ttaRequestId: number, userId: numbe
   });
 
   const openGoals = await Goal.findAll({
-    attributes: ['id', 'grantId', 'createdVia', 'onApprovedAR'],
+    attributes: ['id', 'grantId', 'status', 'createdVia', 'onApprovedAR'],
     where: {
       grantId: grantIds,
       goalTemplateId: goalTemplate.id,
@@ -722,27 +767,39 @@ async function createGoalsForApprovedRequest(ttaRequestId: number, userId: numbe
     },
   });
 
-  if (openGoals.some(isHiddenActivityReportGoal)) {
-    const reportsByGoalId = await getBlockingActivityReportsForGoals(openGoals, userId);
-    const blockingActivityReports = uniqBy(
-      openGoals.flatMap((goal) => reportsByGoalId.get(goal.id) || []),
-      'displayId'
-    );
-    throw standardGoalConflict('STANDARD_GOAL_ON_ACTIVITY_REPORT', blockingActivityReports);
-  }
+  const isMonitoring = goalTemplate.standard === TTA_REQUEST_MONITORING_STANDARD;
 
   // each grant has its own goal from the template, so they can be found or created together
   await Promise.all(
     grantIds.map(async (grantId) => {
-      const goal =
-        openGoals.find((openGoal) => openGoal.grantId === grantId) ||
-        (await Goal.create({
+      let goal = openGoals.find((openGoal) => openGoal.grantId === grantId);
+
+      if (!goal) {
+        if (isMonitoring) {
+          return;
+        }
+        goal = await Goal.create({
           name: goalTemplate.templateName,
           grantId,
           goalTemplateId: goalTemplate.id,
           status: GOAL_STATUS.NOT_STARTED,
           createdVia: 'ttaRequest',
-        }));
+        });
+      }
+
+      if (isHiddenActivityReportGoal(goal)) {
+        await goal.update({ createdVia: 'ttaRequest' });
+      }
+
+      if (goal.status === GOAL_STATUS.SUSPENDED) {
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: await statusBeforeSuspension(goal.id),
+          reason: 'Goal unsuspended by TTA request approval',
+          context: 'approveTtaRequest',
+        });
+      }
 
       await TtaRequestGoal.findOrCreate({ where: { ttaRequestId, goalId: goal.id } });
     })

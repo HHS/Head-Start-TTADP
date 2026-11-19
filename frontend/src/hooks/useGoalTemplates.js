@@ -7,6 +7,7 @@ export default function useGoalTemplates(selectedGrants, options = {}) {
     filterOutUsedTemplates = false,
     includeBlockingActivityReports = false,
     includeClosedSuspendedGoals = false,
+    includeMonitoringWithoutGoal = false,
   } = options;
   const [goalTemplates, setGoalTemplates] = useState(null);
 
@@ -27,6 +28,7 @@ export default function useGoalTemplates(selectedGrants, options = {}) {
         const templates = await getGoalTemplates(grantIds, {
           includeBlockingActivityReports,
           includeClosedSuspendedGoals,
+          includeMonitoringWithoutGoal,
         });
         if (!isCurrentRequest) {
           return;
@@ -60,6 +62,7 @@ export default function useGoalTemplates(selectedGrants, options = {}) {
     filterOutUsedTemplates,
     includeBlockingActivityReports,
     includeClosedSuspendedGoals,
+    includeMonitoringWithoutGoal,
   ]);
 
   return goalTemplates;

@@ -5,6 +5,8 @@ import {
   TTA_REQUEST_STATUSES,
   TTA_REQUEST_STEPS,
 } from '@ttahub/common';
+import { CREATION_METHOD } from '../constants';
+import changeGoalStatus from '../goalServices/changeGoalStatus';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import filtersToScopes from '../scopes';
@@ -42,6 +44,7 @@ const {
   ActivityReportGoal,
   Goal,
   Grant,
+  GoalStatusChange,
   GoalTemplate,
   Permission,
   Recipient,
@@ -79,7 +82,8 @@ describe('ttaRequests service', () => {
         createUser({}),
         createRecipient({}),
         createRecipient({}),
-        createGoalTemplate(),
+        // the form only offers curated templates
+        createGoalTemplate({ name: null, creationMethod: CREATION_METHOD.CURATED }),
         createUser({ homeRegionId: 1 }),
         createUser({ homeRegionId: 1 }),
       ]);
@@ -633,6 +637,31 @@ describe('ttaRequests service', () => {
       expect(submitted.grants.map((g) => g.id)).toEqual([grantOne.id]);
       expect(submitted.reviewer.id).toBe(reviewer.id);
       expect(submitted.context).toBe('<p>Context</p>');
+    });
+
+    it('rejects a goal template the form would not offer', async () => {
+      const [automatic, otherRegion] = await Promise.all([
+        createGoalTemplate(),
+        createGoalTemplate({ name: null, creationMethod: CREATION_METHOD.CURATED }),
+      ]);
+      await otherRegion.update({ regionId: 2 });
+
+      try {
+        await Promise.all(
+          [automatic, otherRegion].map(async (template) => {
+            const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+            await expect(
+              submitTtaRequest(draft, { ...complete, goalTemplateId: template.id }, creator.id)
+            ).rejects.toMatchObject({ statusCode: 400 });
+          })
+        );
+      } finally {
+        await TtaRequest.destroy({
+          where: { goalTemplateId: [automatic.id, otherRegion.id] },
+          force: true,
+        });
+        await GoalTemplate.destroy({ where: { id: [automatic.id, otherRegion.id] } });
+      }
     });
 
     it('rejects a reviewer who cannot review in the region', async () => {
@@ -1224,6 +1253,7 @@ describe('ttaRequests service', () => {
       // the goals outlive their requests, so each test starts without any
       const goalIds = (await templateGoals()).map(({ id }) => id);
       await TtaRequestGoal.destroy({ where: { goalId: goalIds } });
+      await GoalStatusChange.destroy({ where: { goalId: goalIds } });
       await Goal.destroy({ where: { id: goalIds }, individualHooks: true, force: true });
     });
 
@@ -1317,6 +1347,133 @@ describe('ttaRequests service', () => {
       expect(result.goals.map(({ id }) => id)).toEqual([existing.id]);
     });
 
+    it.each([
+      ['Not Started', 'Not Started'],
+      ['In Progress', 'In Progress'],
+    ])("unsuspends a grant's goal that was %s before it was suspended", async (before, after) => {
+      const suspended = await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: before,
+        createdVia: 'rtr',
+      });
+      await changeGoalStatus({
+        goalId: suspended.id,
+        userId: creator.id,
+        newStatus: 'Suspended',
+        reason: 'Recipient request',
+        context: 'test',
+      });
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+
+      const goals = await templateGoals();
+      expect(goals).toHaveLength(1);
+      expect(goals[0].id).toBe(suspended.id);
+      expect(goals[0].status).toBe(after);
+      expect(result.goals.map(({ id }) => id)).toEqual([suspended.id]);
+      const change = await GoalStatusChange.findOne({
+        where: { goalId: suspended.id, oldStatus: 'Suspended' },
+      });
+      expect(change).toMatchObject({
+        newStatus: after,
+        userId: backupCor.id,
+        context: 'approveTtaRequest',
+      });
+    });
+
+    it('rejects a request whose goal template the form would not offer', async () => {
+      const automatic = await createGoalTemplate();
+      const awaiting = await awaitingApproval();
+      await TtaRequest.update({ goalTemplateId: automatic.id }, { where: { id: awaiting.id } });
+
+      try {
+        await expect(
+          approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id)
+        ).rejects.toMatchObject({ statusCode: 400 });
+        expect(await Goal.count({ where: { goalTemplateId: automatic.id } })).toBe(0);
+      } finally {
+        await TtaRequest.destroy({ where: { id: awaiting.id }, force: true });
+        await GoalTemplate.destroy({ where: { id: automatic.id } });
+      }
+    });
+
+    describe('for the monitoring goal', () => {
+      let monitoringTemplate;
+      let monitoringGoal;
+
+      const awaitingMonitoringApproval = async () => {
+        const awaiting = await awaitingApproval([grantOne.id, grantTwo.id]);
+        await TtaRequest.update(
+          { goalTemplateId: monitoringTemplate.id },
+          { where: { id: awaiting.id } }
+        );
+        return awaiting;
+      };
+
+      beforeAll(async () => {
+        monitoringTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
+      });
+
+      afterEach(async () => {
+        if (monitoringGoal) {
+          await TtaRequestGoal.destroy({ where: { goalId: monitoringGoal.id } });
+          await GoalStatusChange.destroy({ where: { goalId: monitoringGoal.id } });
+          await Goal.destroy({ where: { id: monitoringGoal.id }, force: true });
+          monitoringGoal = null;
+        }
+      });
+
+      it('links the grants that have a monitoring goal and creates none', async () => {
+        monitoringGoal = await Goal.create({
+          name: monitoringTemplate.templateName,
+          grantId: grantOne.id,
+          goalTemplateId: monitoringTemplate.id,
+          status: 'In Progress',
+          createdVia: 'monitoring',
+        });
+        const awaiting = await awaitingMonitoringApproval();
+
+        const result = await approveTtaRequest(
+          awaiting,
+          { status: APPROVER_STATUSES.APPROVED },
+          backupCor.id
+        );
+
+        expect(result.status).toBe(TTA_REQUEST_STATUSES.APPROVED);
+        expect(result.goals.map(({ id }) => id)).toEqual([monitoringGoal.id]);
+        expect(
+          await Goal.count({
+            where: { grantId: [grantOne.id, grantTwo.id], goalTemplateId: monitoringTemplate.id },
+          })
+        ).toBe(1);
+      });
+
+      it('approves the request without a goal when its grants have no monitoring goal', async () => {
+        const awaiting = await awaitingMonitoringApproval();
+
+        const result = await approveTtaRequest(
+          awaiting,
+          { status: APPROVER_STATUSES.APPROVED },
+          backupCor.id
+        );
+
+        expect(result.status).toBe(TTA_REQUEST_STATUSES.APPROVED);
+        expect(result.goals).toEqual([]);
+        expect(
+          await Goal.count({
+            where: { grantId: [grantOne.id, grantTwo.id], goalTemplateId: monitoringTemplate.id },
+          })
+        ).toBe(0);
+      });
+    });
+
     it("leaves a grant's closed goal from the template closed and creates a new one", async () => {
       const closed = await Goal.create({
         name: goalTemplate.templateName,
@@ -1401,23 +1558,24 @@ describe('ttaRequests service', () => {
         await ActivityReport.destroy({ where: { id: report.id }, force: true });
       });
 
-      it('rejects the approval with a conflict naming the report', async () => {
+      it("takes over the report's goal, so it shows on the recipient record", async () => {
         const awaiting = await awaitingApproval();
 
-        await expect(
-          approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id)
-        ).rejects.toMatchObject({
-          statusCode: 409,
-          responseBody: {
-            code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
-            blockingActivityReports: [
-              expect.objectContaining({ displayId: expect.stringContaining(`-AR-${report.id}`) }),
-            ],
-          },
-        });
+        const result = await approveTtaRequest(
+          awaiting,
+          { status: APPROVER_STATUSES.APPROVED },
+          backupCor.id
+        );
 
-        expect(await TtaRequestGoal.count({ where: { ttaRequestId: awaiting.id } })).toBe(0);
-        expect((await templateGoals()).map(({ id }) => id)).toEqual([draftGoal.id]);
+        expect(result.goals.map(({ id }) => id)).toEqual([draftGoal.id]);
+        const goals = await templateGoals();
+        expect(goals).toHaveLength(1);
+        expect(goals[0]).toMatchObject({
+          id: draftGoal.id,
+          status: 'Not Started',
+          createdVia: 'ttaRequest',
+          onApprovedAR: false,
+        });
       });
     });
 
