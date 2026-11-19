@@ -475,8 +475,9 @@ const requeuePendingFileDeletions = async ({
     where: { completedAt: null, attempts: { [Op.gte]: maxAttempts } },
   });
   if (exhausted) {
-    auditLogger.error(
-      `SERVICE:FILES:requeuePendingFileDeletions ${exhausted} S3 file deletions are still pending after ${maxAttempts} attempts`
+    auditLogger.alertError(
+      `SERVICE:FILES:requeuePendingFileDeletions ${exhausted} S3 file deletions are still pending after ${maxAttempts} attempts and need manual cleanup`,
+      's3_orphaned_file'
     );
   }
 

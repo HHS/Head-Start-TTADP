@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { FILE_STATUSES } from '../constants';
+import { auditLogger } from '../logger';
 import db, { CommunicationLog, CommunicationLogFile, File, FileDeletion, User } from '../models';
 import { createUser } from '../testUtils';
 import {
@@ -448,7 +449,13 @@ describe('files service', () => {
       addDeleteFileToQueue.mock.calls.filter(([, , id]) => id === deletion.id);
 
     it('requeues only stale pending rows and counts an attempt', async () => {
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
       const { exhausted } = await requeuePendingFileDeletions();
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.stringContaining('need manual cleanup'),
+        's3_orphaned_file'
+      );
+      alertSpy.mockRestore();
 
       expect(callsFor(rows.stale)).toEqual([[rows.stale.fileId, rows.stale.key, rows.stale.id]]);
       expect(callsFor(rows.recent)).toEqual([]);
