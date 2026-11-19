@@ -12,21 +12,36 @@ import { COLOR_SCALE } from './FindingCategoryHotspotUtils';
 import './TTAHoursProvidedOverTime.css';
 
 const TITLE = 'TTA hours provided over time';
-const PERIODS = ['Current year', 'Previous year', 'Last 6 months'] as const;
-type Period = (typeof PERIODS)[number];
 type Filter = { topic: string; condition: string; query: string | number | string[] };
 type HoursRow = { startDate: string; duration: number };
 type MonitoringReview = { startDate: string; endDate: string };
 
-function periodMonths(period: Period) {
-  const today = moment();
-  const start =
-    period === 'Previous year'
-      ? today.clone().subtract(1, 'year').startOf('year')
-      : period === 'Last 6 months'
-        ? today.clone().subtract(5, 'months').startOf('month')
-        : today.clone().startOf('year');
-  const count = period === 'Last 6 months' ? 6 : 12;
+function dateRange(filters: Filter[], hours: HoursRow[]) {
+  const dateFilter = filters.find((filter) => filter.topic === 'startDate');
+  const query = Array.isArray(dateFilter?.query) ? dateFilter.query[0] : dateFilter?.query;
+  if (typeof query === 'string') {
+    const [startDate, endDate, ...extra] = query.split('-');
+    const start = moment(startDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+    const end = moment(endDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+    if (!extra.length && start.isValid() && end.isValid() && !end.isBefore(start)) {
+      return { start, end };
+    }
+  }
+
+  const dates = hours
+    .map((row) => moment(row.startDate, 'YYYY-MM-DD', true))
+    .filter((date) => date.isValid());
+  if (!dates.length) return null;
+  return {
+    start: moment.min(dates),
+    end: moment.max(dates),
+  };
+}
+
+function monthsInRange(range: ReturnType<typeof dateRange>) {
+  if (!range) return [];
+  const start = range.start.clone().startOf('month');
+  const count = range.end.clone().startOf('month').diff(start, 'months') + 1;
   return Array.from({ length: count }, (_, index) => start.clone().add(index, 'months'));
 }
 
@@ -40,12 +55,10 @@ function colorLevel(value: number) {
 }
 
 export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[] }) {
-  const [period, setPeriod] = useState<Period>('Current year');
   const [showTable, setShowTable] = useState(false);
   const drawerRef = useRef(null);
   const chartRef = useRef(null);
   const capture = useMediaCapture(chartRef, TITLE);
-  const months = periodMonths(period);
   const widgetFilters = filters.filter((filter) => filter.topic !== 'startDate');
   const query = filtersToQueryString(widgetFilters);
   const { data, loading, error } = useFetch(
@@ -60,6 +73,8 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
     [query],
     'Unable to load TTA hours provided over time'
   );
+  const range = dateRange(filters, data.hours);
+  const months = monthsInRange(range);
 
   const menuItems = showTable
     ? [{ label: 'Display graph', onClick: () => setShowTable(false) }]
@@ -92,19 +107,6 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
         error={error}
         menuItems={menuItems}
       >
-        <div className="tta-hours-periods padding-x-3">
-          {PERIODS.map((option) => (
-            <button
-              type="button"
-              key={option}
-              className={`tta-hours-period ${period === option ? 'tta-hours-period-active' : ''}`}
-              aria-pressed={period === option}
-              onClick={() => setPeriod(option)}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
         {error ? null : showTable ? (
           <p className="padding-3">Table view is not yet available.</p>
         ) : (
@@ -154,11 +156,12 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                             week === 5
                               ? month.clone().endOf('month')
                               : first.clone().add(6, 'days');
-                          const firstDate = first.format('YYYY-MM-DD');
-                          const lastDate = last.format('YYYY-MM-DD');
+                          const firstDate = moment
+                            .max(first, range?.start || first)
+                            .format('YYYY-MM-DD');
+                          const lastDate = moment.min(last, range?.end || last).format('YYYY-MM-DD');
                           const matching = data.hours.filter(
-                            (row: HoursRow) =>
-                              row.startDate >= firstDate && row.startDate <= lastDate
+                            (row: HoursRow) => row.startDate >= firstDate && row.startDate <= lastDate
                           );
                           const hours = matching.reduce(
                             (sum: number, row: HoursRow) => sum + Number(row.duration),
@@ -188,16 +191,13 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                       <td />
                       {months.map((month) => (
                         <td key={month.format('YYYY-MM')}>
-                          {month.format(period === 'Last 6 months' ? 'MMM YY' : 'MMM')}
+                          {month.format('MMM YY')}
                         </td>
                       ))}
                     </tr>
                   </tfoot>
                 </table>
               </div>
-              {period !== 'Last 6 months' && (
-                <div className="text-center text-bold margin-top-1">{months[0].format('YYYY')}</div>
-              )}
             </div>
           </div>
         )}

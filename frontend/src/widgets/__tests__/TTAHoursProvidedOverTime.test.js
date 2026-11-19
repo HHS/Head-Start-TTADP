@@ -16,7 +16,7 @@ jest.mock(
 );
 
 const filters = [
-  { topic: 'startDate', condition: 'is within', query: '01/01/2026-11/17/2026' },
+  { topic: 'startDate', condition: 'is within', query: '01/01/2026-02/15/2026' },
   { topic: 'region', condition: 'is', query: '1' },
   { topic: 'recipientId', condition: 'contains', query: '401' },
 ];
@@ -53,29 +53,24 @@ describe('TTA hours provided over time', () => {
     expect(screen.getByLabelText('January 2026, week 2: 0.0 hours, monitoring review')).toHaveClass(
       'tta-hours-monitoring'
     );
-    expect(screen.getByRole('button', { name: 'Current year' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    expect(screen.queryByRole('button', { name: 'Current year' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'December 2025' })).not.toBeInTheDocument();
     expect(fetchWidget).toHaveBeenCalledWith(
       'ttaHoursProvidedOverTime',
       'region.in[]=1&recipientId.ctn[]=401'
     );
   });
 
-  it('changes periods without filtering training sessions by their event start date', async () => {
+  it('uses the selected page date range without filtering sessions by event start date', async () => {
     render(<TTAHoursProvidedOverTime filters={filters} />);
     await screen.findByLabelText('January 2026, week 1: 3.5 hours, monitoring review');
-    userEvent.click(screen.getByRole('button', { name: 'Previous year' }));
-    expect(screen.getByLabelText('December 2025, week 5: 7.0 hours')).toBeInTheDocument();
-    userEvent.click(screen.getByRole('button', { name: 'Last 6 months' }));
-    expect(screen.getByRole('button', { name: 'Last 6 months' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
+    expect(screen.getByLabelText('February 2026, week 3: 0.0 hours')).toBeInTheDocument();
+    expect(screen.queryByLabelText('December 2025, week 5: 7.0 hours')).not.toBeInTheDocument();
+    expect(fetchWidget).toHaveBeenCalledWith(
+      'ttaHoursProvidedOverTime',
+      'region.in[]=1&recipientId.ctn[]=401'
     );
-    expect(screen.getByLabelText('June 2026, week 1: 0.0 hours')).toBeInTheDocument();
-    expect(screen.queryByLabelText('May 2026, week 1: 0.0 hours')).not.toBeInTheDocument();
-    expect(fetchWidget).toHaveBeenCalledTimes(2);
   });
 
   it('offers the drawer, screenshot, and deferred table view', async () => {

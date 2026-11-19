@@ -1,20 +1,3 @@
-.tta-hours-periods {
-  display: flex;
-  flex-wrap: wrap;
-  border-bottom: 1px solid #dfe1e2;
-}
-.tta-hours-period {
-  background: none;
-  border: 0;
-  border-bottom: 4px solid transparent;
-  padding: 1rem;
-  cursor: pointer;
-  color: #1b1b1b;
-}
-.tta-hours-period-active {
-  border-bottom-color: #336a90;
-  font-weight: bold;
-}
 .tta-hours-legend {
   display: flex;
   align-items: center;
