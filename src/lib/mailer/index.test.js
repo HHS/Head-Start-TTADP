@@ -1888,14 +1888,14 @@ describe('mailer tests', () => {
   });
 
   describe('Training report session submitted digest', () => {
-    const trReport = { id: 97, displayId: 'R01-TR-25-1798' };
+    const session = { id: 97, eventId: 'R01-TR-25-1798', displayId: 'Session A' };
 
-    it('renders the populated digest with links to the training reports', async () => {
+    it('renders the populated digest with links to the sessions', async () => {
       process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest(
         {
           data: {
-            reports: [trReport],
+            reports: [session],
             user: mockNewCollaborator,
             type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
             freq: EMAIL_DIGEST_FREQ.DAILY,
@@ -1906,12 +1906,11 @@ describe('mailer tests', () => {
       );
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`TTA Hub ${DAILY} digest: session submitted for review`);
+      expect(message.text).toContain('The following sessions were submitted for review:');
+      expect(message.text).toContain('Select the session name to view it in the Hub.');
+      expect(message.text).toContain(`* ${session.displayId}`);
       expect(message.text).toContain(
-        'Sessions were submitted for review on these Training Reports:'
-      );
-      expect(message.text).toContain(`* ${trReport.displayId}`);
-      expect(message.text).toContain(
-        `${process.env.TTA_SMART_HUB_URI}/training-report/view/R01-TR-25-1798`
+        `${process.env.TTA_SMART_HUB_URI}/training-report/R01-TR-25-1798/session/97`
       );
     });
 

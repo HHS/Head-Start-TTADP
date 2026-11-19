@@ -155,7 +155,7 @@ describe('training report digests', () => {
         data: { ...COMPLETE, ...data },
       });
 
-    it('returns each report with a session submitted to the user within the interval once', async () => {
+    it('returns each session submitted to the user within the interval', async () => {
       const [submitted, approved, old, otherApprover] = await Promise.all([
         createEvent([]),
         createEvent([]),
@@ -164,8 +164,8 @@ describe('training report digests', () => {
       ]);
       const now = new Date();
       const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      await Promise.all([
-        createSession(submitted.id, now, { status: 'In progress' }),
+      const [inProgress, unnamed] = await Promise.all([
+        createSession(submitted.id, now, { status: 'In progress', sessionName: 'Session A' }),
         createSession(submitted.id, now, {}),
         createSession(approved.id, now, { status: 'Complete' }),
         createSession(approved.id, now, { status: 'needs_action' }),
@@ -175,20 +175,23 @@ describe('training report digests', () => {
 
       const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
 
-      expect(reports).toEqual([{ id: submitted.id, displayId: submitted.eventId }]);
+      expect(reports).toEqual([
+        { id: inProgress.id, eventId: submitted.eventId, displayId: 'Session A' },
+        { id: unnamed.id, eventId: submitted.eventId, displayId: `Session ${unnamed.id}` },
+      ]);
     });
 
     it('skips sessions no longer submitted though they keep a recent submittedAt', async () => {
       // e.g. a facilitation reset cleared completion and only one side resubmitted
       const partial = await createEvent([]);
-      await createSession(partial.id, new Date(), {
+      const session = await createSession(partial.id, new Date(), {
         status: 'In progress',
         collabComplete: false,
       });
 
       const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
 
-      expect(reports.map((report) => report.id)).not.toContain(partial.id);
+      expect(reports.map((report) => report.id)).not.toContain(session.id);
     });
 
     it('returns nothing for a non-integer user id', async () => {

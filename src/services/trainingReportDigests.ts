@@ -11,6 +11,14 @@ export interface TrainingReportDigestRow {
   displayId: string;
 }
 
+export interface SessionDigestRow {
+  id: number;
+  /** The parent Training Report's display id, e.g. R01-TR-25-1234 */
+  eventId: string;
+  /** The session name, shown as the digest link text */
+  displayId: string;
+}
+
 /**
  * Validates a user id that is interpolated into a raw audit-log subquery.
  * @returns the id as an integer, or null when it is not one.
@@ -108,25 +116,25 @@ export async function trainingReportsWhereCollaboratorByDate(
 }
 
 /**
- * Training Reports with sessions submitted or resubmitted to the user for approval within the
- * interval (TR-21). Sessions the user has since approved or requested changes on are skipped,
- * as are sessions since reassigned to another approver or no longer submitted (e.g. reset by a
- * facilitation change), since `submittedAt` survives those.
+ * Sessions submitted or resubmitted to the user for approval within the interval (TR-21).
+ * Sessions the user has since approved or requested changes on are skipped, as are sessions
+ * since reassigned to another approver or no longer submitted (e.g. reset by a facilitation
+ * change), since `submittedAt` survives those.
  * @param userId The approver's user id.
  * @param date A trusted interval expression from `frequencyToInterval`.
  */
 export async function trainingReportsWhereSessionSubmittedByDate(
   userId: number | string,
   date: string
-): Promise<TrainingReportDigestRow[]> {
+): Promise<SessionDigestRow[]> {
   const id = toUserId(userId);
   if (id === null) {
     return [];
   }
 
   const sessions = await SessionReportPilot.findAll({
-    attributes: ['eventId', 'approverId', 'data'],
-    include: [{ model: EventReportPilot, as: 'event', attributes: ['data'] }],
+    attributes: ['id', 'eventId', 'approverId', 'data'],
+    include: [{ model: EventReportPilot, as: 'event', attributes: ['eventId', 'data'] }],
     where: {
       approverId: id,
       submittedAt: { [Op.gt]: sequelize.literal(date) },
@@ -141,21 +149,15 @@ export async function trainingReportsWhereSessionSubmittedByDate(
         },
       ],
     },
+    order: [['id', 'ASC']],
   });
 
-  const submittedEventIds = sessions
+  return sessions
     .map((session) => session.get({ plain: true }))
     .filter((session) => isSessionSubmitted(session.event as EventShape, session as SessionShape))
-    .map((session) => session.eventId);
-
-  if (!submittedEventIds.length) {
-    return [];
-  }
-
-  return EventReportPilot.findAll({
-    attributes: ['id', ['eventId', 'displayId']],
-    where: { id: [...new Set(submittedEventIds)] },
-    order: [['id', 'ASC']],
-    raw: true,
-  });
+    .map((session) => ({
+      id: session.id,
+      eventId: session.event.eventId,
+      displayId: session.data?.sessionName || `Session ${session.id}`,
+    }));
 }
