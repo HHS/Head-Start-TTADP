@@ -1,5 +1,6 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import { deleteFileFromS3 } from '../../lib/s3';
+import { auditLogger } from '../../logger';
 import { ActivityReport } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import CommunicationLogPolicy from '../../policies/communicationLog';
@@ -470,6 +471,52 @@ describe('deleteHandler authorization and orphan cleanup', () => {
     expect(deleteCommunicationLogFile).toHaveBeenCalledWith(5);
     expect(deleteFile).toHaveBeenCalledWith(1);
     expect(addDeleteFileToQueue).toHaveBeenCalledWith(1, 'key');
+  });
+
+  describe('when the S3 delete cannot be queued', () => {
+    const setUpLastReference = () => {
+      getFileById
+        .mockResolvedValueOnce({
+          id: 1,
+          key: 'key',
+          ...noReferences,
+          communicationLogFiles: [{ id: 5, communicationLogId: 5 }],
+        })
+        .mockResolvedValueOnce({ id: 1, key: 'key', ...noReferences });
+      logById.mockResolvedValue({ id: 5 });
+      CommunicationLogPolicy.mockImplementation(() => ({ canUploadFileToLog: () => true }));
+      addDeleteFileToQueue.mockRejectedValueOnce(new Error('redis down'));
+    };
+
+    it('deletes the S3 object directly', async () => {
+      setUpLastReference();
+      deleteFileFromS3.mockResolvedValueOnce({});
+      const res = mockRes();
+
+      await runInTransaction(deleteHandler, { params: { communicationLogId: 5, fileId: 1 } }, res);
+
+      expect(deleteFile).toHaveBeenCalledWith(1);
+      expect(deleteFileFromS3).toHaveBeenCalledWith('key');
+      expect(res.status).toHaveBeenCalledWith(204);
+    });
+
+    it('raises an alert when the direct delete also fails', async () => {
+      setUpLastReference();
+      deleteFileFromS3.mockRejectedValueOnce(new Error('s3 down'));
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+      const res = mockRes();
+
+      await runInTransaction(deleteHandler, { params: { communicationLogId: 5, fileId: 1 } }, res);
+
+      expect(deleteFileFromS3).toHaveBeenCalledWith('key');
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.stringContaining('needs manual cleanup'),
+        's3_orphaned_file',
+        expect.any(Error)
+      );
+      expect(res.status).toHaveBeenCalledWith(204);
+      alertSpy.mockRestore();
+    });
   });
 
   it('keeps a supporting attachment file that is still linked to a communication log', async () => {

@@ -5,7 +5,7 @@ import httpCodes from 'http-codes';
 import { v4 as uuidv4 } from 'uuid';
 import { FILE_STATUSES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
-import { getSignedDownloadUrl, uploadFile } from '../../lib/s3';
+import { deleteFileFromS3, getSignedDownloadUrl, uploadFile } from '../../lib/s3';
 import { auditLogger, logger } from '../../logger';
 import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -104,9 +104,21 @@ const removeFileIfOrphaned = async (req, fileId) => {
   onTransactionCommitted(req, async () => {
     try {
       await addDeleteFileToQueue(id, key);
+      return;
     } catch (err) {
       auditLogger.error(
-        `${logContext.namespace}:removeFileIfOrphaned Failed to queue S3 delete for file ${id}: ${err.message}`
+        `${logContext.namespace}:removeFileIfOrphaned Failed to queue S3 delete for file ${id}, deleting directly: ${err.message}`
+      );
+    }
+    // The File row is already gone and no job exists for Bull to retry, so delete the
+    // object directly rather than leave it orphaned in S3.
+    try {
+      await deleteFileFromS3(key);
+    } catch (err) {
+      auditLogger.alertError(
+        `${logContext.namespace}:removeFileIfOrphaned S3 object for deleted file ${id} was not removed and needs manual cleanup: ${err.message}`,
+        's3_orphaned_file',
+        err
       );
     }
   });
