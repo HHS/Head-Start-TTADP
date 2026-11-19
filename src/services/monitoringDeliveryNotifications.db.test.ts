@@ -296,18 +296,19 @@ describe('monitoring delivery notifications (database)', () => {
     expect(simulatedReview.review_name).toBe(SIMULATED_REVIEW_NAME);
     expect(simulatedReview.report_delivery_date).toBe(new Date().toISOString().slice(0, 10));
 
-    // the first active grant in the region is grant (created before twinGrant)
+    // the region's lowest-id active grant; test grant ids are random, so it may be either
+    const [expected] = [grant, twinGrant].sort((a, b) => a.id - b.id);
     const links = await GrantDeliveredReview.findAll({
       where: { deliveredReviewId: simulatedReview.id },
     });
     expect(links.map((l) => [l.grantId, l.recipient_id, l.region_id])).toEqual([
-      [grant.id, grant.recipientId, region.id],
+      [expected.id, expected.recipientId, region.id],
     ]);
 
     const [delivery] = await MonitoringReportDelivery.findAll({
       where: { deliveredReviewId: simulatedReview.id },
     });
-    expect([delivery.recipientId, delivery.regionId]).toEqual([grant.recipientId, region.id]);
+    expect([delivery.recipientId, delivery.regionId]).toEqual([expected.recipientId, region.id]);
     expect(delivery.notifiedAt).not.toBeNull();
 
     const notifications = await monitoringNotifications(simulatedReview.id);
@@ -316,7 +317,7 @@ describe('monitoring delivery notifications (database)', () => {
     );
     expect(result).toMatchObject({
       regionId: region.id,
-      recipientName: (await Recipient.findByPk(grant.recipientId)).name,
+      recipientName: (await Recipient.findByPk(expected.recipientId)).name,
       detected: 1,
       recorded: 1,
       inApp: 3,
