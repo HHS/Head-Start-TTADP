@@ -8,8 +8,12 @@ import fetchWidget from '../fetchers/Widgets';
 import useFetch from '../hooks/useFetch';
 import useMediaCapture from '../hooks/useMediaCapture';
 import { filtersToQueryString } from '../utils';
-import { COLOR_SCALE } from './FindingCategoryHotspotUtils';
+import { COLOR_SCALE as SHARED_COLOR_SCALE } from './FindingCategoryHotspotUtils';
 import './TTAHoursProvidedOverTime.css';
+
+const COLOR_SCALE = SHARED_COLOR_SCALE.map((color, index) =>
+  index === 3 ? { ...color, textColor: SHARED_COLOR_SCALE[0].textColor } : color
+);
 
 const TITLE = 'TTA hours provided over time';
 type Filter = { topic: string; condition: string; query: string | number | string[] };
