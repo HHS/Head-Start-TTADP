@@ -3,6 +3,7 @@ import { FILE_STATUSES } from '../constants';
 import db, { File } from '../models';
 import {
   createFileMetaData,
+  fileHasReferences,
   markFilesQueuedForScan,
   queueFilesForScan,
   updateStatusByKey,
@@ -174,6 +175,37 @@ describe('files service', () => {
       await queueFilesForScan(files);
 
       expect(await statuses()).toEqual([FILE_STATUSES.UPLOADED, FILE_STATUSES.QUEUEING_FAILED]);
+    });
+  });
+
+  describe('fileHasReferences', () => {
+    const unreferenced = {
+      reportFiles: [],
+      reportObjectiveFiles: [],
+      sessionFiles: [],
+      communicationLogFiles: [],
+      supportingAttachments: [],
+      importFile: null,
+    };
+
+    it('is false when no association holds the file', () => {
+      expect(fileHasReferences(unreferenced)).toBe(false);
+    });
+
+    it.each([
+      ['reportFiles', [{ id: 1 }]],
+      ['reportObjectiveFiles', [{ id: 1 }]],
+      ['sessionFiles', [{ id: 1 }]],
+      ['communicationLogFiles', [{ id: 1 }]],
+      ['supportingAttachments', [{ id: 1 }]],
+      ['importFile', { id: 1 }],
+    ])('is true when %s references the file', (association, value) => {
+      expect(fileHasReferences({ ...unreferenced, [association]: value })).toBe(true);
+    });
+
+    it('treats an association that was not loaded as a reference', () => {
+      const { communicationLogFiles: _omitted, ...partial } = unreferenced;
+      expect(fileHasReferences(partial)).toBe(true);
     });
   });
 });
