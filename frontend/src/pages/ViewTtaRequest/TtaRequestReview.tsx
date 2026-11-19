@@ -7,6 +7,7 @@ import { useHistory } from 'react-router-dom';
 import Select from 'react-select';
 import AppLoadingContext from '../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import FormErrorSummary from '../../components/FormErrorSummary';
 import FormItem from '../../components/FormItem';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import MultiSelect from '../../components/MultiSelect';
@@ -382,6 +383,7 @@ export default function TtaRequestReview({
             {error}
           </Alert>
         )}
+        <FormErrorSummary />
         <Button type="submit" className="margin-top-4">
           Submit
         </Button>

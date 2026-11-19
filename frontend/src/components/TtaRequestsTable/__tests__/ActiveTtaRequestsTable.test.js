@@ -374,8 +374,8 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/view/101`
     );
-    expect(within(firstRow).getByText('Pending changes')).toBeVisible();
-    expect(within(firstRow).queryByRole('link', { name: 'Pending changes' })).toBeNull();
+    expect(within(firstRow).getByText('Needs action')).toBeVisible();
+    expect(within(firstRow).queryByRole('link', { name: 'Needs action' })).toBeNull();
   });
 
   it('links a request sent back for changes into the form for an admin', async () => {
@@ -391,7 +391,7 @@ describe('ActiveTtaRequestsTable', () => {
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
     );
-    expect(within(firstRow).getByRole('link', { name: 'Pending changes' })).toHaveAttribute(
+    expect(within(firstRow).getByRole('link', { name: 'Needs action' })).toHaveAttribute(
       'href',
       `${RECIPIENT_PATH}/tta-request/101`
     );

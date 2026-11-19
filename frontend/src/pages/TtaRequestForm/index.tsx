@@ -10,6 +10,7 @@ import { Redirect, useHistory, useLocation, useParams } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import DismissingComponentWrapper from '../../components/DismissingComponentWrapper';
+import FormErrorSummary from '../../components/FormErrorSummary';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import { nameWithRole, toNotesSummary } from '../../components/TtaRequestNotesSummary/notes';
 import { HTTPError } from '../../fetchers';
@@ -381,6 +382,7 @@ function TtaRequestFormBody({
                 {saveError}
               </Alert>
             )}
+            <FormErrorSummary />
             {lastAutoSaveTime && (
               <Alert
                 type="success"

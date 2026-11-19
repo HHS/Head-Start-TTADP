@@ -5,6 +5,7 @@ import React, { useContext, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
+import FormErrorSummary from '../../components/FormErrorSummary';
 import FormItem from '../../components/FormItem';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import { HTTPError } from '../../fetchers';
@@ -159,6 +160,7 @@ export default function TtaRequestApproval({
             {error}
           </Alert>
         )}
+        <FormErrorSummary />
         <Button type="submit" className="margin-top-4">
           Submit
         </Button>

@@ -11,6 +11,9 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
 import ViewTtaRequest from '..';
 
+// a field's own error, as opposed to the form's error summary that lists it again
+const INLINE_ERROR = { selector: '.usa-error-message' };
+
 const URL = '/api/tta-requests/14322';
 const REVIEW_URL = '/api/tta-requests/14322/review';
 const APPROVE_URL = '/api/tta-requests/14322/approve';
@@ -567,7 +570,7 @@ describe('ViewTtaRequest', () => {
     userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Select an approving COR')).toBeVisible();
+    expect(await screen.findByText('Select an approving COR', INLINE_ERROR)).toBeVisible();
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
   });
 
@@ -578,8 +581,8 @@ describe('ViewTtaRequest', () => {
 
     userEvent.click(await screen.findByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Choose a review status')).toBeVisible();
-    expect(screen.queryByText('Select at least one staff member')).toBeNull();
+    expect(await screen.findByText('Choose a review status', INLINE_ERROR)).toBeVisible();
+    expect(screen.queryByText('Select at least one staff member', INLINE_ERROR)).toBeNull();
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
   });
 
@@ -591,12 +594,22 @@ describe('ViewTtaRequest', () => {
     userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Select at least one staff member')).toBeVisible();
+    expect(await screen.findByText('Select at least one staff member', INLINE_ERROR)).toBeVisible();
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
+
+    // and lists them above the submit button, where the user is looking
+    const summary = screen.getByTestId('form-error-summary');
+    expect(summary).toHaveTextContent(
+      'This form has errors. Please fix the following fields before submitting:'
+    );
+    expect(summary).toHaveTextContent('Select at least one staff member');
 
     // sending it back for changes instead doesn't need staff, so the error goes
     userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
-    await waitFor(() => expect(screen.queryByText('Select at least one staff member')).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByText('Select at least one staff member', INLINE_ERROR)).toBeNull()
+    );
+    expect(screen.queryByTestId('form-error-summary')).toBeNull();
   });
 
   it('sends the request back for changes after a failed attempt to send it to the COR', async () => {
@@ -607,8 +620,8 @@ describe('ViewTtaRequest', () => {
     userEvent.selectOptions(await screen.findByLabelText(/choose review status/i), 'approved');
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Select at least one staff member')).toBeVisible();
-    expect(screen.getByText('Select an approving COR')).toBeVisible();
+    expect(await screen.findByText('Select at least one staff member', INLINE_ERROR)).toBeVisible();
+    expect(screen.getByText('Select an approving COR', INLINE_ERROR)).toBeVisible();
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
 
     // the hidden COR's error must not block sending it back instead
@@ -650,7 +663,7 @@ describe('ViewTtaRequest', () => {
     userEvent.selectOptions(screen.getByLabelText(/choose review status/i), 'needs_action');
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Select 5 or fewer staff members')).toBeVisible();
+    expect(await screen.findByText('Select 5 or fewer staff members', INLINE_ERROR)).toBeVisible();
     expect(fetchMock.called(REVIEW_URL)).toBe(false);
   });
 
@@ -827,7 +840,10 @@ describe('ViewTtaRequest', () => {
 
       userEvent.click(await screen.findByRole('button', { name: 'Submit' }));
 
-      expect(await screen.findByText('Choose an approval status')).toBeVisible();
+      expect(await screen.findByText('Choose an approval status', INLINE_ERROR)).toBeVisible();
+      expect(screen.getByTestId('form-error-summary')).toHaveTextContent(
+        'Choose an approval status'
+      );
       expect(fetchMock.called(APPROVE_URL)).toBe(false);
     });
 

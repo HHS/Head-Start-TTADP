@@ -34,7 +34,7 @@ describe('ttaRequestStatusLabel', () => {
       'sent back by the reviewer',
       request('needs_action'),
       NEEDS_ACTION,
-      PENDING_CHANGES,
+      NEEDS_ACTION,
       REVIEW_PENDING,
       REVIEW_PENDING,
     ],
@@ -72,6 +72,9 @@ describe('ttaRequestStatusLabel', () => {
   it('flags only what waits on the viewing user', () => {
     expect(ttaRequestStatusLabel(request('submitted'), REVIEWER).needsAction).toBe(true);
     expect(ttaRequestStatusLabel(request('submitted'), CREATOR).needsAction).toBe(false);
+    expect(ttaRequestStatusLabel(request('needs_action'), CREATOR).needsAction).toBe(true);
+    // the reviewer sent it back, so it reads as needing action but awaits the creator
+    expect(ttaRequestStatusLabel(request('needs_action'), REVIEWER).needsAction).toBe(false);
   });
 
   it('reads as pending review without a user', () => {

@@ -293,10 +293,10 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('alert')).toContainText(
         `You sent request ${displayId} back to its creator for changes on`
       );
-      await expect(requestRow(page, displayId)).toContainText('Pending changes');
+      await expect(requestRow(page, displayId)).toContainText('Needs action');
       // the reviewer is an admin, and an admin can also edit a request sent back for changes
       await expect(
-        requestRow(page, displayId).getByRole('link', { name: 'Pending changes' })
+        requestRow(page, displayId).getByRole('link', { name: 'Needs action' })
       ).toBeVisible();
     });
 
@@ -553,7 +553,7 @@ test.describe('TTA request review', () => {
       await expect(page.getByRole('alert')).toContainText(
         `You sent request ${displayId} back to its creator for changes on`
       );
-      await expect(requestRow(page, displayId)).toContainText('Pending changes');
+      await expect(requestRow(page, displayId)).toContainText('Needs action');
     });
 
     await test.step('the creator resubmits the request', async () => {
