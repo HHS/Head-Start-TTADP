@@ -1,7 +1,7 @@
 import { isNonProductionEnvironment } from '../../envParser';
 import { handleError } from '../../lib/apiErrorHandler';
 import { sendEmailDigests } from '../../lib/cron';
-import { runDigests } from './digests';
+import router, { runDigests } from './digests';
 
 jest.mock('../../lib/cron', () => ({
   sendEmailDigests: jest.fn(),
@@ -73,6 +73,11 @@ describe('admin digests', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(400);
   });
 
+  it('runs outside a request transaction', () => {
+    const [layer] = router.stack;
+    expect(layer.route.stack.map(({ handle }) => handle)).toEqual([runDigests]);
+  });
+
   it('handles errors', async () => {
     const error = new Error('boom');
     sendEmailDigests.mockRejectedValue(error);
@@ -80,6 +85,7 @@ describe('admin digests', () => {
 
     await runDigests(req, mockResponse);
 
+    expect(mockResponse.status).not.toHaveBeenCalledWith(200);
     expect(handleError).toHaveBeenCalledWith(req, mockResponse, error, {
       namespace: 'ADMIN:DIGESTS:RUN',
     });

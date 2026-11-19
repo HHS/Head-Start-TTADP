@@ -515,15 +515,15 @@
       "tier": "reconciled",
       "locator": {
         "type": "cloudFoundryBuildpack",
-        "value": "1.9.6",
+        "value": "1.9.8",
         "pinned": true
       },
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "manifest.yml",
-        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.6, the released v1.9.6 tag, which currently resolves to commit 1819bb83c6678b4c6f786f44664318c39bbd4aa5. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
+        "note": "manifest.yml references https://github.com/cloudfoundry/nodejs-buildpack.git#v1.9.8, the released v1.9.8 tag, which currently resolves to commit a4c87a2e5d56fa4dcd47238d0e09dd9d873bad89. Upstream tags are mutable, so this does not by itself guarantee the staged code cannot change."
       },
-      "notes": "Pinned by TTAHUB-5732 to a released tag (now v1.9.6, the first release shipping the Node 24.22.1 build that matches package.json engines). The nightly automation app (automation/configs/process.yml) is pinned to the same tag. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
+      "notes": "Pinned by TTAHUB-5732 to a released tag (now v1.9.8, which ships the Node 24.22.3 build that matches package.json engines; bumped from v1.9.6 by TTAHUB-2958 after the cloud.gov buildpack security update notice, with Node moved from 24.22.1 to 24.22.3 because v1.9.8 no longer ships 24.22.1). The nightly automation app (automation/configs/process.yml) is pinned to the same tag. Closes the known gap recorded by ADR 0029. See disposition INV-2026-0005."
     },
     {
       "id": "platform.nodeVersion",
@@ -537,7 +537,7 @@
         "value": ".nvmrc",
         "pinned": true
       },
-      "sha256": "d9f318747a126ce2247661af67852b185def7789492eabfad7bba322be087c33",
+      "sha256": "584f19ccde29925286e32f566a2aa06c89efb4e2eb2bb2fc9ea5d56e2d190ac4",
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": ".nvmrc"
@@ -555,7 +555,7 @@
         "value": "Dockerfile",
         "pinned": true
       },
-      "sha256": "470633b2315f45eaf8fd2c94add1de8910a836013d690ef5c48a862b4e9bc20d",
+      "sha256": "efa083068df21b28da24b8bbb131a4811144e1ab39741702b3f72c7fba7f1de3",
       "authorization": {
         "type": "repositoryConfiguration",
         "reference": "Dockerfile"
@@ -572,7 +572,7 @@
         "type": "repositoryFile",
         "value": "manifest.yml"
       },
-      "sha256": "2d48d5c57aef40c78f7a25a6d4756a65d26668daade0c2ac739bb16030219354",
+      "sha256": "2ef6090e18d9a7c3b3a30bb1340eeb2eeab2e78ec940e84869a014c2c46a6afc",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0003-configuration-by-environment-variable.md"
@@ -640,7 +640,7 @@
         "type": "repositoryFile",
         "value": "yarn.lock"
       },
-      "sha256": "cb8aa119cf174f9ef3e2ab4274a41ca9fc656dbd8286654ccdd51c64a13afacb",
+      "sha256": "0587909f3a9e579faa4b588210c84d91c5e2d180959f1f13b38a559ed5f0b7cf",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
@@ -658,7 +658,7 @@
         "type": "repositoryFile",
         "value": "frontend/yarn.lock"
       },
-      "sha256": "bb2fffd44a779b0e3623250ed20494b28f80a37b3b151cb1203f3ab61ee1a7fe",
+      "sha256": "6a61944393636533dfc37801eb0f547069d7fc7f78e5d8fb30138dc087c5868a",
       "authorization": {
         "type": "adr",
         "reference": "docs/adr/0029-release-inventory-baseline-reconciliation.md",
