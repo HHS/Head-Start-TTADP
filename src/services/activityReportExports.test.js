@@ -1,5 +1,25 @@
-import db, { ActivityReportGoal, ActivityReportObjective, Objective } from '../models';
-import { createGoal, createReport, destroyGoal, destroyReport, getUniqueId } from '../testUtils';
+import { APPROVER_STATUSES } from '@ttahub/common';
+import db, {
+  ActivityReportApprover,
+  ActivityReportCollaborator,
+  ActivityReportGoal,
+  ActivityReportObjective,
+  CollaboratorRole,
+  CollaboratorType,
+  GoalCollaborator,
+  Objective,
+  Role,
+  User,
+  UserRole,
+} from '../models';
+import {
+  createGoal,
+  createReport,
+  createUser,
+  destroyGoal,
+  destroyReport,
+  getUniqueId,
+} from '../testUtils';
 import {
   EXPORT_DATA_SETS,
   ExportCapacityError,
@@ -269,10 +289,25 @@ describe('activityReportExports', () => {
     let legacyReport;
     let authorlessReport;
     let recipientlessReport;
+    let creatorUser;
+    let collaboratorUser;
+    let approverUser;
+    let collaborator;
 
     beforeAll(async () => {
+      const [ecsRole, ecmRole, fesRole] = await Promise.all([
+        Role.findOne({ where: { name: 'ECS' } }),
+        Role.findOne({ where: { name: 'ECM' } }),
+        Role.findOne({ where: { name: 'FES' } }),
+      ]);
+      creatorUser = await createUser({ name: `Creator ${getUniqueId()}` });
+      collaboratorUser = await createUser({ name: `Collaborator ${getUniqueId()}` });
+      approverUser = await createUser({ name: `Approver ${getUniqueId()}` });
+
       report = await createReport({
         regionId: REGION_ID,
+        userId: creatorUser.id,
+        creatorRole: 'Early Childhood Specialist',
         activityRecipients: [{ grantId: getUniqueId() }],
       });
       legacyReport = await createReport({
@@ -289,15 +324,51 @@ describe('activityReportExports', () => {
         regionId: REGION_ID,
         activityRecipients: [],
       });
+
+      // Collaborator gets report-specific roles (CollaboratorRoles); the approver has no
+      // per-report role, so it falls back to the user's general roles (UserRoles).
+      await UserRole.create({ userId: approverUser.id, roleId: ecmRole.id });
+      collaborator = await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: collaboratorUser.id,
+      });
+      await CollaboratorRole.bulkCreate([
+        { activityReportCollaboratorId: collaborator.id, roleId: ecsRole.id },
+        { activityReportCollaboratorId: collaborator.id, roleId: fesRole.id },
+      ]);
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: approverUser.id,
+        status: APPROVER_STATUSES.APPROVED,
+      });
     });
 
     afterAll(async () => {
+      await ActivityReportApprover.destroy({
+        where: { activityReportId: report.id },
+        force: true,
+      });
+      await CollaboratorRole.destroy({ where: { activityReportCollaboratorId: collaborator.id } });
+      await ActivityReportCollaborator.destroy({ where: { id: collaborator.id } });
+      await UserRole.destroy({ where: { userId: approverUser.id } });
       await Promise.all([
         destroyReport(report),
         destroyReport(legacyReport),
         destroyReport(authorlessReport),
         destroyReport(recipientlessReport),
       ]);
+      await User.destroy({ where: { id: [collaboratorUser.id, approverUser.id] } });
+    });
+
+    it('formats creator, collaborator, and approver names with role abbreviations', async () => {
+      const { csv } = await collect({
+        dataSet: 'activity-reports',
+        reportIds: [report.id],
+        regionIds: [REGION_ID],
+      });
+      expect(csv).toContain(`${creatorUser.name}:ECS`);
+      expect(csv).toContain(`${collaboratorUser.name}:ECS,FES`);
+      expect(csv).toContain(`${approverUser.name}:ECM`);
     });
 
     it('emits one CSV row for the in-scope report, with a BOM and header', async () => {
@@ -425,6 +496,7 @@ describe('activityReportExports', () => {
     let goal;
     let objective;
     let aro;
+    let goalCreatorUser;
 
     beforeAll(async () => {
       const grantId = getUniqueId();
@@ -452,14 +524,31 @@ describe('activityReportExports', () => {
         ttaProvided: 'export tta text',
         status: 'Complete',
       });
+
+      // Goals have no per-goal role like ActivityReportCollaborators does, so the
+      // creator/collaborator names are annotated with the user's general roles instead.
+      const [ecsRole, creatorType] = await Promise.all([
+        Role.findOne({ where: { name: 'ECS' } }),
+        CollaboratorType.findOne({ where: { name: 'Creator' } }),
+      ]);
+      goalCreatorUser = await createUser({ name: `Goal Creator ${getUniqueId()}` });
+      await UserRole.create({ userId: goalCreatorUser.id, roleId: ecsRole.id });
+      await GoalCollaborator.create({
+        goalId: goal.id,
+        userId: goalCreatorUser.id,
+        collaboratorTypeId: creatorType.id,
+      });
     });
 
     afterAll(async () => {
       await ActivityReportObjective.destroy({ where: { id: aro.id }, force: true });
       await ActivityReportGoal.destroy({ where: { activityReportId: report.id }, force: true });
       await Objective.destroy({ where: { id: objective.id }, force: true });
+      await GoalCollaborator.destroy({ where: { goalId: goal.id }, force: true });
+      await UserRole.destroy({ where: { userId: goalCreatorUser.id } });
       await destroyGoal(goal);
       await destroyReport(report);
+      await User.destroy({ where: { id: goalCreatorUser.id } });
     });
 
     it('emits the goal row for the in-scope report', async () => {
@@ -472,6 +561,16 @@ describe('activityReportExports', () => {
       expect(csv).toContain('goal_id'); // header
       expect(csv).toContain(String(goal.id));
       expect(csv).toContain(report.displayId);
+    });
+
+    it('formats the goal creator and collaborator names with role abbreviations', async () => {
+      const { csv } = await collect({
+        dataSet: 'goals',
+        reportIds: [report.id],
+        regionIds: [REGION_ID],
+      });
+      expect(csv).toContain(`${goalCreatorUser.name}: ECS`);
+      expect(csv).toContain(`Creator: ${goalCreatorUser.name}: ECS`);
     });
 
     it('emits the objective row for the in-scope report', async () => {

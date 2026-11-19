@@ -24,8 +24,8 @@ JSON: {
       { "columnName": "state_code", "type": "string", "nullable": true, "description": "Grant state code." },
       { "columnName": "program_specialist", "type": "string", "nullable": true, "description": "Program specialist name." },
       { "columnName": "fei_root_causes", "type": "string", "nullable": true, "description": "Current FEI root causes." },
-      { "columnName": "creator", "type": "string", "nullable": true, "description": "Goal creator name." },
-      { "columnName": "collaborators", "type": "string", "nullable": true, "description": "Goal collaborators by type." },
+      { "columnName": "creator", "type": "string", "nullable": true, "description": "Goal creator name, with role abbreviations." },
+      { "columnName": "collaborators", "type": "string", "nullable": true, "description": "Goal collaborators by type, with role abbreviations." },
       { "columnName": "ar_cnt", "type": "integer", "nullable": true, "description": "Distinct approved ARs the goal appears on (within scope)." },
       { "columnName": "activity_reports", "type": "string", "nullable": true, "description": "Report ids, newline-separated." },
       { "columnName": "ar_statuses", "type": "string", "nullable": true, "description": "arid: goal status at AR-write time, per line." },
@@ -516,13 +516,33 @@ SELECT
 FROM status_change_rows
 GROUP BY 1
 ;
+DROP TABLE IF EXISTS user_roles;
+CREATE TEMP TABLE user_roles
+AS
+-- a user's general roles; goals have no per-goal role like ActivityReportCollaborators does,
+-- so creator/collaborator names below are annotated with this instead. Scoped to just the
+-- users who collaborate on a qualifying goal.
+SELECT ur."userId" uid, STRING_AGG(r.name, ',' ORDER BY r.name) roles
+FROM "UserRoles" ur
+JOIN (
+  SELECT DISTINCT gc."userId" uid
+  FROM qualifying_goals qg
+  JOIN "GoalCollaborators" gc ON qg.gid = gc."goalId"
+  WHERE gc."deletedAt" IS NULL
+) su ON ur."userId" = su.uid
+JOIN "Roles" r ON ur."roleId" = r.id
+GROUP BY 1
+;
 DROP TABLE IF EXISTS collaborators;
 CREATE TEMP TABLE collaborators
 AS
 SELECT
   gc."goalId" gid,
-  STRING_AGG(DISTINCT u.name, ', ') FILTER (WHERE ct.name = 'Creator') creator,
-  STRING_AGG(DISTINCT ct.name || ': ' || u.name, E'\n' ORDER BY ct.name || ': ' || u.name) collaborators
+  STRING_AGG(DISTINCT u.name || CASE WHEN ur.roles IS NOT NULL THEN ': ' || ur.roles ELSE '' END, ', ') FILTER (WHERE ct.name = 'Creator') creator,
+  STRING_AGG(
+    DISTINCT ct.name || ': ' || u.name || CASE WHEN ur.roles IS NOT NULL THEN ': ' || ur.roles ELSE '' END,
+    E'\n' ORDER BY ct.name || ': ' || u.name || CASE WHEN ur.roles IS NOT NULL THEN ': ' || ur.roles ELSE '' END
+  ) collaborators
 FROM qualifying_goals qg
 JOIN "GoalCollaborators" gc
   ON qg.gid = gc."goalId"
@@ -530,6 +550,8 @@ JOIN "CollaboratorTypes" ct
   ON gc."collaboratorTypeId" = ct.id
 JOIN "Users" u
   ON gc."userId" = u.id
+LEFT JOIN user_roles ur
+  ON ur.uid = gc."userId"
 WHERE gc."deletedAt" IS NULL
 GROUP BY 1
 ;
