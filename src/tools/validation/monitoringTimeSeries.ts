@@ -1092,7 +1092,10 @@ const updateMonitoringTimeSeries = async (
     )
     SELECT
       b.data_id citation_id,
+      b.timeband_start changed_at,
       date_trunc('week', b.timeband_start)::date period_start,
+      b.prev_status,
+      b.calculated_status,
       gc.region_id
     FROM bands b
     LEFT JOIN "GrantCitations_timeseries" gc

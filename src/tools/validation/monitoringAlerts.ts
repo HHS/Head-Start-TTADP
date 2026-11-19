@@ -595,8 +595,11 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     FROM latest l
     CROSS JOIN generate_series(0, l.n) i
     ),
+    -- Terms below e^-700 are dropped rather than passed to exp(), which
+    -- raises an underflow error instead of returning 0; they can't move the
+    -- sum near the 0.001 threshold.
     tail AS (
-    SELECT SUM(exp(fn.lf - fj.lf - fnj.lf + fj.i * ln(r.p) + (l.n - fj.i) * ln(1 - r.p))) p_tail
+    SELECT SUM(CASE WHEN t.ln_term < -700 THEN 0 ELSE exp(t.ln_term) END) p_tail
     FROM latest l
     CROSS JOIN rate r
     JOIN ln_factorial fj
@@ -605,6 +608,9 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
       ON fn.i = l.n
     JOIN ln_factorial fnj
       ON fnj.i = l.n - fj.i
+    CROSS JOIN LATERAL (
+      SELECT fn.lf - fj.lf - fnj.lf + fj.i * ln(r.p) + (l.n - fj.i) * ln(1 - r.p) ln_term
+    ) t
     ),
     new_values AS (
     SELECT c.citation
@@ -645,6 +651,64 @@ const refreshMonitoringAlerts = async (transaction: Transaction): Promise<void> 
     CROSS JOIN validation_run cur
     CROSS JOIN validation_params vp
     WHERE t.p_tail < 0.001
+    ;
+
+    -- citation_status_changes_zscore_elevated. Reuses citation_status_changes,
+    -- built earlier this run by updateMonitoringTimeSeries.
+    WITH latest AS (
+    SELECT
+      MAX(value) FILTER (WHERE stat_name = 'status_changes_z') z,
+      MAX(value) FILTER (WHERE stat_name = 'status_changes') changed
+    FROM "ValidationTimeSeries"
+    CROSS JOIN validation_params vp
+    WHERE feature_set = 'monitoring_citations'
+      AND period_type = 'week'
+      AND region_id = 0
+      AND period_start = vp.last_complete_week
+      AND stat_name IN ('status_changes_z', 'status_changes')
+    ),
+    examples AS (
+    SELECT string_agg(
+      COALESCE(e.citation, 'unknown') || ' from ' || COALESCE(e.prev_status, 'no status')
+        || ' to ' || COALESCE(e.calculated_status, 'no status'),
+      ', ' ORDER BY e.citation, e.citation_id
+    ) list
+    FROM (
+      SELECT DISTINCT ON (sc.citation_id)
+        sc.citation_id,
+        c.citation,
+        sc.prev_status,
+        sc.calculated_status
+      FROM citation_status_changes sc
+      CROSS JOIN validation_params vp
+      LEFT JOIN "Citations" c
+        ON c.id = sc.citation_id
+      WHERE sc.period_start = vp.last_complete_week
+      ORDER BY sc.citation_id, sc.changed_at DESC
+      LIMIT 2
+    ) e
+    )
+    INSERT INTO "ValidationAlerts" (run_id, check_name, message, severity, context, "createdAt", "updatedAt")
+    SELECT
+      cur.run_id,
+      'citation_status_changes_zscore_elevated',
+      COALESCE(l.changed, 0)::int || ' citations changed status in the last complete week (e.g. '
+        || COALESCE(ex.list, 'unknown') || ')',
+      CASE WHEN l.z > 3 THEN cur.alert ELSE cur.team_notification END,
+      jsonb_build_object(
+        'feature_set', 'monitoring_citations',
+        'stat_name', 'status_changes_z',
+        'period_start', vp.last_complete_week,
+        'z_score', l.z,
+        'value', l.changed
+      ),
+      NOW(),
+      NOW()
+    FROM latest l
+    CROSS JOIN examples ex
+    CROSS JOIN validation_run cur
+    CROSS JOIN validation_params vp
+    WHERE l.z > 2
     ;
 
     -- finding_category_missing. IS NOT DISTINCT FROM, not =, in the

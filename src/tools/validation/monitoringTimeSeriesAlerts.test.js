@@ -1,5 +1,7 @@
 import { faker } from '@faker-js/faker';
+import { Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
+import { VALIDATION_ALERT_SEVERITY, VALIDATION_PROCESS } from '../../constants';
 import {
   Citation,
   Grant,
@@ -25,11 +27,14 @@ jest.mock('../../logger');
 
 // Synthetic process names so this file's cleanup never touches real runs, and
 // so previously_flagged's monitoring_validation_cycles lookup (hardcoded to
-// VALIDATION_PROCESS.MONITORING_POST_REFRESH) never matches anything here.
-const PROCESS_COUNTING = 'test_report_delivery_lag_counting';
+// VALIDATION_PROCESS.MONITORING_POST_REFRESH) never matches anything here -
+// except the suppression test, which needs that lookup and so uses the real
+// process name with its own import ids (SUPPRESSION_IMPORT_IDS).
 const PROCESS_REGION_WEEK = 'test_report_delivery_lag_region_week';
 const PROCESS_ZSCORE = 'test_report_delivery_lag_zscore';
 const PROCESS_OTHER_CHECKS = 'test_report_delivery_lag_other_checks';
+const PROCESS_CITATION_CHECKS = 'test_citation_checks';
+const SUPPRESSION_IMPORT_IDS = [95101, 95102];
 const CYCLE = { import_id: 95000, source_updated_at: new Date('2026-08-01T00:00:00.000Z') };
 
 const REVIEW_STATUS_COMPLETE_ID = 95001;
@@ -116,7 +121,7 @@ const createReviewWithGrant = async ({ reviewId, grantNumber, reportDeliveryDate
   return review;
 };
 
-describe('report delivery lag measures and checks', () => {
+describe('monitoring time-series threshold checks', () => {
   const recipientId = faker.number.int({ min: 90000, max: 899999 });
   const grantId = faker.number.int({ min: 90000, max: 899999 });
   const grantNumber = `RDL-${uuidv4().slice(0, 8)}`;
@@ -125,25 +130,14 @@ describe('report delivery lag measures and checks', () => {
   const grantNumber2 = `RDL2-${uuidv4().slice(0, 8)}`;
 
   const deliveredThisWeek = lastCompleteWeekDate(2);
-  // A different week for fixtures that don't care about "last complete week"
-  // specifically (the counting describe below) - region_week_all_elevated and
-  // the Z-score checks both evaluate "last complete week" unanimously across
-  // every review in the region, so a review placed there for an unrelated
-  // purpose would change what those checks see.
-  const deliveredEarlierWeek = new Date(deliveredThisWeek.getTime() - 28 * 24 * 60 * 60 * 1000);
-
   // All MonitoringReview.reviewId values this file creates, across every
   // nested describe below - declared here (not per-describe) so the one
   // afterAll can clean them all up regardless of which block created them.
-  const reviewIdElevated = uuidv4();
-  const reviewIdNormal = uuidv4();
   const reviewIdBothElevated1 = uuidv4();
   const reviewIdBothElevated2 = uuidv4();
   const reviewIdMultiGrant = uuidv4();
   const reviewIdForZ = uuidv4();
   const allReviewIds = [
-    reviewIdElevated,
-    reviewIdNormal,
     reviewIdBothElevated1,
     reviewIdBothElevated2,
     reviewIdMultiGrant,
@@ -197,9 +191,12 @@ describe('report delivery lag measures and checks', () => {
     await ValidationTimeSeries.destroy({
       where: {
         feature_set: [
+          'monitoring_reviews',
           'monitoring_report_delivery',
           'monitoring_findings',
           'monitoring_finding_closure',
+          'monitoring_grants',
+          'monitoring_citations',
         ],
       },
       force: true,
@@ -219,96 +216,6 @@ describe('report delivery lag measures and checks', () => {
       force: true,
     });
     await sequelize.close();
-  });
-
-  describe('updateMonitoringTimeSeries: elevated_count/sample_count counting', () => {
-    let reviewElevated;
-    let reviewNormal;
-
-    beforeAll(async () => {
-      reviewElevated = await createReviewWithGrant({
-        reviewId: reviewIdElevated,
-        grantNumber,
-        reportDeliveryDate: deliveredEarlierWeek,
-      });
-      reviewNormal = await createReviewWithGrant({
-        reviewId: reviewIdNormal,
-        grantNumber,
-        reportDeliveryDate: deliveredEarlierWeek,
-      });
-
-      // Elevated: learned about it (our own dml_timestamp) 10 days after
-      // reportDeliveryDate - over the 7-day import-lag threshold. sourceUpdatedAt
-      // set equal to dml_timestamp so this review doesn't also register as
-      // source-lag elevated (keeps this case isolated to import lag only).
-      const elevatedLearnedAt = new Date(deliveredEarlierWeek.getTime() + 10 * 24 * 60 * 60 * 1000);
-      await insertReviewAuditRow({
-        reviewDbId: reviewElevated.id,
-        dmlTimestamp: elevatedLearnedAt,
-        newRowData: {
-          reportDeliveryDate: deliveredEarlierWeek.toISOString(),
-          sourceUpdatedAt: elevatedLearnedAt.toISOString(),
-        },
-      });
-
-      // Normal: learned about it 1 day later - well under the threshold.
-      const normalLearnedAt = new Date(deliveredEarlierWeek.getTime() + 1 * 24 * 60 * 60 * 1000);
-      await insertReviewAuditRow({
-        reviewDbId: reviewNormal.id,
-        dmlTimestamp: normalLearnedAt,
-        newRowData: {
-          reportDeliveryDate: deliveredEarlierWeek.toISOString(),
-          sourceUpdatedAt: normalLearnedAt.toISOString(),
-        },
-      });
-
-      await runValidation({
-        processName: PROCESS_COUNTING,
-        logLabel: 'Test Report Delivery Lag Counting',
-        steps: [refreshMonitoringValidationStaging, updateMonitoringTimeSeries],
-        cycle: CYCLE,
-      });
-    });
-
-    afterAll(async () => {
-      await ValidationRun.destroy({ where: { process_name: PROCESS_COUNTING }, force: true });
-    });
-
-    it('counts exactly one of two reviews as import-lag elevated', async () => {
-      const periodStart = new Date(
-        Date.UTC(
-          deliveredEarlierWeek.getUTCFullYear(),
-          deliveredEarlierWeek.getUTCMonth(),
-          deliveredEarlierWeek.getUTCDate() - (deliveredEarlierWeek.getUTCDay() || 7) + 1
-        )
-      )
-        .toISOString()
-        .slice(0, 10);
-
-      const rows = await ValidationTimeSeries.findAll({
-        where: {
-          feature_set: 'monitoring_report_delivery',
-          period_type: 'week',
-          period_start: periodStart,
-          region_id: 0,
-          stat_name: ['import_lag_elevated_count', 'import_lag_sample_count'],
-        },
-        raw: true,
-      });
-      const byStat = Object.fromEntries(rows.map((r) => [r.stat_name, Number(r.value)]));
-      expect(byStat.import_lag_sample_count).toBeGreaterThanOrEqual(2);
-      expect(byStat.import_lag_elevated_count).toBeGreaterThanOrEqual(1);
-    });
-
-    it('does not record a Z-score yet - too few trailing weeks of history', async () => {
-      const count = await ValidationTimeSeries.count({
-        where: {
-          feature_set: 'monitoring_report_delivery',
-          stat_name: 'import_lag_elevated_z',
-        },
-      });
-      expect(count).toBe(0);
-    });
   });
 
   describe('review_lag_region_week_all_elevated', () => {
@@ -658,6 +565,208 @@ describe('report delivery lag measures and checks', () => {
         where: { finding_uuid: citations.map((c) => c.finding_uuid) },
         force: true,
       });
+    });
+
+    it('alerts in the first cycle a threshold condition holds and not in the next', async () => {
+      const citations = Array.from({ length: 25 }).map(() => ({
+        mfid: faker.number.int({ min: 900000, max: 89999999 }),
+        finding_uuid: uuidv4(),
+        active: true,
+      }));
+      await Citation.bulkCreate(citations);
+
+      const runCycle = (importId) =>
+        runValidation({
+          processName: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+          logLabel: 'Test Suppression',
+          steps: [
+            refreshMonitoringValidationStaging,
+            updateMonitoringTimeSeries,
+            forceClosureStalled,
+            refreshMonitoringAlerts,
+          ],
+          cycle: { import_id: importId, source_updated_at: null },
+        });
+      const stalledAlerts = (runId) =>
+        ValidationAlert.findAll({
+          where: { run_id: runId, check_name: 'finding_closure_stalled' },
+          raw: true,
+        });
+
+      try {
+        // refreshMonitoringAlerts clears this process's earlier alerts, so the
+        // first cycle's alerts are read before the second cycle runs.
+        const first = await runCycle(SUPPRESSION_IMPORT_IDS[0]);
+        expect(await stalledAlerts(first.runId)).toHaveLength(1);
+
+        const second = await runCycle(SUPPRESSION_IMPORT_IDS[1]);
+        expect(await stalledAlerts(second.runId)).toHaveLength(0);
+      } finally {
+        const runIds = (
+          await ValidationRun.findAll({
+            where: {
+              process_name: VALIDATION_PROCESS.MONITORING_POST_REFRESH,
+              import_id: { [Op.in]: SUPPRESSION_IMPORT_IDS },
+            },
+            attributes: ['id'],
+            raw: true,
+          })
+        ).map((r) => r.id);
+        await ValidationAlert.destroy({ where: { run_id: runIds }, force: true });
+        await ValidationRecord.destroy({ where: { run_id: runIds }, force: true });
+        await ValidationRun.destroy({ where: { id: runIds }, force: true });
+        await Citation.destroy({
+          where: { finding_uuid: citations.map((c) => c.finding_uuid) },
+          force: true,
+        });
+      }
+    });
+  });
+
+  describe('citation_new_values_unlikely / citation_status_changes_zscore_elevated', () => {
+    const tag = uuidv4().replace(/-/g, '').slice(0, 10);
+    const newValues = [`1302.${tag}(a)`, `75.${tag}(b)`];
+    const lastCompleteWeekStart = lastCompleteWeekDate(0).toISOString().slice(0, 10);
+    const citationUuids = [];
+
+    beforeAll(async () => {
+      const citations = newValues.map((citation) => ({
+        mfid: faker.number.int({ min: 900000, max: 89999999 }),
+        finding_uuid: uuidv4(),
+        citation,
+        initial_report_delivery_date: lastCompleteWeekDate(2).toISOString().slice(0, 10),
+      }));
+      citationUuids.push(...citations.map((c) => c.finding_uuid));
+      await Citation.bulkCreate(citations);
+    });
+
+    afterEach(async () => {
+      const runIds = (
+        await ValidationRun.findAll({
+          where: { process_name: PROCESS_CITATION_CHECKS },
+          attributes: ['id'],
+          raw: true,
+        })
+      ).map((r) => r.id);
+      if (runIds.length) {
+        await ValidationAlert.destroy({ where: { run_id: runIds }, force: true });
+        await ValidationRecord.destroy({ where: { run_id: runIds }, force: true });
+        await ValidationRun.destroy({ where: { id: runIds }, force: true });
+      }
+    });
+
+    afterAll(async () => {
+      await Citation.destroy({ where: { finding_uuid: citationUuids }, force: true });
+    });
+
+    const runWithOverride = async (override, checkName) => {
+      const { runId } = await runValidation({
+        processName: PROCESS_CITATION_CHECKS,
+        logLabel: 'Test Citation Checks',
+        steps: [
+          refreshMonitoringValidationStaging,
+          updateMonitoringTimeSeries,
+          override,
+          refreshMonitoringAlerts,
+        ],
+        cycle: CYCLE,
+      });
+      return ValidationAlert.findAll({
+        where: { run_id: runId, check_name: checkName },
+        raw: true,
+      });
+    };
+
+    // Replaces the stored counts with one trailing week that sets the rate and
+    // the last complete week itself.
+    const forceNewValueCounts =
+      ({ trailingN, trailingK, n, k }) =>
+      async (transaction) => {
+        await sequelize.query(
+          `
+          DELETE FROM "ValidationTimeSeries"
+          WHERE feature_set = 'monitoring_citations'
+            AND period_type = 'week'
+            AND region_id = 0
+            AND stat_name IN ('citations_delivered', 'citations_with_new_value')
+            AND period_start >= (:lastWeek::date - INTERVAL '52 weeks')::date
+            AND period_start <= :lastWeek::date
+          ;
+          INSERT INTO "ValidationTimeSeries"
+            (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
+          VALUES
+            ('monitoring_citations', 'week', (:lastWeek::date - INTERVAL '1 week')::date, 0, 0, 'citations_delivered', :trailingN, NOW(), NOW()),
+            ('monitoring_citations', 'week', (:lastWeek::date - INTERVAL '1 week')::date, 0, 0, 'citations_with_new_value', :trailingK, NOW(), NOW()),
+            ('monitoring_citations', 'week', :lastWeek::date, 0, 0, 'citations_delivered', :n, NOW(), NOW()),
+            ('monitoring_citations', 'week', :lastWeek::date, 0, 0, 'citations_with_new_value', :k, NOW(), NOW())
+          ;
+          `,
+          {
+            transaction,
+            replacements: { lastWeek: lastCompleteWeekStart, trailingN, trailingK, n, k },
+          }
+        );
+      };
+
+    const newValueAlerts = (counts) =>
+      runWithOverride(forceNewValueCounts(counts), 'citation_new_values_unlikely');
+
+    it('fires with example values when the count is unlikely at the trailing rate', async () => {
+      const alerts = await newValueAlerts({ trailingN: 1000, trailingK: 20, n: 10, k: 5 });
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0].message).toBe(
+        `5 of 10 citations delivered in the last complete week cite a value not seen before (e.g. ${newValues.join(', ')})`
+      );
+      expect(alerts[0].context.distinct_new_values).toBe(2);
+    });
+
+    it('does not fire below 3 new values', async () => {
+      const alerts = await newValueAlerts({ trailingN: 1000, trailingK: 20, n: 10, k: 2 });
+      expect(alerts).toHaveLength(0);
+    });
+
+    it('handles binomial-tail terms too small for exp() without erroring', async () => {
+      // Smoothed rate (99 + 1) / (9998 + 2) = 0.01; the j = n term is e^-921.
+      const alerts = await newValueAlerts({ trailingN: 9998, trailingK: 99, n: 200, k: 3 });
+      expect(alerts).toHaveLength(0);
+    });
+
+    const forceStatusZ = (z) => async (transaction) => {
+      await sequelize.query(
+        `
+        INSERT INTO "ValidationTimeSeries"
+          (feature_set, period_type, period_start, region_id, geo_id, stat_name, value, "createdAt", "updatedAt")
+        VALUES
+          ('monitoring_citations', 'week', :lastWeek::date, 0, 0, 'status_changes_z', :z, NOW(), NOW()),
+          ('monitoring_citations', 'week', :lastWeek::date, 0, 0, 'status_changes', 7, NOW(), NOW())
+        ON CONFLICT (feature_set, period_type, period_start, region_id, geo_id, stat_name)
+        DO UPDATE SET value = EXCLUDED.value, "updatedAt" = NOW()
+        `,
+        { transaction, replacements: { lastWeek: lastCompleteWeekStart, z } }
+      );
+    };
+
+    it.each([
+      [3.5, VALIDATION_ALERT_SEVERITY.ALERT],
+      [2.5, VALIDATION_ALERT_SEVERITY.TEAM_NOTIFICATION],
+    ])('raises a status-change spike at Z = %d with severity %s', async (z, severity) => {
+      const alerts = await runWithOverride(
+        forceStatusZ(z),
+        'citation_status_changes_zscore_elevated'
+      );
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0].severity).toBe(severity);
+      expect(alerts[0].message).toMatch(
+        /^7 citations changed status in the last complete week \(e\.g\. /
+      );
+    });
+
+    it('does not raise a status-change spike at Z = 2', async () => {
+      const alerts = await runWithOverride(
+        forceStatusZ(2),
+        'citation_status_changes_zscore_elevated'
+      );
+      expect(alerts).toHaveLength(0);
     });
   });
 });
