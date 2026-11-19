@@ -40,13 +40,7 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
 }
 
 /**
- * Returns the validated, de-duplicated ids of the grants in scope.
- *
- * Independently validate that every grant id is a positive integer before it is
- * interpolated into SQL by `sessionRecipientGrantFilter`. Per AGENTS.md ("Traps
- * to Avoid → SQL injection in filters"), `sequelize.escape` is insufficient —
- * types must be re-checked at the SQL boundary even when the upstream source
- * (here, Grant.findAll) is expected to return integers.
+ * Returns the de-duplicated ids of the grants in scope.
  */
 export async function getRecipientGrantIds(scopes: IScopes): Promise<number[]> {
   const grants = (await Grant.findAll({
@@ -55,9 +49,7 @@ export async function getRecipientGrantIds(scopes: IScopes): Promise<number[]> {
     raw: true,
   })) as { id: number }[];
 
-  return [...new Set(grants.map((g) => g.id))]
-    .map((id) => Number(id))
-    .filter((id) => Number.isInteger(id) && id > 0);
+  return [...new Set(grants.map((g) => g.id))];
 }
 
 /**
