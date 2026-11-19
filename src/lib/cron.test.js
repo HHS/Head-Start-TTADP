@@ -447,23 +447,28 @@ describe('cron', () => {
       expect(trainingReportTaskDueNotifications).toHaveBeenCalledWith('today');
     });
 
-    it('rejects when a digest fails', async () => {
-      digestForSetting.mockRejectedValueOnce(new Error('boom'));
+    it('runs the remaining digests before rejecting when one fails', async () => {
+      process.env.SEND_TRAININGREPORTTASKDUENOTIFICATION = 'true';
+      digestForSetting.mockRejectedValueOnce(new Error('boom')).mockResolvedValue([]);
+      recipientApprovedDigest.mockResolvedValue([]);
 
-      await expect(sendEmailDigests('MONTHLY')).rejects.toThrow('boom');
+      await expect(sendEmailDigests('DAILY', { includeTrainingReport: true })).rejects.toThrow(
+        'boom'
+      );
+
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.keys(DIGEST_CONFIG).length);
+      expect(recipientApprovedDigest).toHaveBeenCalledWith('today', 'daily');
+      expect(trainingReportTaskDueNotifications).toHaveBeenCalledWith('today');
     });
 
     it('rejects when a digest fails after earlier digests were queued', async () => {
       digestForSetting
         .mockResolvedValueOnce([{}, {}])
-        .mockRejectedValueOnce(new Error('Redis down'));
+        .mockRejectedValueOnce(new Error('Redis down'))
+        .mockResolvedValue([]);
+      recipientApprovedDigest.mockResolvedValue([]);
 
-      await expect(sendEmailDigests('DAILY', { includeTrainingReport: true })).rejects.toThrow(
-        'Redis down'
-      );
-      expect(digestForSetting).toHaveBeenCalledTimes(2);
-      expect(recipientApprovedDigest).not.toHaveBeenCalled();
-      expect(trainingReportTaskDueNotifications).not.toHaveBeenCalled();
+      await expect(sendEmailDigests('WEEKLY')).rejects.toThrow('Redis down');
     });
   });
 });

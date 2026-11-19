@@ -506,6 +506,42 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.MONITORING_DATA_RECEIVED, () => {
+    const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.MONITORING_DATA_RECEIVED];
+
+    it('textFn interpolates the recipient name', () => {
+      expect(config.textFn({ recipientName: 'Recipient A' })).toBe(
+        'A new monitoring report for Recipient A is available.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
+    });
+
+    it('linkFn returns the recipient monitoring path with the recipient and region ids', () => {
+      expect(config.linkFn({ recipientId: 500, regionId: 1 })).toBe(
+        '/recipient-tta-records/500/region/1/monitoring'
+      );
+    });
+
+    it('linkText returns "View details"', () => {
+      expect(config.linkText()).toBe('View details');
+    });
+
+    it('archiveLabel returns "View details"', () => {
+      expect(config.archiveLabel()).toBe('View details');
+    });
+
+    it('displayId returns null', () => {
+      expect(config.displayId()).toBeNull();
+    });
+
+    it('uses the inAppWhenMonitoringDetailsAdded setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenMonitoringDetailsAdded');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE];
 

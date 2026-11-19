@@ -5,6 +5,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 import AllRegionsTtaRequestForm from '../AllRegionsTtaRequestForm';
 
 jest.mock(
@@ -33,11 +34,13 @@ const RECIPIENTS = [
 
 const renderForm = () =>
   render(
-    <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-      <MemoryRouter>
-        <AllRegionsTtaRequestForm />
-      </MemoryRouter>
-    </AppLoadingContext.Provider>
+    <UserContext.Provider value={{ user: { id: 1, permissions: [] } }}>
+      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+        <MemoryRouter>
+          <AllRegionsTtaRequestForm />
+        </MemoryRouter>
+      </AppLoadingContext.Provider>
+    </UserContext.Provider>
   );
 
 describe('AllRegionsTtaRequestForm', () => {
