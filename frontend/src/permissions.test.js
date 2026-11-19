@@ -1,6 +1,7 @@
 import { SCOPE_IDS, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import {
   allRegionsUserHasTtaRequestPermissionTo,
+  canApproveTtaRequest,
   canCreateCommunicationLog,
   canCreateTtaRequest,
   canEditTtaRequest,
@@ -398,5 +399,51 @@ describe('canReviewerEditTtaRequest', () => {
   it('is false without a user or request', () => {
     expect(canReviewerEditTtaRequest(null, request)).toBe(false);
     expect(canReviewerEditTtaRequest(reviewer, null)).toBe(false);
+  });
+});
+
+describe('canApproveTtaRequest', () => {
+  const request = {
+    creator: { id: 1 },
+    reviewer: { id: 5 },
+    regionId: 3,
+    status: TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+  };
+
+  it.each([SCOPE_IDS.APPROVE_TTA_REQUESTS, SCOPE_IDS.BACKUP_APPROVE_TTA_REQUESTS])(
+    'is true for a COR with scope %s in its region while it awaits approval',
+    (scopeId) => {
+      expect(
+        canApproveTtaRequest({ id: 7, permissions: [{ scopeId, regionId: 3 }] }, request)
+      ).toBe(true);
+    }
+  );
+
+  it('is false for a COR in another region', () => {
+    const cor = { id: 7, permissions: [{ scopeId: SCOPE_IDS.APPROVE_TTA_REQUESTS, regionId: 4 }] };
+    expect(canApproveTtaRequest(cor, request)).toBe(false);
+  });
+
+  it('is false for the reviewer', () => {
+    const reviewer = {
+      id: 5,
+      permissions: [{ scopeId: SCOPE_IDS.REVIEW_TTA_REQUESTS, regionId: 3 }],
+    };
+    expect(canApproveTtaRequest(reviewer, request)).toBe(false);
+  });
+
+  it.each([
+    TTA_REQUEST_STATUSES.DRAFT,
+    TTA_REQUEST_STATUSES.SUBMITTED,
+    TTA_REQUEST_STATUSES.NEEDS_ACTION,
+    TTA_REQUEST_STATUSES.APPROVED,
+  ])('is false while the request is %s', (status) => {
+    const cor = { id: 7, permissions: [{ scopeId: SCOPE_IDS.APPROVE_TTA_REQUESTS, regionId: 3 }] };
+    expect(canApproveTtaRequest(cor, { ...request, status })).toBe(false);
+  });
+
+  it('is false without a user or request', () => {
+    expect(canApproveTtaRequest(null, request)).toBe(false);
+    expect(canApproveTtaRequest({ id: 7, permissions: [] }, null)).toBe(false);
   });
 });

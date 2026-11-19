@@ -6,6 +6,7 @@ export const STATUS_LABELS = {
   COR_APPROVAL_PENDING: 'COR approval pending',
   PENDING_CHANGES: 'Pending changes',
   NEEDS_ACTION: 'Needs action',
+  APPROVED: 'Approved',
 };
 
 /** what the label needs to know about a request */
@@ -66,6 +67,8 @@ export default function ttaRequestStatusLabel(
       }
       return label(isApprover ? STATUS_LABELS.NEEDS_ACTION : STATUS_LABELS.COR_APPROVAL_PENDING);
     }
+    case TTA_REQUEST_STATUSES.APPROVED:
+      return label(STATUS_LABELS.APPROVED);
     default:
       return label(request.status);
   }

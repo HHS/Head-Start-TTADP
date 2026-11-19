@@ -271,4 +271,61 @@ describe('TtaRequest policy', () => {
       expect(policy.canReview()).toBe(false);
     });
   });
+
+  describe('canApprove', () => {
+    const awaiting = {
+      ...draft,
+      reviewerId: 2,
+      status: TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+    };
+
+    it.each([
+      ['primary', SCOPES.APPROVE_TTA_REQUESTS],
+      ['backup', SCOPES.BACKUP_APPROVE_TTA_REQUESTS],
+    ])('is true for a %s COR in the region', (_label, scopeId) => {
+      const policy = new TtaRequest(createUser({ id: 4, scopeIds: [scopeId] }), 1, awaiting);
+      expect(policy.canApprove()).toBe(true);
+    });
+
+    it('is false for a COR in another region, and logs the attempt', () => {
+      const policy = new TtaRequest(
+        createUser({ id: 4, scopeIds: [SCOPES.APPROVE_TTA_REQUESTS] }),
+        2,
+        awaiting
+      );
+      expect(policy.canApprove()).toBe(false);
+      expect(auditLogger.warn).toHaveBeenCalled();
+    });
+
+    it('is false for the reviewer', () => {
+      const policy = new TtaRequest(
+        createUser({ id: 2, scopeIds: [SCOPES.REVIEW_TTA_REQUESTS] }),
+        1,
+        awaiting
+      );
+      expect(policy.canApprove()).toBe(false);
+    });
+
+    it.each([
+      TTA_REQUEST_STATUSES.DRAFT,
+      TTA_REQUEST_STATUSES.SUBMITTED,
+      TTA_REQUEST_STATUSES.NEEDS_ACTION,
+      TTA_REQUEST_STATUSES.APPROVED,
+    ])('is false while the request is %s', (status) => {
+      const policy = new TtaRequest(
+        createUser({ id: 4, scopeIds: [SCOPES.APPROVE_TTA_REQUESTS] }),
+        1,
+        { ...awaiting, status }
+      );
+      expect(policy.canApprove()).toBe(false);
+    });
+
+    it('is false without a request', () => {
+      const policy = new TtaRequest(
+        createUser({ id: 4, scopeIds: [SCOPES.APPROVE_TTA_REQUESTS] }),
+        1
+      );
+      expect(policy.canApprove()).toBe(false);
+    });
+  });
 });

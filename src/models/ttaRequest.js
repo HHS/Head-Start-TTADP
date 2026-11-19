@@ -3,7 +3,8 @@ const { TTA_REQUEST_ORIGINATORS, TTA_REQUEST_STATUSES } = require('@ttahub/commo
 
 /**
  * A TTA request, created by a TTA Request Creator and saved as a draft until it is
- * submitted for review. Goals are only created from a request when it is approved.
+ * submitted for review. Goals are only created from a request when its COR approves it,
+ * and are linked to it through TtaRequestGoals.
  */
 export default (sequelize, DataTypes) => {
   class TtaRequest extends Model {
@@ -68,6 +69,16 @@ export default (sequelize, DataTypes) => {
         otherKey: 'userId',
         as: 'assignedStaff',
       });
+      TtaRequest.hasMany(models.TtaRequestGoal, {
+        foreignKey: 'ttaRequestId',
+        as: 'requestGoals',
+      });
+      TtaRequest.belongsToMany(models.Goal, {
+        through: models.TtaRequestGoal,
+        foreignKey: 'ttaRequestId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
     }
   }
 
@@ -125,6 +136,10 @@ export default (sequelize, DataTypes) => {
         defaultValue: TTA_REQUEST_STATUSES.DRAFT,
       },
       submittedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      approvedAt: {
         type: DataTypes.DATE,
         allowNull: true,
       },

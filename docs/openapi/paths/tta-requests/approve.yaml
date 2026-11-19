@@ -1,0 +1,70 @@
+put:
+  tags:
+    - tta request
+  summary: Approve a TTA request, or send it back to its reviewer
+  description: >-
+    Available to any primary or backup COR in the request's region while the
+    request is awaiting approval. Needs action sends the request back to its
+    reviewer, whose review is pending again, and sets the status to submitted.
+    Approved sets the status to approved and creates a goal from the request's
+    goal template on each of its grants, reusing a grant's open goal from the
+    template; a closed goal is never reopened, so a new one is created instead.
+    Either way the COR becomes the request's approver and their decision and
+    note are added to its notes.
+  parameters:
+    - name: ttaRequestId
+      in: path
+      description: ID of the TTA request
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              enum:
+                - needs_action
+                - approved
+            note:
+              type: string
+              nullable: true
+              description: The COR's notes for the reviewer
+  responses:
+    '200':
+      description: Approved TTA request, or one sent back to its reviewer
+      content:
+        application/json:
+          schema:
+            $ref: '../../index.yaml#/components/schemas/ttaRequest'
+    '400':
+      description: Malformed ID or body, or the request has no goal or grants to approve
+    '403':
+      description: Not awaiting approval, or no primary or backup COR permission in the region
+    '404':
+      description: TTA request not found
+    '409':
+      description: >-
+        A grant's open goal from the template is only on Activity Reports that
+        are not yet approved, so it can't be reused until they are approved or
+        drop the goal
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                  - STANDARD_GOAL_ON_ACTIVITY_REPORT
+              blockingActivityReports:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true

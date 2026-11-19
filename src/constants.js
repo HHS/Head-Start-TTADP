@@ -547,7 +547,15 @@ const MAINTENANCE_CATEGORY = {
   IMPORT: 'IMPORT',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin', 'monitoring', 'merge'];
+const GOAL_CREATED_VIA = [
+  'imported',
+  'activityReport',
+  'rtr',
+  'admin',
+  'monitoring',
+  'merge',
+  'ttaRequest',
+];
 
 const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
 const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;

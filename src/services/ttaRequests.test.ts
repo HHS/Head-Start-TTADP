@@ -1,5 +1,6 @@
 import {
   APPROVER_STATUSES,
+  REPORT_STATUSES,
   TTA_REQUEST_NOTE_ACTIONS,
   TTA_REQUEST_STATUSES,
   TTA_REQUEST_STEPS,
@@ -12,10 +13,12 @@ import {
   createGrant,
   createRecipient,
   createRegion,
+  createReport,
   createUser,
 } from '../testUtils';
 import { getCitationsByGrantIds } from './citations';
 import {
+  approveTtaRequest,
   createTtaRequest,
   getTtaRequests,
   lockTtaRequest,
@@ -34,6 +37,9 @@ jest.mock('./citations', () => ({
 }));
 
 const {
+  ActivityRecipient,
+  ActivityReport,
+  ActivityReportGoal,
   Goal,
   Grant,
   GoalTemplate,
@@ -46,6 +52,7 @@ const {
   TtaRequestReviewer,
   TtaRequestAssignedStaff,
   TtaRequestCitation,
+  TtaRequestGoal,
   User,
   UserRole,
 } = db;
@@ -1158,6 +1165,350 @@ describe('ttaRequests service', () => {
       expect(rows.find((row) => row.id === submitted.id)?.status).toBe(
         TTA_REQUEST_STATUSES.NEEDS_ACTION
       );
+    });
+  });
+
+  describe('approveTtaRequest', () => {
+    let otherCor;
+
+    // a request the reviewer has sent on to the approving COR
+    const awaitingApproval = async (grantIds = [grantOne.id]) => {
+      const draft = await createTtaRequest({ regionId: 1 }, creator.id);
+      const submitted = await submitTtaRequest(
+        draft,
+        {
+          recipientAware: true,
+          originator: 'Recipient',
+          citations: [],
+          context: '<p>Context</p>',
+          creatorNotes: 'Please help',
+          recipientId: recipient.id,
+          grantIds,
+          goalTemplateId: goalTemplate.id,
+          reviewerId: reviewer.id,
+        },
+        creator.id
+      );
+      return reviewTtaRequest(
+        submitted,
+        {
+          ...assigned,
+          status: APPROVER_STATUSES.APPROVED,
+          approverId: backupCor.id,
+          note: 'Over to you',
+        },
+        reviewer.id
+      );
+    };
+
+    const templateGoals = () =>
+      Goal.findAll({
+        where: { grantId: [grantOne.id, grantTwo.id], goalTemplateId: goalTemplate.id },
+        order: [['grantId', 'ASC']],
+      });
+
+    beforeAll(async () => {
+      otherCor = await createUser({});
+      await Promise.all([
+        Permission.create({
+          // the region's one primary COR may already be taken, so this is another backup
+          userId: otherCor.id,
+          regionId: 1,
+          scopeId: SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
+        }),
+        Permission.create({ userId: otherCor.id, regionId: 14, scopeId: SCOPES.SITE_ACCESS }),
+      ]);
+    });
+
+    afterEach(async () => {
+      // the goals outlive their requests, so each test starts without any
+      const goalIds = (await templateGoals()).map(({ id }) => id);
+      await TtaRequestGoal.destroy({ where: { goalId: goalIds } });
+      await Goal.destroy({ where: { id: goalIds }, individualHooks: true, force: true });
+    });
+
+    afterAll(async () => {
+      await TtaRequest.destroy({ where: { userId: creator.id }, force: true });
+      await Permission.destroy({ where: { userId: otherCor.id } });
+      await User.destroy({ where: { id: otherCor.id } });
+    });
+
+    it('sends the request back to the reviewer with the COR note', async () => {
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.NEEDS_ACTION, note: 'Assign a second specialist' },
+        backupCor.id
+      );
+
+      expect(result.status).toBe(TTA_REQUEST_STATUSES.SUBMITTED);
+      expect(result.approvedAt).toBeNull();
+      // the reviewer reviews it again
+      expect(result.reviewers.map(({ userId, status }) => ({ userId, status }))).toEqual([
+        { userId: reviewer.id, status: null },
+      ]);
+      expect(result.approvers.map(({ userId, status }) => ({ userId, status }))).toEqual([
+        { userId: backupCor.id, status: APPROVER_STATUSES.NEEDS_ACTION },
+      ]);
+      expect(result.notes).toHaveLength(3);
+      expect(result.notes[2]).toMatchObject({
+        step: TTA_REQUEST_STEPS.APPROVER,
+        action: TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
+        note: 'Assign a second specialist',
+      });
+      expect(result.goals).toEqual([]);
+      expect(await templateGoals()).toEqual([]);
+    });
+
+    it('approves the request and creates a goal on each of its grants', async () => {
+      const awaiting = await awaitingApproval([grantOne.id, grantTwo.id]);
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED, note: '' },
+        backupCor.id
+      );
+
+      expect(result.status).toBe(TTA_REQUEST_STATUSES.APPROVED);
+      expect(result.approvedAt).toBeTruthy();
+      expect(result.approvers.map(({ userId, status }) => ({ userId, status }))).toEqual([
+        { userId: backupCor.id, status: APPROVER_STATUSES.APPROVED },
+      ]);
+      expect(result.notes[2]).toMatchObject({
+        step: TTA_REQUEST_STEPS.APPROVER,
+        action: TTA_REQUEST_NOTE_ACTIONS.APPROVED,
+        note: null,
+      });
+
+      const goals = await templateGoals();
+      expect(goals.map(({ grantId }) => grantId)).toEqual(
+        [grantOne.id, grantTwo.id].sort((a, b) => a - b)
+      );
+      goals.forEach((goal) => {
+        expect(goal.name).toBe(goalTemplate.templateName);
+        expect(goal.status).toBe('Not Started');
+        expect(goal.createdVia).toBe('ttaRequest');
+      });
+      expect(result.goals.map(({ id }) => id).sort()).toEqual(goals.map(({ id }) => id).sort());
+    });
+
+    it("reuses a grant's open goal from the template", async () => {
+      const existing = await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'In Progress',
+        createdVia: 'rtr',
+      });
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+
+      const goals = await templateGoals();
+      expect(goals).toHaveLength(1);
+      expect(goals[0].id).toBe(existing.id);
+      expect(goals[0].status).toBe('In Progress');
+      expect(goals[0].createdVia).toBe('rtr');
+      expect(result.goals.map(({ id }) => id)).toEqual([existing.id]);
+    });
+
+    it("leaves a grant's closed goal from the template closed and creates a new one", async () => {
+      const closed = await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'Closed',
+        createdVia: 'rtr',
+      });
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+
+      await closed.reload();
+      expect(closed.status).toBe('Closed');
+      const created = (await templateGoals()).filter(({ id }) => id !== closed.id);
+      expect(created).toHaveLength(1);
+      expect(created[0].status).toBe('Not Started');
+      expect(created[0].createdVia).toBe('ttaRequest');
+      expect(result.goals.map(({ id }) => id)).toEqual([created[0].id]);
+    });
+
+    it("reuses a grant's open goal from the template over a closed one", async () => {
+      await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'Closed',
+        createdVia: 'rtr',
+      });
+      const open = await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'In Progress',
+        createdVia: 'rtr',
+      });
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+
+      expect(await templateGoals()).toHaveLength(2);
+      expect(result.goals.map(({ id }) => id)).toEqual([open.id]);
+    });
+
+    describe('when the open goal is only on a report that is not yet approved', () => {
+      let report;
+      let draftGoal;
+
+      beforeEach(async () => {
+        draftGoal = await Goal.create({
+          name: goalTemplate.templateName,
+          grantId: grantOne.id,
+          goalTemplateId: goalTemplate.id,
+          status: 'Not Started',
+          createdVia: 'activityReport',
+          onApprovedAR: false,
+        });
+        report = await createReport({
+          userId: creator.id,
+          regionId: 1,
+          activityRecipients: [{ grantId: grantOne.id }],
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        });
+        await ActivityReportGoal.create({ activityReportId: report.id, goalId: draftGoal.id });
+      });
+
+      afterEach(async () => {
+        await ActivityReportGoal.destroy({
+          where: { activityReportId: report.id },
+          individualHooks: true,
+        });
+        await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
+        await ActivityReport.destroy({ where: { id: report.id }, force: true });
+      });
+
+      it('rejects the approval with a conflict naming the report', async () => {
+        const awaiting = await awaitingApproval();
+
+        await expect(
+          approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id)
+        ).rejects.toMatchObject({
+          statusCode: 409,
+          responseBody: {
+            code: 'STANDARD_GOAL_ON_ACTIVITY_REPORT',
+            blockingActivityReports: [
+              expect.objectContaining({ displayId: expect.stringContaining(`-AR-${report.id}`) }),
+            ],
+          },
+        });
+
+        expect(await TtaRequestGoal.count({ where: { ttaRequestId: awaiting.id } })).toBe(0);
+        expect((await templateGoals()).map(({ id }) => id)).toEqual([draftGoal.id]);
+      });
+    });
+
+    it('lets another COR in the region act in place of the one picked', async () => {
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        otherCor.id
+      );
+
+      // the COR picked never acted, so nothing of theirs is kept
+      expect(result.approvers.map(({ userId, status }) => ({ userId, status }))).toEqual([
+        { userId: otherCor.id, status: APPROVER_STATUSES.APPROVED },
+      ]);
+    });
+
+    it('lets the reviewer send the request back to the COR after changes', async () => {
+      const awaiting = await awaitingApproval();
+      const returned = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.NEEDS_ACTION },
+        backupCor.id
+      );
+
+      const resent = await reviewTtaRequest(
+        returned,
+        { ...assigned, status: APPROVER_STATUSES.APPROVED, approverId: backupCor.id },
+        reviewer.id
+      );
+
+      expect(resent.status).toBe(TTA_REQUEST_STATUSES.AWAITING_APPROVAL);
+      // the COR is asked again
+      expect(resent.approvers.map(({ userId, status }) => ({ userId, status }))).toEqual([
+        { userId: backupCor.id, status: null },
+      ]);
+    });
+
+    it('lists approved requests apart from the active ones, with their assigned staff', async () => {
+      const awaiting = await awaitingApproval();
+      await approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id);
+
+      const { ttaRequest: scopes } = await filtersToScopes(
+        { 'region.in': ['1'] },
+        { userId: reviewer.id }
+      );
+      const [{ rows: active }, { rows: approved }, { rows: recipientApproved }] = await Promise.all(
+        [
+          getTtaRequests(scopes, reviewer.id),
+          getTtaRequests(scopes, reviewer.id, null, 'approved'),
+          getTtaRequests(scopes, reviewer.id, recipient.id, 'approved'),
+        ]
+      );
+
+      expect(active.find((row) => row.id === awaiting.id)).toBeUndefined();
+      const row = approved.find(({ id }) => id === awaiting.id);
+      expect(row.status).toBe(TTA_REQUEST_STATUSES.APPROVED);
+      expect(row.approvedAt).toBeTruthy();
+      expect(row.assignedStaff.map(({ id }) => id)).toEqual([staffMember.id]);
+      expect(recipientApproved.map(({ id }) => id)).toContain(awaiting.id);
+    });
+
+    it('keeps the COR on the request when it is sent back to the reviewer and the creator', async () => {
+      const awaiting = await awaitingApproval();
+      const returned = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.NEEDS_ACTION },
+        backupCor.id
+      );
+      const backToCreator = await reviewTtaRequest(
+        returned,
+        { ...assigned, status: APPROVER_STATUSES.NEEDS_ACTION },
+        reviewer.id
+      );
+
+      expect(backToCreator.status).toBe(TTA_REQUEST_STATUSES.NEEDS_ACTION);
+      expect(backToCreator.approvers.map(({ userId }) => userId)).toEqual([backupCor.id]);
+    });
+
+    it('rejects approving a request without a goal, without writing anything', async () => {
+      const awaiting = await awaitingApproval();
+      await TtaRequest.update({ goalTemplateId: null }, { where: { id: awaiting.id } });
+
+      await expect(
+        approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id)
+      ).rejects.toMatchObject({ statusCode: 400 });
+
+      const stored = await ttaRequestById(awaiting.id);
+      expect(stored.status).toBe(TTA_REQUEST_STATUSES.AWAITING_APPROVAL);
+      expect(stored.notes).toHaveLength(2);
     });
   });
 

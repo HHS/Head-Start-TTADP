@@ -3565,10 +3565,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ttahub/common@npm:2.4.27":
-  version: 2.4.27
-  resolution: "@ttahub/common@npm:2.4.27"
-  checksum: 10c0/20ac06a01d68b1e9d131ddb4ed80299a2078c22f9d16077fbf424d93985c32b09800baa8308116469f3c79c59b5904478158f12c8a1b3b1b03f79fd16989b176
+"@ttahub/common@npm:2.4.28":
+  version: 2.4.28
+  resolution: "@ttahub/common@npm:2.4.28"
+  checksum: 10c0/14ed88d06bf7063bee322b8d489ea6df96c5b05059968918528fa3e5615556c6a0fc58398fb6981138899d860efca41f4171fc2ec88ea493bffe2601d4753b15
   languageName: node
   linkType: hard
 
@@ -6610,7 +6610,7 @@ __metadata:
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:^13.5.0"
     "@trussworks/react-uswds": "npm:5.5.0"
-    "@ttahub/common": "npm:2.4.27"
+    "@ttahub/common": "npm:2.4.28"
     "@types/node": "npm:^24.19.2"
     "@types/react": "npm:^17.0.89"
     "@types/react-dom": "npm:^17.0.26"

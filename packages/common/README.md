@@ -28,6 +28,10 @@ Splits a TTA request's reviewers from its approvers in `src/ttaRequests.d.ts`: t
 declares `reviewers` (`TtaRequestReviewerData`) beside `approvers` (`TtaRequestApproverData`),
 and neither has a `step` any more.
 
+Adds `TTA_REQUEST_STATUSES.APPROVED` and `TTA_REQUEST_NOTE_ACTIONS.APPROVED` for the COR's
+approval, and declares it (`TtaRequestApprovePayload`) and the goals an approved request creates
+(`goals` on `TtaRequestResponse`) in `src/ttaRequests.d.ts`.
+
 ## 2.4.27
 
 Adds `TTA_REQUEST_STATUSES.AWAITING_APPROVAL`, `TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL`,
