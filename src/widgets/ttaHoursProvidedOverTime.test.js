@@ -186,7 +186,6 @@ describe('ttaHoursProvidedOverTime', () => {
     sessionHybrid = await makeSession('2025-10-01', { duration: 1, deliveryMethod: 'hybrid' }, [
       templateTeachingPractices.id,
     ]);
-    // Rounds to one decimal place: 2.96 -> 3
     sessionLater = await makeSession('2025-11-15', { duration: 2.96, deliveryMethod: 'virtual' });
 
     // In progress: excluded
