@@ -158,6 +158,7 @@ LEFT JOIN "Users" u
   ON ar."userId" = u.id
 LEFT JOIN "Roles" creator_role
   ON creator_role."fullName" = ar."creatorRole"::text
+  AND creator_role."deletedAt" IS NULL
 WHERE ar."calculatedStatus" = 'approved'
   -- Narrowing point: AR id list resolved upstream from the Landing filters.
   AND (NULLIF(current_setting('ssdi.activityReportIds', true), '') IS NULL
