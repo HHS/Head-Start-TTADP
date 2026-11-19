@@ -1446,6 +1446,7 @@ enum enum_Users_flags {
  actionable_notifications
  quality_assurance_dashboard
  recipient_tta_request
+ tta_hours_provided_over_time
  tta_timeline
 }
 
