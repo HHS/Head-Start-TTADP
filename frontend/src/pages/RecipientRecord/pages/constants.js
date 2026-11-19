@@ -41,6 +41,7 @@ export const GOALS_OBJECTIVES_FILTER_KEY = (recipientId) =>
 export const TTA_TIMELINE_FEATURE_FLAG = 'tta_timeline';
 
 export const RECIPIENT_TTA_REQUEST_FEATURE_FLAG = 'recipient_tta_request';
+export const TTA_HOURS_PROVIDED_OVER_TIME_FEATURE_FLAG = 'tta_hours_provided_over_time';
 
 export const getIdParamArray = (search) => {
   const searchParams = new URLSearchParams(search);

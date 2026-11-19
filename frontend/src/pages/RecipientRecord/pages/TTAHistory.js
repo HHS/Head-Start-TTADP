@@ -7,6 +7,7 @@ import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
+import FeatureFlag from '../../../components/FeatureFlag';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterContext from '../../../FilterContext';
 import { getSessionReportsTable } from '../../../fetchers/session';
@@ -23,7 +24,7 @@ import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import TTAHoursProvidedOverTime from '../../../widgets/TTAHoursProvidedOverTime';
 import TrainingReportsTable from '../../RegionalDashboard/components/TrainingReportsTable';
-import { TTAHISTORY_FILTER_CONFIG } from './constants';
+import { TTA_HOURS_PROVIDED_OVER_TIME_FEATURE_FLAG, TTAHISTORY_FILTER_CONFIG } from './constants';
 
 function TrainingReportsSectionInContext({
   recipientId,
@@ -207,7 +208,9 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             <TargetPopulationsTable filters={filtersToApply} />
           </Grid>
         </Grid>
-        <TTAHoursProvidedOverTime filters={filtersToApply} />
+        <FeatureFlag flag={TTA_HOURS_PROVIDED_OVER_TIME_FEATURE_FLAG}>
+          <TTAHoursProvidedOverTime filters={filtersToApply} />
+        </FeatureFlag>
         <ApprovedARAndTRByGoalCategory filters={filtersToApply} />
         <FilterContext.Provider value={{ filterKey }}>
           <ActivityReportsTable
