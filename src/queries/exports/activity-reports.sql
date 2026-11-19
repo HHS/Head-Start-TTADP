@@ -15,7 +15,7 @@ JSON: {
       { "columnName": "end_date", "type": "date", "nullable": true, "description": "Activity end date." },
       { "columnName": "create_date", "type": "date", "nullable": true, "description": "Report created date (US Eastern)." },
       { "columnName": "approved_date", "type": "date", "nullable": true, "description": "Report approved date." },
-      { "columnName": "creator", "type": "string", "nullable": true, "description": "Report author name, with role abbreviation as of the AR." },
+      { "columnName": "creator", "type": "string", "nullable": true, "description": "Report author name, with role abbreviation as of the AR, falling back to their current general role when none was recorded on the AR." },
       { "columnName": "collaborators", "type": "string", "nullable": true, "description": "Collaborator names with role abbreviations, newline-separated." },
       { "columnName": "approvers", "type": "string", "nullable": true, "description": "Approver names with role abbreviations, newline-separated." },
       { "columnName": "requester", "type": "string", "nullable": true, "description": "Who requested the activity." },
@@ -123,7 +123,11 @@ SELECT
   ) report_id,
   ar."regionId" region,
   ar."calculatedStatus" ar_status,
-  u.name || CASE WHEN creator_role.name IS NOT NULL THEN ':' || creator_role.name ELSE '' END creator,
+  -- creator's role as of this AR, falling back to their current general role below (in the
+  -- final select, once user_roles is available) when no role was recorded on the AR itself
+  u.name creator_name,
+  creator_role.name creator_role_abbr,
+  ar."userId" creator_uid,
   ar.requester,
   ar."activityRecipientType" recipient_type,
   ARRAY_TO_STRING(ar."ttaType", E'\n') tta_type,
@@ -202,17 +206,46 @@ LEFT JOIN grants ON are."grantId" = grid
 LEFT JOIN "OtherEntities" oe ON are."otherEntityId" = oe.id
 GROUP BY 1
 ),
+scoped_collaborators AS MATERIALIZED (
+  SELECT arc.id arcid, arc."userId" uid FROM ars JOIN "ActivityReportCollaborators" arc ON arid = arc."activityReportId"
+),
 user_roles AS MATERIALIZED (
--- a user's general roles, used for approvers and as the collaborator fallback below;
--- scoped to just the users who appear as a collaborator or approver on these reports
+-- a user's general roles, used for approvers, as the collaborator fallback below, and as
+-- the creator fallback when an AR has no creatorRole recorded; scoped to just the users who
+-- appear as a collaborator, approver, or creator on these reports
 SELECT ur."userId" uid, STRING_AGG(r.name, ',' ORDER BY r.name) roles
 FROM "UserRoles" ur
 JOIN (
-  SELECT arc."userId" uid FROM ars JOIN "ActivityReportCollaborators" arc ON arid = arc."activityReportId"
+  SELECT uid FROM scoped_collaborators
   UNION
   SELECT ara."userId" uid FROM ars JOIN "ActivityReportApprovers" ara ON arid = ara."activityReportId"
+  UNION
+  SELECT creator_uid uid FROM ars WHERE creator_uid IS NOT NULL
 ) su ON ur."userId" = su.uid
 JOIN "Roles" r ON ur."roleId" = r.id
+GROUP BY 1
+),
+creators AS MATERIALIZED (
+-- one row per ar; a real column (not just a final-select alias) so the dynamic ORDER BY
+-- below can reference it the same way it references collaborators/approvers/etc.
+SELECT
+  arid cr_arid,
+  creator_name || CASE
+    WHEN COALESCE(creator_role_abbr, cur.roles) IS NOT NULL THEN ':' || COALESCE(creator_role_abbr, cur.roles)
+    ELSE ''
+  END creator
+FROM ars
+LEFT JOIN user_roles cur ON cur.uid = creator_uid
+),
+collaborator_roles AS MATERIALIZED (
+-- roles picked for this collaborator on this report, where recorded. A pre-aggregated join
+-- (not a per-row LATERAL/correlated subquery) because CollaboratorRoles has no index on
+-- activityReportCollaboratorId - a correlated lookup would re-scan the whole table once per
+-- exported collaborator instead of once total.
+SELECT sc.arcid, STRING_AGG(r.name, ',' ORDER BY r.name) roles
+FROM scoped_collaborators sc
+JOIN "CollaboratorRoles" cr ON cr."activityReportCollaboratorId" = sc.arcid
+JOIN "Roles" r ON cr."roleId" = r.id
 GROUP BY 1
 ),
 collaborators AS MATERIALIZED (
@@ -225,13 +258,7 @@ SELECT
 FROM ars
 JOIN "ActivityReportCollaborators" arc ON arid = arc."activityReportId"
 JOIN "Users" u ON arc."userId" = u.id
--- roles picked for this collaborator on this report, where recorded
-LEFT JOIN LATERAL (
-  SELECT STRING_AGG(r.name, ',' ORDER BY r.name) roles
-  FROM "CollaboratorRoles" cr
-  JOIN "Roles" r ON cr."roleId" = r.id
-  WHERE cr."activityReportCollaboratorId" = arc.id
-) cor ON TRUE
+LEFT JOIN collaborator_roles cor ON cor.arcid = arc.id
 LEFT JOIN user_roles ur ON ur.uid = arc."userId"
 GROUP BY 1
 ),
@@ -471,6 +498,7 @@ SELECT
   approved_at_et,
   approved_at_local
 FROM ars
+LEFT JOIN creators ON arid = cr_arid
 LEFT JOIN recipients ON arid = r_arid
 LEFT JOIN collaborators ON arid = c_arid
 LEFT JOIN approvers ON arid = a_arid

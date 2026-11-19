@@ -286,6 +286,7 @@ describe('activityReportExports', () => {
   describe('streaming real rows (activity-reports)', () => {
     const REGION_ID = 20;
     let report;
+    let fallbackCreatorReport;
     let legacyReport;
     let authorlessReport;
     let recipientlessReport;
@@ -310,6 +311,14 @@ describe('activityReportExports', () => {
         creatorRole: 'Early Childhood Specialist',
         activityRecipients: [{ grantId: getUniqueId() }],
       });
+      // No creatorRole: exercises the fallback to the author's general UserRoles below.
+      // creatorUser's own UserRole is FES (distinct from report's ECS creatorRole) so the
+      // two reports' expected output can't pass by coincidence.
+      fallbackCreatorReport = await createReport({
+        regionId: REGION_ID,
+        userId: creatorUser.id,
+        activityRecipients: [{ grantId: getUniqueId() }],
+      });
       legacyReport = await createReport({
         regionId: REGION_ID,
         legacyId: `LEGACY-${getUniqueId()}`,
@@ -328,6 +337,7 @@ describe('activityReportExports', () => {
       // Collaborator gets report-specific roles (CollaboratorRoles); the approver has no
       // per-report role, so it falls back to the user's general roles (UserRoles).
       await UserRole.create({ userId: approverUser.id, roleId: ecmRole.id });
+      await UserRole.create({ userId: creatorUser.id, roleId: fesRole.id });
       collaborator = await ActivityReportCollaborator.create({
         activityReportId: report.id,
         userId: collaboratorUser.id,
@@ -350,14 +360,15 @@ describe('activityReportExports', () => {
       });
       await CollaboratorRole.destroy({ where: { activityReportCollaboratorId: collaborator.id } });
       await ActivityReportCollaborator.destroy({ where: { id: collaborator.id } });
-      await UserRole.destroy({ where: { userId: approverUser.id } });
+      await UserRole.destroy({ where: { userId: [approverUser.id, creatorUser.id] } });
+      await destroyReport(report);
       await Promise.all([
-        destroyReport(report),
+        destroyReport(fallbackCreatorReport),
         destroyReport(legacyReport),
         destroyReport(authorlessReport),
         destroyReport(recipientlessReport),
       ]);
-      await User.destroy({ where: { id: [collaboratorUser.id, approverUser.id] } });
+      await User.destroy({ where: { id: [creatorUser.id, collaboratorUser.id, approverUser.id] } });
     });
 
     it('formats creator, collaborator, and approver names with role abbreviations', async () => {
@@ -369,6 +380,15 @@ describe('activityReportExports', () => {
       expect(csv).toContain(`${creatorUser.name}:ECS`);
       expect(csv).toContain(`${collaboratorUser.name}:ECS,FES`);
       expect(csv).toContain(`${approverUser.name}:ECM`);
+    });
+
+    it("falls back to the author's general role when the AR has no creatorRole", async () => {
+      const { csv } = await collect({
+        dataSet: 'activity-reports',
+        reportIds: [fallbackCreatorReport.id],
+        regionIds: [REGION_ID],
+      });
+      expect(csv).toContain(`${creatorUser.name}:FES`);
     });
 
     it('emits one CSV row for the in-scope report, with a BOM and header', async () => {
