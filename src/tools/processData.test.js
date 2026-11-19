@@ -736,7 +736,7 @@ describe('processData', () => {
       expect(userPermissions.length).toBe(16);
     });
 
-    it('gives the all-permissions test user every scope except admin and primary TTA approver', async () => {
+    it('gives the all-permissions test user every scope except admin and TTA approver scopes', async () => {
       await bootstrapUsers();
 
       const user = await User.findOne({ where: { hsesUserId: '53137' } });
@@ -745,7 +745,8 @@ describe('processData', () => {
 
       expect(scopeIds.has(SCOPES.ADMIN)).toBe(false);
       expect(scopeIds.has(SCOPES.APPROVE_TTA_REQUESTS)).toBe(false);
-      expect(scopeIds.has(SCOPES.BACKUP_APPROVE_TTA_REQUESTS)).toBe(true);
+      expect(scopeIds.has(SCOPES.BACKUP_APPROVE_TTA_REQUESTS)).toBe(false);
+      expect(scopeIds.has(SCOPES.REVIEW_TTA_REQUESTS)).toBe(true);
     });
 
     it('repoints grant specialists to the updated bootstrapped user', async () => {

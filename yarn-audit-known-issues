@@ -1,1 +1,1 @@
-{"type":"auditSummary","data":{"vulnerabilities":{"info":0,"low":0,"moderate":0,"high":0,"critical":0},"dependencies":839,"devDependencies":0,"optionalDependencies":0,"totalDependencies":839}}
+{"value":"picomatch","children":{"ID":1247710,"Issue":"picomatch vulnerable to ReDoS through single-branch repeated extglobs","URL":"https://github.com/advisories/GHSA-fc5q-39xc-vjpf","Severity":"high","Vulnerable Versions":"<=4.0.7","Tree Versions":["4.0.4"],"Dependents":["tinyglobby@npm:0.2.17"]}}

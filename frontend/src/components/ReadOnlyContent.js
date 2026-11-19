@@ -42,7 +42,16 @@ Status.propTypes = {
   statusKey: PropTypes.string.isRequired,
 };
 
-export default function ReadOnlyContent({ title, sections, className, displayStatus, spacing }) {
+export default function ReadOnlyContent({
+  title,
+  sections,
+  className,
+  displayStatus,
+  spacing,
+  titleAction,
+  titleHeadingLevel,
+  titleClassName,
+}) {
   const {
     title: titleSpacing,
     section: sectionSpacing,
@@ -51,9 +60,14 @@ export default function ReadOnlyContent({ title, sections, className, displaySta
 
   return (
     <div className={`ttahub-read-only-content-section-container ${className}`}>
-      <div className="display-flex">
-        <h2 className={`font-serif-xl margin-bottom-${titleSpacing} margin-top-0`}>{title}</h2>
+      <div className={`display-flex${titleAction ? ' flex-justify flex-align-baseline' : ''}`}>
+        {createElement(
+          `h${titleHeadingLevel}`,
+          { className: `${titleClassName} margin-bottom-${titleSpacing} margin-top-0` },
+          title
+        )}
         {displayStatus && <Status statusKey={displayStatus} />}
+        {titleAction}
       </div>
       {sections.map((section) => {
         const subheadings = Object.keys(section.data);
@@ -123,6 +137,12 @@ ReadOnlyContent.propTypes = {
     })
   ).isRequired,
   displayStatus: PropTypes.string,
+  // shown at the end of the title's line, e.g. a link to edit what is shown
+  titleAction: PropTypes.node,
+  // the title's heading level, so it fits the outline of the page it is on
+  titleHeadingLevel: PropTypes.oneOf([2, 3, 4]),
+  // the title's type style, for pages that follow a different heading scale
+  titleClassName: PropTypes.string,
   // USWDS spacing units; any omitted key keeps its default
   spacing: PropTypes.shape({
     title: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -135,4 +155,7 @@ ReadOnlyContent.defaultProps = {
   className: '',
   displayStatus: '',
   spacing: {},
+  titleAction: null,
+  titleHeadingLevel: 2,
+  titleClassName: 'font-serif-xl',
 };

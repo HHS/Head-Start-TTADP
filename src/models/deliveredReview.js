@@ -8,6 +8,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'deliveredReviewId',
         as: 'deliveredReviewCitations',
       });
+      models.DeliveredReview.hasMany(models.MonitoringReportDelivery, {
+        foreignKey: 'deliveredReviewId',
+        as: 'monitoringReportDeliveries',
+      });
       models.DeliveredReview.hasMany(models.GrantDeliveredReview, {
         foreignKey: 'deliveredReviewId',
         as: 'grantDeliveredReviews',

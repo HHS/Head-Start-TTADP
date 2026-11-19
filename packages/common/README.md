@@ -16,11 +16,30 @@ Whenever changes to this package are made, you will need to:
 - Bump the version in `package.json`.
 - Publish the latest version of the package to npm by running `npm publish` in this directory. There is also a yarn task in the root of the TTAHUB app you can run `yarn publish:common`
 
-If your PR depends on the latest version of this package, please don't forget to run `yarn upgrade @ttahub/common` (in BE and FE) and commit the changes to `package.json` (all 3: ./package.json, ./frontend/package.json, ./packages/common/package.json) and `yarn.lock` (BE and FE).
+If your PR depends on the latest version of this package, please don't forget to run `yarn up @ttahub/common` (in BE and FE) and commit the changes to `package.json` (all 3: ./package.json, ./frontend/package.json, ./packages/common/package.json) and `yarn.lock` (BE and FE).
 
 Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update the package.json file's.
 
 ## Versions
+
+## 2.4.28
+
+Splits a TTA request's reviewers from its approvers in `src/ttaRequests.d.ts`: the response
+declares `reviewers` (`TtaRequestReviewerData`) beside `approvers` (`TtaRequestApproverData`),
+and neither has a `step` any more.
+
+## 2.4.27
+
+Adds `TTA_REQUEST_STATUSES.AWAITING_APPROVAL`, `TTA_REQUEST_NOTE_ACTIONS.SENT_FOR_APPROVAL`,
+`TTA_REQUEST_MAX_ASSIGNED_STAFF` and `TTA_REQUEST_ASSIGNABLE_ROLES`, and declares the assigned staff,
+the approving COR and the send-to-COR review in `src/ttaRequests.d.ts`.
+
+## 2.4.26
+
+Adds `TTA_REQUEST_STATUSES.NEEDS_ACTION`, `TTA_REQUEST_STEPS` and `TTA_REQUEST_NOTE_ACTIONS`, and
+declares the TTA request review payload, notes and approvers in `src/ttaRequests.d.ts`. Built on
+the published 2.4.25, so it keeps the timeline keyset cursor (`cursor`, `nextCursor`) declarations
+in `src/recipientTimeline.d.ts`; 2.4.24 was published with no changes from 2.4.23.
 
 ## 2.4.23
 

@@ -83,7 +83,7 @@ export default function WhoIsTheRequestFor({
 
   return (
     <>
-      <h3 className="margin-top-4 margin-bottom-2">Who is the request for?</h3>
+      <h3 className="font-sans-lg text-bold margin-top-4 margin-bottom-2">Who is the request for?</h3>
       {recipientOptions && (
         <Controller
           name={TTA_REQUEST_FIELDS.RECIPIENT}
