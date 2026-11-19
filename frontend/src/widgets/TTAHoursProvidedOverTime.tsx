@@ -139,12 +139,12 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
         ) : (
           <div ref={chartRef} className="tta-hours-chart padding-3">
             <div>
-              <div className="tta-hours-legend margin-bottom-2">
+              <div className="display-flex flex-align-center flex-justify-center flex-wrap flex-gap-05 margin-bottom-2">
                 <span>TTA duration (hours):</span>
                 {['0', '>0-3', '>3-6', '>6-9', '>9-12', '>12'].map((label, index) => (
                   <span
                     key={label}
-                    className="tta-hours-legend-cell"
+                    className="tta-hours-legend-cell display-flex flex-align-center flex-justify-center height-6 border border-base-lighter text-bold"
                     style={{
                       background: COLOR_SCALE[index].bg,
                       color: COLOR_SCALE[index].textColor,
@@ -155,13 +155,13 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                 ))}
                 <span className="margin-left-2">Monitoring:</span>
                 <span
-                  className="tta-hours-monitoring-key"
+                  className="tta-hours-monitoring-key width-6 height-6"
                   role="img"
                   aria-label="Red outline indicates monitoring"
                 />
               </div>
-              <div className="tta-hours-scroll">
-                <table className="tta-hours-grid">
+              <div className="overflow-x-auto">
+                <table className="tta-hours-grid width-full">
                   <caption className="usa-sr-only">TTA hours by month and week</caption>
                   <thead className="usa-sr-only">
                     <tr>
@@ -176,7 +176,9 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                   <tbody>
                     {[1, 2, 3, 4, 5].map((week) => (
                       <tr key={week}>
-                        <th scope="row">Week {week}</th>
+                        <th scope="row" className="width-10 text-normal text-right padding-right-05 text-no-wrap">
+                          Week {week}
+                        </th>
                         {months.map((month) => {
                           const first = month.clone().date((week - 1) * 7 + 1);
                           const last =
@@ -204,7 +206,7 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                           return (
                             <td
                               key={month.format('YYYY-MM')}
-                              className={monitoring ? 'tta-hours-monitoring' : ''}
+                              className={`height-6 text-center text-bold ${monitoring ? 'tta-hours-monitoring' : 'border border-base-light'}`}
                               style={{ background: color.bg, color: color.textColor }}
                               aria-label={`${month.format('MMMM YYYY')}, week ${week}: ${hours.toFixed(1)} hours${monitoring ? ', monitoring review' : ''}`}
                             >
@@ -215,11 +217,11 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot aria-hidden="true">
+                  <tfoot aria-hidden="true" className="text-center">
                     <tr>
                       <td />
                       {months.map((month) => (
-                        <td key={month.format('YYYY-MM')}>
+                        <td key={month.format('YYYY-MM')} className="padding-top-05">
                           {month.format('MMM YY')}
                         </td>
                       ))}
