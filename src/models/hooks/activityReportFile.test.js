@@ -1,17 +1,7 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { ActivityReport, sequelize, User } from '..';
-import { cleanupOrphanFiles } from '../helpers/orphanCleanupHelper';
-import { afterDestroy, beforeDestroy } from './activityReportFile';
-import { propagateDestroyToFile } from './genericFile';
+import { beforeDestroy } from './activityReportFile';
 import { approverUserIds, draftObject, mockApprovers } from './testHelpers';
-
-jest.mock('./genericFile', () => ({
-  propagateDestroyToFile: jest.fn(),
-}));
-
-jest.mock('../helpers/orphanCleanupHelper', () => ({
-  cleanupOrphanFiles: jest.fn(),
-}));
 
 describe('activityReportFile hooks', () => {
   const mockUserIds = approverUserIds();
@@ -68,19 +58,6 @@ describe('activityReportFile hooks', () => {
 
       await transaction.commit();
       await ActivityReport.destroy({ where: { id: ar.id } });
-    });
-  });
-
-  describe('afterDestroy', () => {
-    it('should call hooks', async () => {
-      const mockSequelize = {};
-      const mockInstance = { fileId: 1 };
-      const mockOptions = {};
-
-      await afterDestroy(mockSequelize, mockInstance, mockOptions);
-
-      expect(propagateDestroyToFile).toHaveBeenCalledWith(mockSequelize, mockInstance, mockOptions);
-      expect(cleanupOrphanFiles).toHaveBeenCalledWith(mockSequelize, 1);
     });
   });
 });

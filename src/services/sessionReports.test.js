@@ -12,6 +12,7 @@ import db, {
 import { createGoal, createGrant, createRecipient, createUser, destroyGoal } from '../testUtils';
 import * as eventService from './event';
 import { createEvent, destroyEvent } from './event';
+import { removeOrphanedFiles } from './files';
 import {
   archiveSessionNeedsActionNotifications,
   createNotificationForSessionSubmittedCollaborators,
@@ -34,6 +35,10 @@ import {
 } from './sessionReports';
 
 jest.mock('bull');
+jest.mock('./files', () => ({
+  ...jest.requireActual('./files'),
+  removeOrphanedFiles: jest.fn(),
+}));
 jest.mock('../lib/mailer', () => ({
   trEventComplete: jest.fn(),
   trPocAdded: jest.fn(),
@@ -830,6 +835,10 @@ describe('session reports service', () => {
 
     it('should delete files and attachments associated with the session report pilot', async () => {
       const id = 1;
+      jest.spyOn(SessionReportPilotFile, 'findAll').mockResolvedValueOnce([{ fileId: 3 }]);
+      jest
+        .spyOn(SessionReportPilotSupportingAttachment, 'findAll')
+        .mockResolvedValueOnce([{ fileId: 4 }]);
       const destroyMock = jest
         .spyOn(SessionReportPilotFile, 'destroy')
         .mockResolvedValue(undefined);
@@ -839,18 +848,14 @@ describe('session reports service', () => {
 
       await destroySession(id);
 
-      expect(destroyMock).toHaveBeenCalledWith(
-        {
-          where: { sessionReportPilotId: id },
-        },
-        { individualHooks: true }
-      );
-      expect(destroyAttachmentMock).toHaveBeenCalledWith(
-        {
-          where: { sessionReportPilotId: id },
-        },
-        { individualHooks: true }
-      );
+      expect(destroyMock).toHaveBeenCalledWith({ where: { sessionReportPilotId: id } });
+      expect(destroyAttachmentMock).toHaveBeenCalledWith({
+        where: { sessionReportPilotId: id },
+      });
+      // Files no longer linked anywhere are cleaned up explicitly.
+      expect(removeOrphanedFiles).toHaveBeenCalledWith([3, 4]);
+      destroyMock.mockRestore();
+      destroyAttachmentMock.mockRestore();
     });
     it('should delete session', async () => {
       // Verify the session record is present
@@ -862,6 +867,32 @@ describe('session reports service', () => {
       // Verify the session was deleted
       const session = await SessionReportPilot.findByPk(createdSession.id);
       expect(session).toBeNull();
+    });
+
+    it('refuses to delete a session on a completed Training Report', async () => {
+      const completedEvent = await createEvent({
+        ownerId: 99_889,
+        regionId: 99_889,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: { eventId: 'R01-PD-99_889', status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      });
+      // Sessions can't be created on a completed event, so complete it afterwards.
+      const session = await createSession({ eventId: completedEvent.id, data: {} });
+      await db.EventReportPilot.update(
+        { data: { ...completedEvent.data, status: TRAINING_REPORT_STATUSES.COMPLETE } },
+        { where: { id: completedEvent.id }, hooks: false }
+      );
+
+      try {
+        await expect(destroySession(session.id)).rejects.toThrow(
+          'Cannot update session report on a completed event'
+        );
+        expect(await SessionReportPilot.findByPk(session.id)).not.toBeNull();
+      } finally {
+        await SessionReportPilot.destroy({ where: { id: session.id }, force: true, hooks: false });
+        await destroyEvent(completedEvent.id);
+      }
     });
   });
 
