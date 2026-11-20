@@ -70,10 +70,24 @@ Workflows orchestrate the execution of jobs, grouping them by purpose and defini
 ### Build, Test, and Deploy Workflow
 
 This workflow automates the building, testing, and deployment process for the application. It triggers on pushes to specific branches unless manual flags are set. It consists of:
-1. **Build and Lint**
-2. **Backend, Frontend, and E2E Tests**, and the **Secret Printing Check**, which runs in parallel with the build and is required for the `tests_done` gate
-3. **Dynamic Security Scan**
-4. **Deploy**: Deploys to lower environments based on the branch. Production branch merges still use the existing production deploy job; production release tag and evidence handling are documented in the [Infrastructure guide](./infrastructure.md#production-release-provenance).
+1. **Secret Printing Check**, which runs first and gates the build, so a script that prints credentials never reaches the (public) build log
+2. **Build and Lint**
+3. **Backend, Frontend, and E2E Tests**, all required for the `tests_done` gate
+4. **Dynamic Security Scan**
+5. **Deploy**: Deploys to lower environments based on the branch. Production branch merges still use the existing production deploy job; production release tag and evidence handling are documented in the [Infrastructure guide](./infrastructure.md#production-release-provenance).
+
+It does not run on `main` merge queue branches (`gh-readonly-queue/main/*`); those run the Merge Queue Check workflow instead. A merge queue for any other branch runs this full workflow.
+
+### Merge Queue Check Workflow
+
+The GitHub merge queue builds a temporary `gh-readonly-queue/main/*` branch for each queued PR and waits for the required `ci/circleci: tests_done` check on it. The PR branch has already passed the full suite, and the queue commit is the same commit that lands on `main`, where the full suite runs again before the staging deploy. So this workflow runs only:
+1. **Secret Printing Check**
+2. **Build and Lint**, which on queue branches also runs the migration and seeder ordering test (`src/migrations.test.js`)
+3. **`tests_done`**: a no-op checkpoint that reports the status the merge queue requires
+
+The queue still enforces migration and seeder ordering against `main`. Once a migration or seeder lands on `main`, it's no longer a branch-only file, so this test can't detect that ordering mistake after merge. It compares only against `main`, so it does not catch two queued PRs whose migrations clash with each other; that was true before as well.
+
+Other failures that appear only when a PR is combined with `main` or with other queued PRs may now land on `main`. The full suite still runs there and blocks the staging deploy until they are fixed.
 
 ---
 

@@ -67,7 +67,16 @@ workflows:
     # This is the primary workflow that runs on each push to the GitHub repo
     # It will build the app, run all tests, then deploy if the branch matches
     # autodeploy: main->staging, production->prod
-    when: pipeline.parameters.action == "build_test_deploy"
+    # Merge queue branches run merge_queue_check instead: the queue commit is the same commit that lands
+    # on main, so the full suite here would run twice on identical code.
+    when:
+      and:
+        - equal: [build_test_deploy, << pipeline.parameters.action >>]
+        - not:
+            matches: &merge_queue_branch
+              # Only the main queue: a queue for any other branch falls back to the full suite.
+              pattern: "^gh-readonly-queue/main/.*$"
+              value: << pipeline.git.branch >>
     max_auto_reruns: 2
     jobs:
       # The check runs first and gates the build: a build script that prints credentials would publish
@@ -158,6 +167,32 @@ workflows:
             branches:
               only:
                 - production
+
+  merge_queue_check:
+    # The GitHub merge queue builds a temporary gh-readonly-queue/main/* branch and waits for the required
+    # ci/circleci: tests_done check on it. The PR branch already passed the full suite, and the same commit
+    # runs it again on main (gating the staging deploy), so the queue only needs a quick build and lint,
+    # plus the migration ordering check that build_and_lint runs when merge_queue is true.
+    when:
+      and:
+        - equal: [build_test_deploy, << pipeline.parameters.action >>]
+        - matches: *merge_queue_branch
+    # Same as build_test_deploy: build_and_lint makes network calls (apt-get, yarn install, yarn audit),
+    # and one transient failure would otherwise drop the PR from the queue.
+    max_auto_reruns: 2
+    jobs:
+      # Gates the build for the same reason as in build_test_deploy: a script that prints credentials
+      # would publish them to the (public) job log.
+      - secret_printing_check
+      - build_and_lint:
+          merge_queue: true
+          requires:
+            - secret_printing_check
+      # Named tests_done so it reports the status check the merge queue requires.
+      - checkpoint:
+          name: tests_done
+          requires:
+            - build_and_lint
 
   deploy_only:
     # job to be triggered manually, will build the app and deploy to target env
@@ -413,6 +448,10 @@ jobs:
       load_deploy_frontend_env:
         type: boolean
         default: true
+      merge_queue:
+        description: "Set only by merge_queue_check: runs the migration ordering test and skips the workspace upload."
+        type: boolean
+        default: false
     steps:
       - checkout
       - run:
@@ -486,6 +525,14 @@ jobs:
             - node_modules
             - frontend/node_modules
           key: yarn4-deps-{{ checksum "combined-yarnlock.txt" }}
+      # The merge queue skips test_backend, but migration ordering can only be checked before merge: once a
+      # migration or seeder lands on main, it's no longer a branch-only file, so the test can't detect it.
+      - when:
+          condition: << parameters.merge_queue >>
+          steps:
+            - run:
+                name: Check migration and seeder ordering against main
+                command: npx jest src/migrations.test.js --forceExit
       - run:
           name: Ensure directories exist
           command: mkdir -p reports frontend/reports frontend/lint-reports
@@ -562,12 +609,16 @@ jobs:
       - store_artifacts:
           path: reports
           destination: lint.json
-      - persist_to_workspace:
-          root: .
-          paths:
-            - build
-            - node_modules
-            - frontend/node_modules
+      # No job after build_and_lint in merge_queue_check uses the workspace, so skip the upload there.
+      - unless:
+          condition: << parameters.merge_queue >>
+          steps:
+            - persist_to_workspace:
+                root: .
+                paths:
+                  - build
+                  - node_modules
+                  - frontend/node_modules
 
   test_backend:
     executor: docker-postgres-executor

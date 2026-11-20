@@ -101,7 +101,7 @@ If UI review fails, engineering addresses the issue and resubmits for validation
 
 ### 7. Merge to `main`
 
-Once required reviews pass, the PR is placed into the merge queue for merge to `main`.
+Once required reviews pass, the PR is placed into the merge queue for merge to `main`. The queue runs a quick build and lint check plus the migration ordering test; the full test suite runs on the PR branch before review and again on `main` before the staging deploy (see the [CircleCI guide](./circle-ci.md#merge-queue-check-workflow)).
 
 ### 8. Prepare production release
 
