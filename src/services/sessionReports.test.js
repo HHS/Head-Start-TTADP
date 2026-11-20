@@ -868,6 +868,32 @@ describe('session reports service', () => {
       const session = await SessionReportPilot.findByPk(createdSession.id);
       expect(session).toBeNull();
     });
+
+    it('refuses to delete a session on a completed Training Report', async () => {
+      const completedEvent = await createEvent({
+        ownerId: 99_889,
+        regionId: 99_889,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: { eventId: 'R01-PD-99_889', status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      });
+      // Sessions can't be created on a completed event, so complete it afterwards.
+      const session = await createSession({ eventId: completedEvent.id, data: {} });
+      await db.EventReportPilot.update(
+        { data: { ...completedEvent.data, status: TRAINING_REPORT_STATUSES.COMPLETE } },
+        { where: { id: completedEvent.id }, hooks: false }
+      );
+
+      try {
+        await expect(destroySession(session.id)).rejects.toThrow(
+          'Cannot update session report on a completed event'
+        );
+        expect(await SessionReportPilot.findByPk(session.id)).not.toBeNull();
+      } finally {
+        await SessionReportPilot.destroy({ where: { id: session.id }, force: true, hooks: false });
+        await destroyEvent(completedEvent.id);
+      }
+    });
   });
 
   describe('findSessionById', () => {

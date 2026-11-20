@@ -190,8 +190,9 @@ export async function destroySession(id: number): Promise<void> {
     `Error archiving session needs action notifications for session ${id}:`
   );
 
-  // Delete session.
-  await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
+  // Delete session. individualHooks runs beforeDestroy, which refuses to delete a session
+  // on a completed Training Report; the route's transaction then rolls back the deletes above.
+  await SessionReportPilot.destroy({ where: { id }, individualHooks: true });
 }
 
 // eslint-disable-next-line max-len

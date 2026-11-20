@@ -5,6 +5,7 @@ import db, { CommunicationLog, CommunicationLogFile, File, FileDeletion, User } 
 import { createUser } from '../testUtils';
 import {
   createFileMetaData,
+  enqueueS3Delete,
   fileHasReferences,
   markFilesQueuedForScan,
   queueFilesForScan,
@@ -465,15 +466,38 @@ describe('files service', () => {
       expect(exhausted).toBeGreaterThanOrEqual(1);
     });
 
-    it('keeps a row pending and counts the attempt when enqueueing fails', async () => {
+    it('keeps a row pending without using an attempt when enqueueing fails', async () => {
       addDeleteFileToQueue.mockRejectedValue(new Error('redis unavailable'));
 
       await requeuePendingFileDeletions();
 
       const stale = await rows.stale.reload();
-      expect(stale.attempts).toBe(1);
+      expect(stale.attempts).toBe(0);
       expect(stale.completedAt).toBeNull();
       addDeleteFileToQueue.mockReset();
+    });
+  });
+
+  describe('enqueueS3Delete', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+      addDeleteFileToQueue.mockReset();
+    });
+
+    it('resolves with the queued job', async () => {
+      addDeleteFileToQueue.mockResolvedValueOnce({ id: 'job-1' });
+      await expect(enqueueS3Delete(1, 'key.txt', 2)).resolves.toEqual({ id: 'job-1' });
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(1, 'key.txt', 2);
+    });
+
+    it('rejects instead of hanging when Redis never accepts the job', async () => {
+      jest.useFakeTimers();
+      addDeleteFileToQueue.mockReturnValueOnce(new Promise(() => {}));
+
+      const result = enqueueS3Delete(1, 'key.txt', 2);
+      jest.advanceTimersByTime(5000);
+
+      await expect(result).rejects.toThrow('timed out');
     });
   });
 });

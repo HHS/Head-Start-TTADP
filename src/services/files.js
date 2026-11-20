@@ -106,6 +106,29 @@ const fileHasReferences = (file) =>
     return value !== null;
   });
 
+// Bull waits for Redis to connect before adding a job, so with Redis down an enqueue never
+// settles. Give up after this long; the outbox row stays pending for the retry sweep.
+const S3_DELETE_ENQUEUE_TIMEOUT_MS = 5000;
+
+/**
+ * Queues the S3 delete for an outbox row, rejecting if Redis doesn't accept it in time.
+ * @param {number} fileId
+ * @param {string} key
+ * @param {number} fileDeletionId
+ */
+const enqueueS3Delete = (fileId, key, fileDeletionId) => {
+  let timer;
+  const timeout = new Promise((_resolve, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`timed out after ${S3_DELETE_ENQUEUE_TIMEOUT_MS}ms`)),
+      S3_DELETE_ENQUEUE_TIMEOUT_MS
+    );
+  });
+  return Promise.race([addDeleteFileToQueue(fileId, key, fileDeletionId), timeout]).finally(() =>
+    clearTimeout(timer)
+  );
+};
+
 /**
  * Promote the callback to each parent only after its savepoint commits.
  * @param {() => Promise<void>} callback
@@ -178,7 +201,7 @@ const removeOrphanedFiles = async (
             useMaster: true,
             raw: true,
           });
-          if (committed) await addDeleteFileToQueue(file.id, file.key, deletion.id);
+          if (committed) await enqueueS3Delete(file.id, file.key, deletion.id);
         } catch (err) {
           auditLogger.error(
             `SERVICE:FILES:removeOrphanedFiles Failed to queue S3 delete for file ${file.id} (deletion ${deletion.id}); the retry sweep will requeue it: ${err.message}`
@@ -430,17 +453,19 @@ const queueFilesForScan = async (files) =>
 
 /**
  * Re-enqueues S3 deletes whose outbox row is still pending: the enqueue after commit failed,
- * or every attempt of the S3 job failed. Each pass counts as an attempt; rows that run out
- * of attempts stay pending and are reported so someone can look at them.
+ * or every attempt of the S3 job failed. Each successful enqueue counts as an attempt; a
+ * failed enqueue (e.g. Redis down) doesn't, so an outage can't use up a row's attempts. Rows
+ * that run out of attempts stay pending and are reported so someone can look at them.
  * @param {object} [options]
  * @param {number} [options.olderThanMinutes] - skip rows touched more recently than this,
- *   so jobs that are still queued or retrying aren't duplicated
+ *   so jobs that are still queued or retrying aren't duplicated. Kept below the hourly cron
+ *   interval so a row requeued at one run is eligible again at the next.
  * @param {number} [options.maxAttempts] - stop re-enqueueing a row after this many passes
  * @param {number} [options.limit] - rows handled per pass
  * @returns {Promise<{ requeued: number, exhausted: number }>}
  */
 const requeuePendingFileDeletions = async ({
-  olderThanMinutes = 60,
+  olderThanMinutes = 45,
   maxAttempts = 10,
   limit = 500,
 } = {}) => {
@@ -457,12 +482,12 @@ const requeuePendingFileDeletions = async ({
 
   let requeued = 0;
   for (const deletion of pending) {
-    // Bumps updatedAt too, so the next pass waits before trying this row again.
-    // eslint-disable-next-line no-await-in-loop
-    await deletion.update({ attempts: deletion.attempts + 1 });
     try {
       // eslint-disable-next-line no-await-in-loop
-      await addDeleteFileToQueue(deletion.fileId, deletion.key, deletion.id);
+      await enqueueS3Delete(deletion.fileId, deletion.key, deletion.id);
+      // Bumps updatedAt too, so later passes leave the queued job alone while it runs.
+      // eslint-disable-next-line no-await-in-loop
+      await deletion.update({ attempts: deletion.attempts + 1 });
       requeued += 1;
     } catch (err) {
       auditLogger.error(
@@ -497,6 +522,7 @@ export {
   deleteSessionFile,
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
+  enqueueS3Delete,
   fileHasReferences,
   fileIdsForActivityReportObjectives,
   getActivityReportFilesById,
