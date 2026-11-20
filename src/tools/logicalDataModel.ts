@@ -110,7 +110,10 @@ export function processEnum(name, table, schemaEnum, modelEnum) {
  */
 export function normalizeColumnDefault(dbDefault) {
   if (typeof dbDefault !== 'string') return dbDefault;
-  const withoutCast = dbDefault.replace(/::(?:"[^"]+"|[a-z_][a-z0-9_ ]*(?:\([0-9, ]*\))?)$/i, '');
+  const withoutCast = dbDefault.replace(
+    /::(?:"[^"]+"|[a-z_][a-z0-9_ ]*(?:\([0-9, ]*\))?)(?:\[\])*$/i,
+    ''
+  );
   const match = withoutCast.match(/^'((?:[^']|'')*)'$/s);
   return match ? match[1].replace(/''/g, "'") : withoutCast;
 }
@@ -172,6 +175,11 @@ export function processClassDefinition(schema, key) {
         !(
           normalizedDefault === modelField.defaultValue ||
           normalizedDefault === modelField.defaultValue?.toString() ||
+          // Only an empty array maps unambiguously to PostgreSQL's '{}'; joining elements would
+          // make ['a,b'] look like the two-element '{a,b}'.
+          (Array.isArray(modelField.defaultValue) &&
+            modelField.defaultValue.length === 0 &&
+            normalizedDefault === '{}') ||
           field.default === modelField.defaultValue?.val
         ) &&
         field.default !== '<generated>' &&

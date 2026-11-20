@@ -548,6 +548,8 @@ const MAINTENANCE_TYPE = {
   IMPORT_PROCESS: 'IMPORT_PROCESS',
 };
 
+// Adding a flag needs no migration. When removing one, add a migration that calls
+// removeUsersFlags (src/lib/migration.js) so existing users don't fail model validation.
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
   'actionable_notifications',

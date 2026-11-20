@@ -154,6 +154,12 @@ export async function setFeatureFlag(req, res) {
       res.sendStatus(403);
       return;
     }
+
+    if (!FEATURE_FLAGS.includes(flag)) {
+      res.status(400).json({ message: `Invalid feature flag: ${flag}` });
+      return;
+    }
+
     const result = await setFlag(flag, on);
 
     res.json(result);

@@ -361,7 +361,14 @@ describe('Users DB service', () => {
         scopeId: SCOPES.READ_REPORTS,
       },
     ];
+    // setFlag updates every user with site access, so each test runs in a transaction that is
+    // rolled back, leaving other users in the shared database untouched.
+    let transaction;
+    const QA_FLAG = 'quality_assurance_dashboard';
+    const flagsFor = async (id) => (await User.findOne({ where: { id }, transaction })).flags;
+
     beforeEach(async () => {
+      transaction = await db.sequelize.transaction();
       await Promise.all(
         users.map((u) =>
           User.create(
@@ -379,33 +386,79 @@ describe('Users DB service', () => {
               ],
               lastLogin: new Date(),
             },
-            { include: [{ model: Permission, as: 'permissions' }] }
+            { include: [{ model: Permission, as: 'permissions' }], transaction }
           )
         )
       );
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51, 52, 53] } });
+      await transaction.rollback();
     });
 
     it('adds a flag to users that do not have the flag', async () => {
-      const result = await setFlag('quality_assurance_dashboard', true);
-      expect(result[1] > 3).toEqual(true);
-      const user = await User.findOne({ where: { id: 50 } });
-      expect(user.flags[0]).toBe('quality_assurance_dashboard');
+      const result = await setFlag(QA_FLAG, true, { transaction });
+      expect(result[1]).toBeGreaterThanOrEqual(3);
+      expect(await flagsFor(50)).toEqual([QA_FLAG]);
     });
     it('removes a flag from users that have the flag', async () => {
-      await setFlag('quality_assurance_dashboard', true);
-      const result = await setFlag('quality_assurance_dashboard', false);
-      expect(result[1] > 3).toEqual(true);
-      const user = await User.findOne({ where: { id: 50 } });
-      expect(user.flags[0]).toBe(undefined);
+      await setFlag(QA_FLAG, true, { transaction });
+      const result = await setFlag(QA_FLAG, false, { transaction });
+      expect(result[1]).toBeGreaterThanOrEqual(3);
+      expect(await flagsFor(50)).toEqual([]);
     });
     it('does not set a flag for users without permissions', async () => {
-      await setFlag('quality_assurance_dashboard', true);
-      const user = await User.findOne({ where: { id: 53 } });
-      expect(user.flags[0]).toBe(undefined);
+      await setFlag(QA_FLAG, true, { transaction });
+      expect(await flagsFor(53)).toEqual([]);
+    });
+    it('does not add a flag twice', async () => {
+      await setFlag(QA_FLAG, true, { transaction });
+      await setFlag(QA_FLAG, true, { transaction });
+      expect(await flagsFor(50)).toEqual([QA_FLAG]);
+    });
+    it('rejects a flag that is not in FEATURE_FLAGS', async () => {
+      await expect(setFlag('not_a_flag\'; DROP TABLE "Users"; --', true, { transaction })).rejects.toThrow(
+        'Invalid feature flag'
+      );
+    });
+  });
+
+  describe('User flags', () => {
+    const userId = 58;
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: userId } });
+    });
+
+    it('defaults to an empty array', async () => {
+      await User.create({ id: userId, name: 'user 58', hsesUsername: 'user.58', hsesUserId: '58' });
+      const user = await User.findByPk(userId);
+      expect(user.flags).toEqual([]);
+    });
+
+    it('saves and returns valid flags as an array', async () => {
+      await User.create({
+        id: userId,
+        name: 'user 58',
+        hsesUsername: 'user.58',
+        hsesUserId: '58',
+        flags: ['quality_assurance_dashboard', 'tta_timeline'],
+      });
+      const user = await User.findByPk(userId);
+      expect(Array.isArray(user.flags)).toBe(true);
+      expect(user.flags).toEqual(['quality_assurance_dashboard', 'tta_timeline']);
+    });
+
+    it('rejects flags that are not in FEATURE_FLAGS', async () => {
+      await expect(
+        User.create({
+          id: userId,
+          name: 'user 58',
+          hsesUsername: 'user.58',
+          hsesUserId: '58',
+          flags: ['not_a_flag'],
+        })
+      ).rejects.toThrow('Invalid feature flag: not_a_flag');
     });
   });
 

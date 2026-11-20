@@ -1681,6 +1681,11 @@ jobs:
       - cf_migrate:
           app_name: "tta-smarthub-<< parameters.target_env >>"
           target_env: << parameters.target_env >>
+      - run:
+          # The restore recreates Postgres types with new OIDs, but Sequelize caches enum OIDs
+          # at startup, so enum array columns come back as raw strings until the app restarts.
+          name: "Restart app: tta-smarthub-<< parameters.target_env >>"
+          command: cf restart tta-smarthub-<< parameters.target_env >> --strategy rolling
       - notify_job_failure
 
   run_cmd:
