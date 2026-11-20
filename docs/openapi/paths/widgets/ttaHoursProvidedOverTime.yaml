@@ -1,0 +1,64 @@
+get:
+  tags:
+    - widgets
+  operationId: ttaHoursProvidedOverTime
+  description: >
+    Gets TTA hours provided over time for the TTA History tab on the Recipient
+    TTA Record. Returns one row per start date, summing the recorded TTA
+    duration (hours) of approved Activity Reports (by AR start date) and
+    complete Training Report sessions (by session start date) for the
+    recipient. Rows are sorted by start date ascending.
+  responses:
+    200:
+      description: TTA hours grouped by start date
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                  description: Activity or session start date (YYYY-MM-DD)
+                duration:
+                  type: number
+                  description: Total TTA hours across ARs and TR sessions on this date
+                goals:
+                  type: array
+                  description: >
+                    Distinct goals on this date. Uses the goal category (standard)
+                    when available, otherwise the goal name.
+                  items:
+                    type: string
+                deliveryMethods:
+                  type: array
+                  description: Distinct delivery methods (lowercased) on this date
+                  items:
+                    type: string
+                activityReports:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      displayId:
+                        type: string
+                trainingReportSessions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: Session report id
+                      eventId:
+                        type: integer
+                        description: Training report (event) id
+                      eventDisplayId:
+                        type: string
+                        description: Training report display id (e.g. R01-TR-23-1234)
+                      sessionName:
+                        type: string

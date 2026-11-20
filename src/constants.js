@@ -553,6 +553,7 @@ const FEATURE_FLAGS = [
   'actionable_notifications',
   'tta_timeline',
   'recipient_tta_request',
+  'tta_hours_provided_over_time',
 ];
 
 const MAINTENANCE_CATEGORY = {
