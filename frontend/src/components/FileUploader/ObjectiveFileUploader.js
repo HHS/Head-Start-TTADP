@@ -9,11 +9,7 @@
 
 import PropTypes from 'prop-types';
 import React from 'react';
-import {
-  deleteFile,
-  deleteObjectiveFile,
-  removeActivityReportObjectiveFile,
-} from '../../fetchers/File';
+import { deleteObjectiveFile, removeActivityReportObjectiveFile } from '../../fetchers/File';
 import Dropzone from './Dropzone';
 import FileTable from './FileTable';
 import './FileUploader.scss';
@@ -45,10 +41,9 @@ const ObjectiveFileUploader = ({
       } else if (fileHasObjectiveFile) {
         // remove objective file and delete file
         await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId]);
-      } else {
-        // remove the file entirely
-        await deleteFile(file.id);
       }
+      // Otherwise the file has no saved parent, so the API has nothing to unlink or delete;
+      // just drop it from the list.
 
       // remove from the UI if the network request was successful
       const copyOfFiles = [...files];
