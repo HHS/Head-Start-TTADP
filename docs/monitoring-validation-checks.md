@@ -5,6 +5,7 @@
 The inventory of every monitoring validation observation, stat, and check: what each measures, and — for checks — what severity it raises and the time window that gates it. For how the validation system itself works (processes, runs, steps, tables, Slack routing), see [Monitoring Data Validation](./monitoring-data-validation.md).
 
 Three vocabularies, matching the three tables they're recorded in:
+
 - **Observation** (`ValidationRecords.observation_name`) — a per-entity measurement or categorization, recorded for every entity it applies to whether or not it's alert-worthy.
 - **Stat** (`ValidationTimeSeries.stat_name`) — an aggregated time-series statistic.
 - **Check** (`ValidationAlerts.check_name`) — what actually turns into a Slack notification, alert, or blocking critical. Most checks are derived from one observation or stat; the two gate checks write directly to `ValidationAlerts` with no backing observation.
@@ -14,6 +15,7 @@ Three vocabularies, matching the three tables they're recorded in:
 ### Observations → checks
 
 **MonitoringFindings**
+
 - `category` → `finding_category_missing` (team_notification)
 - `closure_state` → _(none)_
 - `history_determination_recognized` → `history_determination_unrecognized` (team_notification)
@@ -34,6 +36,7 @@ Three vocabularies, matching the three tables they're recorded in:
 - `delivered_review_citation_no_window` → `delivered_review_citation_no_window` (team_notification)
 
 **MonitoringReviews**
+
 - `delivery_report_lag_days` → `review_delivery_report_lag` (alert)
 - `finding_count` → _(none)_
 - `review_type_shape` → `review_type_shape_violation` (alert)
@@ -45,6 +48,7 @@ Three vocabularies, matching the three tables they're recorded in:
 - `delivered_review_completion_state` → `delivered_review_reopened` (team_notification)
 
 **`*Statuses` tables**
+
 - `statuses_table_integrity` → `statuses_table_integrity_violated` (alert)
 
 ### Stats → checks
@@ -57,6 +61,9 @@ Three vocabularies, matching the three tables they're recorded in:
 - `source_lag_elevated_z` → `source_lag_zscore_elevated` (alert)
 - `completion_gap_elevated_z` → `completion_gap_zscore_elevated` (alert)
 - _(no backing stat — computed inline from the same per-review data as the three Z-score stats above)_ → `review_lag_region_week_all_elevated` (alert)
+- `citations_with_new_value` (with `citations_delivered`) → `citation_new_values_unlikely` (alert)
+- `status_changes_z` → `citation_status_changes_zscore_elevated` (team_notification / alert)
+- `monitoring_grants` stats, `citations_delivered`, `citations_delivered_<category>`, their `_z` stats, and `source_share_<source>` → _(none; anomaly-detection inputs)_
 
 ### Gate checks (no backing observation)
 
@@ -135,7 +142,7 @@ The observations below that back an alert (`review_type_shape`, `review_status_v
 
 **`closure_count`** (`monitoring_finding_closure`, monthly, per region/geo **and national**) — distinct Citations whose `closed_date` fell in that month. `closed_date` is a raw passthrough on `Citations`, not computed through the status-chain logic the way `active`/`active_through` are — fine as a trend to watch, but not reliable enough to use as a filter classifying a finding as open or closed elsewhere.
 
-Three weekly, national-only measures (`import_lag_days`, `source_lag_days`, `completion_gap_days`) share one mechanic: each week, a review counts as "elevated" past its own day-threshold; the week's elevated fraction (`elevated_count / sample_count`) is then expressed as a Z-score against the trailing 52 weeks of that same weekly fraction (mean and standard deviation of the prior weeks' fractions, not of individual reviews) — self-calibrating, so a given Z-score means the same thing regardless of the measure's natural scale, without a hand-picked trigger percentage. The Z-score is the stored `value`; `elevated_count` and `sample_count` are stored alongside as their own stats for context. No Z-score is recorded for a week with fewer than 20 trailing weeks of data or fewer than 20 reviews in the current week itself. Recomputed over the full history each run, same as the other stats. Weekly and national-only: weekly regional volume is too sparse for a fraction to be meaningful.
+Three weekly, national-only measures (`import_lag_days`, `source_lag_days`, `completion_gap_days`) share one mechanic: each week, a review counts as "elevated" past its own day-threshold; the week's elevated fraction (`elevated_count / sample_count`) is then expressed as a Z-score against the trailing 52 weeks of that same weekly fraction (mean and standard deviation of the prior weeks' fractions, not of individual reviews) — self-calibrating, so a given Z-score means the same thing regardless of the measure's natural scale, without a hand-picked trigger percentage. The Z-score is the stored `value`; `elevated_count` and `sample_count` are stored alongside as their own stats for context. No Z-score is recorded for a week with fewer than 20 trailing weeks of data or fewer than 20 reviews in the current week itself. Recomputed from the run's recompute floor, same as the other stats. Weekly and national-only: weekly regional volume is too sparse for a fraction to be meaningful.
 
 **`import_lag_days`** — the gap between a review's `reportDeliveryDate` and when our own audit log first recorded it (`dml_timestamp`). Elevated at >7 days, chosen to land at a ~3.7% baseline rate (matches the day-count the existing per-entity `review_delivery_report_lag` check already uses). Stats: `import_lag_elevated_z`, `import_lag_elevated_count`, `import_lag_sample_count`.
 
@@ -143,9 +150,29 @@ Three weekly, national-only measures (`import_lag_days`, `source_lag_days`, `com
 
 **`completion_gap_days`** — the absolute gap between a review's first transition to `Complete` status and `sourceUpdatedAt` as of the same audit row used for `source_lag_days` — not `reportDeliveryDate`'s own value, which is routinely backdated and doesn't represent when it was actually recorded. Absolute value because either side can lead: both the delivery record and the `Complete` status have to be set before a review's citations are visible in the TTA Hub, so a large gap in either direction is the same kind of problem. Elevated at >2 days (~4.5% baseline). Stats: `completion_gap_elevated_z`, `completion_gap_elevated_count`, `completion_gap_sample_count`.
 
+### `monitoring_grants`
+
+Monthly, per region and national (`region_id = 0`, deduplicated; `geo_id` always 0). Grants and citations are read as of the start of the next month (now, for the current month) from the audit-log bands, so a historical month is their state as the Hub reported it then. The grant fraction and open-finding stats start in March 2026, the first month of `Citations` audit history. Delivered reviews are the exception (see `noncompliant_reviews_delivered` below).
+
+- **Denominator** — `active_grant_count`: grants with status `Active` as of the month end.
+- **Grants of interest** — the numerators of the per-active-grant ratios count events (findings, reviews) only when they are on a grant of interest. That is a wider set than the denominator: every Active grant, plus each inactive grant whose immediate successor (`GrantReplacements`, one hop) is Active and was in place by the month end. An event on an inactive grant with no Active successor is not counted.
+- **`grants_with_open_ncdef_finding`** / **`grants_with_open_ncdef_finding_fraction`** — Active grants with at least one open Noncompliance or Deficiency citation, and that count over `active_grant_count`. Active grants only, so the numerator is a subset of the denominator.
+- **`open_ncdef_findings`** / **`overdue_ncdef_findings`** / **`open_ncdef_findings_per_active_grant`** — open Noncompliance/Deficiency citations on grants of interest, those past `finding_deadline`, and the open count over `active_grant_count`. A citation on grants in several regions counts once per region and once nationally.
+- **`noncompliant_reviews_delivered`** / **`noncompliant_reviews_per_active_grant`** — `DeliveredReviews` with outcome `Non Compliant` or `Deficient`, delivered that month on a grant of interest, and that count over `active_grant_count`. Like the other event-dated stats (e.g. `findings_delivered`), each review uses its current `outcome` and `GrantDeliveredReviews` links, so a later correction or unlink updates the month the review was delivered in. Whether its grant is of interest, and the denominator, still come from the grants as of that month end. Reviews aren't read from their audit log so the stat can reach back further than that log does, and corrections that change it are rare.
+
+### `monitoring_citations`
+
+National unless noted. Citations are bucketed on `initial_report_delivery_date`.
+
+- **`citations_delivered`** / **`citations_delivered_<category>`** (weekly) — citations delivered, in total and per `calculated_category` (the category lowercased, with each run of non-alphanumeric characters replaced by `_`).
+- **`status_changes`** (weekly, per region and national) — citations whose `calculated_status` changed that week, read from the `Citations` audit-log bands, so it starts in March 2026. A region row counts each citation linked to that region's grants at the moment of the change.
+- **`_z`** — each of the weekly series above has a Z-score: the week against the trailing 52 weeks, with empty weeks counted as 0. Not recorded for the current partial week, or when there are fewer than 20 trailing weeks, fewer than 20 events across them, or no variation.
+- **`citations_with_new_value`** (weekly) — citations delivered that week whose `Citations.citation` value had never been delivered before. Values are compared as stored, so a missing or blank code is one value like any other. Starts six weeks after the first delivery, since nearly every value is new in the first weeks of data. No Z-score; `citation_new_values_unlikely` tests it against the trailing rate instead.
+- **`source_share_<source>`** (monthly) — the share of the month's delivered citations whose `citation` comes from each regulation: `hspps` (Head Start Program Performance Standards, `1302.`), `cfr_75` (45 CFR 75, `75.`), `head_start_act` (the Head Start Act, `6xx`) and `other`. Not recorded for a month with fewer than 5 citations.
+
 ## Check definitions
 
-Severity, message logic, and window for each check that can reach Slack. See [Windows](./monitoring-data-validation.md#conventions) in the process doc for what `since previous cycle` means mechanically.
+Severity, message logic, and window for each check that can reach Slack. **Window** after each entry refers to the re-alert suppression rule. See [Windows](./monitoring-data-validation.md#conventions) in the process doc for what each window form means mechanically.
 
 ### Gate
 
@@ -155,7 +182,7 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 ### Threshold
 
-**`reviews_created_region_zero`** — alert when a region created zero reviews over the last four complete weeks, and the cross-region four-week average exceeds 5 (so a quiet season doesn't false-alarm). Window: none (recomputed fresh every run over its own rolling 4-week data window).
+**`reviews_created_region_zero`** — alert when a region created zero reviews over the last four complete weeks, and the cross-region four-week average exceeds 5 (so a quiet season doesn't false-alarm). Window: since previous cycle, per region (see Conventions in the process doc).
 
 **`findings_delivered_month_spike`** — alert when the last complete month delivered >50% as many findings as the entire twelve months before it. Window: none (recomputed fresh every run over its own rolling 13-month data window).
 
@@ -163,7 +190,7 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 **`finding_closure_month_spike`** — alert when the last complete month closed >50% as many findings as the entire twelve months before it. Window: none (recomputed fresh every run over its own rolling 13-month data window).
 
-**`finding_closure_stalled`** — alert when zero findings closed nationally in each of the last 2 complete months while more than 20 Citations are currently `active`. Window: none (recomputed fresh every run over its own rolling 2-month data window plus the current live Citations count).
+**`finding_closure_stalled`** — alert when zero findings closed nationally in each of the last 2 complete months while more than 20 Citations are currently `active`. Window: since previous cycle, national singleton (see Conventions in the process doc).
 
 **`import_lag_zscore_elevated`** — alert when the last complete week's `import_lag_elevated_z` exceeds +2. Window: none (recomputed fresh every run over its own rolling 53-week data window: the current week plus 52 trailing weeks).
 
@@ -171,7 +198,11 @@ Severity, message logic, and window for each check that can reach Slack. See [Wi
 
 **`completion_gap_zscore_elevated`** — alert when the last complete week's `completion_gap_elevated_z` exceeds +2. Window: none (recomputed fresh every run over its own rolling 53-week data window: the current week plus 52 trailing weeks).
 
-**`review_lag_region_week_all_elevated`** — alert when every review a region delivered in the last complete week (at least 2) was elevated on at least one of `import_lag_days`/`source_lag_days`/`completion_gap_days`. Backtested against production data: fired only on the weeks of two known real incidents (including an early-2025 import slowdown) across roughly two years of history. Window: none (recomputed fresh every run over the last complete week only).
+**`review_lag_region_week_all_elevated`** — alert when every review a region delivered in the last complete week (at least 2) was elevated on at least one of `import_lag_days`/`source_lag_days`/`completion_gap_days`. Window: none (recomputed fresh every run over the last complete week only).
+
+**`citation_new_values_unlikely`** — alert when the last complete week has at least 3 `citations_with_new_value` and that many is unlikely by chance: the binomial probability of at least that many new values among the week's `citations_delivered`, at the rate seen over the trailing 52 weeks, is below 0.001. The rate is smoothed to `(new values + 1) / (citations + 2)`, so a year with no new values still gives a usable nonzero rate. Testing against the rate, rather than a fixed share, adapts to both the week's volume and how often new values have been appearing. The message names two of the new values as examples. Window: none (last complete week only).
+
+**`citation_status_changes_zscore_elevated`** — fires when the last complete week's `status_changes_z` exceeds +2: team_notification up to +3, alert above +3. A burst of citations changing status together (for example, many corrected at once) is worth knowing about but not unexpected, so only a large spike reaches the alert channel. The message gives the week's count and two example citations with their transitions. Window: none (last complete week only).
 
 ### Entity-based
 
