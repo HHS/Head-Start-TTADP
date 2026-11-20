@@ -9,12 +9,14 @@ import db from '../models';
 import {
   checkUserExists,
   checkUserExistsByNationalCenter,
+  countEventHelperBlob,
   createEvent,
   csvImport,
   destroyEvent,
   filterEventSessions,
   findAllEvents,
   findEventByDbId,
+  findEventBySmartsheetId,
   findEventHelper,
   findEventHelperBlob,
   findEventsByCollaboratorId,
@@ -123,6 +125,30 @@ describe('event service', () => {
         [11_111]
       );
 
+      await destroyEvent(created.id);
+    });
+
+    it('emails new POCs on a Regional PD event with National Centers', async () => {
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+      const created = await createEvent({
+        ownerId: 98_989,
+        regionId: 98_989,
+        pocIds: [11_111, 98_989],
+        collaboratorIds: [],
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+          owner: { id: 98_989, name: 'Owner Name' },
+        },
+      });
+
+      // the owner is never notified as a POC
+      expect(trPocAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [11_111]
+      );
+
+      trPocAddedSpy.mockRestore();
       await destroyEvent(created.id);
     });
 
@@ -266,6 +292,130 @@ describe('event service', () => {
       expect(previous).toEqual([98_989]);
       expect(current).toEqual([98_989, 11_111]);
 
+      await destroyEvent(created.id);
+    });
+
+    it('emails only the newly added POCs', async () => {
+      const created = await createAnEvent(98_989);
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989, 11_111, 11_112],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: {
+          status: 'active',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+          owner: { id: 98_989, name: 'test' },
+        },
+      });
+
+      expect(trPocAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id, eventId: created.eventId }),
+        [11_111, 11_112]
+      );
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('defers the POC email until after commit so its queries cannot abort the save', async () => {
+      const created = await createAnEvent(98_989);
+      // Like the real mailer: a failed query whose error is swallowed. Inside the request
+      // transaction this would abort it, so the email must wait for the commit.
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockImplementation(async () => {
+        try {
+          await db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"');
+        } catch {
+          // swallowed, as the mailer does
+        }
+      });
+      const deferred = [];
+
+      const updated = await db.sequelize.transaction(async () => {
+        const result = await updateEvent(
+          created.id,
+          {
+            ownerId: 98_989,
+            pocIds: [98_989, 11_111],
+            regionId: 98_989,
+            collaboratorIds: [98_989],
+            data: {
+              status: 'active',
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+              owner: { id: 98_989, name: 'test' },
+            },
+          },
+          (work) => {
+            deferred.push(work);
+          }
+        );
+        expect(trPocAddedSpy).not.toHaveBeenCalled();
+        return result;
+      });
+      await Promise.all(deferred.map((work) => work()));
+
+      expect(updated.pocIds).toEqual([98_989, 11_111]);
+      expect(trPocAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [11_111]
+      );
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('emails a POC once when overlapping saves both add them', async () => {
+      const created = await createAnEvent(98_989);
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+      const request = {
+        ownerId: 98_989,
+        pocIds: [98_989, 11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: {
+          status: 'active',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+          owner: { id: 98_989, name: 'test' },
+        },
+      };
+      const deferred = [];
+      const save = () =>
+        db.sequelize.transaction(() =>
+          updateEvent(created.id, structuredClone(request), (work) => {
+            deferred.push(work);
+          })
+        );
+
+      await Promise.all([save(), save()]);
+      await Promise.all(deferred.map((work) => work()));
+
+      const emailed = trPocAddedSpy.mock.calls.flatMap(([, newPocIds]) => newPocIds);
+      expect(emailed).toEqual([11_111]);
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('does not email POCs on events without National Centers', async () => {
+      const created = await createAnEvent(98_989);
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: {
+          status: 'active',
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      });
+
+      expect(trPocAddedSpy).toHaveBeenCalledWith(expect.anything(), []);
+
+      trPocAddedSpy.mockRestore();
       await destroyEvent(created.id);
     });
 
@@ -592,6 +742,31 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('findEventBySmartsheetId omits sessions only when includeSessions is false', async () => {
+      const created = await createAnEvent(98_989);
+      const sessionReport = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: { sessionName: 'Smartsheet session' },
+      });
+
+      const [withoutSessions, withSessions] = await Promise.all([
+        findEventBySmartsheetId(created.eventId, [{}], { includeSessions: false }),
+        findEventBySmartsheetId(created.eventId),
+      ]);
+
+      expect(withoutSessions.sessionReports).toEqual([]);
+      expect(withoutSessions).toHaveProperty('ownerId', 98_989);
+      expect(withoutSessions).toHaveProperty('regionId', 98_989);
+      expect(withoutSessions).toHaveProperty('eventId', created.eventId);
+      expect(withoutSessions.data).toHaveProperty('status');
+
+      expect(withSessions.sessionReports).toHaveLength(1);
+      expect(withSessions.sessionReports[0]).toHaveProperty('id', sessionReport.id);
+
+      await db.SessionReportPilot.destroy({ where: { id: sessionReport.id } });
+      await destroyEvent(created.id);
+    });
+
     it('findEventsByOwnerId', async () => {
       const created = await createAnEvent(98_989);
       const found = await findEventsByOwnerId(created.ownerId);
@@ -730,6 +905,33 @@ describe('event service', () => {
       await destroyEvent(found[0].id);
       await destroyEvent(found[1].id);
       await destroyEvent(found[2].id);
+    });
+
+    it('findEventHelperBlob paginates and countEventHelperBlob counts all matches', async () => {
+      const created = await Promise.all(
+        ['A', 'B', 'C'].map((eventId) =>
+          createAnEventWithData(11_111, { eventId, status: TRS.NOT_STARTED })
+        )
+      );
+      const options = {
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        allowNull: true,
+        scopes: [{ id: created.map((e) => e.id) }],
+      };
+
+      const [page, count] = await Promise.all([
+        findEventHelperBlob({ ...options, limit: 2, offset: 1 }),
+        countEventHelperBlob(options),
+      ]);
+
+      expect(count).toBe(3);
+      expect(page).toHaveLength(2);
+      expect(page[0]).toHaveProperty('eventId', 'B');
+      expect(page[1]).toHaveProperty('eventId', 'C');
+
+      await Promise.all(created.map((e) => destroyEvent(e.id)));
     });
 
     it('findEventHelperBlob use scopes', async () => {

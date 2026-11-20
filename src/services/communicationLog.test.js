@@ -148,6 +148,15 @@ describe('communicationLog services', () => {
     expect(result.data).toEqual({ foo: 'updated' });
   });
 
+  it('ignores fractional recipient ids instead of letting the database round them', async () => {
+    const result = await updateLog(log.id, {
+      foo: 'fractional',
+      recipients: [{ value: `${secondRecipient.id + 0.1}` }],
+    });
+    expect(result.recipients.map(({ id }) => id)).toEqual([recipient.id]);
+    expect(result.data).toEqual({ foo: 'fractional' });
+  });
+
   it('preserves recipients when recipients is undefined', async () => {
     // Update without recipients field - should preserve existing recipients
     const result = await updateLog(log.id, { foo: 'another update' });

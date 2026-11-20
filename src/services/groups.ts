@@ -1,7 +1,7 @@
 import { GROUP_SHARED_WITH } from '@ttahub/common';
-import { Op, type WhereOptions } from 'sequelize';
+import { Op, Transaction, type WhereOptions } from 'sequelize';
 import { GROUP_COLLABORATORS } from '../constants';
-import SCOPES from '../middleware/scopeConstants';
+import SCOPES, { REPORT_ACCESS_SCOPES } from '../middleware/scopeConstants';
 import db, { sequelize } from '../models';
 import { getCollaboratorTypeMapping } from './collaboratorType';
 
@@ -193,7 +193,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
                 attributes: [],
                 required: true,
                 where: {
-                  scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
+                  scopeId: REPORT_ACCESS_SCOPES,
                 },
               },
             ],
@@ -427,7 +427,7 @@ async function creatorRegionIds(userId: number): Promise<number[]> {
       },
     ],
     where: {
-      scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
+      scopeId: REPORT_ACCESS_SCOPES,
     },
     raw: true,
   });
@@ -473,7 +473,7 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
       },
     ],
     where: {
-      scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
+      scopeId: REPORT_ACCESS_SCOPES,
     },
     raw: true,
   });
@@ -623,7 +623,7 @@ export async function potentialSharedWith(
         attributes: [],
         required: true,
         where: {
-          scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
+          scopeId: REPORT_ACCESS_SCOPES,
           regionId: creatorsRegionIds,
         },
       },
@@ -699,7 +699,7 @@ export async function potentialRecipientGrants(data: {
         attributes: ['regionId'],
         where: {
           userId,
-          scopeId: [SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS, SCOPES.APPROVE_REPORTS],
+          scopeId: REPORT_ACCESS_SCOPES,
         },
         group: [['regionId', 'ASC']],
       })
@@ -790,6 +790,18 @@ export async function potentialRecipientGrants(data: {
  * @returns A Promise that resolves to the updated group.
  * @throws {Error} If there is an error performing the database operations.
  */
+/**
+ * Locks the group's row for the rest of the caller's transaction (the ambient CLS transaction from
+ * `transactionWrapper`). An update takes this lock before reading the group, so the grants it
+ * authorizes against are still the group's grants when `editGroup` saves.
+ */
+export async function lockGroup(groupId: number) {
+  return Group.findByPk(groupId, {
+    attributes: ['id'],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
+  });
+}
+
 export async function editGroup(groupId: number, data: GroupData): Promise<GroupResponse> {
   const { grants, coOwners = [], individuals = [], sharedWith } = data;
 

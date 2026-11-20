@@ -2,9 +2,10 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { GROUP_COLLABORATORS } from '../../constants';
+import parsePositiveInteger from '../../lib/parsePositiveInteger';
 import { auditLogger } from '../../logger';
 import db from '../../models';
-import GroupPolicy from '../../policies/group';
+import GroupPolicy, { type GrantType } from '../../policies/group';
 import { currentUserId } from '../../services/currentUser';
 import {
   checkGroupNameAvailable,
@@ -14,6 +15,7 @@ import {
   type GroupResponse,
   group,
   groups,
+  lockGroup,
   potentialGroupUsers,
   potentialRecipientGrants,
 } from '../../services/groups';
@@ -45,7 +47,7 @@ function checkBulkPermissions(
   // An array of user data objects with their permissions
   userDatas: { id: number; permissions: { regionId: number; scopeId: number }[] }[],
   // An array of grants
-  grants: { id: number; regionId: number; recipientId?: number; status?: string }[],
+  grants: GrantType[],
   // An optional group object
   groupData?: { id: number; isPublic: boolean; grants?; groupCollaborators? }
 ): boolean {
@@ -56,6 +58,37 @@ function checkBulkPermissions(
     // Check if every result is false
     .every((result) => result);
   return resultz;
+}
+
+/**
+ * Normalizes client-supplied grant IDs into a de-duplicated list of positive integers.
+ *
+ * @param grantIds - The raw grant IDs from the request body.
+ * @returns The normalized grant IDs, or null if the input is not an array of valid IDs.
+ */
+function parseGrantIds(grantIds: unknown): number[] | null {
+  if (!Array.isArray(grantIds)) return null;
+  // Only numbers and digit-only strings are accepted, so values like true or [1] are rejected
+  const ids = grantIds.map(parsePositiveInteger);
+  if (ids.includes(null)) return null;
+  return [...new Set(ids)];
+}
+
+/**
+ * Resolves grant IDs to the grants stored in the database, so authorization runs against each
+ * grant's actual region rather than anything supplied by the client.
+ *
+ * @param grantIds - Normalized grant IDs.
+ * @returns The resolved grants, or null if any of the IDs do not exist.
+ */
+async function resolveGrants(grantIds: number[]): Promise<GrantType[] | null> {
+  if (!grantIds.length) return [];
+  const grants = await Grant.findAll({
+    attributes: ['id', 'regionId', 'recipientId', 'status'],
+    where: { id: grantIds },
+    raw: true,
+  });
+  return grants.length === grantIds.length ? grants : null;
 }
 
 /**
@@ -264,8 +297,15 @@ export async function createGroup(req: Request, res: Response) {
     } = req.body;
     // cast isPublic to boolean
     const isPublic = isPublicRaw === 'true' || isPublicRaw === true;
+
+    const parsedGrantIds = parseGrantIds(grantIds);
+    if (!parsedGrantIds) {
+      res.sendStatus(httpCodes.BAD_REQUEST);
+      return;
+    }
+
     // Fetch the current user ID and related data in parallel
-    const [userId, coOwners, individuals] = await Promise.all([
+    const [userId, coOwners, individuals, grants] = await Promise.all([
       currentUserId(req, res),
       coOwnerIds.length
         ? Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId)))
@@ -273,27 +313,31 @@ export async function createGroup(req: Request, res: Response) {
       individualIds.length
         ? Promise.all(individualIds.map(async (sharedWithId) => userById(sharedWithId)))
         : Promise.resolve([]),
+      // Resolve the submitted grants server-side so they can be authorized before persisting
+      resolveGrants(parsedGrantIds),
     ]);
 
-    // Fetch the user data for the current user
-    const [user, grants, nameAvailable] = await Promise.all([
+    // Fetch the user data for the current user and every grant they can add to a group
+    const [user, creatorGrants, nameAvailable] = await Promise.all([
       userById(userId),
       potentialRecipientGrants({ userId }),
       checkGroupNameAvailable(name),
     ]);
-    const grantsWithId = grants.map((grant) => ({ ...grant, id: grant.grantId }));
+    // Co-owners and shared-with users are checked against every grant the creator can access,
+    // the same rule potentialGroupUsers applies when offering them
+    const creatorGrantsWithId = creatorGrants.map((grant) => ({ ...grant, id: grant.grantId }));
 
-    // Create a new GroupPolicy instance with the user and grants data
-    const policy = new GroupPolicy(user, grantsWithId);
+    // Create a new GroupPolicy instance with the user and the submitted grants
+    const policy = new GroupPolicy(user, grants || []);
 
-    // Check if the current user can add to the group
-    if (!policy.canAddToGroup()) {
+    // Check that every submitted grant exists and the current user can add it to the group
+    if (!grants || !policy.canAddToGroup()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
     // Check if the co-owners have the necessary permissions
-    if (!checkBulkPermissions('canAddToGroup', coOwners, grantsWithId)) {
+    if (!checkBulkPermissions('canAddToGroup', coOwners, creatorGrantsWithId)) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'co-owner-permissions',
         message: GROUP_ERRORS.CO_OWNER_PERMISSIONS,
@@ -302,7 +346,9 @@ export async function createGroup(req: Request, res: Response) {
     }
 
     // Check if the sharedWith have the necessary permissions
-    if (!checkBulkPermissions('canUseGroup', individuals, grantsWithId, { id: -1, isPublic })) {
+    if (
+      !checkBulkPermissions('canUseGroup', individuals, creatorGrantsWithId, { id: -1, isPublic })
+    ) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'shared-with-permissions',
         message: GROUP_ERRORS.SHARED_WITH_PERMISSIONS,
@@ -323,7 +369,7 @@ export async function createGroup(req: Request, res: Response) {
     const groupResponse = await createNewGroup({
       ...req.body,
       userId,
-      grants: grantIds, // filter to only active grants
+      grants: parsedGrantIds,
     });
 
     // Send the group response as JSON
@@ -362,28 +408,30 @@ export async function updateGroup(req: Request, res: Response) {
     } = req.body;
 
     const isPublic = isPublicRaw === 'true' || isPublicRaw === true;
+
+    const parsedGrantIds = parseGrantIds(grantIds);
+    if (!parsedGrantIds) {
+      res.sendStatus(httpCodes.BAD_REQUEST);
+      return;
+    }
+
     // Parse the groupId and retrieve necessary data from various async functions
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
+    // Hold the group's row lock until this request's transaction ends, so another edit cannot
+    // change the group's grants between the check below and editGroup saving them
+    await lockGroup(groupId);
     // Destructure the array returned by Promise.all into individual variables
     const [
       userId, // Store the result of the currentUserId function
       groupData, // Store the result of the group function
-      grants, // Store the result of the Grant.findAll function
+      submittedGrants, // The submitted grants as stored, or null if any do not exist
       coOwners, // Store the result of the Promise.all function
       individuals, // Store the result of the Promise.all function
     ] = await Promise.all([
       // Call the currentUserId function with req and res parameters and await its result
       currentUserId(req, res),
       group(groupId), // Call the group function with groupId parameter and await its result
-      Grant.findAll({
-        // Call the findAll method on the Grant model
-        attributes: ['id', 'regionId', 'recipientId', 'status'],
-        where: {
-          id: grantIds,
-          status: 'Active',
-        },
-        raw: true,
-      }),
+      resolveGrants(parsedGrantIds),
       // Map each coOwnerId to a Promise returned by the userById function and await all promises
       Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId))),
       // Map each sharedWithId to a Promise returned by the userById function and await all promises
@@ -396,6 +444,23 @@ export async function updateGroup(req: Request, res: Response) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
+
+    // Every submitted grant must exist, and the editing user must have access to each grant
+    // being newly added to the group before anything is persisted
+    if (!submittedGrants) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+    const existingGrantIds = new Set((groupData?.grants || []).map(({ id }) => id));
+    const addedGrants = submittedGrants.filter(({ id }) => !existingGrantIds.has(id));
+    const user = await userById(userId);
+    if (!new GroupPolicy(user, addedGrants).canAddToGroup()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    // Co-owners and shared-with users only need access to the group's active grants
+    const grants = submittedGrants.filter(({ status }) => status === 'Active');
 
     // Check if the co-owners have the necessary permissions
     if (!checkBulkPermissions('canAddToGroup', coOwners, grants)) {
@@ -427,7 +492,7 @@ export async function updateGroup(req: Request, res: Response) {
     // Edit the group and send the updated group response
     const groupResponse = await editGroup(groupId, {
       ...req.body,
-      grants: grantIds,
+      grants: parsedGrantIds,
     });
 
     res.json(groupResponse);
@@ -452,6 +517,9 @@ export async function deleteGroup(req: Request, res: Response) {
   try {
     const { groupId: groupIdRaw } = req.params;
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
+    // Lock the group before destroyGroup touches its grant and collaborator rows, so delete
+    // and update both lock the parent group first and cannot deadlock each other
+    await lockGroup(groupId);
     const [userId, groupData] = await Promise.all([
       currentUserId(req, res),
       group(groupId), // Retrieve the group data using the groupId

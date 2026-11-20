@@ -12,29 +12,12 @@ const {
   buildScaFindingId,
   operationalDate,
   resolveProjectPath,
-  validateArray,
   writeJson,
 } = require('./utilities');
+const { parseYarnNpmAudit } = require('./yarn-npm-audit');
 
-function parseJsonLines(filePath) {
-  return fs
-    .readFileSync(filePath, 'utf8')
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .map((line) => JSON.parse(line));
-}
-
-function collectPathsFromFinding(finding) {
-  const paths = new Set();
-  validateArray(finding.paths || [], 'advisory.findings[].paths').forEach((findingPath) => {
-    if (findingPath) {
-      paths.add(findingPath);
-    }
-  });
-
-  return [...paths].sort();
-}
-
+// Reads a `yarn npm audit --json` report and returns one finding per advisory, package and
+// installed version. `paths` holds the direct dependents Yarn reports for the package.
 function collectAuditAdvisoriesFromFile({
   auditPath,
   scope,
@@ -43,54 +26,44 @@ function collectAuditAdvisoriesFromFile({
   cwd = process.cwd(),
 } = {}) {
   const resolvedAuditPath = resolveProjectPath(auditPath, cwd);
-  const rows = parseJsonLines(resolvedAuditPath).filter((row) => row.type === 'auditAdvisory');
+  const advisories = parseYarnNpmAudit(fs.readFileSync(resolvedAuditPath, 'utf8'));
   const findingsById = new Map();
 
-  rows.forEach((row) => {
-    const advisory = row.data?.advisory;
-    if (!advisory?.github_advisory_id || !advisory?.module_name) {
+  advisories.forEach((advisory) => {
+    if (!advisory.ghsa) {
       return;
     }
 
-    validateArray(advisory.findings || [], 'advisory.findings').forEach((finding) => {
-      if (!finding.version) {
-        return;
-      }
-
-      const id = buildScaFindingId(
-        scope,
-        advisory.github_advisory_id,
-        advisory.module_name,
-        finding.version
-      );
+    advisory.versions.forEach((version) => {
+      const id = buildScaFindingId(scope, advisory.ghsa, advisory.module, version);
       const existing = findingsById.get(id);
-      const sourcePaths = collectPathsFromFinding(finding);
 
       if (existing) {
-        existing.paths = [...new Set([...existing.paths, ...sourcePaths])].sort();
+        existing.paths = [...new Set([...existing.paths, ...advisory.dependents])].sort();
         return;
       }
 
       findingsById.set(id, {
         id,
         scope,
-        scannerFindingId: advisory.github_advisory_id,
-        module: advisory.module_name,
-        affectedVersion: finding.version,
-        title: advisory.title || `${advisory.module_name} advisory`,
+        scannerFindingId: advisory.ghsa,
+        module: advisory.module,
+        affectedVersion: version,
+        title: advisory.title || `${advisory.module} advisory`,
         sourceSeverity: advisory.severity,
         severity: mapSeverity(scanTypes, 'yarn-audit', advisory.severity),
         firstDetected: baselineDate,
         lastObserved: baselineDate,
-        advisoryId: advisory.id || null,
-        advisoryUrl: advisory.url || null,
-        vulnerableVersions: advisory.vulnerable_versions || null,
-        patchedVersions: advisory.patched_versions || null,
-        recommendation: advisory.recommendation || null,
-        cves: advisory.cves || [],
-        cwe: advisory.cwe || [],
-        cvss: advisory.cvss || null,
-        paths: sourcePaths,
+        advisoryId: advisory.advisoryId,
+        advisoryUrl: advisory.url,
+        vulnerableVersions: advisory.vulnerableVersions,
+        // Yarn 4 audit output does not include patched versions, recommendations, CVEs, CWEs or CVSS.
+        patchedVersions: null,
+        recommendation: null,
+        cves: [],
+        cwe: [],
+        cvss: null,
+        paths: [...advisory.dependents],
       });
     });
   });
@@ -162,8 +135,6 @@ function createScaBaselines({
 
 module.exports = {
   collectAuditAdvisoriesFromFile,
-  collectPathsFromFinding,
   createScaBaseline,
   createScaBaselines,
-  parseJsonLines,
 };

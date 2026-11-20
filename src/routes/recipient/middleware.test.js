@@ -108,6 +108,23 @@ describe('checkRecipientTimelineQuery', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  it('passes an opaque cursor through as a control rather than a filter', () => {
+    const req = {
+      query: { cursor: ' WyIyMDI2LTA4LTIyIDEwOjAwOjAwIiwiY29tbXVuaWNhdGlvbkxvZyIsNV0 ' },
+    };
+    const res = mockResponse();
+    const next = jest.fn();
+
+    checkRecipientTimelineQuery(req, res, next);
+
+    expect(res.locals.recipientTimelineQuery).toMatchObject({
+      cursor: 'WyIyMDI2LTA4LTIyIDEwOjAwOjAwIiwiY29tbXVuaWNhdGlvbkxvZyIsNV0',
+      offset: 0,
+      filters: [],
+    });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
   it.each(['is', 'is not'])('accepts every defined purpose with %s', (condition) => {
     const filter = { topic: 'purpose', condition, query: COMMUNICATION_PURPOSES };
     const parameter = condition === 'is' ? 'purpose.in' : 'purpose.nin';
@@ -124,6 +141,8 @@ describe('checkRecipientTimelineQuery', () => {
   it.each([
     ['non-positive limit', { limit: '0' }],
     ['negative offset', { offset: '-1' }],
+    ['empty cursor', { cursor: '' }],
+    ['oversized cursor', { cursor: 'a'.repeat(501) }],
     ['unsupported sort field', { sortBy: 'title' }],
     ['unsupported direction', { direction: 'sideways' }],
     ['invalid checkbox', { excludeMultiRecipientCommunications: 'sometimes' }],

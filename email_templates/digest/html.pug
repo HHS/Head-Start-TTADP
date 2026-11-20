@@ -1,6 +1,9 @@
 p Hello #{user.name},
-p Below are your report notifications for #{freq}.
-p Select the report number to view it in the Hub.
+if type === 'monitoringDetailsAddedDigest'
+    p Below are your monitoring notifications for #{freq}.
+else
+    p Below are your report notifications for #{freq}.
+    p Select the report number to view it in the Hub.
 case type
     when 'collaboratorDigest'
         p You were added as a collaborator on these activity reports:
@@ -16,13 +19,18 @@ case type
         p The following Activity Reports, on which you are a collaborator, have been submitted for approval:
     when 'creatorReportSubmittedForReviewDigest'
         p The following Activity Reports, on which you are a creator, have been submitted for approval:
+    when 'trainingReportPocAddedDigest'
+        p You were added as a regional point of contact on these Training Reports:
+    when 'monitoringDetailsAddedDigest'
+        p New monitoring reports were added in your region for the following recipients:
     default
         p
 ul
   for report in reports
     li
-      a(href=reportPath + report.id)= report.displayId
-p That's it!
+      a(href=report.link)= report.displayId
+if type !== 'monitoringDetailsAddedDigest'
+    p That's it!
 p Best wishes,
   br
   | The TTA Hub team

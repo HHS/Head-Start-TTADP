@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker';
 import { UniqueConstraintError } from 'sequelize';
 import { FEATURE_FLAGS } from '../../constants';
-import SCOPES from '../../middleware/scopeConstants';
 import handleErrors from '../../lib/apiErrorHandler';
-import db, { Permission, Role, User, UserRole } from '../../models';
+import SCOPES from '../../middleware/scopeConstants';
+import db, { Permission, Role, User, UserRole, UserValidationStatus } from '../../models';
 import { createUser as createTestUser } from '../../testUtils';
 import {
   createUser,
@@ -12,6 +12,7 @@ import {
   getFeatures,
   getUser,
   getUsers,
+  resetEmailVerification,
   updateUser,
 } from './user';
 
@@ -352,6 +353,42 @@ describe('User route handler', () => {
     await createUser(mockRequest, mockResponse);
 
     expect(handleErrors).toHaveBeenCalledTimes(2);
+  });
+
+  describe('resetEmailVerification', () => {
+    let verifiedUser;
+
+    beforeAll(async () => {
+      verifiedUser = await createTestUser();
+      await UserValidationStatus.create({
+        userId: verifiedUser.id,
+        token: 'token',
+        type: 'email',
+        validatedAt: new Date(),
+      });
+    });
+
+    afterAll(async () => {
+      await UserValidationStatus.destroy({ where: { userId: verifiedUser.id } });
+      await User.destroy({ where: { id: verifiedUser.id } });
+    });
+
+    it('clears the email validatedAt for the user', async () => {
+      const req = { ...mockRequest, params: { userId: String(verifiedUser.id) } };
+      await resetEmailVerification(req, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith({ count: 1 });
+      const status = await UserValidationStatus.findOne({
+        where: { userId: verifiedUser.id, type: 'email' },
+      });
+      expect(status.validatedAt).toBeNull();
+    });
+
+    it('returns a 400 for a non-numeric userId', async () => {
+      const req = { ...mockRequest, params: { userId: 'abc' } };
+      await resetEmailVerification(req, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
+    });
   });
 
   describe('createUserRoles', () => {

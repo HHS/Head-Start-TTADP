@@ -46,6 +46,22 @@ describe('Group', () => {
 
       expect(g.canAddToGroup()).toBe(false);
     });
+
+    it('should return false if the user has no report scope in the grant region', () => {
+      const user = {
+        id: 1,
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+          },
+        ],
+      };
+
+      const g = new Group(user, [{ regionId: 1 }]);
+
+      expect(g.canAddToGroup()).toBe(false);
+    });
   });
 
   describe('ownsGroup', () => {

@@ -9,6 +9,7 @@ import { Permission, Role, sequelize, User, UserRole } from '../../models';
 import {
   primaryApproverConflicts,
   regionsWithExclusiveScopeConflicts,
+  requireEmailVerification,
   userAttributes,
   userById,
 } from '../../services/users';
@@ -273,6 +274,28 @@ export async function deleteUser(req, res) {
   }
 }
 
+/**
+ * Clears a user's email verification so they must verify their email again.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function resetEmailVerification(req, res) {
+  const userId = parseInt(req.params.userId, 10);
+  if (Number.isNaN(userId)) {
+    res.sendStatus(httpCodes.BAD_REQUEST);
+    return;
+  }
+
+  try {
+    const count = await requireEmailVerification(userId);
+    auditLogger.warn(`User ${req.session.userId} required email verification for User: ${userId}`);
+    res.json({ count });
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
 export async function getFeatures(req, res) {
   try {
     res.json(FEATURE_FLAGS);
@@ -316,6 +339,7 @@ router.get('/', transactionWrapper(getUsers));
 router.get('/creators/region/:regionId', transactionWrapper(getCreatorsByRegion));
 router.post('/', transactionWrapper(createUser));
 router.put('/:userId', transactionWrapper(updateUser));
+router.put('/:userId/require-email-verification', transactionWrapper(resetEmailVerification));
 router.delete('/:userId', transactionWrapper(deleteUser));
 
 export default router;

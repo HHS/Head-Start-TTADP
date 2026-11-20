@@ -4,6 +4,7 @@ import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagno
 import transactionWrapper from '../transactionWrapper';
 import buildInfo from './buildInfo';
 import courseRouter from './course';
+import emailTestingRouter from './emailTesting';
 import goalRouter from './goal';
 import groupRouter from './group';
 import getRequestErrors, { getRequestError } from './handlers';
@@ -39,6 +40,7 @@ router.use('/goals', goalRouter);
 router.use('/roles', roleRouter);
 router.use('/alerts', siteAlertRouter);
 router.use('/redis', redisRouter);
+router.use('/email-testing', emailTestingRouter);
 router.use('/national-center', nationalCenterRouter);
 router.use('/training-reports', trainingReportRouter);
 router.use('/legacy-reports', legacyReportRouter);

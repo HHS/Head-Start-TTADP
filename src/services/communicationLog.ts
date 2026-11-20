@@ -2,11 +2,13 @@ import stringify from 'csv-stringify/lib/sync';
 import moment from 'moment';
 import { Op, type WhereOptions } from 'sequelize';
 import normalizeSortDir from '../lib/normalizeSortDir';
+import parseSelectionIds from '../lib/parseSelectionIds';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import db from '../models';
 
 const {
   sequelize,
+  Grant,
   CommunicationLog,
   CommunicationLogRecipient,
   CommunicationLogStaff,
@@ -226,6 +228,44 @@ const logById = async (id: number) => {
 
   return withOtherStaff(log);
 };
+
+export async function recipientsInRegion(recipientIds: number[], regionId: number | number[]) {
+  if (!recipientIds.every((id) => Number.isSafeInteger(id) && id > 0)) return false;
+  if (!recipientIds.length) return true;
+  if (Array.isArray(regionId) && !regionId.length) return false;
+
+  // Recipients can span regions. A grant in this region establishes the relationship.
+  const grants = await Grant.findAll({
+    attributes: ['recipientId'],
+    where: { recipientId: [...new Set(recipientIds)], regionId },
+  });
+  const regionalRecipientIds = new Set(grants.map((grant) => grant.recipientId));
+  return recipientIds.every((id) => regionalRecipientIds.has(id));
+}
+
+/**
+ * The region of a log that has no saved region, taken from its recipients' grants. It is only
+ * returned when every recipient has at least one grant and all of those grants are in one region;
+ * otherwise the region cannot be told reliably and this returns null.
+ */
+export async function regionIdFromRecipients(recipientIds: number[]): Promise<number | null> {
+  if (!recipientIds.length) return null;
+  if (!recipientIds.every((id) => Number.isSafeInteger(id) && id > 0)) return null;
+
+  const uniqueIds = [...new Set(recipientIds)];
+  const grants = await Grant.findAll({
+    attributes: ['recipientId', 'regionId'],
+    where: { recipientId: uniqueIds },
+  });
+
+  const recipientsWithGrants = new Set<number>(
+    grants.map((grant: { recipientId: number }) => grant.recipientId)
+  );
+  if (!uniqueIds.every((id) => recipientsWithGrants.has(id))) return null;
+
+  const regionIds = new Set<number>(grants.map((grant: { regionId: number }) => grant.regionId));
+  return regionIds.size === 1 ? [...regionIds][0] : null;
+}
 
 const createLog = async (recipientIds: number[], userId: number, data: CommLogData) => {
   const { otherStaff, ...jsonData } = data;
@@ -457,9 +497,7 @@ const updateLog = async (id: number, logData: CommLogData) => {
 
   // Only process recipients if array is provided and non-empty
   // This prevents accidental deletion of all recipients when recipients array is empty/undefined
-  const recipientIds = Array.isArray(recipients)
-    ? recipients.map((recipient) => Number(recipient.value)).filter((rid) => rid > 0)
-    : [];
+  const recipientIds = parseSelectionIds(recipients);
 
   // Reconcile recipients, staff, and the JSON data in a single transaction so an
   // error partway through cannot leave the source-of-truth tables in an

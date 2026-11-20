@@ -1,6 +1,7 @@
 import type {
   CitationOption,
   TtaRequestFormValues,
+  TtaRequestGrant,
   TtaRequestPayload,
   TtaRequestRecipient,
   TtaRequestResponse,
@@ -18,6 +19,10 @@ const recipientAwareToForm = (recipientAware: boolean | null): string => {
   }
   return recipientAware ? 'yes' : 'no';
 };
+
+/** the chosen grants as one comparable value, to tell when they change */
+export const grantIdsKey = (grants: TtaRequestGrant[]): string =>
+  grants.map((grant) => grant.id).join(',');
 
 /** the select key buildUniqueCitationOptions gives the same citation, so a saved one matches */
 const citationToOption = ({

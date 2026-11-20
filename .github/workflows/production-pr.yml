@@ -38,7 +38,9 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --production --frozen-lockfile
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: "true"
+        run: yarn workspaces focus --production
 
       - name: Create or update the production PR
         env:

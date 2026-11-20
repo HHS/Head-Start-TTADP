@@ -13,6 +13,8 @@ function runSummaryScript(artifactDir, summaryFile, expectedTasks = '6', env = {
     artifactDir,
     'monitoring-validation-team-notifications.txt'
   );
+  const alertOnlyFile = path.join(artifactDir, 'monitoring-alert-only.txt');
+  const teamComprehensiveFile = path.join(artifactDir, 'monitoring-team-comprehensive.txt');
   execFileSync(
     'bash',
     [
@@ -24,13 +26,22 @@ function runSummaryScript(artifactDir, summaryFile, expectedTasks = '6', env = {
       alertsFile,
       ohsFile,
       teamNotificationsFile,
+      alertOnlyFile,
+      teamComprehensiveFile,
     ],
     {
       encoding: 'utf-8',
       env: { ...process.env, ...env },
     }
   );
-  return { goalFile, alertsFile, ohsFile, teamNotificationsFile };
+  return {
+    goalFile,
+    alertsFile,
+    ohsFile,
+    teamNotificationsFile,
+    alertOnlyFile,
+    teamComprehensiveFile,
+  };
 }
 
 describe('build_import_summary.sh', () => {
@@ -77,13 +88,13 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
     );
     // report-only critical: criticalCount > 0 but the phase succeeded (nothing
     // blocked), so it must still be surfaced alongside the alerts
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+      'Monitoring Gate: {"asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '2');
@@ -94,10 +105,10 @@ describe('build_import_summary.sh', () => {
         'New Goals: Example Recipient Alpha (Region 1)\n' +
         'New Goals: Example Recipient Bravo (Region 3)\n' +
         '```\n' +
-        'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT): ```\n' +
+        'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT, run 111): ```\n' +
         'Region 5 created no monitoring reviews in the last four complete weeks\n' +
         '```\n' +
-        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - did not block the fact-table refresh: ```\n' +
+        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT, run 222) - did not block the fact-table refresh: ```\n' +
         '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
         '```\n'
     );
@@ -178,7 +189,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
     );
 
     const { goalFile, alertsFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
@@ -189,7 +200,7 @@ describe('build_import_summary.sh', () => {
       'Monitoring Updates: ```\nNew Goals: Example Recipient Alpha (Region 1)\n```\n'
     );
     expect(fs.readFileSync(alertsFile, 'utf-8')).toBe(
-      'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT): ```\n' +
+      'Monitoring Validation Alerts (as of 2026-03-24 06:00 EDT, run 111): ```\n' +
         'Region 5 created no monitoring reviews in the last four complete weeks\n' +
         '```\n' +
         'Monitoring Gate: no result found\n'
@@ -232,7 +243,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
     );
 
     const { ohsFile } = runSummaryScript(artifactDir, summaryFile, '1', {
@@ -271,7 +282,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_data.log'),
-      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","alerts":[' +
+      'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[' +
         '{"message":"16 finding(s) are attached to a grant not on any of their own reviews","severity":"alert"},' +
         '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
         ']}\n'
@@ -537,7 +548,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '6');
@@ -545,7 +556,7 @@ describe('build_import_summary.sh', () => {
     const summary = fs.readFileSync(summaryFile, 'utf-8');
     // The critical data condition is the headline; the refresh block is a clause.
     expect(summary).toBe(
-      'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - blocked the fact-table refresh: ```\n' +
+      'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT, run 222) - blocked the fact-table refresh: ```\n' +
         '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
         '```\n'
     );
@@ -585,7 +596,7 @@ describe('build_import_summary.sh', () => {
     // phase is what failed. The critical must still reach the channel.
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
+      'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":1,"alerts":[{"check_name":"findings_mass_source_deletion","message":"52.0% of monitoring findings from the last year have no live row (900 of 1730)","severity":"critical"}]}\n'
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-update_fact_tables.log'),
@@ -599,7 +610,7 @@ describe('build_import_summary.sh', () => {
       'Monitoring job failure: ```\n' +
         'Error: fact-table refresh failed\n' +
         '```\n' +
-        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT) - did not block the fact-table refresh: ```\n' +
+        'Monitoring Gate Criticals (as of 2026-03-24 06:00 EDT, run 222) - did not block the fact-table refresh: ```\n' +
         '52.0% of monitoring findings from the last year have no live row (900 of 1730)\n' +
         '```\n'
     );
@@ -635,7 +646,7 @@ describe('build_import_summary.sh', () => {
     // and no criticals - this must NOT be mislabeled as a critical block.
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","runId":222,"error":"connection terminated unexpectedly"}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '6');
@@ -680,7 +691,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","runId":222,"error":"connection terminated unexpectedly"}\n'
     );
 
     runSummaryScript(artifactDir, summaryFile, '2');
@@ -689,7 +700,7 @@ describe('build_import_summary.sh', () => {
     expect(summary).toBe(
       'Monitoring Updates: none\n' +
         'Monitoring Validation: no result found\n' +
-        'Monitoring Gate: did not complete, data was not validated (as of 2026-03-24 06:00 EDT)\n'
+        'Monitoring Gate: did not complete, data was not validated (as of 2026-03-24 06:00 EDT, run 222)\n'
     );
   });
 
@@ -765,7 +776,7 @@ describe('build_import_summary.sh', () => {
     );
     fs.writeFileSync(
       path.join(logDir, 'phase-validate_monitoring_gate.log'),
-      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","error":"connection terminated unexpectedly"}\n'
+      'Monitoring Gate: {"status":"failure","asOf":"2026-03-24 06:00 EDT","runId":222,"error":"connection terminated unexpectedly"}\n'
     );
 
     const { goalFile, ohsFile } = runSummaryScript(artifactDir, summaryFile, '6', {
@@ -839,5 +850,265 @@ describe('build_import_summary.sh', () => {
     expect(fs.readFileSync(summaryFile, 'utf-8')).toBe(
       fs.readFileSync(goalFile, 'utf-8') + fs.readFileSync(alertsFile, 'utf-8')
     );
+  });
+
+  describe('alert-only file (base_channel_alert_only gating)', () => {
+    it('is empty on a fully quiet success - goal updates but no alerts or criticals', () => {
+      const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-quiet-'));
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+            taskRuns: [
+              {
+                taskName: 'import-download-prod-1',
+                status: 'SUCCEEDED',
+                exitCode: 0,
+                logFile: path.join(logDir, 'phase-download.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-report_updates.log'),
+        'Recent Monitoring Updates: [{"recipient":"New Goals: Example Recipient Alpha","region":1}]\n'
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-validate_monitoring_data.log'),
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[]}\n'
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-validate_monitoring_gate.log'),
+        'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":0,"alerts":[]}\n'
+      );
+
+      const { alertOnlyFile } = runSummaryScript(artifactDir, summaryFile, '1');
+
+      expect(fs.readFileSync(summaryFile, 'utf-8')).toContain('New Goals: Example Recipient Alpha');
+      // Nothing alert-worthy happened - the base channel gets nothing at all,
+      // not even the goal-update content that still reaches the summary file.
+      expect(fs.readFileSync(alertOnlyFile, 'utf-8')).toBe('');
+    });
+
+    it('is empty when the only finding is team_notification severity', () => {
+      const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-team-only-'));
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+            taskRuns: [
+              {
+                taskName: 'import-download-prod-1',
+                status: 'SUCCEEDED',
+                exitCode: 0,
+                logFile: path.join(logDir, 'phase-download.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-validate_monitoring_data.log'),
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[' +
+          '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
+          ']}\n'
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-validate_monitoring_gate.log'),
+        'Monitoring Gate: {"status":"success","asOf":"2026-03-24 06:00 EDT","runId":222,"criticalCount":0,"alerts":[]}\n'
+      );
+
+      const { alertOnlyFile, teamNotificationsFile } = runSummaryScript(
+        artifactDir,
+        summaryFile,
+        '1'
+      );
+
+      expect(fs.readFileSync(teamNotificationsFile, 'utf-8')).toContain(
+        '4 finding(s) on delivered reviews have no category'
+      );
+      // team_notification content isn't "alert" content for base_channel_alert_only's
+      // purposes - it has its own channel via monitoring-team-comprehensive.txt.
+      expect(fs.readFileSync(alertOnlyFile, 'utf-8')).toBe('');
+    });
+
+    it('matches the full summary when a real validation alert or gate critical is present', () => {
+      const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-alert-present-'));
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+            taskRuns: [
+              {
+                taskName: 'import-download-prod-1',
+                status: 'SUCCEEDED',
+                exitCode: 0,
+                logFile: path.join(logDir, 'phase-download.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-validate_monitoring_data.log'),
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[{"message":"Region 5 created no monitoring reviews in the last four complete weeks"}]}\n'
+      );
+
+      const { alertOnlyFile } = runSummaryScript(artifactDir, summaryFile, '1');
+
+      expect(fs.readFileSync(alertOnlyFile, 'utf-8')).toBe(fs.readFileSync(summaryFile, 'utf-8'));
+      expect(fs.readFileSync(alertOnlyFile, 'utf-8')).toContain(
+        'Region 5 created no monitoring reviews in the last four complete weeks'
+      );
+    });
+
+    it('matches the full summary when the import job fails', () => {
+      const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-alert-failure-'));
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+            taskRuns: [
+              {
+                taskName: 'import-process-prod-1',
+                status: 'FAILED',
+                exitCode: 1,
+                logFile: path.join(logDir, 'phase-process.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-process.log'),
+        'Task import-process-prod-1 status: RUNNING\nError: downstream system unavailable\nPHASE_FAILURE process exit 1\n'
+      );
+
+      const { alertOnlyFile } = runSummaryScript(artifactDir, summaryFile, '6');
+
+      expect(fs.readFileSync(alertOnlyFile, 'utf-8')).toBe(fs.readFileSync(summaryFile, 'utf-8'));
+      expect(fs.readFileSync(alertOnlyFile, 'utf-8')).toContain(
+        'Error: downstream system unavailable'
+      );
+    });
+  });
+
+  describe('team-comprehensive file (team_notification_channel content)', () => {
+    it('combines the full summary with team_notification content', () => {
+      const artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'import-summary-comprehensive-'));
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: { targetEnv: 'prod', startedAt: '2026-03-24T10:00:00Z' },
+            taskRuns: [
+              {
+                taskName: 'import-download-prod-1',
+                status: 'SUCCEEDED',
+                exitCode: 0,
+                logFile: path.join(logDir, 'phase-download.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-validate_monitoring_data.log'),
+        'Monitoring Validation Alerts: {"asOf":"2026-03-24 06:00 EDT","runId":111,"alerts":[' +
+          '{"message":"16 finding(s) are attached to a grant not on any of their own reviews","severity":"alert"},' +
+          '{"message":"4 finding(s) on delivered reviews have no category","severity":"team_notification"}' +
+          ']}\n'
+      );
+
+      const { teamComprehensiveFile } = runSummaryScript(artifactDir, summaryFile, '1', {
+        OHS_MONITORING_ALERTS_ENABLED: 'true',
+      });
+
+      const summary = fs.readFileSync(summaryFile, 'utf-8');
+      const teamComprehensive = fs.readFileSync(teamComprehensiveFile, 'utf-8');
+
+      expect(teamComprehensive).toBe(
+        summary +
+          'Monitoring Validation Team Notifications (as of 2026-03-24 06:00 EDT, run 111): ```\n' +
+          '4 finding(s) on delivered reviews have no category\n' +
+          '```\n'
+      );
+      expect(teamComprehensive).toContain(
+        '16 finding(s) are attached to a grant not on any of their own reviews'
+      );
+    });
+
+    it('is just the summary when there are no team_notifications', () => {
+      const artifactDir = fs.mkdtempSync(
+        path.join(os.tmpdir(), 'import-summary-comprehensive-none-')
+      );
+      const logDir = path.join(artifactDir, 'logs');
+      const summaryFile = path.join(artifactDir, 'monitoring-updates.txt');
+      fs.mkdirSync(logDir, { recursive: true });
+
+      fs.writeFileSync(
+        path.join(artifactDir, 'import-status.json'),
+        JSON.stringify(
+          {
+            metadata: { targetEnv: 'dev', startedAt: '2026-03-24T10:00:00Z' },
+            taskRuns: [
+              {
+                taskName: 'import-download-dev-1',
+                status: 'SUCCEEDED',
+                exitCode: 0,
+                logFile: path.join(logDir, 'phase-download.log'),
+              },
+            ],
+          },
+          null,
+          2
+        )
+      );
+      fs.writeFileSync(
+        path.join(logDir, 'phase-report_updates.log'),
+        'Recent Monitoring Updates: []\n'
+      );
+
+      const { teamComprehensiveFile } = runSummaryScript(artifactDir, summaryFile, '1');
+
+      expect(fs.readFileSync(teamComprehensiveFile, 'utf-8')).toBe(
+        fs.readFileSync(summaryFile, 'utf-8')
+      );
+    });
   });
 });

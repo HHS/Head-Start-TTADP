@@ -530,6 +530,15 @@ export async function activityReportAndRecipientsById(activityReportId) {
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
 }
 
+export async function approvedActivityReportWhere(filters, regionIds, userId = 0) {
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
+  return {
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+    [Op.and]: scopes,
+    ...(regionIds === undefined ? {} : { regionId: { [Op.in]: regionIds } }),
+  };
+}
+
 /**
  * Retrieves activity reports in sorted slices
  * using sequelize.literal for several associated fields based on the following
@@ -554,12 +563,7 @@ export async function activityReports(
   ids = []
 ) {
   const sortDir = normalizeSortDir(rawSortDir);
-  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
-
-  const where = {
-    calculatedStatus: REPORT_STATUSES.APPROVED,
-    [Op.and]: scopes,
-  };
+  const where = await approvedActivityReportWhere(filters, undefined, userId);
 
   if (excludeLegacy) {
     where.legacyId = { [Op.eq]: null };
@@ -1620,14 +1624,7 @@ export async function getAllDownloadableActivityReports(
   const regions = toNumberArray(readRegions);
   const parsedReportIds = toNumberArray(reportIds);
 
-  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
-  const where = {
-    regionId: {
-      [Op.in]: regions,
-    },
-    calculatedStatus: REPORT_STATUSES.APPROVED,
-    [Op.and]: scopes,
-  };
+  const where = await approvedActivityReportWhere(filters, regions, userId);
 
   if (parsedReportIds.length) {
     where.id = { [Op.in]: parsedReportIds };

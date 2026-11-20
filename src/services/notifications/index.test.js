@@ -113,10 +113,22 @@ describe('Notification service', () => {
     return notification;
   };
 
+  // Random entity ids must not repeat within a test: notifications that share an entity and type
+  // are archived together, which made counts flaky.
+  const usedEntityIds = new Set();
+  const uniqueEntityId = () => {
+    let entityId;
+    do {
+      entityId = faker.number.int({ min: 99001, max: 99999 });
+    } while (usedEntityIds.has(entityId));
+    usedEntityIds.add(entityId);
+    return entityId;
+  };
+
   const createTrackedNotification = async (overrides = {}) => {
     const attributes = await ensureActivityReportForNotification({
       userId: user.id,
-      entityId: faker.number.int({ min: 99001, max: 99999 }),
+      entityId: uniqueEntityId(),
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       text: faker.lorem.sentence(),
       ...overrides,
@@ -145,6 +157,7 @@ describe('Notification service', () => {
   });
 
   afterEach(async () => {
+    usedEntityIds.clear();
     if (createdNotificationIds.length) {
       await NotificationUserState.destroy({ where: { notificationId: createdNotificationIds } });
       await Notification.destroy({ where: { id: createdNotificationIds } });

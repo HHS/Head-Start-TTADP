@@ -28,6 +28,7 @@ export default async function logEmailNotification(job, success, result) {
   const { report, approversWithSettings: approvers = [] } = data;
   const { author, activityReportCollaborators = [] } = report;
   let templateLocals = report;
+  let activityReportIds = [report.id];
 
   try {
     switch (job.name) {
@@ -69,11 +70,20 @@ export default async function logEmailNotification(job, success, result) {
       case EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED:
       case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED:
       case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION:
       case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED:
       case EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE:
       case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED:
+      case EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED:
         emailTo = data.emailTo;
         template = path.resolve(emailTemplatePath, data.templatePath, 'subject.pug');
+        break;
+      case EMAIL_ACTIONS.MONITORING_DETAILS_ADDED:
+        emailTo = [data.user.email];
+        template = path.resolve(emailTemplatePath, 'monitoring_details_added', 'subject.pug');
+        templateLocals = data;
+        // report.id is a DeliveredReview id, not an Activity Report
+        activityReportIds = [];
         break;
       default:
         logger.error(`Unknown job name: ${job.name}`);
@@ -85,7 +95,7 @@ export default async function logEmailNotification(job, success, result) {
       emailTo,
       action: job.name,
       subject,
-      activityReports: [report.id],
+      activityReports: activityReportIds,
       success,
       result,
     });
@@ -108,6 +118,8 @@ export async function logDigestEmailNotification(job, success, result) {
   let subject;
   const { data } = job;
   const { user, reports, subjectFreq } = data;
+  // the monitoring digest lists recipients, not Activity Reports
+  const isMonitoringDigest = job.name === EMAIL_ACTIONS.MONITORING_DETAILS_ADDED_DIGEST;
   const template = path.resolve(emailTemplatePath, 'digest', 'subject.pug');
   const emailTo = user ? [user.email] : [''];
 
@@ -118,7 +130,7 @@ export async function logDigestEmailNotification(job, success, result) {
       emailTo,
       action: job.name,
       subject,
-      activityReports: reports.map((r) => r.id),
+      activityReports: isMonitoringDigest ? [] : reports.map((r) => r.id),
       success,
       result,
     });

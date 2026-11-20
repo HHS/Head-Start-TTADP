@@ -55,6 +55,28 @@ describe('UserSection', () => {
 
   afterEach(() => fetchMock.restore());
 
+  it('resets email verification after confirming in the modal', async () => {
+    fetchMock.put('/api/admin/users/1/require-email-verification', { count: 1 });
+    userEvent.click(screen.getByRole('button', { name: 'Reset email verification' }));
+    expect(
+      screen.getByText(/are you sure you want to reset email verification for first last/i)
+    ).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Reset verification' }));
+    expect(
+      await screen.findByText('This user must verify their email address again.')
+    ).toBeInTheDocument();
+    expect(fetchMock.called('/api/admin/users/1/require-email-verification')).toBe(true);
+  });
+
+  it('shows an error if resetting email verification fails', async () => {
+    fetchMock.put('/api/admin/users/1/require-email-verification', 500);
+    userEvent.click(screen.getByRole('button', { name: 'Reset email verification' }));
+    userEvent.click(screen.getByRole('button', { name: 'Reset verification' }));
+    expect(
+      await screen.findByText('Unable to reset email verification for this user.')
+    ).toBeInTheDocument();
+  });
+
   it('properly controls user info', () => {
     const inputBox = screen.getByLabelText('Full Name');
     expect(inputBox).toHaveValue('first last');

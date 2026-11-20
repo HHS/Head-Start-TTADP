@@ -13,4 +13,13 @@ const SCOPES = {
   APPROVE_TTA_REQUESTS: 12,
   BACKUP_APPROVE_TTA_REQUESTS: 13,
 };
+
+// Scopes that give a user access to activity reports in a region. Groups only offer, and only
+// accept, grants from regions where the user has one of these
+export const REPORT_ACCESS_SCOPES = [
+  SCOPES.READ_REPORTS,
+  SCOPES.READ_WRITE_REPORTS,
+  SCOPES.APPROVE_REPORTS,
+];
+
 export default SCOPES;

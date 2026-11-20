@@ -3,6 +3,8 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
+import parsePositiveInteger from '../../lib/parsePositiveInteger';
+import parseSelectionIds from '../../lib/parseSelectionIds';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import Policy from '../../policies/communicationLog';
@@ -20,6 +22,8 @@ import {
   logById,
   logsByRecipientAndScopes,
   logsByScopes,
+  recipientsInRegion,
+  regionIdFromRecipients,
   updateLog,
 } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
@@ -51,6 +55,12 @@ const getAuthorizationByLogId = async (req: Request, res: Response) => {
     log,
     policy: new Policy(user, Number(regionId), log),
   };
+};
+
+/** Returns the data with its saved region set to regionId, or with no region when undefined. */
+const withRegion = (data, regionId?: number | string) => {
+  const { regionId: _submittedRegionId, ...rest } = data;
+  return regionId === undefined || regionId === null ? rest : { ...rest, regionId };
 };
 
 async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) {
@@ -167,6 +177,24 @@ async function communicationLogById(req: Request, res: Response) {
     }
 
     const log = await logById(Number(id));
+
+    if (log) {
+      // The log's own region decides who can read it, so the region in the URL cannot widen
+      // access. Logs saved without a region use their recipients' region when it is unambiguous.
+      // When it is not, only administrators can read the log.
+      const logRegionId =
+        parsePositiveInteger(log.data?.regionId) ??
+        (await regionIdFromRecipients((log.recipients ?? []).map(({ id: rid }) => rid)));
+      const canRead = logRegionId
+        ? new Policy(policy.user, logRegionId, log).canReadLog()
+        : policy.isAdmin();
+
+      if (!canRead) {
+        res.status(httpCodes.FORBIDDEN).send();
+        return;
+      }
+    }
+
     res.status(httpCodes.OK).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -260,7 +288,37 @@ const updateLogById = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { data } = req.body;
+    const { data: submittedData } = req.body;
+
+    // The saved region decides who can read this log, so a request cannot change it.
+    const data = submittedData && withRegion(submittedData, log.data?.regionId);
+
+    // Only newly added recipients are checked, so editing an older log is not blocked by
+    // recipients it already had. They must belong to the region the log is saved under, and
+    // the user needs write access there (being the creator is not enough). Logs saved without a
+    // region fall back to the regions the user can write to. Admins can write to any region.
+    const existingRecipientIds = new Set((log.recipients ?? []).map(({ id: rid }) => rid));
+    const newRecipientIds = parseSelectionIds(data?.recipients).filter(
+      (recipientId) => !existingRecipientIds.has(recipientId)
+    );
+    if (newRecipientIds.length) {
+      const storedRegionId = parsePositiveInteger(log.data?.regionId);
+      let allowedRegionIds: number[] | null = storedRegionId ? [storedRegionId] : null;
+
+      if (!policy.isAdmin()) {
+        const writableRegionIds = policy.getWritableRegionIds();
+        if (storedRegionId && !writableRegionIds.includes(storedRegionId)) {
+          res.status(httpCodes.FORBIDDEN).send();
+          return;
+        }
+        allowedRegionIds = allowedRegionIds ?? writableRegionIds;
+      }
+
+      if (allowedRegionIds && !(await recipientsInRegion(newRecipientIds, allowedRegionIds))) {
+        res.status(httpCodes.FORBIDDEN).send();
+        return;
+      }
+    }
 
     const updatedLog = await updateLog(Number(id), data);
     if (!updatedLog) {
@@ -310,8 +368,19 @@ const createLogByRecipientId = async (req: Request, res: Response) => {
     const { recipientId } = req.params;
     const userId = await currentUserId(req, res);
     const { data } = req.body;
+    const regionId = Number(req.params.regionId);
 
-    const log = await createLog([Number(recipientId)], userId, data);
+    if (data?.regionId !== undefined && parsePositiveInteger(data.regionId) !== regionId) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    if (!(await recipientsInRegion([Number(recipientId)], regionId))) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const log = await createLog([Number(recipientId)], userId, { ...data, regionId });
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -329,14 +398,21 @@ const createLogByRegionId = async (req: Request, res: Response) => {
     const userId = await currentUserId(req, res);
     const { data } = req.body;
     const { recipients, ...fields } = data;
+    const regionId = Number(req.params.regionId);
 
-    const recipientIds = Array.isArray(recipients)
-      ? recipients
-          .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
-          .filter((id: number) => Number.isInteger(id) && id > 0)
-      : [];
+    if (fields.regionId !== undefined && parsePositiveInteger(fields.regionId) !== regionId) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
 
-    const log = await createLog(recipientIds, userId, fields);
+    const recipientIds = parseSelectionIds(recipients);
+
+    if (!(await recipientsInRegion(recipientIds, regionId))) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const log = await createLog(recipientIds, userId, { ...fields, regionId });
     res.status(httpCodes.CREATED).json(log);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

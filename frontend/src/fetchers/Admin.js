@@ -17,6 +17,13 @@ export const updateUser = async (userId, data) => {
   return user.json();
 };
 
+export const requireEmailVerification = async (userId) => {
+  const result = await put(
+    join('/', 'api', 'admin', 'users', String(userId), 'require-email-verification')
+  );
+  return result.json();
+};
+
 export const getRecipients = async () => {
   const recipients = await get(join('/', 'api', 'admin', 'recipients'));
   return recipients.json();
@@ -64,6 +71,23 @@ export const getRedisInfo = async () => {
 
 export const flushRedis = async () => {
   const result = await post(join('/', 'api', 'admin', 'redis', 'flush'));
+  return result.json();
+};
+
+export const runEmailDigests = async (frequency) => {
+  const result = await post(join('/', 'api', 'admin', 'email-testing', 'digests', frequency));
+  return result.json();
+};
+
+export const runMonitoringDeliveries = async () => {
+  const result = await post(join('/', 'api', 'admin', 'email-testing', 'monitoring-deliveries'));
+  return result.json();
+};
+
+export const simulateMonitoringReview = async (regionId) => {
+  const result = await post(
+    join('/', 'api', 'admin', 'email-testing', 'simulate-monitoring-review', String(regionId))
+  );
   return result.json();
 };
 

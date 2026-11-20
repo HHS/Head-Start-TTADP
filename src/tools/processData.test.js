@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
+import SCOPES from '../middleware/scopeConstants';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -39,6 +40,7 @@ import processData, {
   processCitationGrantNumbers,
   truncateAuditTables,
 } from './processData';
+import { countNonEmptyAuditTables } from './verifyProcessedData';
 
 jest.mock('../logger');
 
@@ -354,6 +356,25 @@ describe('processData', () => {
     }
   });
 
+  it('runs verify inside the transaction and rolls everything back when it fails', async () => {
+    const report = await ActivityReport.create(reportObject);
+    let emailSeenByVerify;
+    const verify = jest.fn(async () => {
+      const user = await User.findOne({ where: { id: mockUser.id } });
+      emailSeenByVerify = user.email;
+      throw new Error('verification failed');
+    });
+
+    await expect(processData(report, { verify })).rejects.toThrow('verification failed');
+
+    expect(verify).toHaveBeenCalledTimes(1);
+    // verify sees the uncommitted anonymized data...
+    expect(emailSeenByVerify).not.toBe(mockUser.email);
+    // ...and none of it is committed after the failure
+    const user = await User.findOne({ where: { id: mockUser.id } });
+    expect(user.email).toBe(mockUser.email);
+  });
+
   it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockActivityReportFile.activityReportId = report.id;
@@ -398,8 +419,13 @@ describe('processData', () => {
       dml_txid: uuidv4(),
     });
 
+    // Run against the real database: Sequelize returns information_schema table-name queries in a
+    // dialect-specific shape that a mocked query would hide
+    expect(await countNonEmptyAuditTables()).toBeGreaterThan(0);
+
     await truncateAuditTables();
     expect(await ZALGoal.count()).toBe(0);
+    expect(await countNonEmptyAuditTables()).toBe(0);
   });
 
   describe('deleteNotifications', () => {
@@ -708,6 +734,19 @@ describe('processData', () => {
       const user = await User.findOne({ where: { hsesUserId: '51113' } });
       const userPermissions = await Permission.findAll({ where: { userId: user.id } });
       expect(userPermissions.length).toBe(16);
+    });
+
+    it('gives the all-permissions test user every scope except admin and TTA approver scopes', async () => {
+      await bootstrapUsers();
+
+      const user = await User.findOne({ where: { hsesUserId: '53137' } });
+      const userPermissions = await Permission.findAll({ where: { userId: user.id } });
+      const scopeIds = new Set(userPermissions.map((p) => p.scopeId));
+
+      expect(scopeIds.has(SCOPES.ADMIN)).toBe(false);
+      expect(scopeIds.has(SCOPES.APPROVE_TTA_REQUESTS)).toBe(false);
+      expect(scopeIds.has(SCOPES.BACKUP_APPROVE_TTA_REQUESTS)).toBe(false);
+      expect(scopeIds.has(SCOPES.REVIEW_TTA_REQUESTS)).toBe(true);
     });
 
     it('repoints grant specialists to the updated bootstrapped user', async () => {

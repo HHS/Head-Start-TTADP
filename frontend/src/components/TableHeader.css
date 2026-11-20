@@ -9,6 +9,18 @@
   container: ttahub-table-header-without-menu / inline-size;
 }
 
+.ttahub-table-header--actions-only .ttahub-table-header--contents-heading-section {
+  align-items: center;
+  flex: 1;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-right: 1.5rem;
+}
+
+.ttahub-table-header--actions-only .smart-hub--table-controls {
+  flex-shrink: 0;
+}
+
 /**
  * the mobile view of the stuff inside the header, left aligned horizontally
  * and "spaced-between" vertically, with a small gap

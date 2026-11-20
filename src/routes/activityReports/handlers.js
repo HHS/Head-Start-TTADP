@@ -16,6 +16,7 @@ import {
   reportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
+import validateOtherEntityObjectives from '../../lib/validateOtherEntityObjectives';
 import { auditLogger, logger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -333,17 +334,27 @@ export async function getGoals(req, res) {
  * @param {*} res - response
  */
 export async function saveOtherEntityObjectivesForReport(req, res) {
-  const { objectivesWithoutGoals, activityReportId, region } = req.body;
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
-  const authorization = new User(user);
-
-  if (!authorization.canWriteInRegion(parseInt(region, DECIMAL_BASE))) {
-    res.sendStatus(403);
-    return;
-  }
   try {
+    const { objectivesWithoutGoals, activityReportId, region } = req.body;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new User(user);
     const report = await ActivityReportModel.findByPk(activityReportId);
+
+    if (
+      !report ||
+      Number(region) !== report.regionId ||
+      !authorization.canWriteInRegion(report.regionId)
+    ) {
+      res.sendStatus(403);
+      return;
+    }
+
+    if (!validateOtherEntityObjectives(objectivesWithoutGoals)) {
+      res.sendStatus(400);
+      return;
+    }
+
     await saveObjectivesForReport(objectivesWithoutGoals, report);
     const updatedObjectives = await getObjectivesByReportId(activityReportId);
     res.json(updatedObjectives);
@@ -1341,7 +1352,7 @@ export async function downloadAllAlerts(req, res) {
   }
 }
 
-// Streams a flat CSV export for the reportIds pulled for the page. This includes
+// Streams a flat CSV export for selected IDs or the full filtered table. This includes
 // AR, Goal, or Objective focused exports. Region policy is re-enforced in the SQL.
 export async function downloadActivityReportExport(req, res) {
   let responseStarted = false;
@@ -1362,6 +1373,9 @@ export async function downloadActivityReportExport(req, res) {
       {
         dataSet: params.dataSet,
         reportIds: params.reportIds,
+        ...(params.exportAll === true
+          ? { filters: await setReadRegions(req.query, userId), userId }
+          : {}),
         regionIds,
         sortBy: params.sortBy,
         direction: params.direction,

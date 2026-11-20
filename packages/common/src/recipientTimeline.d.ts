@@ -32,6 +32,8 @@ export interface RecipientTimelineRequestParams {
   regionId: number;
   limit: number;
   offset: number;
+  /** Opaque keyset cursor from a previous response's nextCursor. Cannot be combined with offset. */
+  cursor?: string;
   sortBy: 'date';
   direction: 'asc' | 'desc';
   filters: RecipientTimelineFilter[];
@@ -57,7 +59,14 @@ export interface RecipientTimelineEvent extends RecipientTimelineEventPresentati
 }
 
 export interface RecipientTimelineResponse {
+  /**
+   * Grouped views only. The first page lists every category with events in the filters. Later
+   * pages list the categories of that page's events, so a client can add one that had no events
+   * when the first page loaded.
+   */
   categories?: RecipientTimelineCategory[];
   count: number;
   events: RecipientTimelineEvent[];
+  /** Present only when more events follow this page; pass it back as cursor. */
+  nextCursor?: string;
 }

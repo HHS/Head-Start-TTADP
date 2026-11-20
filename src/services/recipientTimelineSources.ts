@@ -1,4 +1,4 @@
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, TTA_REQUEST_STATUSES } from '@ttahub/common';
 import type {
   RecipientTimelineEventPresentation,
   RecipientTimelineEventType,
@@ -10,6 +10,7 @@ import { literal, Op } from 'sequelize';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import { getSignedDownloadUrl } from '../lib/s3';
 import db from '../models';
+import { MIN_DELIVERY_DATE, REVIEW_STATUS_COMPLETE } from './monitoring';
 
 const {
   ActivityRecipient,
@@ -22,17 +23,21 @@ const {
   CommunicationLog,
   CommunicationLogFile,
   CommunicationLogRecipient,
+  DeliveredReview,
   EventReportPilot,
   File,
   Goal,
+  GoalFieldResponse,
   GoalStatusChange,
   GoalTemplate,
   Grant,
+  GrantDeliveredReview,
   Objective,
   Program,
   Role,
   SessionReportPilot,
   Topic,
+  TtaRequest,
   User,
 } = db;
 
@@ -341,6 +346,8 @@ async function populateActivityReports(
     if (reportId && citation) pushMapValue(citationsByReport, reportId, citation);
   });
 
+  // The Monitoring tab's citation view lists every citation's details for the recipient.
+  const monitoringCitationsLink = `/recipient-tta-records/${context.recipientId}/region/${context.regionId}/monitoring/citation`;
   const presentations = new Map<number, RecipientTimelineEventPresentation>();
   reports.forEach((report) => {
     const presentation = emptyActivityReportPresentation();
@@ -382,7 +389,12 @@ async function populateActivityReports(
       ...(topics.length ? [{ label: 'Topics', items: [{ text: topics.join(', ') }] }] : []),
       ...(deliveryMethod ? [{ label: 'Delivery method', items: [{ text: deliveryMethod }] }] : []),
       ...(citations.length
-        ? [{ label: 'Citations addressed', items: citations.map((text) => ({ text })) }]
+        ? [
+            {
+              label: 'Citations addressed',
+              items: citations.map((text) => ({ text, link: monitoringCitationsLink })),
+            },
+          ]
         : []),
       ...(grants.length
         ? [{ label: 'Grant numbers', items: grants.map((text) => ({ text })) }]
@@ -444,17 +456,74 @@ const GOAL_STATUS_EVENT_RULES: Array<{
   },
 ];
 
+// The RTTAPA tab hides goals created on an activity report until that report is approved
+// (see standardGoalsForRecipient), so the Timeline counts the same goals.
+const goalCountsPredicate = (goalAlias: string) =>
+  `("${goalAlias}"."createdVia" IS DISTINCT FROM 'activityReport' OR "${goalAlias}"."onApprovedAR" = TRUE)`;
+
+// A recorded transition: it has a new status and is not a "Goal created" creation snapshot. The
+// 08/2025 backfill stamped those snapshots with the goal's status at migration time on the
+// creation date, and the next transition's oldStatus (or the goal's current status) already says
+// the same thing for real ones. A genuine transition from a NULL status is kept.
+const goalStatusChangeIsTransition = (alias: string) => `"${alias}"."newStatus" IS NOT NULL
+          AND NOT COALESCE(
+            "${alias}"."oldStatus" IS NULL
+              AND "${alias}"."reason" = 'Goal created'
+              AND "${alias}"."context" = 'Creation',
+            FALSE
+          )`;
+
 // Reopening a standard creates a new goal. Share this predicate between the index and
 // population query so event filters and titles agree, without fetching prior goals one at a time.
-const PRIOR_CLOSED_GOAL_PREDICATE = `EXISTS (
+// A prior goal only counts when it was Closed as of the status change being labelled, so closing
+// an older goal later never rewrites the title of an earlier event. Before a goal's first
+// transition its status is that transition's oldStatus, which may be NULL (no status yet), and a
+// goal with no transitions uses its current status.
+// Index "GoalStatusChanges_goalId_changedAt_id" backs these lookups.
+const priorClosedGoalPredicate = (changeAlias: string) => `EXISTS (
   SELECT 1 FROM "Goals" AS "previousGoal"
   WHERE "previousGoal"."grantId" = "goal"."grantId"
     AND "previousGoal"."goalTemplateId" = "goal"."goalTemplateId"
     AND "previousGoal"."prestandard" = "goal"."prestandard"
-    AND "previousGoal"."status" = 'Closed'
     AND "previousGoal"."deletedAt" IS NULL
     AND "previousGoal"."mapsToParentGoalId" IS NULL
+    AND ${goalCountsPredicate('previousGoal')}
     AND ("previousGoal"."createdAt", "previousGoal"."id") < ("goal"."createdAt", "goal"."id")
+    AND (CASE
+      WHEN EXISTS (
+        SELECT 1 FROM "GoalStatusChanges" AS "previousChange"
+        WHERE "previousChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('previousChange')}
+          AND COALESCE("previousChange"."performedAt", "previousChange"."createdAt")
+            <= COALESCE("${changeAlias}"."performedAt", "${changeAlias}"."createdAt")
+      ) THEN (
+        SELECT "previousChange"."newStatus"
+        FROM "GoalStatusChanges" AS "previousChange"
+        WHERE "previousChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('previousChange')}
+          AND COALESCE("previousChange"."performedAt", "previousChange"."createdAt")
+            <= COALESCE("${changeAlias}"."performedAt", "${changeAlias}"."createdAt")
+        ORDER BY
+          COALESCE("previousChange"."performedAt", "previousChange"."createdAt") DESC,
+          "previousChange"."id" DESC
+        LIMIT 1
+      )
+      WHEN EXISTS (
+        SELECT 1 FROM "GoalStatusChanges" AS "nextChange"
+        WHERE "nextChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('nextChange')}
+      ) THEN (
+        SELECT "nextChange"."oldStatus"
+        FROM "GoalStatusChanges" AS "nextChange"
+        WHERE "nextChange"."goalId" = "previousGoal"."id"
+          AND ${goalStatusChangeIsTransition('nextChange')}
+        ORDER BY
+          COALESCE("nextChange"."performedAt", "nextChange"."createdAt") ASC,
+          "nextChange"."id" ASC
+        LIMIT 1
+      )
+      ELSE "previousGoal"."status"
+    END) = 'Closed'
 )`;
 
 const buildGoalStatusChangeIndexQuery = (
@@ -471,7 +540,7 @@ const buildGoalStatusChangeIndexQuery = (
     return `WHEN ("change"."oldStatus" IN (${oldStatuses})
       ${rule.oldStatuses.includes(null) ? 'OR "change"."oldStatus" IS NULL' : ''})
       AND "change"."newStatus" IN (${newStatuses})
-      ${rule.requiresPriorClosedGoal ? `AND ${PRIOR_CLOSED_GOAL_PREDICATE}` : ''}
+      ${rule.requiresPriorClosedGoal ? `AND ${priorClosedGoalPredicate('change')}` : ''}
       THEN ${eventType}`;
   });
   const standardPredicates = context.filters
@@ -502,6 +571,7 @@ const buildGoalStatusChangeIndexQuery = (
       AND "goal"."deletedAt" IS NULL
       AND "goal"."mapsToParentGoalId" IS NULL
       AND "goal"."status" <> 'Draft'
+      AND ${goalCountsPredicate('goal')}
     INNER JOIN "Grants" AS "grant"
       ON "grant"."id" = "goal"."grantId"
     ${standardPredicates.length ? `WHERE ${standardPredicates.join('\n      AND ')}` : ''}`;
@@ -522,7 +592,7 @@ async function populateGoalStatusChanges(
       'newStatus',
       'reason',
       'context',
-      [literal(PRIOR_CLOSED_GOAL_PREDICATE), 'hasPriorClosedGoal'],
+      [literal(priorClosedGoalPredicate('GoalStatusChange')), 'hasPriorClosedGoal'],
     ],
     where: { id: { [Op.in]: [...new Set(sourceIds)] } },
     include: [
@@ -537,6 +607,7 @@ async function populateGoalStatusChanges(
         include: [
           { model: GoalTemplate, as: 'goalTemplate', attributes: ['standard'], required: false },
           { model: Grant.unscoped(), as: 'grant', attributes: ['number'], required: false },
+          { model: GoalFieldResponse, as: 'responses', attributes: ['response'], required: false },
         ],
       },
     ],
@@ -557,12 +628,19 @@ async function populateGoalStatusChanges(
         change.userRoles ?? []
       );
       const standard = change.goal?.goalTemplate?.standard?.trim();
+      // Only FEI goals have field responses; they hold the root causes.
+      const rootCause = (change.goal?.responses ?? [])
+        .flatMap(({ response }) => response ?? [])
+        .map((value) => value?.trim())
+        .filter(Boolean)
+        .join(', ');
       const details = [
         ['Goal number', change.goal ? `G-${change.goal.id}` : null],
         ['Previous status', change.oldStatus],
         ['New status', change.newStatus],
         ['Reason', change.reason],
         ['Context', change.context],
+        ['Root cause', rootCause],
         ['Grant number', change.goal?.grant?.number],
       ]
         .filter(([, value]) => value?.trim())
@@ -1034,10 +1112,242 @@ export const SESSION_REPORT_TIMELINE_SOURCE: TimelineEventSource = Object.freeze
   populate: populateSessionReports,
 });
 
+const MONITORING_STANDARD = 'Monitoring';
+
+// Validate source-specific filters even when called outside the shared timeline assembler.
+const standardFilterValues = (query: unknown): string[] => {
+  if (
+    !Array.isArray(query) ||
+    query.length === 0 ||
+    query.some((value) => typeof value !== 'string' || !value.trim())
+  ) {
+    throw new Error('Timeline standard filters require non-empty strings');
+  }
+  return query.map((value) => value.trim());
+};
+
+const buildMonitoringReportIndexQuery = (
+  context: RecipientTimelineRequestParams,
+  bindings: TimelineSourceBindings
+): string => {
+  const eventType = bindings.add('eventType', 'Monitoring report received');
+  const status = bindings.add('status', REVIEW_STATUS_COMPLETE);
+  const minDeliveryDate = bindings.add('minDeliveryDate', MIN_DELIVERY_DATE);
+  const predicates = context.filters
+    .filter(({ topic }) => topic === 'standard')
+    .map((filter, index) => {
+      const values = bindings.add(`standard_${index}`, standardFilterValues(filter.query));
+      const standard = bindings.add(`monitoringStandard_${index}`, MONITORING_STANDARD);
+      return `${standard} ${filter.condition === 'is not' ? 'NOT ' : ''}IN (${values})`;
+    });
+
+  return `
+    SELECT DISTINCT
+      "review"."id" AS "sourceId",
+      "review"."report_delivery_date" AS "date",
+      ${eventType} AS "eventType",
+      "grant"."recipientId",
+      CAST(:regionId AS INTEGER) AS "regionId"
+    FROM "DeliveredReviews" AS "review"
+    INNER JOIN "GrantDeliveredReviews" AS "grantReview"
+      ON "grantReview"."deliveredReviewId" = "review"."id"
+    INNER JOIN "Grants" AS "grant"
+      ON "grant"."id" = "grantReview"."grantId"
+    WHERE "grant"."recipientId" = :recipientId
+      AND "grant"."regionId" = :regionId
+      AND "review"."deletedAt" IS NULL
+      AND "review"."review_status" = ${status}
+      AND "review"."review_uuid" IS NOT NULL
+      AND "review"."review_type" IS NOT NULL
+      AND "review"."report_delivery_date" IS NOT NULL
+      AND "review"."report_delivery_date" >= ${minDeliveryDate}
+      ${predicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
+};
+
+async function populateMonitoringReports(
+  sourceIds: readonly number[],
+  context: RecipientTimelineRequestParams
+): Promise<Map<number, RecipientTimelineEventPresentation>> {
+  if (sourceIds.length === 0) return new Map();
+  const reviewIds = [...new Set(sourceIds)];
+  const [reviews, grantReviews] = await Promise.all([
+    DeliveredReview.findAll({
+      attributes: ['id', 'review_name', 'review_type', 'outcome'],
+      where: { id: { [Op.in]: reviewIds } },
+    }),
+    GrantDeliveredReview.findAll({
+      attributes: ['deliveredReviewId'],
+      where: { deliveredReviewId: { [Op.in]: reviewIds } },
+      include: [
+        {
+          model: Grant.unscoped(),
+          as: 'grant',
+          attributes: ['number'],
+          where: { recipientId: context.recipientId, regionId: context.regionId },
+          required: true,
+        },
+      ],
+    }),
+  ]);
+  const grantsByReview = new Map<number, string[]>();
+  grantReviews.forEach(({ deliveredReviewId, grant }) => {
+    pushMapValue(grantsByReview, deliveredReviewId, grant.number);
+  });
+  return new Map(
+    reviews.map((review) => {
+      const reviewType = communicationText(review.review_type);
+      const outcome = communicationText(review.outcome);
+      const grants = uniqueSorted(grantsByReview.get(review.id) ?? []);
+      const presentation: RecipientTimelineEventPresentation = {
+        title: 'Monitoring report received',
+        subtitle: communicationText(review.review_name),
+        durationHours: null,
+        byline: null,
+        indicators: [],
+        tags: [{ label: MONITORING_STANDARD, flagged: true }],
+        details: [
+          ...(reviewType ? [{ label: 'Review type', items: [{ text: reviewType }] }] : []),
+          ...(outcome ? [{ label: 'Outcome', items: [{ text: outcome }] }] : []),
+          ...(grants.length
+            ? [{ label: 'Grant numbers', items: grants.map((text) => ({ text })) }]
+            : []),
+        ],
+        links: [
+          {
+            label: 'View monitoring review',
+            to: `/recipient-tta-records/${context.recipientId}/region/${context.regionId}/monitoring/review`,
+          },
+        ],
+      };
+      return [review.id, presentation];
+    })
+  );
+}
+
+export const MONITORING_REPORT_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
+  name: 'monitoringReport',
+  supportedFilterTopics: ['standard'] as const,
+  buildIndexQuery: buildMonitoringReportIndexQuery,
+  populate: populateMonitoringReports,
+});
+
+const buildTtaRequestIndexQuery = (
+  context: RecipientTimelineRequestParams,
+  bindings: TimelineSourceBindings
+): string => {
+  const eventType = bindings.add('eventType', 'TTA request');
+  const status = bindings.add('status', TTA_REQUEST_STATUSES.SUBMITTED);
+  const predicates = context.filters
+    .filter(({ topic }) => topic === 'standard')
+    .map((filter, index) => {
+      const values = bindings.add(`standard_${index}`, standardFilterValues(filter.query));
+      return `${filter.condition === 'is not' ? 'NOT ' : ''}EXISTS (
+        SELECT 1 FROM "GoalTemplates" AS "filteredGoalTemplate"
+        WHERE "filteredGoalTemplate"."id" = "ttaRequest"."goalTemplateId"
+          AND "filteredGoalTemplate"."deletedAt" IS NULL
+          AND "filteredGoalTemplate"."standard" IN (${values})
+      )`;
+    });
+
+  return `
+    SELECT
+      "ttaRequest"."id" AS "sourceId",
+      "ttaRequest"."submittedAt" AS "date",
+      ${eventType} AS "eventType",
+      "ttaRequest"."recipientId",
+      "ttaRequest"."regionId"
+    FROM "TtaRequests" AS "ttaRequest"
+    WHERE "ttaRequest"."recipientId" = :recipientId
+      AND "ttaRequest"."regionId" = :regionId
+      AND "ttaRequest"."status" = ${status}
+      AND "ttaRequest"."submittedAt" IS NOT NULL
+      AND "ttaRequest"."deletedAt" IS NULL
+      ${predicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;
+};
+
+async function populateTtaRequests(
+  sourceIds: readonly number[],
+  context: RecipientTimelineRequestParams
+): Promise<Map<number, RecipientTimelineEventPresentation>> {
+  if (sourceIds.length === 0) return new Map();
+  const requests = await TtaRequest.findAll({
+    attributes: ['id', 'regionId', 'originator', 'context', 'recipientAware'],
+    where: { id: { [Op.in]: [...new Set(sourceIds)] } },
+    include: [
+      {
+        model: User,
+        as: 'creator',
+        attributes: ['name'],
+        required: false,
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+            through: { attributes: [] },
+            where: { deletedAt: null },
+            required: false,
+          },
+        ],
+      },
+      { model: GoalTemplate, as: 'goalTemplate', attributes: ['standard'], required: false },
+    ],
+  });
+  return new Map(
+    requests.map((request) => {
+      const creator = nameWithRoles(
+        request.creator?.name ?? null,
+        (request.creator?.roles ?? []).map(({ name }) => name)
+      );
+      const standards = uniqueSorted([request.goalTemplate?.standard]);
+      const originator = communicationText(request.originator);
+      const requestContext = convert(communicationText(request.context) ?? '', {
+        wordwrap: false,
+      }).trim();
+      const presentation: RecipientTimelineEventPresentation = {
+        title: 'TTA request',
+        subtitle: communicationText(request.displayId),
+        durationHours: null,
+        byline: creator ? { label: 'By', values: [creator] } : null,
+        indicators: [],
+        tags: standards.map((label) => ({ label, flagged: label === MONITORING_STANDARD })),
+        details: [
+          ...(originator ? [{ label: 'Originator', items: [{ text: originator }] }] : []),
+          ...(requestContext ? [{ label: 'Context', items: [{ text: requestContext }] }] : []),
+          ...(typeof request.recipientAware === 'boolean'
+            ? [
+                {
+                  label: 'Recipient aware',
+                  items: [{ text: request.recipientAware ? 'Yes' : 'No' }],
+                },
+              ]
+            : []),
+        ],
+        links: [
+          {
+            label: 'View TTA request',
+            to: `/recipient-tta-records/${context.recipientId}/region/${context.regionId}/tta-request/view/${request.id}`,
+          },
+        ],
+      };
+      return [request.id, presentation];
+    })
+  );
+}
+
+export const TTA_REQUEST_TIMELINE_SOURCE: TimelineEventSource = Object.freeze({
+  name: 'ttaRequest',
+  supportedFilterTopics: ['standard'] as const,
+  buildIndexQuery: buildTtaRequestIndexQuery,
+  populate: populateTtaRequests,
+});
+
 /** Code-owned source registry; request data cannot select or inject source SQL. */
 export const RECIPIENT_TIMELINE_SOURCES: readonly TimelineEventSource[] = Object.freeze([
   ACTIVITY_REPORT_TIMELINE_SOURCE,
   GOAL_STATUS_CHANGE_TIMELINE_SOURCE,
   COMMUNICATION_LOG_TIMELINE_SOURCE,
   SESSION_REPORT_TIMELINE_SOURCE,
+  MONITORING_REPORT_TIMELINE_SOURCE,
+  TTA_REQUEST_TIMELINE_SOURCE,
 ]);
