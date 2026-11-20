@@ -1,7 +1,7 @@
 System Boundary Diagram
 =======================
 
-![rendered boundary diagram]
+![rendered boundary diagram](boundary_diagram.svg)
 
 UML Source
 ----------
@@ -23,7 +23,6 @@ Boundary(aws, "AWS GovCloud") {
       Boundary(app, "Application") {
         Container(www_app, "<&layers> TTA Hub Web Application", "NodeJS, Express, React", "Displays and collects TTA data. Multiple instances running")
         Container(worker_app, "<&layers> TTA Hub Worker Application", "NodeJS, Bull", "Perform background work and data processing")
-        Container(similarity_api, "Similarity API", "Python", "AI application to identify similarity of text")
         Container(clamav, "File scanning API", "ClamAV", "Internal application for scanning user uploads\n\n docker: ajilaag/clamav-rest:20211026")
         Container(maintenance_app, "Maintenance Page", "Static", "Static page served in place of the TTA Hub during incident response or blocking maintenance. The primary hostname is remapped to this application so users cannot reach the live site while work is in progress.")
         Container(www_jwks, ".well-known/jwks.json (JWKS)", "HTTP JSON", "Publishes public JWK (kid) for token client-auth verification")
@@ -66,6 +65,14 @@ Boundary(hses, "HSES") {
 }
 Boundary(itams, "ITAMS") {
   System(SFTP, "SFTP", "SFTP with files for Monitoring/CLASS data")
+}
+Boundary(acf_ngsc, "ACF NGSC") {
+  ' invisible spacer: shifts JSCAPE off the boundary title so the incoming arrows do not cross it
+  rectangle "<color:white>mmmmmm</color>" as ngsc_pad #transparent;line:transparent
+  System_Ext(jscape, "JSCAPE MFT", "Managed file transfer service operated by ACF NGSC\nmft-sftp.management.acf.gov, port 22\n[PENDING: JSCAPE ATO, host key fingerprint]")
+}
+Boundary(ohs_data_layer, "ACF OHS Data Layer") {
+  System_Ext(ohs_etl, "ACF OHS Data Layer ETL", "Retrieves the nightly extract files from JSCAPE")
 }
 Boundary(gsa_saas, "SaaS") {
   System_Ext(google_tag_manager, "Google Tag Manager", "Tag Manager")
@@ -124,10 +131,21 @@ Rel(worker_app, www_s3, "CLASS/Monitoring: cache file", "vpc endpoint")
 Rel(www_s3, worker_app, "CLASS/Monitoring: process file", "vpc endpoint")
 Rel(worker_app, www_db, "CLASS/Monitoring: save data", "psql")
 
+Rel(www_app, jscape, "TTA extract: nightly upload of a zip of CSV files (upload only) [PENDING: web application or worker, to confirm]", "SFTP - SSH (22), SSH public key auth, FIPS 140-3 algorithms")
+Rel(ohs_etl, jscape, "TTA extract: retrieve nightly zip of CSV files")
+note right of jscape
+[PENDING] marks items that are still to be confirmed and are not final.
+- Nightly job, production only, runs after the HSES import [PENDING: web application or worker, to confirm]
+- Outbound TCP 22 from the two cloud.gov shared egress addresses (52.222.122.97 and 52.222.123.172), allowlisted by NGSC. The addresses are shared with other cloud.gov customers, so SSH key authentication is the primary control
+- Uploads only; no password authentication, SSH public key only (RSA 3072 bits or larger, or ECDSA P-256/P-384)
+- Separate key pairs for staging and production; private keys are stored as environment variables populated from CircleCI, like the Hub's other secrets
+- Verifies the NGSC host key fingerprint [PENDING: fingerprint not yet received]
+- MFA does not apply to the automated account
+- Excludes user names and emails, specialist and personnel contact details, and free text narratives [PENDING: final field list and sensitivity classification]
+- Files kept on the Hub after upload [PENDING: to confirm]
+end note
 
-Rel(www_app, similarity_api, "request similarity", "https GET (443)")
-Rel(personnel, similarity_api, "request similarity", "https GET (443)")
-Rel(similarity_api, www_db, "read data for similarity", "psql")
+
 
 BiRel(www_app, www_db, "reads/writes dataset records", "psql")
 BiRel(worker_app, www_db, "reads/writes dataset records", "psql")
@@ -149,8 +167,11 @@ Lay_R(HSES_AUTH, aws)
 [personnel] -r-> [www_app]
 
 www_app -left- worker_app
-worker_app -left- similarity_api
-similarity_api -left- clamav
+
+' keep the NGSC and ACF OHS boundaries beside the other external systems, clear of the cloud.gov boundary lines
+Lay_R(SFTP, jscape)
+Lay_R(SFTP, ohs_etl)
+Lay_R(ngsc_pad, jscape)
 
 @enduml
 ```

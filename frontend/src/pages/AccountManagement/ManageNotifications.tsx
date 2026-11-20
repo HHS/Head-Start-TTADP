@@ -13,6 +13,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import NavigationPromptModal from '../../components/NavigationPromptModal';
+import { userHasRole } from '../../components/RolesOnly';
 import { getSettings, updateSettings } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
 import useNavigationPromptModal from '../../hooks/useNavigationPromptModal';
@@ -21,6 +22,7 @@ import UserContext from '../../UserContext';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
 import CollabReportNotifications from './components/notifications/CollabReportNotifications';
 import CommunicationLogNotifications from './components/notifications/CommunicationLogNotification';
+import { MONITORING_NOTIFICATION_ROLES } from './components/notifications/constants';
 import EmailValidationPreferenceBox from './components/notifications/EmailValidationPreferenceBox';
 import OtherNotifications from './components/notifications/OtherNotifications';
 import SystemRelatedNotifications from './components/notifications/SystemRelatedNotifications';
@@ -144,6 +146,8 @@ export default function ManageNotifications({
     [user]
   );
 
+  const hasMonitoringRole = useMemo(() => userHasRole(user, MONITORING_NOTIFICATION_ROLES), [user]);
+
   const accordionItems = useMemo(
     () =>
       [
@@ -161,6 +165,7 @@ export default function ManageNotifications({
           expanded: true,
           headingLevel: 'h2',
         },
+
         ...(hasNotificationsFeatureFlag
           ? [
               {
@@ -218,6 +223,10 @@ export default function ManageNotifications({
                 expanded: true,
                 headingLevel: 'h2',
               },
+            ]
+          : []),
+        ...(hasMonitoringRole || hasNotificationsFeatureFlag
+          ? [
               {
                 title: 'Other',
                 content: (
@@ -240,6 +249,7 @@ export default function ManageNotifications({
       emailVerificationSent,
       clearAlerts,
       hasNotificationsFeatureFlag,
+      hasMonitoringRole,
     ]
   );
 

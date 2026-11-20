@@ -6,7 +6,12 @@ import React from 'react';
 import { Router } from 'react-router';
 import join from 'url-join';
 
+import { isNonProductionEnvironment } from '../../../utils/environment';
 import Admin from '../index';
+
+jest.mock('../../../utils/environment', () => ({
+  isNonProductionEnvironment: jest.fn(() => true),
+}));
 
 const recipientsUrl = join('/', 'api', 'admin', 'recipients');
 const usersUrl = join('/', 'api', 'admin', 'users');
@@ -16,7 +21,10 @@ const buildInfoUrl = '/api/admin/buildInfo';
 describe('Admin landing page', () => {
   const history = createMemoryHistory();
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => {
+    fetchMock.restore();
+    isNonProductionEnvironment.mockReturnValue(true);
+  });
 
   beforeEach(() => {
     fetchMock.get(recipientsUrl, []);
@@ -105,5 +113,29 @@ describe('Admin landing page', () => {
 
     const heading = await screen.findByRole('heading', { name: /Preview confluence RSS feed/i });
     expect(heading).toBeVisible();
+  });
+  it('shows email testing outside production', async () => {
+    history.push('/admin/email-testing');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>
+    );
+
+    expect(screen.getByRole('link', { name: 'Email testing' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Email testing' })).toBeVisible();
+  });
+
+  it('hides email testing in production', () => {
+    isNonProductionEnvironment.mockReturnValue(false);
+    history.push('/admin/email-testing');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>
+    );
+
+    expect(screen.queryByRole('link', { name: 'Email testing' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Email testing' })).not.toBeInTheDocument();
   });
 });

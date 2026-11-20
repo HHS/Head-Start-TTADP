@@ -123,12 +123,12 @@ describe('ObjectiveFileUploader', () => {
     fireEvent.click(fileThree.parentNode.lastChild.firstChild);
     deleteButton = screen.getByText('Delete');
     fetchMock.restore();
-    fetchMock.delete('/api/files/abc', { status: 204 });
     act(() => {
       fireEvent.click(deleteButton);
     });
-    expect(fetchMock.called()).toBeTruthy();
     await waitFor(() => expect(mockOnChange).toHaveBeenCalledTimes(2));
+    // A file with no saved parent is only removed from the list; no API call is made.
+    expect(fetchMock.called()).toBe(false);
   });
 
   it('files are properly removed when on a report', async () => {
