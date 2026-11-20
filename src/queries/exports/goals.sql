@@ -531,6 +531,7 @@ JOIN (
   WHERE gc."deletedAt" IS NULL
 ) su ON ur."userId" = su.uid
 JOIN "Roles" r ON ur."roleId" = r.id
+  AND r."deletedAt" IS NULL
 GROUP BY 1
 ;
 DROP TABLE IF EXISTS collaborators;

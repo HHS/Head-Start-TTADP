@@ -111,7 +111,19 @@ SET LOCAL TIME ZONE 'America/New_York';
 
 -- @stream-final-select
 -- Marks the setup/final-SELECT split for the streaming executor; inert for manual runs.
-WITH ars AS MATERIALIZED (
+WITH roles AS MATERIALIZED (
+-- every Roles row, with flags so each use filters late: deleted for current-role lookups,
+-- name_pick for the creatorRole join (fullName isn't unique, so pick one per name to keep
+-- ars from fanning out; active rows first, retired roles still resolve as recorded)
+SELECT
+  id,
+  name,
+  "fullName" full_name,
+  "deletedAt" IS NOT NULL deleted,
+  ROW_NUMBER() OVER (PARTITION BY "fullName" ORDER BY "deletedAt" NULLS FIRST, id) = 1 name_pick
+FROM "Roles"
+),
+ars AS MATERIALIZED (
 SELECT
   ar.id arid,
   COALESCE(
@@ -123,10 +135,11 @@ SELECT
   ) report_id,
   ar."regionId" region,
   ar."calculatedStatus" ar_status,
-  -- creator's role as of this AR, falling back to their current general role below (in the
-  -- final select, once user_roles is available) when no role was recorded on the AR itself
+  -- creator's role as of this AR, retired roles included; their current general role is
+  -- used below (once user_roles is available) only when no role was recorded on the AR
   u.name creator_name,
   creator_role.name creator_role_abbr,
+  ar."creatorRole" IS NOT NULL creator_role_recorded,
   ar."userId" creator_uid,
   ar.requester,
   ar."activityRecipientType" recipient_type,
@@ -156,9 +169,11 @@ SELECT
 FROM "ActivityReports" ar
 LEFT JOIN "Users" u
   ON ar."userId" = u.id
-LEFT JOIN "Roles" creator_role
-  ON creator_role."fullName" = ar."creatorRole"::text
-  AND creator_role."deletedAt" IS NULL
+-- enum's 'Customer Service Contract' won't match Roles' 'Customer Service Contact'; no ARs use it,
+-- and reconciling the enum is the real fix, so no fallback here
+LEFT JOIN roles creator_role
+  ON creator_role.full_name = ar."creatorRole"::text
+  AND creator_role.name_pick
 WHERE ar."calculatedStatus" = 'approved'
   -- Narrowing point: AR id list resolved upstream from the Landing filters.
   AND (NULLIF(current_setting('ssdi.activityReportIds', true), '') IS NULL
@@ -223,7 +238,8 @@ JOIN (
   UNION
   SELECT creator_uid uid FROM ars WHERE creator_uid IS NOT NULL
 ) su ON ur."userId" = su.uid
-JOIN "Roles" r ON ur."roleId" = r.id
+JOIN roles r ON ur."roleId" = r.id
+  AND NOT r.deleted
 GROUP BY 1
 ),
 creators AS MATERIALIZED (
@@ -236,7 +252,7 @@ SELECT
     ELSE ''
   END creator
 FROM ars
-LEFT JOIN user_roles cur ON cur.uid = creator_uid
+LEFT JOIN user_roles cur ON cur.uid = creator_uid AND NOT creator_role_recorded
 ),
 collaborator_roles AS MATERIALIZED (
 -- roles picked for this collaborator on this report, where recorded. A pre-aggregated join
@@ -246,7 +262,7 @@ collaborator_roles AS MATERIALIZED (
 SELECT sc.arcid, STRING_AGG(r.name, ',' ORDER BY r.name) roles
 FROM scoped_collaborators sc
 JOIN "CollaboratorRoles" cr ON cr."activityReportCollaboratorId" = sc.arcid
-JOIN "Roles" r ON cr."roleId" = r.id
+JOIN roles r ON cr."roleId" = r.id
 GROUP BY 1
 ),
 collaborators AS MATERIALIZED (

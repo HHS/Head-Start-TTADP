@@ -1,4 +1,5 @@
 import { APPROVER_STATUSES } from '@ttahub/common';
+import { parse } from 'csv-parse/sync';
 import db, {
   ActivityReportApprover,
   ActivityReportCollaborator,
@@ -32,6 +33,26 @@ import {
 
 const ALL_REGIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const NOOP_CALLBACKS = { onStart: () => {}, onChunk: () => {} };
+
+// Test-owned roles for UserRoles/CollaboratorRoles; a unique name keeps assertions exact.
+const createTestRole = (prefix, { retired = false } = {}) => {
+  const name = `${prefix}${getUniqueId()}`;
+  return Role.create({
+    id: getUniqueId(),
+    name,
+    fullName: `Export test role ${name}`,
+    isSpecialist: true,
+    deletedAt: retired ? new Date() : null,
+  });
+};
+
+// creatorRole is an enum matched to Roles.fullName, so a test-owned role can't stand in
+// for one; read the real row (from migrations and the users seeder) instead.
+const findMigrationRole = async (fullName) => {
+  const role = await Role.findOne({ where: { fullName } });
+  if (!role) throw new Error(`Roles row '${fullName}' is missing; check migrations`);
+  return role;
+};
 
 // Drive the streamer and collect everything it emits.
 const collect = async (options) => {
@@ -287,6 +308,7 @@ describe('activityReportExports', () => {
     const REGION_ID = 20;
     let report;
     let fallbackCreatorReport;
+    let grantsSpecialistReport;
     let legacyReport;
     let authorlessReport;
     let recipientlessReport;
@@ -294,12 +316,32 @@ describe('activityReportExports', () => {
     let collaboratorUser;
     let approverUser;
     let collaborator;
+    let collaboratorRoleA;
+    let collaboratorRoleB;
+    let approverRole;
+    let creatorFallbackRole;
+    let retiredRole;
+    let creatorRoleRow;
+    let grantsSpecialistRoleRow;
 
     beforeAll(async () => {
-      const [ecsRole, ecmRole, fesRole] = await Promise.all([
-        Role.findOne({ where: { name: 'ECS' } }),
-        Role.findOne({ where: { name: 'ECM' } }),
-        Role.findOne({ where: { name: 'FES' } }),
+      [
+        collaboratorRoleA,
+        collaboratorRoleB,
+        approverRole,
+        creatorFallbackRole,
+        retiredRole,
+        creatorRoleRow,
+        grantsSpecialistRoleRow,
+      ] = await Promise.all([
+        createTestRole('A'),
+        createTestRole('B'),
+        createTestRole('C'),
+        createTestRole('D'),
+        createTestRole('E', { retired: true }),
+        findMigrationRole('Early Childhood Specialist'),
+        // retired in Roles, but still a valid creatorRole that should export as recorded
+        findMigrationRole('Grants Specialist'),
       ]);
       creatorUser = await createUser({ name: `Creator ${getUniqueId()}` });
       collaboratorUser = await createUser({ name: `Collaborator ${getUniqueId()}` });
@@ -312,11 +354,17 @@ describe('activityReportExports', () => {
         activityRecipients: [{ grantId: getUniqueId() }],
       });
       // No creatorRole: exercises the fallback to the author's general UserRoles below.
-      // creatorUser's own UserRole is FES (distinct from report's ECS creatorRole) so the
-      // two reports' expected output can't pass by coincidence.
+      // creatorUser's own UserRole differs from report's creatorRole so the two reports'
+      // expected output can't pass by coincidence.
       fallbackCreatorReport = await createReport({
         regionId: REGION_ID,
         userId: creatorUser.id,
+        activityRecipients: [{ grantId: getUniqueId() }],
+      });
+      grantsSpecialistReport = await createReport({
+        regionId: REGION_ID,
+        userId: creatorUser.id,
+        creatorRole: 'Grants Specialist',
         activityRecipients: [{ grantId: getUniqueId() }],
       });
       legacyReport = await createReport({
@@ -335,21 +383,32 @@ describe('activityReportExports', () => {
       });
 
       // Collaborator gets report-specific roles (CollaboratorRoles); the approver has no
-      // per-report role, so it falls back to the user's general roles (UserRoles).
-      await UserRole.create({ userId: approverUser.id, roleId: ecmRole.id });
-      await UserRole.create({ userId: creatorUser.id, roleId: fesRole.id });
+      // per-report role, so it falls back to the user's general roles (UserRoles). Both
+      // general-role users also hold a retired role, which the export should leave out.
+      await UserRole.bulkCreate([
+        { userId: approverUser.id, roleId: approverRole.id },
+        { userId: approverUser.id, roleId: retiredRole.id },
+        { userId: creatorUser.id, roleId: creatorFallbackRole.id },
+        { userId: creatorUser.id, roleId: retiredRole.id },
+      ]);
       collaborator = await ActivityReportCollaborator.create({
         activityReportId: report.id,
         userId: collaboratorUser.id,
       });
       await CollaboratorRole.bulkCreate([
-        { activityReportCollaboratorId: collaborator.id, roleId: ecsRole.id },
-        { activityReportCollaboratorId: collaborator.id, roleId: fesRole.id },
+        { activityReportCollaboratorId: collaborator.id, roleId: collaboratorRoleA.id },
+        { activityReportCollaboratorId: collaborator.id, roleId: collaboratorRoleB.id },
       ]);
       await ActivityReportApprover.create({
         activityReportId: report.id,
         userId: approverUser.id,
         status: APPROVER_STATUSES.APPROVED,
+      });
+      // A collaborator with no CollaboratorRoles (common on legacy reports) falls back to
+      // UserRoles, as ActivityReportCollaborator.fullName does in the app.
+      await ActivityReportCollaborator.create({
+        activityReportId: fallbackCreatorReport.id,
+        userId: approverUser.id,
       });
     });
 
@@ -359,11 +418,25 @@ describe('activityReportExports', () => {
         force: true,
       });
       await CollaboratorRole.destroy({ where: { activityReportCollaboratorId: collaborator.id } });
-      await ActivityReportCollaborator.destroy({ where: { id: collaborator.id } });
+      await ActivityReportCollaborator.destroy({
+        where: { activityReportId: [report.id, fallbackCreatorReport.id] },
+      });
       await UserRole.destroy({ where: { userId: [approverUser.id, creatorUser.id] } });
+      await Role.destroy({
+        where: {
+          id: [
+            collaboratorRoleA.id,
+            collaboratorRoleB.id,
+            approverRole.id,
+            creatorFallbackRole.id,
+            retiredRole.id,
+          ],
+        },
+      });
       await destroyReport(report);
       await Promise.all([
         destroyReport(fallbackCreatorReport),
+        destroyReport(grantsSpecialistReport),
         destroyReport(legacyReport),
         destroyReport(authorlessReport),
         destroyReport(recipientlessReport),
@@ -377,18 +450,63 @@ describe('activityReportExports', () => {
         reportIds: [report.id],
         regionIds: [REGION_ID],
       });
-      expect(csv).toContain(`${creatorUser.name}:ECS`);
-      expect(csv).toContain(`${collaboratorUser.name}:ECS,FES`);
-      expect(csv).toContain(`${approverUser.name}:ECM`);
+      expect(csv).toContain(`${creatorUser.name}:${creatorRoleRow.name}`);
+      expect(csv).toContain(
+        `${collaboratorUser.name}:${collaboratorRoleA.name},${collaboratorRoleB.name}`
+      );
+      expect(csv).toContain(`${approverUser.name}:${approverRole.name}`);
+      expect(csv).not.toContain(retiredRole.name);
     });
 
-    it("falls back to the author's general role when the AR has no creatorRole", async () => {
+    it('falls back to general roles without a creatorRole or CollaboratorRoles', async () => {
       const { csv } = await collect({
         dataSet: 'activity-reports',
         reportIds: [fallbackCreatorReport.id],
         regionIds: [REGION_ID],
       });
-      expect(csv).toContain(`${creatorUser.name}:FES`);
+      expect(csv).toContain(`${creatorUser.name}:${creatorFallbackRole.name}`);
+      expect(csv).toContain(`${approverUser.name}:${approverRole.name}`);
+      expect(csv).not.toContain(retiredRole.name);
+    });
+
+    it('exports a retired creatorRole as recorded instead of falling back', async () => {
+      // Migrations retire Grants Specialist, but the users seeder reinserts it as active,
+      // so retire it here and restore whatever it was.
+      const originalDeletedAt = grantsSpecialistRoleRow.deletedAt;
+      await grantsSpecialistRoleRow.update({ deletedAt: originalDeletedAt ?? new Date() });
+      try {
+        const { csv } = await collect({
+          dataSet: 'activity-reports',
+          reportIds: [grantsSpecialistReport.id],
+          regionIds: [REGION_ID],
+        });
+        expect(csv).toContain(`${creatorUser.name}:${grantsSpecialistRoleRow.name}`);
+        expect(csv).not.toContain(creatorFallbackRole.name);
+      } finally {
+        await grantsSpecialistRoleRow.update({ deletedAt: originalDeletedAt });
+      }
+    });
+
+    it('resolves a duplicated creatorRole fullName to one row, preferring the active role', async () => {
+      const duplicate = await Role.create({
+        id: getUniqueId(),
+        name: `X${getUniqueId()}`,
+        fullName: creatorRoleRow.fullName,
+        isSpecialist: true,
+        deletedAt: new Date(),
+      });
+      try {
+        const { csv, rowCount } = await collect({
+          dataSet: 'activity-reports',
+          reportIds: [report.id],
+          regionIds: [REGION_ID],
+        });
+        expect(rowCount).toBe(1);
+        expect(csv).toContain(`${creatorUser.name}:${creatorRoleRow.name}`);
+        expect(csv).not.toContain(duplicate.name);
+      } finally {
+        await duplicate.destroy();
+      }
     });
 
     it('emits one CSV row for the in-scope report, with a BOM and header', async () => {
@@ -517,6 +635,8 @@ describe('activityReportExports', () => {
     let objective;
     let aro;
     let goalCreatorUser;
+    let goalCreatorRole;
+    let retiredRole;
 
     beforeAll(async () => {
       const grantId = getUniqueId();
@@ -546,13 +666,19 @@ describe('activityReportExports', () => {
       });
 
       // Goals have no per-goal role like ActivityReportCollaborators does, so the
-      // creator/collaborator names are annotated with the user's general roles instead.
-      const [ecsRole, creatorType] = await Promise.all([
-        Role.findOne({ where: { name: 'ECS' } }),
+      // creator/collaborator names are annotated with the user's general roles instead,
+      // leaving out retired ones.
+      let creatorType;
+      [goalCreatorRole, retiredRole, creatorType] = await Promise.all([
+        createTestRole('G'),
+        createTestRole('R', { retired: true }),
         CollaboratorType.findOne({ where: { name: 'Creator' } }),
       ]);
       goalCreatorUser = await createUser({ name: `Goal Creator ${getUniqueId()}` });
-      await UserRole.create({ userId: goalCreatorUser.id, roleId: ecsRole.id });
+      await UserRole.bulkCreate([
+        { userId: goalCreatorUser.id, roleId: goalCreatorRole.id },
+        { userId: goalCreatorUser.id, roleId: retiredRole.id },
+      ]);
       await GoalCollaborator.create({
         goalId: goal.id,
         userId: goalCreatorUser.id,
@@ -566,6 +692,7 @@ describe('activityReportExports', () => {
       await Objective.destroy({ where: { id: objective.id }, force: true });
       await GoalCollaborator.destroy({ where: { goalId: goal.id }, force: true });
       await UserRole.destroy({ where: { userId: goalCreatorUser.id } });
+      await Role.destroy({ where: { id: [goalCreatorRole.id, retiredRole.id] } });
       await destroyGoal(goal);
       await destroyReport(report);
       await User.destroy({ where: { id: goalCreatorUser.id } });
@@ -589,8 +716,11 @@ describe('activityReportExports', () => {
         reportIds: [report.id],
         regionIds: [REGION_ID],
       });
-      expect(csv).toContain(`${goalCreatorUser.name}: ECS`);
-      expect(csv).toContain(`Creator: ${goalCreatorUser.name}: ECS`);
+      const [row] = parse(csv, { bom: true, columns: true }).filter(
+        (r) => r.goal_id === String(goal.id)
+      );
+      expect(row.creator).toBe(`${goalCreatorUser.name}: ${goalCreatorRole.name}`);
+      expect(row.collaborators).toBe(`Creator: ${goalCreatorUser.name}: ${goalCreatorRole.name}`);
     });
 
     it('emits the objective row for the in-scope report', async () => {
