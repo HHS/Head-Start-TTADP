@@ -170,6 +170,8 @@ app.get(oauth2CallbackPath, async (req, res) => {
     const dbUser = await retrieveUserDetails(data);
     const claims = req.session?.claims || {};
     const idToken = req.session?.id_token || '';
+    // Read before regenerate(), which replaces the session and drops this value.
+    const referrerPath = req.session?.referrerPath;
 
     // console.log('REQ SESSION BEFORE REGEN:', req.session);
     await new Promise((resolve) => {
@@ -186,12 +188,10 @@ app.get(oauth2CallbackPath, async (req, res) => {
         req.session.claims = claims;
         req.session.id_token = idToken;
 
-        const redirectPath =
-          req.session.referrerPath && req.session.referrerPath !== '/logout'
-            ? req.session.referrerPath
-            : '/';
+        const isLogoutPage = referrerPath?.split('?')[0] === '/logout';
+        const redirectPath = referrerPath && !isLogoutPage ? referrerPath : '/';
 
-        logger.debug(`referrer path: ${req.session.referrerPath}`);
+        logger.debug(`referrer path: ${referrerPath}`);
         auditLogger.info(`User ${dbUser.id} logged in`);
 
         res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));

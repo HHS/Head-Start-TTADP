@@ -85,9 +85,30 @@ async function getOidcClient() {
   return cachedClient;
 }
 
+/**
+ * Returns the path (with query string) of the page the user started login from, so the
+ * OAuth callback can send them back there. Only same-site relative paths are returned;
+ * anything that could be read as another host (e.g. `//evil.example`) is dropped.
+ */
+export function getSafeReferrerPath(referrer) {
+  if (!referrer) {
+    return '';
+  }
+
+  try {
+    const { pathname, search } = new URL(referrer);
+    const path = `${pathname}${search}`;
+    if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) {
+      return '';
+    }
+    return path;
+  } catch {
+    return '';
+  }
+}
+
 export async function login(req, res) {
-  const referrer = req.headers.referer;
-  req.session.referrerPath = referrer ? new URL(referrer).pathname : '';
+  req.session.referrerPath = getSafeReferrerPath(req.headers.referer);
 
   try {
     const client = await getOidcClient();
