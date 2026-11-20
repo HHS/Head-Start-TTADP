@@ -409,6 +409,24 @@ describe('files service', () => {
       const deletion = await FileDeletion.findOne({ where: { fileId: file.id } });
       expect(deletion.completedAt).toBeNull();
     });
+
+    it('enqueues one batch per transaction and stops at the first failed enqueue', async () => {
+      const [first, second] = [await makeFile(), await makeFile()];
+      addDeleteFileToQueue.mockRejectedValueOnce(new Error('redis unavailable'));
+
+      await db.sequelize.transaction(async () => {
+        await removeOrphanedFiles([first.id]);
+        await removeOrphanedFiles([second.id]);
+      });
+
+      // The second file isn't tried, so an outage costs one timeout, not one per file.
+      expect(addDeleteFileToQueue).toHaveBeenCalledTimes(1);
+      const deletions = await FileDeletion.findAll({
+        where: { fileId: [first.id, second.id] },
+      });
+      expect(deletions).toHaveLength(2);
+      expect(deletions.every((d) => d.completedAt === null)).toBe(true);
+    });
   });
 
   describe('requeuePendingFileDeletions', () => {
@@ -464,6 +482,17 @@ describe('files service', () => {
       expect(callsFor(rows.exhausted)).toEqual([]);
       expect((await rows.stale.reload()).attempts).toBe(1);
       expect(exhausted).toBeGreaterThanOrEqual(1);
+    });
+
+    it('does not report a row as exhausted while its final job may still be running', async () => {
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+      const { exhausted: before } = await requeuePendingFileDeletions();
+      rows.justExhausted = await makeDeletion(4, { attempts: 10 }, new Date());
+
+      const { exhausted: after } = await requeuePendingFileDeletions();
+      alertSpy.mockRestore();
+
+      expect(after).toBe(before);
     });
 
     it('keeps a row pending without using an attempt when enqueueing fails', async () => {
