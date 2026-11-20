@@ -5,6 +5,7 @@ import Users from '../../policies/user';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 import {
   archiveSessionNeedsActionNotifications,
+  createNotificationForNewCollaborators,
   createNotificationForNewPocs,
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
@@ -142,6 +143,69 @@ describe('createNotificationForNewPocs', () => {
 
     mockCreateNotification.mockClear();
     await createNotificationForNewPocs(buildEvent(REGIONAL_PD), [3], null);
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('createNotificationForNewCollaborators', () => {
+  let findAllSpy: jest.SpyInstance;
+  let flagSpy: jest.SpyInstance;
+
+  const event = { id: 77, eventId: 'R01-TR-1234', ownerId: 1 };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findAllSpy = jest
+      .spyOn(db.User, 'findAll')
+      .mockImplementation(({ where }) =>
+        Promise.resolve((where.id as number[]).map((id) => ({ id, flags: [], permissions: [] })))
+      );
+    jest.spyOn(db.User, 'findOne').mockResolvedValue({ name: 'Event Creator' } as never);
+    flagSpy = jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValue(true);
+    mockRunInSavepoint.mockImplementation(async (fn) => {
+      await fn();
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('notifies newly added collaborators, naming the event creator', async () => {
+    await createNotificationForNewCollaborators(event, [2], [1, 2, 3, 3]);
+
+    expect(findAllSpy).toHaveBeenCalledWith(expect.objectContaining({ where: { id: [3] } }));
+    expect(flagSpy).toHaveBeenCalledWith('actionable_notifications');
+    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      3,
+      77,
+      NOTIFICATION_TYPES.TRAINING_REPORT_COLLABORATOR_ADDED,
+      {
+        metadata: { author: 'Event Creator', displayId: 'R01-TR-1234', id: 77 },
+        skipExisting: 'archived',
+      }
+    );
+    expect(mockRunInSavepoint).toHaveBeenCalledWith(
+      expect.any(Function),
+      'Error creating collaborator added notification for user 3 on event 77:'
+    );
+  });
+
+  it('skips users without the feature flag', async () => {
+    flagSpy.mockReturnValueOnce(false).mockReturnValueOnce(true);
+
+    await createNotificationForNewCollaborators(event, [], [3, 4]);
+
+    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification.mock.calls[0][0]).toBe(4);
+  });
+
+  it('makes no calls when there are no new collaborators', async () => {
+    await createNotificationForNewCollaborators(event, [2], [2]);
+    await createNotificationForNewCollaborators(event, null, null);
+
+    expect(findAllSpy).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
   });
 });

@@ -29,11 +29,13 @@ import {
 } from './event';
 import {
   archiveSessionNeedsActionNotifications,
+  createNotificationForNewCollaborators,
   createNotificationForNewPocs,
 } from './notifications/trainingReport';
 
 jest.mock('./notifications/trainingReport', () => ({
   archiveSessionNeedsActionNotifications: jest.fn(),
+  createNotificationForNewCollaborators: jest.fn(),
   createNotificationForNewPocs: jest.fn(),
 }));
 
@@ -123,6 +125,19 @@ describe('event service', () => {
         expect.objectContaining({ id: created.id }),
         [],
         [11_111]
+      );
+
+      await destroyEvent(created.id);
+    });
+
+    it('notifies collaborators added on create', async () => {
+      createNotificationForNewCollaborators.mockClear();
+      const created = await createAnEvent(98_989);
+
+      expect(createNotificationForNewCollaborators).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [],
+        [98_989]
       );
 
       await destroyEvent(created.id);
@@ -291,6 +306,27 @@ describe('event service', () => {
       );
       expect(previous).toEqual([98_989]);
       expect(current).toEqual([98_989, 11_111]);
+
+      await destroyEvent(created.id);
+    });
+
+    it('notifies new collaborators with the previous and new collaborators', async () => {
+      const created = await createAnEvent(98_989);
+      createNotificationForNewCollaborators.mockClear();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989],
+        regionId: 98_989,
+        collaboratorIds: [98_989, 11_111],
+        data: { status: 'active', owner: { id: 98_989, name: 'test' } },
+      });
+
+      expect(createNotificationForNewCollaborators).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id, eventId: created.eventId, ownerId: 98_989 }),
+        [98_989],
+        [98_989, 11_111]
+      );
 
       await destroyEvent(created.id);
     });
