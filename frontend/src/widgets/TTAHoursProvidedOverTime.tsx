@@ -145,8 +145,8 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
           <div ref={chartRef} className="tta-hours-chart padding-3">
             <div>
               <div className="display-flex flex-align-center flex-justify-center flex-wrap flex-gap-05 margin-bottom-2">
-                <span>TTA duration (hours):</span>
-                {['0', '>0-3', '>3-6', '>6-9', '>9-12', '>12'].map((label, index) => (
+                <span className="margin-right-1">TTA duration (hours):</span>
+                {['0', '0.25-3', '3.25-6', '6.25-9', '9.25-12', '12+'].map((label, index) => (
                   <span
                     key={label}
                     className="tta-hours-legend-cell display-flex flex-align-center flex-justify-center height-6 border border-base-lighter text-bold"
@@ -158,7 +158,7 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                     {label}
                   </span>
                 ))}
-                <span className="margin-left-2">Monitoring:</span>
+                <span className="margin-left-2 margin-right-1">Monitoring:</span>
                 <span
                   className="tta-hours-monitoring-key width-6 height-6"
                   role="img"
@@ -166,7 +166,7 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                 />
               </div>
               <div className="overflow-x-auto">
-                <table className="tta-hours-grid width-full">
+                <table className="tta-hours-grid width-full border-top-1px border-base-lighter">
                   <caption className="usa-sr-only">TTA hours by month and week</caption>
                   <thead className="usa-sr-only">
                     <tr>

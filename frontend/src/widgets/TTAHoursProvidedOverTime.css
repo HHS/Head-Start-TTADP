@@ -7,6 +7,10 @@
 }
 .tta-hours-grid {
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
   min-width: 750px;
+}
+.tta-hours-grid td,
+.tta-hours-grid th[scope='row'] {
+  min-width: 5rem;
 }

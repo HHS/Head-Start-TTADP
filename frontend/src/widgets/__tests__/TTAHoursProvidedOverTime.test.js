@@ -58,6 +58,12 @@ describe('TTA hours provided over time', () => {
     expect(screen.queryByRole('button', { name: 'Current year' })).not.toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'December 2025' })).not.toBeInTheDocument();
+    expect(screen.getByText('TTA duration (hours):')).toHaveClass('margin-right-1');
+    expect(screen.getByText('Monitoring:')).toHaveClass('margin-right-1');
+    expect(screen.getByRole('table', { name: 'TTA hours by month and week' })).toHaveClass(
+      'border-top-1px',
+      'border-base-lighter'
+    );
     expect(fetchWidget).toHaveBeenCalledWith(
       'ttaHoursProvidedOverTime',
       'region.in[]=1&recipientId.ctn[]=401'
