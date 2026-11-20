@@ -75,6 +75,17 @@ This workflow automates the building, testing, and deployment process for the ap
 3. **Dynamic Security Scan**
 4. **Deploy**: Deploys to lower environments based on the branch. Production branch merges still use the existing production deploy job; production release tag and evidence handling are documented in the [Infrastructure guide](./infrastructure.md#production-release-provenance).
 
+It does not run on merge queue branches (`gh-readonly-queue/*`); those run the Merge Queue Check workflow instead.
+
+### Merge Queue Check Workflow
+
+The GitHub merge queue builds a temporary `gh-readonly-queue/main/*` branch for each queued PR and waits for the required `ci/circleci: tests_done` check on it. The PR branch has already passed the full suite, and the queue commit is the same commit that lands on `main`, where the full suite runs again before the staging deploy. So this workflow runs only:
+1. **Secret Printing Check**
+2. **Build and Lint**
+3. **`tests_done`**: a no-op checkpoint that reports the status the merge queue requires
+
+A failure caused only by combining queued PRs is therefore caught on `main`, where it blocks the staging deploy, rather than in the queue.
+
 ---
 
 ### Daily Scheduled Workflows
