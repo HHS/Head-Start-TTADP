@@ -3,6 +3,7 @@
 import { DECIMAL_BASE, MUTUALLY_EXCLUSIVE_SCOPES } from '@ttahub/common';
 import { Op, QueryTypes } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
+import { FEATURE_FLAGS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import {
   EventReportPilot,
@@ -252,36 +253,48 @@ export async function requireEmailVerification(userId) {
 }
 
 /**
- * Sets a give feature flag on or off for a set of active users
+ * Sets a given feature flag on or off for a set of active users
  *
- * @param {flag:string} flag to set
+ * @param {flag:string} flag to set; must be one of FEATURE_FLAGS
  * @param {on:boolean} on specifies whether to set the flag on or off
+ * @param {object} [options]
+ * @param {import('sequelize').Transaction} [options.transaction] optional transaction to run in
  * @returns {Promise<Array>} result as a promise resolving to an array of empty array and the number of records affected
  */
-export async function setFlag(flag, on = true) {
+export async function setFlag(flag, on = true, { transaction } = {}) {
+  if (!FEATURE_FLAGS.includes(flag)) {
+    throw new Error(`Invalid feature flag: ${flag}`);
+  }
+
+  // Comparisons cast to text[] and the flag is passed untyped so this works whether "flags" is
+  // the legacy enum array or the varchar array (the app is pushed before migrations run on deploy).
   const query = `
     UPDATE
     "Users" u
     SET
       flags = CASE
-        WHEN ${!!on} THEN CASE
-            WHEN flags @> ARRAY ['${flag}'::"enum_Users_flags"] THEN flags
-            ELSE array_append(flags, '${flag}')
+        WHEN :on THEN CASE
+            WHEN flags::text[] @> ARRAY[:flag]::text[] THEN flags
+            ELSE array_append(flags, :flag)
         END
-        ELSE array_remove(flags, '${flag}')
+        ELSE array_remove(flags, :flag)
       END
     FROM
     "Permissions" p
     WHERE
       p."userId" = u.id AND
-      p."scopeId" = ${SITE_ACCESS}
+      p."scopeId" = :siteAccess
       AND CASE
-        WHEN ${!!on} THEN NOT flags @> ARRAY ['${flag}'::"enum_Users_flags"]
-        ELSE flags @> ARRAY ['${flag}'::"enum_Users_flags"]
+        WHEN :on THEN NOT flags::text[] @> ARRAY[:flag]::text[]
+        ELSE flags::text[] @> ARRAY[:flag]::text[]
     END;
   `;
 
-  const result = sequelize.query(query, { type: QueryTypes.UPDATE });
+  const result = sequelize.query(query, {
+    type: QueryTypes.UPDATE,
+    replacements: { flag, on: !!on, siteAccess: SITE_ACCESS },
+    transaction,
+  });
   return result;
 }
 
