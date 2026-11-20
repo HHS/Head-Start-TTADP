@@ -25,6 +25,13 @@ Boundary(aws, "AWS GovCloud") {
         Container(worker_app, "<&layers> TTA Hub Worker Application", "NodeJS, Bull", "Perform background work and data processing")
         Container(clamav, "File scanning API", "ClamAV", "Internal application for scanning user uploads\n\n docker: ajilaag/clamav-rest:20211026")
         Container(maintenance_app, "Maintenance Page", "Static", "Static page served in place of the TTA Hub during incident response or blocking maintenance. The primary hostname is remapped to this application so users cannot reach the live site while work is in progress.")
+        note right of maintenance_app
+        Purpose: tells users the TTA Hub is temporarily unavailable during incident response or maintenance that blocks use of the site (for example, a database credential rotation).
+        - Static HTML, CSS and images served by the cloud.gov staticfile buildpack (nginx). Requests for its own static assets (such as /style.css) return those files; every other path returns the maintenance page.
+        - No forms, scripts or user input. No bound services (database, Redis, S3) and no credentials, and it does not persist application records.
+        - Runs continuously at tta-smarthub-maintenance-page-prod.app.cloud.gov so it can take over without a deploy.
+        - An engineer runs bin/maintenance -e prod -m on to remap ttahub.ohs.acf.hhs.gov from the TTA Hub web application to this page. bin/maintenance -e prod -m off maps the hostname back to the web application.
+        end note
         Container(www_jwks, ".well-known/jwks.json (JWKS)", "HTTP JSON", "Publishes public JWK (kid) for token client-auth verification")
       }
       Boundary(auto, "Automation") {
