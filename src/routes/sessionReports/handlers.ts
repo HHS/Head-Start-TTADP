@@ -301,7 +301,7 @@ export const updateHandler = async (req: Request, res: Response) => {
       updatedStatus !== REPORT_STATUSES.NEEDS_ACTION &&
       updatedStatus !== TRAINING_REPORT_STATUSES.COMPLETE;
     if ((!session?.submitted && updatedSession?.submitted) || isReassigned) {
-      await trSessionSubmittedForApproval(event, updatedSession);
+      onTransactionCommitted(req, () => trSessionSubmittedForApproval(event, updatedSession));
     }
 
     // Likewise, only email the owner on the transition into "needs action".

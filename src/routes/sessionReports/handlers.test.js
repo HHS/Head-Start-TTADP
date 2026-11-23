@@ -457,9 +457,15 @@ describe('session report handlers', () => {
       findSessionById.mockResolvedValue({ ...mockSession, submitted: false });
       updateSession.mockResolvedValue(submittedSession);
       trSessionSubmittedForApproval.mockClear();
-      await updateHandler(mockRequest, mockResponse);
-      expect(trSessionSubmittedForApproval).toHaveBeenCalledWith(mockEvent, submittedSession);
+      const req = { ...mockRequest, inTransactionWrapper: true };
+      await updateHandler(req, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toHaveLength(1);
+
+      await req.transactionCommittedCallbacks[0]();
+
+      expect(trSessionSubmittedForApproval).toHaveBeenCalledWith(mockEvent, submittedSession);
     });
 
     it('does not notify the approver when the session was already submitted', async () => {
@@ -483,7 +489,13 @@ describe('session report handlers', () => {
       findSessionById.mockResolvedValue({ ...mockSession, submitted: true, approverId: 1 });
       updateSession.mockResolvedValue(reassignedSession);
       trSessionSubmittedForApproval.mockClear();
-      await updateHandler(mockRequest, mockResponse);
+      const req = { ...mockRequest, inTransactionWrapper: true };
+      await updateHandler(req, mockResponse);
+      expect(trSessionSubmittedForApproval).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toHaveLength(1);
+
+      await req.transactionCommittedCallbacks[0]();
+
       expect(trSessionSubmittedForApproval).toHaveBeenCalledWith(mockEvent, reassignedSession);
     });
 
