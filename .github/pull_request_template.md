@@ -37,9 +37,10 @@
 
 - [ ] PR created as **Draft**
 - [ ] Staging smoke test completed
+- [ ] Copilot review requested on the draft PR and its findings triaged _(fix it, or ticket it and reply on the thread with the ticket link)_
 - [ ] PR transitioned to **Open** _(this `ready_for_review` transition triggers the Slack/Jira automation)_
 - [ ] Reviewer added after the PR is **Open** _(`seyandiangov` and `elainaparrish` are the authorized approvers under normal circumstances)_
-  - _Sequence: Draft PR → Smoke test → Open PR (automation runs) → Add reviewer_
+  - _Sequence: Draft PR → Smoke test → Copilot review triaged → Open PR (automation runs) → Add reviewer_
   - _Confirm that the Slack notification was sent after the PR was opened_
   - _Confirm that linked Jira ticket(s) transitioned as expected; if not, review the GitHub Actions workflow logs_
 
