@@ -1887,6 +1887,54 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Training report session submitted digest', () => {
+    const session = { id: 97, eventId: 'R01-TR-25-1798', displayId: 'Session A' };
+
+    it('renders the populated digest with links to the sessions', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [session],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: session submitted for review`);
+      expect(message.text).toContain('The following sessions were submitted for review:');
+      expect(message.text).toContain('Select the session name to view it in the Hub.');
+      expect(message.text).toContain(`* ${session.displayId}`);
+      expect(message.text).toContain(
+        `${process.env.TTA_SMART_HUB_URI}/training-report/R01-TR-25-1798/session/97`
+      );
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: no new sessions submitted for review`);
+      expect(message.text).toContain('No sessions were submitted for your review today.');
+    });
+  });
+
+
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
       it('returns null without calling the email sender when notifications are disabled', async () => {
@@ -1951,9 +1999,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 9 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 10 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(9);
+        expect(entries).toHaveLength(10);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');

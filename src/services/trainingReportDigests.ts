@@ -1,11 +1,21 @@
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
 import db from '../models';
-import { REGIONAL_PD_WITH_NATIONAL_CENTERS } from './eventFlow';
+import { isSessionSubmitted, REGIONAL_PD_WITH_NATIONAL_CENTERS } from './eventFlow';
+import type { EventShape, SessionShape } from './types/event';
 
-const { EventReportPilot, sequelize } = db;
+const { EventReportPilot, SessionReportPilot, sequelize } = db;
 
 export interface TrainingReportDigestRow {
   id: number;
+  displayId: string;
+}
+
+export interface SessionDigestRow {
+  id: number;
+  /** The parent Training Report's display id, e.g. R01-TR-25-1234 */
+  eventId: string;
+  /** The session name, shown as the digest link text */
   displayId: string;
 }
 
@@ -103,4 +113,51 @@ export async function trainingReportsWhereCollaboratorByDate(
     order: [['id', 'ASC']],
     raw: true,
   });
+}
+
+/**
+ * Sessions submitted or resubmitted to the user for approval within the interval (TR-21).
+ * Sessions the user has since approved or requested changes on are skipped, as are sessions
+ * since reassigned to another approver or no longer submitted (e.g. reset by a facilitation
+ * change), since `submittedAt` survives those.
+ * @param userId The approver's user id.
+ * @param date A trusted interval expression from `frequencyToInterval`.
+ */
+export async function trainingReportsWhereSessionSubmittedByDate(
+  userId: number | string,
+  date: string
+): Promise<SessionDigestRow[]> {
+  const id = toUserId(userId);
+  if (id === null) {
+    return [];
+  }
+
+  const sessions = await SessionReportPilot.findAll({
+    attributes: ['id', 'eventId', 'approverId', 'data'],
+    include: [{ model: EventReportPilot, as: 'event', attributes: ['eventId', 'data'] }],
+    where: {
+      approverId: id,
+      submittedAt: { [Op.gt]: sequelize.literal(date) },
+      [Op.or]: [
+        { data: { status: null } },
+        {
+          data: {
+            status: {
+              [Op.notIn]: [TRAINING_REPORT_STATUSES.COMPLETE, REPORT_STATUSES.NEEDS_ACTION],
+            },
+          },
+        },
+      ],
+    },
+    order: [['id', 'ASC']],
+  });
+
+  return sessions
+    .map((session) => session.get({ plain: true }))
+    .filter((session) => isSessionSubmitted(session.event as EventShape, session as SessionShape))
+    .map((session) => ({
+      id: session.id,
+      eventId: session.event.eventId,
+      displayId: session.data?.sessionName || `Session ${session.id}`,
+    }));
 }

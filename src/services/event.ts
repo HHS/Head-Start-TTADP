@@ -22,6 +22,7 @@ import EventReport from '../policies/event';
 import { getNewPocIds } from './eventFlow';
 import {
   archiveSessionNeedsActionNotifications,
+  archiveSessionSubmittedNotifications,
   createNotificationForNewCollaborators,
   createNotificationForNewPocs,
 } from './notifications/trainingReport';
@@ -204,9 +205,10 @@ export async function destroyEvent(id: number): Promise<void> {
       attributes: ['id'],
     });
     await Promise.all(
-      sessions.map((session) =>
-        archiveSessionNeedsActionNotifications(session.id, { removeLink: true })
-      )
+      sessions.flatMap((session) => [
+        archiveSessionNeedsActionNotifications(session.id, { removeLink: true }),
+        archiveSessionSubmittedNotifications(session.id, { removeLink: true }),
+      ])
     );
   }, `Error archiving session notifications for event ${id}:`);
   try {
