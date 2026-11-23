@@ -44,13 +44,6 @@ export const getNewPocIds = (
   return getAddedUserIds(event.ownerId, previousPocIds, currentPocIds);
 };
 
-/**
- * True when the supplied user has the National Center role.
- *
- * Returns false when user is null/undefined, when roles is missing or not an
- * array, and when a role entry is null/undefined (defensive against
- * unexpected shapes coming from the database or test fixtures).
- */
 export const isNationalCenterUser = (
   user: { roles?: Array<{ name?: string } | null | undefined> | null } | null | undefined
 ): boolean =>

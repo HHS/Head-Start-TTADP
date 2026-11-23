@@ -1,4 +1,4 @@
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'fs';
 import httpCodes from 'http-codes';
@@ -11,7 +11,6 @@ import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import CommunicationLogPolicy from '../../policies/communicationLog';
 import EventPolicy from '../../policies/event';
-import Users from '../../policies/user';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { logById } from '../../services/communicationLog';
@@ -29,11 +28,13 @@ import {
   deleteSessionFile,
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
+  fileHasReferences,
   getFileById,
   markFilesQueuedForScan,
   queueFilesForScan,
   updateStatus,
 } from '../../services/files';
+import { addDeleteFileToQueue } from '../../services/s3Queue';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { onTransactionCommitted } from '../transactionWrapper';
@@ -68,6 +69,14 @@ const hasReportAuthorization = async (user, reportId) => {
   return true;
 };
 
+const reportIsApproved = async (reportId) => {
+  const report = await ActivityReport.findOne({
+    where: { id: reportId },
+    attributes: ['calculatedStatus'],
+  });
+  return report?.calculatedStatus === REPORT_STATUSES.APPROVED;
+};
+
 const reportIsInAnEditableState = async (user, reportId) => {
   const report = await ActivityReport.findOne({
     where: { id: reportId },
@@ -77,58 +86,85 @@ const reportIsInAnEditableState = async (user, reportId) => {
   return authorization.reportHasEditableStatus();
 };
 
-const deleteOnlyFile = async (req, res) => {
-  const { fileId } = req.params;
-  const userId = await currentUserId(req, res);
-
-  const user = await userById(userId);
-  const policy = new Users(user);
-  if (!policy.canWriteInAtLeastOneRegion()) {
-    return res.status(400).send({ error: 'Write permissions required' });
+/**
+ * Deletes the file if nothing references it any more. The file is reloaded so references
+ * removed earlier in this transaction aren't counted. The S3 object is only queued for
+ * deletion once the transaction commits, so a rollback can't leave a File row whose S3
+ * object is gone.
+ */
+const removeFileIfOrphaned = async (req, fileId) => {
+  const file = await getFileById(fileId);
+  if (!file || fileHasReferences(file)) {
+    return;
   }
 
-  try {
-    //
-    const file = await getFileById(fileId);
-    if (!file) {
-      return res.status(404).send({ error: 'File not found' });
+  await deleteFile(file.id);
+
+  const { id, key } = file;
+  onTransactionCommitted(req, async () => {
+    try {
+      await addDeleteFileToQueue(id, key);
+      return;
+    } catch (err) {
+      auditLogger.error(
+        `${logContext.namespace}:removeFileIfOrphaned Failed to queue S3 delete for file ${id}, deleting directly: ${err.message}`
+      );
     }
-    if (
-      file.reports.length +
-        file.reportObjectiveFiles.length +
-        file.objectiveFiles.length +
-        file.objectiveTemplateFiles.length ===
-      0
-    ) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
+    // The File row is already gone and no job exists for Bull to retry, so delete the
+    // object directly rather than leave it orphaned in S3.
+    try {
+      await deleteFileFromS3(key);
+    } catch (err) {
+      auditLogger.alertError(
+        `${logContext.namespace}:removeFileIfOrphaned S3 object for deleted file ${id} was not removed and needs manual cleanup: ${err.message}`,
+        's3_orphaned_file',
+        err
+      );
     }
-    return res.status(204).send();
-  } catch (error) {
-    return handleErrors(req, res, error, logContext);
-  }
+  });
 };
 
+// Each parent branch checks the user's access to the parent, then requires that parent to
+// link to the file. Without that link the user's access says nothing about the file, so the
+// request is refused with a 404 and nothing is unlinked or cleaned up.
 const deleteHandler = async (req, res) => {
   const { reportId, fileId, eventSessionId, communicationLogId, sessionAttachmentId } = req.params;
 
+  if (!reportId && !eventSessionId && !communicationLogId && !sessionAttachmentId) {
+    res.status(httpCodes.BAD_REQUEST).send({ error: 'A recognized parent id is required' });
+    return;
+  }
+
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
   try {
     const file = await getFileById(fileId);
+    if (!file) {
+      res.status(httpCodes.NOT_FOUND).send({ error: 'File not found' });
+      return;
+    }
 
     if (reportId) {
       if (!(await hasReportAuthorization(user, reportId))) {
         res.sendStatus(403);
         return;
       }
-      const rf = file.reportFiles.find(
+      // The ActivityReportFile beforeDestroy hook enforced this; unlinking now skips hooks.
+      if (await reportIsApproved(reportId)) {
+        res
+          .status(httpCodes.BAD_REQUEST)
+          .send({ error: 'File cannot be removed from approved report' });
+        return;
+      }
+      const rf = (file.reportFiles || []).find(
         (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE)
       );
-      if (rf) {
-        await deleteActivityReportFile(rf.id);
+      if (!rf) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteActivityReportFile(rf.id);
     } else if (eventSessionId) {
       const session = await findSessionById(eventSessionId);
       const event = await findEventBySmartsheetId(session.eventId);
@@ -140,12 +176,14 @@ const deleteHandler = async (req, res) => {
         return;
       }
 
-      const sof = file.sessionFiles.find(
+      const sof = (file.sessionFiles || []).find(
         (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE)
       );
-      if (sof) {
-        await deleteSessionFile(sof.id);
+      if (!sof) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteSessionFile(sof.id);
     } else if (communicationLogId) {
       const communicationLog = await logById(communicationLogId);
       const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
@@ -155,12 +193,14 @@ const deleteHandler = async (req, res) => {
         return;
       }
 
-      const clf = file.communicationLogFiles.find(
+      const clf = (file.communicationLogFiles || []).find(
         (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE)
       );
-      if (clf) {
-        await deleteCommunicationLogFile(clf.id);
+      if (!clf) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteCommunicationLogFile(clf.id);
     } else if (sessionAttachmentId) {
       // Session Supporting Attachments.
       const session = await findSessionById(sessionAttachmentId);
@@ -172,34 +212,17 @@ const deleteHandler = async (req, res) => {
         return;
       }
 
-      const sof = file.supportingAttachments.find(
+      const sof = (file.supportingAttachments || []).find(
         (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE)
       );
-      if (sof) {
-        await deleteSessionSupportingAttachment(sof.id);
+      if (!sof) {
+        res.status(httpCodes.NOT_FOUND).send({ error: 'File is not attached to this parent' });
+        return;
       }
+      await deleteSessionSupportingAttachment(sof.id);
     }
 
-    const reportLength = file.reports ? file.reports.length : 0;
-    const reportObjectiveLength = file.reportObjectiveFiles ? file.reportObjectiveFiles.length : 0;
-    const objectiveLength = file.objectiveFiles ? file.objectiveFiles.length : 0;
-    const objectiveTemplateFilesLength = file.objectiveTemplateFiles
-      ? file.objectiveTemplateFiles.length
-      : 0;
-    const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
-
-    const canDelete =
-      reportLength +
-        reportObjectiveLength +
-        objectiveLength +
-        objectiveTemplateFilesLength +
-        sessionLength ===
-      0;
-
-    if (canDelete) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
-    }
+    await removeFileIfOrphaned(req, fileId);
 
     res.status(204).send();
   } catch (error) {
@@ -568,4 +591,4 @@ async function deleteActivityReportObjectiveFile(req, res) {
   }
 }
 
-export { deleteActivityReportObjectiveFile, deleteHandler, deleteOnlyFile, uploadHandler };
+export { deleteActivityReportObjectiveFile, deleteHandler, uploadHandler };

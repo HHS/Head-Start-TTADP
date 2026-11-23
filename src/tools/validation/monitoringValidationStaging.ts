@@ -24,15 +24,19 @@ const refreshMonitoringValidationStaging = async (transaction: Transaction): Pro
   // auditLogTimeseries.ts for the canonical definition and caveats.
   await recreateTimeseriesFunction(sequelize.getQueryInterface(), transaction);
 
-  // MonitoringFindings_timeseries / MonitoringReviews_timeseries: full per-column
-  // history reconstruction, one row per audit-log event (not per value-change -
-  // see auditLogTimeseries.ts). Built here, once, for any later check needing a
-  // field's value as of a point in time or a count/time-elapsed-between-states
-  // derived from change history.
+  // <table>_timeseries: full per-column history reconstruction, one row per
+  // audit-log event (see auditLogTimeseries.ts). Built here, once, for any
+  // later check needing a field's value as of a point in time or a
+  // count/time-elapsed-between-states derived from change history. Grants,
+  // Citations and GrantCitations back the as-of-month-end stats in
+  // monitoringTimeSeries.ts.
   await sequelize.query(
     `
     SELECT create_timeseries_from_audit_log('MonitoringFindings');
     SELECT create_timeseries_from_audit_log('MonitoringReviews');
+    SELECT create_timeseries_from_audit_log('Grants');
+    SELECT create_timeseries_from_audit_log('Citations');
+    SELECT create_timeseries_from_audit_log('GrantCitations');
     `,
     { raw: true, transaction }
   );

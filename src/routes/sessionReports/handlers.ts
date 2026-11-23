@@ -39,6 +39,21 @@ const facilitationSchema = Joi.string()
   .valid('national_center', 'regional_tta_staff', 'both')
   .required();
 
+const FACILITATION_REQUIRED_MESSAGE =
+  'Select who is providing the training: national_center, regional_tta_staff, or both';
+
+/**
+ * Sessions on Regional PD events with National Centers must say who is facilitating,
+ * since facilitation selects the session's completion and approval workflow.
+ * Applies to every path that creates a session.
+ */
+const isMissingRequiredFacilitation = (
+  event: { data?: { eventOrganizer?: string } },
+  data: { facilitation?: unknown } | undefined
+): boolean =>
+  event.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
+  !!facilitationSchema.validate(data?.facilitation).error;
+
 async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response) {
   const options = {
     header: true,
@@ -203,14 +218,8 @@ export const createHandler = async (req: Request, res: Response) => {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
-    if (event.data.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS) {
-      const { error } = facilitationSchema.validate(data?.facilitation);
-      if (error) {
-        return res.status(httpCodes.BAD_REQUEST).send({
-          message:
-            'Select who is providing the training: national_center, regional_tta_staff, or both',
-        });
-      }
+    if (isMissingRequiredFacilitation(event, data)) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: FACILITATION_REQUIRED_MESSAGE });
     }
 
     const session = await createSession({
@@ -241,21 +250,39 @@ export const updateHandler = async (req: Request, res: Response) => {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Session Report ID is required' });
     }
 
-    const { eventId } = req.body;
-    if (eventId === undefined) {
+    // Both IDs below are event display (Smartsheet) IDs, e.g. "R01-PD-23-1037":
+    // findSessionById exposes the saved event's display ID as `eventId`.
+    const { eventId: requestEventDisplayId } = req.body;
+    if (requestEventDisplayId === undefined) {
       return res.status(httpCodes.BAD_REQUEST).send({ message: 'Event ID is required' });
     }
 
-    // Authorization is through the associated event
-    const event = await findEventBySmartsheetId(eventId);
+    // Authorization is through the session's saved event, never the client-supplied one.
     const session = await findSessionById(Number(id));
+    const sessionEventDisplayId = session ? String(session.eventId) : null;
+    if (sessionEventDisplayId !== null && String(requestEventDisplayId) !== sessionEventDisplayId) {
+      return res
+        .status(httpCodes.FORBIDDEN)
+        .send({ message: 'Event ID does not match the session report' });
+    }
+
+    const event = await findEventBySmartsheetId(
+      sessionEventDisplayId ?? String(requestEventDisplayId)
+    );
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
     }
     const eventAuth = await getEventAuthorization(req, res, event, session);
 
-    if (!eventAuth.canEditSession()) {
+    // With no existing session, updateSession creates one, so require create permission.
+    const authorized = session ? eventAuth.canEditSession() : eventAuth.canCreateSession();
+    if (!authorized) {
       return res.sendStatus(httpCodes.FORBIDDEN);
+    }
+
+    // Creating through this path must enforce the same rules as createHandler.
+    if (!session && isMissingRequiredFacilitation(event, req.body.data)) {
+      return res.status(httpCodes.BAD_REQUEST).send({ message: FACILITATION_REQUIRED_MESSAGE });
     }
 
     const updatedSession = await updateSession(Number(id), req.body, (work) =>

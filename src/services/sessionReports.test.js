@@ -10,6 +10,7 @@ import db, {
   SessionReportPilotSupportingAttachment,
 } from '../models';
 import { createGoal, createGrant, createRecipient, createUser, destroyGoal } from '../testUtils';
+import * as eventService from './event';
 import { createEvent, destroyEvent } from './event';
 import {
   archiveSessionNeedsActionNotifications,
@@ -192,7 +193,8 @@ describe('session reports service', () => {
       const found = await findSessionById(99_999);
       expect(found).toBeNull();
 
-      const updatedData = { eventId: event.id, data: { harry: 'potter' } };
+      // The route authorizes by the event's display ID, so the fallback must resolve it the same way
+      const updatedData = { eventId, data: { harry: 'potter' } };
       const updated = await updateSession(99_999, updatedData);
 
       expect(updated).toMatchObject({
@@ -202,6 +204,55 @@ describe('session reports service', () => {
       });
 
       await destroySession(updated.id);
+    });
+
+    it('throws when creating a fallback session for an unknown event display ID', async () => {
+      await expect(
+        updateSession(99_999, { eventId: 'R01-PD-DOES-NOT-EXIST', data: {} })
+      ).rejects.toThrow('Event with display ID R01-PD-DOES-NOT-EXIST not found');
+    });
+
+    it('throws a clear error without writing when the saved event cannot be loaded', async () => {
+      const created = await createSession({ eventId: event.id, data: { harry: 'potter' } });
+      const spy = jest.spyOn(eventService, 'findEventByDbId').mockResolvedValueOnce(null);
+
+      try {
+        await expect(
+          updateSession(created.id, { eventId, data: { harry: 'granger' } })
+        ).rejects.toThrow(`Event with database ID ${event.id} for session ${created.id} not found`);
+
+        const stored = await SessionReportPilot.findByPk(created.id);
+        expect(stored.data.harry).toBe('potter');
+      } finally {
+        spy.mockRestore();
+        await destroySession(created.id);
+      }
+    });
+
+    it('never moves a session to the event supplied by the client', async () => {
+      const otherEventId = `R01-PD-${faker.number.int({ min: 100_000, max: 999_999 })}`;
+      const otherEvent = await createEvent({
+        ownerId: 99_887,
+        regionId: 99_887,
+        pocIds: [],
+        collaboratorIds: [],
+        data: { eventId: otherEventId },
+      });
+      const created = await createSession({ eventId: event.id, data: {} });
+
+      try {
+        const updated = await updateSession(created.id, {
+          eventId: otherEventId,
+          data: { harry: 'potter' },
+        });
+
+        expect(updated.eventId).toBe(eventId);
+        const stored = await SessionReportPilot.findByPk(created.id);
+        expect(stored.eventId).toBe(event.id);
+      } finally {
+        await destroySession(created.id);
+        await destroyEvent(otherEvent.id);
+      }
     });
 
     it('strips hydrated event and approver associations from incoming data', async () => {

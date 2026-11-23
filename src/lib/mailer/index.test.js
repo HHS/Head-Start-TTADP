@@ -1934,6 +1934,7 @@ describe('mailer tests', () => {
     });
   });
 
+
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
       it('returns null without calling the email sender when notifications are disabled', async () => {
@@ -3006,7 +3007,13 @@ describe('mailer tests', () => {
       expect(auditLogger.error).toHaveBeenCalledTimes(1);
     });
 
+    const collaboratorImmediately = {
+      key: EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT,
+      value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+    };
+
     it('trCollaboratorAdded success', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementationOnce(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded(
         {
@@ -3025,7 +3032,31 @@ describe('mailer tests', () => {
         })
       );
     });
+    it('trCollaboratorAdded skips collaborators who have not opted in to immediate emails', async () => {
+      await Promise.all(
+        [
+          USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+          USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+          USER_SETTINGS.EMAIL.VALUES.MONTHLY_DIGEST,
+          USER_SETTINGS.EMAIL.VALUES.NEVER,
+        ].map(async (value) => {
+          userSettingOverridesById.mockResolvedValueOnce({ ...collaboratorImmediately, value });
+          await trCollaboratorAdded({ id: 1, eventId: 'tr-1234', data: {} }, 1);
+        })
+      );
+      userSettingOverridesById.mockResolvedValueOnce(undefined);
+      await trCollaboratorAdded({ id: 1, eventId: 'tr-1234', data: {} }, 1);
+
+      expect(userSettingOverridesById).toHaveBeenCalledWith(
+        1,
+        EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT
+      );
+      expect(userById).not.toHaveBeenCalled();
+      expect(notificationQueueMock.add).not.toHaveBeenCalled();
+    });
+
     it('trCollaboratorAdded error', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded();
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
@@ -3033,6 +3064,7 @@ describe('mailer tests', () => {
     });
 
     it('throws an error if the collaborator is not found', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementationOnce(() => Promise.resolve(null));
       await trCollaboratorAdded(
         {
@@ -3047,6 +3079,7 @@ describe('mailer tests', () => {
     });
 
     it('logs info if emailTo is an empty array', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementationOnce(() => Promise.resolve({ email: null }));
       await trCollaboratorAdded(
         {
