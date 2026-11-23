@@ -7,14 +7,20 @@ const goalTemplatesUrl = join('/', 'api', 'goal-templates');
 export async function getGoalTemplates(grantIds, options = {}) {
   const normalizedOptions =
     typeof options === 'boolean' ? { includeClosedSuspendedGoals: options } : options;
-  const { includeBlockingActivityReports = false, includeClosedSuspendedGoals = false } =
-    normalizedOptions;
+  const {
+    includeBlockingActivityReports = false,
+    includeClosedSuspendedGoals = false,
+    includeMonitoringWithoutGoal = false,
+  } = normalizedOptions;
   const params = grantIds.map((grantId) => `grantIds=${grantId}`);
   if (includeClosedSuspendedGoals) {
     params.push('includeClosedSuspendedGoals=true');
   }
   if (includeBlockingActivityReports) {
     params.push('includeBlockingActivityReports=true');
+  }
+  if (includeMonitoringWithoutGoal) {
+    params.push('includeMonitoringWithoutGoal=true');
   }
   const url = params.length ? join(goalTemplatesUrl, `?${params.join('&')}`) : goalTemplatesUrl;
   const response = await get(url);

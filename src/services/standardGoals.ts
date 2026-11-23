@@ -809,7 +809,7 @@ interface StandardGoalRequestContext {
   userId?: number;
 }
 
-function standardGoalConflict(code: string, blockingActivityReports = undefined) {
+export function standardGoalConflict(code: string, blockingActivityReports = undefined) {
   const responseBody = {
     code,
     ...(blockingActivityReports ? { blockingActivityReports } : {}),

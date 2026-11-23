@@ -36,6 +36,8 @@ export interface BlockingActivityReportSummary {
 interface CuratedTemplateOptions {
   includeBlockingActivityReports?: boolean;
   includeClosedAndSuspendedGoals?: boolean;
+  /** offer the monitoring template even to grants without a monitoring goal */
+  includeMonitoringWithoutGoal?: boolean;
   userId?: number;
 }
 
@@ -212,6 +214,7 @@ export async function getCuratedTemplates(
   const {
     includeBlockingActivityReports = false,
     includeClosedAndSuspendedGoals = false,
+    includeMonitoringWithoutGoal = false,
     userId,
   } = normalizedOptions;
   const authorizedUser = includeBlockingActivityReports
@@ -309,16 +312,22 @@ export async function getCuratedTemplates(
         {
           [Op.or]: [{ '$"region.grants"."id"$': { [Op.not]: null } }, { regionId: null }],
         },
-        {
-          [Op.or]: [
-            { '$goals.id$': monitoringGoalIds },
-            {
-              standard: {
-                [Op.not]: 'Monitoring',
+        // the monitoring template is only offered to grants with a monitoring goal, unless
+        // asked for (a TTA request can be for monitoring before there is a goal for it)
+        ...(includeMonitoringWithoutGoal
+          ? []
+          : [
+              {
+                [Op.or]: [
+                  { '$goals.id$': monitoringGoalIds },
+                  {
+                    standard: {
+                      [Op.not]: 'Monitoring',
+                    },
+                  },
+                ],
               },
-            },
-          ],
-        },
+            ]),
       ],
     },
     order: [['templateName', 'ASC']],

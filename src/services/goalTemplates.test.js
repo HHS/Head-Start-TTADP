@@ -142,6 +142,15 @@ describe('goalTemplates services', () => {
       const monitoringTemplateToAssert = templates.find((t) => t.id === monitoringTemplate.id);
       expect(monitoringTemplateToAssert).toBeTruthy();
     });
+
+    it('returns the monitoring template without a monitoring goal when asked', async () => {
+      const templates = await getCuratedTemplates([regularGrant.id], {
+        includeMonitoringWithoutGoal: true,
+      });
+
+      expect(templates.find((t) => t.id === regularTemplate.id)).toBeTruthy();
+      expect(templates.find((t) => t.id === monitoringTemplate.id)).toBeTruthy();
+    });
   });
 
   describe('getSourceFromTemplate', () => {

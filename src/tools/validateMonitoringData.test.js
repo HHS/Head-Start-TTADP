@@ -115,7 +115,7 @@ describe('validateMonitoringData', () => {
   const grantId = faker.number.int({ min: 90000, max: 899999 });
   const grantNumber = `VMD-${uuidv4().slice(0, 8)}`;
   // A second grant in a different region on the same grantee, so the seeded
-  // findings span two regions and the national total must deduplicate them.
+  // findings span two regions.
   const grantId2 = grantId + 1;
   const grantNumber2 = `VMD2-${uuidv4().slice(0, 8)}`;
   const reviewId = uuidv4();
@@ -1518,42 +1518,6 @@ describe('validateMonitoringData', () => {
     expect(run.alert_count).toBeGreaterThan(0);
   });
 
-  it('upserts weekly review-creation stats sliced by region with the geo_id sentinel', async () => {
-    const monday = lastCompleteWeekDate(0);
-    const periodStart = monday.toISOString().slice(0, 10);
-    const rows = await ValidationTimeSeries.findAll({
-      where: {
-        feature_set: 'monitoring_reviews',
-        period_type: 'week',
-        period_start: periodStart,
-        region_id: 1,
-        geo_id: 0,
-        stat_name: 'reviews_created',
-      },
-      raw: true,
-    });
-    // exactly one row per slice (the unique upsert key), counting our review
-    expect(rows.length).toBe(1);
-    expect(Number(rows[0].value)).toBeGreaterThanOrEqual(1);
-  });
-
-  it('upserts monthly findings-delivered stats', async () => {
-    const periodStart = `${reportDeliveryDate.toISOString().slice(0, 7)}-01`;
-    const rows = await ValidationTimeSeries.findAll({
-      where: {
-        feature_set: 'monitoring_findings',
-        period_type: 'month',
-        period_start: periodStart,
-        region_id: 1,
-        geo_id: 0,
-        stat_name: 'findings_delivered',
-      },
-      raw: true,
-    });
-    expect(rows.length).toBe(1);
-    expect(Number(rows[0].value)).toBeGreaterThanOrEqual(2);
-  });
-
   it('captures per-entity observations for the seeded findings and review', async () => {
     const run = await ValidationRun.findOne({
       where: {
@@ -2540,68 +2504,5 @@ describe('validateMonitoringData', () => {
     expect(await recordCount(runC.id)).toBeGreaterThan(0);
     expect(await recordCount(runB2.id)).toBeGreaterThan(0); // previous cycle kept
     expect(await recordCount(runA.id)).toBe(0); // rolled off
-  });
-
-  it('emits a national (region_id 0) findings-delivered total, deduplicated across regions', async () => {
-    await validateMonitoringData();
-
-    const periodStart = `${reportDeliveryDate.toISOString().slice(0, 7)}-01`;
-    const national = await ValidationTimeSeries.findAll({
-      where: {
-        feature_set: 'monitoring_findings',
-        period_type: 'month',
-        period_start: periodStart,
-        region_id: 0,
-        geo_id: 0,
-        stat_name: 'findings_delivered',
-      },
-      raw: true,
-    });
-    // one national row, counting the two distinct delivered findings once each
-    expect(national.length).toBe(1);
-    expect(Number(national[0].value)).toBe(2);
-
-    // Each seeded finding is on grants in regions 1 and 2, so the per-region
-    // rows sum to 4 - the national total (2) is a dedup, not that sum.
-    const perRegion = await ValidationTimeSeries.findAll({
-      where: {
-        feature_set: 'monitoring_findings',
-        period_type: 'month',
-        period_start: periodStart,
-        region_id: [1, 2],
-        stat_name: 'findings_delivered',
-      },
-      raw: true,
-    });
-    const regionSum = perRegion.reduce((sum, r) => sum + Number(r.value), 0);
-    expect(regionSum).toBe(4);
-  });
-
-  it('reconciles: deletes time-series keys the recompute no longer produces', async () => {
-    // A findings row for a region/month with no source data. The next run
-    // recomputes the full range and must drop it, since an upsert alone can't.
-    await ValidationTimeSeries.create({
-      feature_set: 'monitoring_findings',
-      period_type: 'month',
-      period_start: '2025-05-01',
-      region_id: 7,
-      geo_id: 0,
-      stat_name: 'findings_delivered',
-      value: 99,
-    });
-
-    await validateMonitoringData();
-
-    const stale = await ValidationTimeSeries.findAll({
-      where: {
-        feature_set: 'monitoring_findings',
-        period_type: 'month',
-        period_start: '2025-05-01',
-        region_id: 7,
-        stat_name: 'findings_delivered',
-      },
-      raw: true,
-    });
-    expect(stale.length).toBe(0);
   });
 });

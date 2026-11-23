@@ -7,6 +7,7 @@ import {
   TTA_REQUEST_STEPS,
 } from '@ttahub/common';
 import type {
+  TtaRequestApprovePayload,
   TtaRequestApprovingCor,
   TtaRequestCitationData,
   TtaRequestPayload,
@@ -14,12 +15,15 @@ import type {
 } from '@ttahub/common/src/ttaRequests';
 import moment from 'moment';
 import { Op, Transaction, type WhereOptions } from 'sequelize';
+import { CREATION_METHOD, GOAL_STATUS } from '../constants';
+import changeGoalStatus from '../goalServices/changeGoalStatus';
 import { serviceError } from '../lib/serviceError';
 import syncJoinRows from '../lib/syncJoinRows';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { getCitationsByGrantIds } from './citations';
+import { isHiddenActivityReportGoal } from './goalTemplates';
 import { activeUsersWithScopesInRegion, usersByRoles } from './users';
 
 const namespace = 'SERVICE:TTA_REQUESTS';
@@ -32,9 +36,12 @@ const {
   TtaRequestApprover,
   TtaRequestAssignedStaff,
   TtaRequestNote,
+  TtaRequestGoal,
+  Goal,
   Grant,
   Program,
   Recipient,
+  GoalStatusChange,
   GoalTemplate,
   Role,
   User,
@@ -155,6 +162,14 @@ export async function ttaRequestById(id: number) {
         include: [{ model: Role, as: 'roles', attributes: ['name'], through: { attributes: [] } }],
       },
       {
+        model: Goal,
+        as: 'goals',
+        attributes: ['id', 'name', 'status', 'grantId'],
+        through: { attributes: [] },
+        // the goal's default scope has a where, which would make this an inner join
+        required: false,
+      },
+      {
         model: TtaRequestNote,
         as: 'notes',
         attributes: ['id', 'step', 'action', 'note', 'createdAt'],
@@ -176,32 +191,41 @@ export async function ttaRequestById(id: number) {
   });
 }
 
+/** the requests still moving through review, and the ones the COR has approved */
+export type TtaRequestList = 'active' | 'approved';
+
+const ACTIVE_STATUSES = [
+  TTA_REQUEST_STATUSES.SUBMITTED,
+  TTA_REQUEST_STATUSES.NEEDS_ACTION,
+  TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+];
+
 /**
- * The requests the scopes allow, optionally for one recipient: the user's own drafts,
- * since drafts are private to their creator until they are submitted, and anyone's
- * requests that have been submitted, including those sent back for changes.
+ * The requests the scopes allow, optionally for one recipient. The active list has the user's
+ * own drafts, since drafts are private to their creator until they are submitted, and anyone's
+ * requests that have been submitted, including those sent back for changes. The approved list
+ * has the requests the COR has approved, with the staff assigned to them.
  */
 export async function getTtaRequests(
   scopes: WhereOptions[],
   userId: number,
-  recipientId: number | null = null
+  recipientId: number | null = null,
+  list: TtaRequestList = 'active'
 ) {
+  const approved = list === 'approved';
+
   return TtaRequest.findAndCountAll({
     where: {
       [Op.and]: [
         ...scopes,
-        {
-          [Op.or]: [
-            { userId, status: TTA_REQUEST_STATUSES.DRAFT },
-            {
-              status: [
-                TTA_REQUEST_STATUSES.SUBMITTED,
-                TTA_REQUEST_STATUSES.NEEDS_ACTION,
-                TTA_REQUEST_STATUSES.AWAITING_APPROVAL,
+        approved
+          ? { status: TTA_REQUEST_STATUSES.APPROVED }
+          : {
+              [Op.or]: [
+                { userId, status: TTA_REQUEST_STATUSES.DRAFT },
+                { status: ACTIVE_STATUSES },
               ],
             },
-          ],
-        },
         ...(recipientId ? [{ recipientId }] : []),
       ],
     },
@@ -213,6 +237,7 @@ export async function getTtaRequests(
       'status',
       'createdAt',
       'submittedAt',
+      'approvedAt',
     ],
     include: [
       {
@@ -250,8 +275,18 @@ export async function getTtaRequests(
         attributes: ['id', 'stateCode'],
         through: { attributes: [] },
       },
+      ...(approved
+        ? [
+            {
+              model: User,
+              as: 'assignedStaff',
+              attributes: ['id', 'name'],
+              through: { attributes: [] },
+            },
+          ]
+        : []),
     ],
-    order: [['createdAt', 'DESC']],
+    order: [[approved ? 'approvedAt' : 'createdAt', 'DESC']],
     distinct: true,
   });
 }
@@ -535,6 +570,8 @@ export async function submitTtaRequest(
     throw dataError('The reviewer must be able to review TTA requests in the request region');
   }
 
+  await checkGoalTemplate(existing.regionId, saved.goalTemplateId);
+
   if (saved.goalTemplate?.standard === TTA_REQUEST_MONITORING_STANDARD && !saved.citations.length) {
     const grantIds = saved.grants.map((grant) => grant.id);
     const activeCitations = grantIds.length
@@ -636,4 +673,178 @@ export async function reviewTtaRequest(
 
   const reviewed = await ttaRequestById(existing.id);
   return reviewed.toJSON();
+}
+
+/**
+ * A request's goal template has to be one the form offers for its grants: a curated template
+ * for every region or for the request's region. The form only lists those, so any other id was
+ * crafted or left over, and the request can't go on with it.
+ */
+async function checkGoalTemplate(regionId: number, goalTemplateId: number | null) {
+  if (!goalTemplateId) {
+    throw dataError('A request needs a goal before it can be approved');
+  }
+
+  const goalTemplate = await GoalTemplate.findOne({
+    attributes: ['id', 'templateName', 'standard'],
+    where: {
+      id: goalTemplateId,
+      creationMethod: CREATION_METHOD.CURATED,
+      regionId: { [Op.or]: [null, regionId] },
+    },
+  });
+
+  if (!goalTemplate) {
+    throw dataError('The goal must be one that can be used in the request region');
+  }
+
+  return goalTemplate;
+}
+
+/**
+ * The status a suspended goal goes back to: the one it had before it was last suspended, or
+ * In Progress, as approving an Activity Report would set it, when there is no record of that.
+ */
+async function statusBeforeSuspension(goalId: number) {
+  const suspension = await GoalStatusChange.findOne({
+    attributes: ['oldStatus'],
+    where: { goalId, newStatus: GOAL_STATUS.SUSPENDED },
+    order: [
+      ['createdAt', 'DESC'],
+      ['id', 'DESC'],
+    ],
+  });
+
+  return [GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS].includes(suspension?.oldStatus)
+    ? suspension.oldStatus
+    : GOAL_STATUS.IN_PROGRESS;
+}
+
+/**
+ * The goals an approved request is for: one on each of its grants, from its goal template.
+ * A grant only ever has one open goal from a template, so one it already has is reused;
+ * otherwise a new one is created in Not Started. A closed goal is never reopened. Either way it
+ * is linked to the request. The request's citations stay on it, to be picked on later Activity
+ * Reports.
+ *
+ * A goal that is only on Activity Reports that are not yet approved is hidden from the
+ * recipient record and removed with them; the request takes it over, so it shows on the
+ * recipient record and stays if those reports drop it. A suspended goal goes back to the status
+ * it had before it was suspended.
+ *
+ * Monitoring goals only come from the recipient's monitoring reports, so a request for the
+ * monitoring goal is linked to the ones its grants have and never creates one.
+ */
+async function createGoalsForApprovedRequest(ttaRequestId: number, userId: number) {
+  const ttaRequest = await TtaRequest.findByPk(ttaRequestId, {
+    attributes: ['id', 'regionId', 'goalTemplateId'],
+    include: [{ model: TtaRequestGrant, as: 'requestGrants', attributes: ['grantId'] }],
+  });
+
+  const goalTemplate = await checkGoalTemplate(ttaRequest.regionId, ttaRequest.goalTemplateId);
+  const grantIds: number[] = ttaRequest.requestGrants.map(({ grantId }) => grantId);
+
+  if (!grantIds.length) {
+    throw dataError('A request needs at least one grant before it can be approved');
+  }
+
+  // Other requests and reports for the same grants may be saved at the same time, and each
+  // would find no goal and create one. Locking the grants (in order, so two approvals can't
+  // deadlock) makes approvals take turns for the rest of the caller's transaction.
+  await Grant.unscoped().findAll({
+    attributes: ['id'],
+    where: { id: grantIds },
+    order: [['id', 'ASC']],
+    lock: Transaction.LOCK.NO_KEY_UPDATE,
+  });
+
+  const openGoals = await Goal.findAll({
+    attributes: ['id', 'grantId', 'status', 'createdVia', 'onApprovedAR'],
+    where: {
+      grantId: grantIds,
+      goalTemplateId: goalTemplate.id,
+      status: { [Op.ne]: GOAL_STATUS.CLOSED },
+    },
+  });
+
+  const isMonitoring = goalTemplate.standard === TTA_REQUEST_MONITORING_STANDARD;
+
+  // each grant has its own goal from the template, so they can be found or created together
+  await Promise.all(
+    grantIds.map(async (grantId) => {
+      let goal = openGoals.find((openGoal) => openGoal.grantId === grantId);
+
+      if (!goal) {
+        if (isMonitoring) {
+          return;
+        }
+        goal = await Goal.create({
+          name: goalTemplate.templateName,
+          grantId,
+          goalTemplateId: goalTemplate.id,
+          status: GOAL_STATUS.NOT_STARTED,
+          createdVia: 'ttaRequest',
+        });
+      }
+
+      if (isHiddenActivityReportGoal(goal)) {
+        await goal.update({ createdVia: 'ttaRequest' });
+      }
+
+      if (goal.status === GOAL_STATUS.SUSPENDED) {
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: await statusBeforeSuspension(goal.id),
+          reason: 'Goal unsuspended by TTA request approval',
+          context: 'approveTtaRequest',
+        });
+      }
+
+      await TtaRequestGoal.findOrCreate({ where: { ttaRequestId, goalId: goal.id } });
+    })
+  );
+}
+
+/**
+ * A primary or backup COR in the request's region either approves it, which creates its goals,
+ * or sends it back to its reviewer for changes, who reviews it again. Their decision and note are
+ * added to the request's history. A backup acting in place of the COR the reviewer picked
+ * becomes the request's approver.
+ */
+export async function approveTtaRequest(
+  existing: { id: number; regionId: number },
+  { status, note }: TtaRequestApprovePayload,
+  userId: number
+) {
+  // the body is checked by checkApproveTtaRequestBody, so the status is needs action or approved
+  const approved = status === APPROVER_STATUSES.APPROVED;
+
+  if (approved) {
+    await createGoalsForApprovedRequest(existing.id, userId);
+  } else {
+    // the request is back with its reviewer, so their review is pending again
+    await TtaRequestReviewer.update({ status: null }, { where: { ttaRequestId: existing.id } });
+  }
+
+  await syncStepUser(TtaRequestApprover, existing.id, userId);
+  await TtaRequestApprover.update({ status }, { where: { ttaRequestId: existing.id, userId } });
+
+  await TtaRequestNote.create({
+    ttaRequestId: existing.id,
+    userId,
+    step: TTA_REQUEST_STEPS.APPROVER,
+    action: approved ? TTA_REQUEST_NOTE_ACTIONS.APPROVED : TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION,
+    note: note || null,
+  });
+
+  await TtaRequest.update(
+    approved
+      ? { status: TTA_REQUEST_STATUSES.APPROVED, approvedAt: new Date() }
+      : { status: TTA_REQUEST_STATUSES.SUBMITTED },
+    { where: { id: existing.id } }
+  );
+
+  const result = await ttaRequestById(existing.id);
+  return result.toJSON();
 }

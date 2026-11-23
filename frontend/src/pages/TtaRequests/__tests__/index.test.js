@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { allRegionsUserHasTtaRequestPermissionTo } from '../../../permissions';
 import { MemoryRouter } from 'react-router-dom';
 import useFilters from '../../../hooks/useFilters';
+import { allRegionsUserHasTtaRequestPermissionTo } from '../../../permissions';
 import UserContext from '../../../UserContext';
 import TtaRequests from '../index';
 
@@ -65,6 +65,7 @@ describe('TTA Requests', () => {
   beforeEach(() => {
     useFilters.mockReturnValue(defaultFilterReturn);
     fetchMock.get('begin:/api/tta-requests?', { count: 1, rows: [DRAFT] });
+    fetchMock.get('begin:/api/tta-requests/approved', { count: 0, rows: [] });
   });
 
   afterEach(() => {

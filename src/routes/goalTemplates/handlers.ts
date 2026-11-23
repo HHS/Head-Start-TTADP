@@ -59,7 +59,12 @@ export async function getGoalTemplateFilterStandards(req: Request, res: Response
 
 export async function getGoalTemplates(req: Request, res: Response) {
   try {
-    const { grantIds, includeBlockingActivityReports, includeClosedSuspendedGoals } = req.query;
+    const {
+      grantIds,
+      includeBlockingActivityReports,
+      includeClosedSuspendedGoals,
+      includeMonitoringWithoutGoal,
+    } = req.query;
 
     // ensure we only pass numbers to the service
     const parsedGrantIds = [grantIds]
@@ -80,6 +85,7 @@ export async function getGoalTemplates(req: Request, res: Response) {
     const templates = await getCuratedTemplates(parsedGrantIds, {
       includeBlockingActivityReports: shouldIncludeBlockingActivityReports,
       includeClosedAndSuspendedGoals: shouldIncludeClosedAndSuspendedGoals,
+      includeMonitoringWithoutGoal: includeMonitoringWithoutGoal === 'true',
       ...(shouldIncludeBlockingActivityReports ? { userId } : {}),
     });
     res.json(templates);
