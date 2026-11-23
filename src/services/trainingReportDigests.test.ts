@@ -4,6 +4,7 @@ import db from '../models';
 import { createUser } from '../testUtils';
 import { REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS } from './eventFlow';
 import {
+  trainingReportsImportedByDate,
   trainingReportsWhereCollaboratorByDate,
   trainingReportsWherePocByDate,
   trainingReportsWhereSessionSubmittedByDate,
@@ -137,6 +138,48 @@ describe('training report digests', () => {
 
     it('returns nothing for a non-integer user id', async () => {
       expect(await trainingReportsWhereCollaboratorByDate('x', DAILY)).toEqual([]);
+    });
+  });
+  describe('trainingReportsImportedByDate', () => {
+    const createOwnedEvent = async (ownerId: number, status?: string) => {
+      const event = await EventReportPilot.create({
+        ownerId,
+        pocIds: [],
+        collaboratorIds: [],
+        regionId: 1,
+        eventId: `R01-TR-${faker.string.numeric(8)}`,
+        data: { eventOrganizer: REGIONAL_TTA_NO_NATIONAL_CENTERS, ...(status ? { status } : {}) },
+      });
+      eventIds.push(event.id);
+      return event;
+    };
+
+    it('returns reports imported within the interval where the user is the Event Creator', async () => {
+      const before = await createOwnedEvent(poc.id);
+      const since = await windowStartingNow();
+      const imported = await createOwnedEvent(poc.id, 'Not started');
+      const someoneElses = await createOwnedEvent(owner.id);
+
+      const reports = await trainingReportsImportedByDate(poc.id, since);
+
+      expect(reports).toEqual([{ id: imported.id, displayId: imported.eventId }]);
+      expect(reports.map((r) => r.id)).not.toContain(before.id);
+      expect(reports.map((r) => r.id)).not.toContain(someoneElses.id);
+    });
+
+    it('skips suspended reports', async () => {
+      const since = await windowStartingNow();
+      const suspended = await createOwnedEvent(poc.id, 'Suspended');
+      const noStatus = await createOwnedEvent(poc.id);
+
+      const ids = (await trainingReportsImportedByDate(poc.id, since)).map((r) => r.id);
+
+      expect(ids).toEqual([noStatus.id]);
+      expect(ids).not.toContain(suspended.id);
+    });
+
+    it('returns nothing for a non-integer user id', async () => {
+      expect(await trainingReportsImportedByDate('1; DROP TABLE x', DAILY)).toEqual([]);
     });
   });
   describe('trainingReportsWhereSessionSubmittedByDate', () => {

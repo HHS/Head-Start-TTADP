@@ -1934,6 +1934,62 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Training report event imported digest', () => {
+    const imported = [
+      { id: 98, displayId: 'R01-TR-25-1796' },
+      { id: 99, displayId: 'R01-TR-25-1797' },
+    ];
+
+    it('renders the populated digest with links to the event summaries', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: imported,
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${WEEKLY} digest: TR's available in the TTA Hub`);
+      expect(message.text).toContain('Below are your report notifications for this week.');
+      expect(message.text).toContain('New Training Reports are available in the TTA Hub.');
+      expect(message.text).toContain('Select the link below to submit the event details:');
+      expect(message.text).not.toContain('Select the report number to view it in the Hub.');
+      imported.forEach(({ displayId }) => {
+        expect(message.text).toContain(`* ${displayId}`);
+        expect(message.text).toContain(
+          `${process.env.TTA_SMART_HUB_URI}/training-report/${displayId}/event-summary`
+        );
+      });
+      expect(message.text).toContain("That's it!");
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.MONTHLY,
+            subjectFreq: MONTHLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${MONTHLY} digest: no new Training Reports available`);
+      expect(message.text).toContain(
+        'No new Training Reports were imported into the TTA Hub for you this month.'
+      );
+    });
+  });
 
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
@@ -1999,14 +2055,28 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 10 digest configuration entries keyed by actionType', () => {
-        const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(10);
-        entries.forEach((config) => {
+      it('exports digest configuration entries keyed by actionType', () => {
+        const entries = Object.entries(DIGEST_CONFIG);
+        expect(entries.length).toBeGreaterThanOrEqual(11);
+        entries.forEach(([key, config]) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
-          expect(config).toHaveProperty('actionType');
+          expect(config.actionType).toBe(key);
         });
+      });
+
+      it('sends the TR-28c digest to Event Creators who chose a digest for imported TRs', () => {
+        expect(DIGEST_CONFIG[EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED_DIGEST]).toEqual(
+          expect.objectContaining({
+            settingKey: EMAIL_ACTIONS.EVENT_IMPORTED_TRAINING_REPORT,
+            reportLink: expect.any(Function),
+          })
+        );
+        expect(
+          DIGEST_CONFIG[EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED_DIGEST].reportLink({
+            displayId: 'R01-TR-25-1796',
+          })
+        ).toBe('/training-report/R01-TR-25-1796/event-summary');
       });
 
       it('registers a processor for every digest config entry plus the recipient digest', () => {
@@ -2873,61 +2943,82 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
     });
 
-    it('trOwnerAdded correctly gets added to the notificationQueue', async () => {
-      userById.mockImplementationOnce(() => Promise.resolve({ email: 'test.owner@govtest.gov' }));
-      const data = {
-        eventId: 'tr-1234',
-        emailTo: ['test.owner@govtest.gov'],
-        templatePath: 'tr_owner_added',
-        debugMessage: 'Congrats dude',
-        displayId: 'mockReport-1',
-        reportPath: '/asdf/',
-        report: {
-          id: 123,
-          displayId: 'mockReport-1',
-        },
+    describe('trOwnerAdded', () => {
+      const ownerImmediately = {
+        key: EMAIL_ACTIONS.EVENT_IMPORTED_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
       };
 
-      await trOwnerAdded(
-        {
-          eventId: 'tr-1234',
-          data,
-        },
-        jsonTransport
-      );
-      expect(notificationQueueMock.add).toHaveBeenCalledWith(
-        EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
-        expect.objectContaining({ displayId: 'tr-1234' })
-      );
-    });
+      it('emails an opted-in Event Creator with the TR-28b template', async () => {
+        userSettingOverridesById.mockResolvedValue(ownerImmediately);
+        userById.mockImplementationOnce(() => Promise.resolve({ email: 'test.owner@govtest.gov' }));
 
-    it('trOwnerAdded correctly logs exceptions', async () => {
-      userById.mockImplementationOnce(() => Promise.resolve({ email: 'test@gov.test' }));
-      const mock = jest.spyOn(notificationQueueMock, 'add');
-      mock.mockImplementationOnce(() => {
-        throw new Error('Something is not right');
+        await trOwnerAdded({ id: 123, eventId: 'tr-1234' }, 7);
+
+        expect(userSettingOverridesById).toHaveBeenCalledWith(
+          7,
+          EMAIL_ACTIONS.EVENT_IMPORTED_TRAINING_REPORT
+        );
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+          expect.objectContaining({
+            displayId: 'tr-1234',
+            emailTo: ['test.owner@govtest.gov'],
+            templatePath: 'tr_event_imported',
+            reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/event-summary`,
+          })
+        );
       });
-      const data = {
-        eventId: 'tr-1234',
-        emailTo: ['test@gov.test'],
-        templatePath: 'tr_owner_added',
-        debugMessage: 'Congrats dude',
-        displayId: 'mockReport-1',
-        reportPath: '/asdf/',
-        report: {
-          id: 123,
-          displayId: 'mockReport-1',
-        },
-      };
 
-      await trOwnerAdded(
-        {
-          eventId: 'tr-1234',
-          data,
-        },
-        1
-      );
-      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+      it('skips Event Creators who have not opted in to immediate emails', async () => {
+        await Promise.all(
+          [
+            USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+            USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+            USER_SETTINGS.EMAIL.VALUES.MONTHLY_DIGEST,
+            USER_SETTINGS.EMAIL.VALUES.NEVER,
+          ].map(async (value) => {
+            userSettingOverridesById.mockResolvedValueOnce({ ...ownerImmediately, value });
+            await trOwnerAdded({ id: 123, eventId: 'tr-1234' }, 7);
+          })
+        );
+        // the setting defaults to "never", so no override means no email
+        userSettingOverridesById.mockResolvedValueOnce(undefined);
+        await trOwnerAdded({ id: 123, eventId: 'tr-1234' }, 7);
+
+        expect(userById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs an error when the event has no eventId', async () => {
+        await trOwnerAdded({ id: 123 }, 7);
+        expect(auditLogger.error).toHaveBeenCalledWith(
+          new Error('Missing eventId for trOwnerAdded notification on TR 123')
+        );
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs an error when the owner does not exist', async () => {
+        userSettingOverridesById.mockResolvedValue(ownerImmediately);
+        userById.mockResolvedValueOnce(null);
+        await trOwnerAdded({ id: 123, eventId: 'tr-1234' }, 7);
+        expect(auditLogger.error).toHaveBeenCalledWith(
+          new Error(
+            'Unable to notify owner 7 that TR 123 was imported, a user with that ID does not exist'
+          )
+        );
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs exceptions from the queue', async () => {
+        userSettingOverridesById.mockResolvedValue(ownerImmediately);
+        userById.mockImplementationOnce(() => Promise.resolve({ email: 'test@gov.test' }));
+        jest.spyOn(notificationQueueMock, 'add').mockImplementationOnce(() => {
+          throw new Error('Something is not right');
+        });
+        await trOwnerAdded({ id: 123, eventId: 'tr-1234' }, 7);
+        expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+      });
     });
 
     it('trEventComplete returns if process.env.ci is true', async () => {
@@ -3028,7 +3119,8 @@ describe('mailer tests', () => {
         EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
         expect.objectContaining({
           displayId: 'tr-1234',
-          reportPath: expect.stringContaining('/training-report/tr-1234'),
+          templatePath: 'tr_collaborator_added',
+          reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/view/tr-1234`,
         })
       );
     });

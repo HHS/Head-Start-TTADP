@@ -20,6 +20,7 @@ import {
 } from '../../services/activityReports';
 import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
 import {
+  trainingReportsImportedByDate,
   trainingReportsWhereCollaboratorByDate,
   trainingReportsWherePocByDate,
   trainingReportsWhereSessionSubmittedByDate,
@@ -863,7 +864,7 @@ export const trCollaboratorAdded = async (report, newCollaboratorId) => {
 
     const { eventId } = report;
     const eId = eventId;
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
 
     const emailTo = filterAndDeduplicateEmails([collaborator.email]);
 
@@ -946,30 +947,52 @@ export const trPocAdded = async (event, newPocIds) => {
 };
 
 /**
+ * Notifies the Event Creator (owner) that a new Training Report was imported into the TTA Hub
+ * (TR-28b), provided they have opted in to receiving this email immediately. Digest
+ * subscribers are covered by TRAINING_REPORT_EVENT_IMPORTED_DIGEST (TR-28c).
  *
- * @param {db.models.EventReportPilot.dataValues} report
- * @param {number} newCollaboratorId
+ * @param {{ id: number, eventId: string }} report
+ * @param {number} ownerId
  */
 export const trOwnerAdded = async (report, ownerId) => {
   if (process.env.CI) return;
   try {
-    const owner = await userById(ownerId, true);
-
     const { eventId } = report;
     if (!eventId) {
       throw new Error(
         `Missing eventId for trOwnerAdded notification on TR ${report?.id || 'unknown'}`
       );
     }
-    const eId = eventId;
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+    const setting = await userSettingOverridesById(
+      ownerId,
+      EMAIL_ACTIONS.EVENT_IMPORTED_TRAINING_REPORT
+    );
+    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+
+    const owner = await userById(ownerId, true);
+    if (!owner) {
+      throw new Error(
+        `Unable to notify owner ${ownerId} that TR ${report.id} was imported, a user with that ID does not exist`
+      );
+    }
+
+    const emailTo = filterAndDeduplicateEmails([owner.email]);
+    if (emailTo.length === 0) {
+      logger.info(
+        `Did not send tr event imported notification for ${eventId} preferences are not set or marked as "no-send"`
+      );
+      return;
+    }
+
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/event-summary`;
     const data = {
       displayId: eventId,
       reportPath,
       report: {
         displayId: eventId,
       },
-      emailTo: [owner.email],
+      emailTo,
       debugMessage: `MAILER: Notifying ${owner.email} that they were added as an owner to TR ${report.id}`,
       templatePath: 'tr_event_imported',
       ...referenceData(),
@@ -1052,6 +1075,7 @@ export const changesRequestedNotification = (
 const activityReportDigestLink = (report) => `/activity-reports/${report.id}`;
 const trainingReportDigestLink = (report) => `/training-report/view/${report.displayId}`;
 const sessionDigestLink = (session) => `/training-report/${session.eventId}/session/${session.id}`;
+const eventSummaryDigestLink = (report) => `/training-report/${report.displayId}/event-summary`;
 const monitoringDigestLink = (report) =>
   `/recipient-tta-records/${report.id}/region/${report.regionId}/monitoring`;
 
@@ -1113,6 +1137,14 @@ export const DIGEST_CONFIG = {
     actionType: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
     logKey: 'TrainingReportSessionSubmittedDigest',
     reportLink: sessionDigestLink,
+  },
+  // TR-28c: Training Reports imported where the user is the Event Creator
+  [EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.EVENT_IMPORTED_TRAINING_REPORT,
+    reportFetcher: trainingReportsImportedByDate,
+    actionType: EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED_DIGEST,
+    logKey: 'TrainingReportEventImportedDigest',
+    reportLink: eventSummaryDigestLink,
   },
   // Misc-6a (TTAHUB-6062): `reports` are recipients with new monitoring reports in the
   // user's home region, each linking to the recipient's monitoring tab. Not sent when empty.

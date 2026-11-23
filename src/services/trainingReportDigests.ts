@@ -116,6 +116,36 @@ export async function trainingReportsWhereCollaboratorByDate(
 }
 
 /**
+ * Training Reports imported into the TTA Hub within the interval where the user is the Event
+ * Creator (TR-28c). Suspended events are skipped, since the alert is archived on suspension.
+ * @param userId The Event Creator's user id.
+ * @param date A trusted interval expression from `frequencyToInterval`.
+ */
+export async function trainingReportsImportedByDate(
+  userId: number | string,
+  date: string
+): Promise<TrainingReportDigestRow[]> {
+  const id = toUserId(userId);
+  if (id === null) {
+    return [];
+  }
+
+  return EventReportPilot.findAll({
+    attributes: ['id', ['eventId', 'displayId']],
+    where: {
+      ownerId: id,
+      createdAt: { [Op.gt]: sequelize.literal(date) },
+      [Op.or]: [
+        { data: { status: null } },
+        { data: { status: { [Op.ne]: TRAINING_REPORT_STATUSES.SUSPENDED } } },
+      ],
+    },
+    order: [['id', 'ASC']],
+    raw: true,
+  });
+}
+
+/**
  * Sessions submitted or resubmitted to the user for approval within the interval (TR-21).
  * Sessions the user has since approved or requested changes on are skipped, as are sessions
  * since reassigned to another approver or no longer submitted (e.g. reset by a facilitation

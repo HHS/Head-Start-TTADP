@@ -4,8 +4,10 @@ import db from '../../models';
 import Users from '../../policies/user';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 import {
+  archiveEventImportedNotifications,
   archiveSessionNeedsActionNotifications,
   archiveSessionSubmittedNotifications,
+  createEventImportedNotification,
   createNotificationForNewCollaborators,
   createNotificationForNewPocs,
   createNotificationForSessionSubmittedCollaborators,
@@ -209,6 +211,86 @@ describe('createNotificationForNewCollaborators', () => {
 
     expect(findAllSpy).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('createEventImportedNotification', () => {
+  let findOneSpy: jest.SpyInstance;
+  let flagSpy: jest.SpyInstance;
+
+  const event = { id: 77, eventId: 'R01-TR-1234', ownerId: 1 };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findOneSpy = jest
+      .spyOn(db.User, 'findOne')
+      .mockImplementation(({ where }) =>
+        Promise.resolve({ id: where.id, flags: [], permissions: [] })
+      );
+    flagSpy = jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('notifies the Event Creator, skipping only archived notifications', async () => {
+    await createEventImportedNotification(event);
+
+    expect(findOneSpy).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 1 } }));
+    expect(flagSpy).toHaveBeenCalledWith('actionable_notifications');
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      1,
+      77,
+      NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED,
+      { metadata: { displayId: 'R01-TR-1234', id: 77 }, skipExisting: 'archived' }
+    );
+  });
+
+  it('does not notify an Event Creator without the feature flag', async () => {
+    flagSpy.mockReturnValue(false);
+
+    await createEventImportedNotification(event);
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not notify when the Event Creator is not found', async () => {
+    findOneSpy.mockResolvedValue(null);
+
+    await createEventImportedNotification(event);
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('archiveEventImportedNotifications', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('archives the TR-28a type for the event', async () => {
+    const updateSpy = jest.spyOn(db.Notification, 'update').mockResolvedValue([0]);
+
+    await archiveEventImportedNotifications(77);
+
+    expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(77, [
+      NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED,
+    ]);
+    expect(updateSpy).not.toHaveBeenCalled();
+    updateSpy.mockRestore();
+  });
+
+  it('clears the link when removeLink is set', async () => {
+    const updateSpy = jest.spyOn(db.Notification, 'update').mockResolvedValue([1]);
+
+    await archiveEventImportedNotifications(77, { removeLink: true });
+
+    expect(updateSpy).toHaveBeenCalledWith(
+      { link: null },
+      { where: { entityId: 77, type: [NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED] } }
+    );
+    updateSpy.mockRestore();
   });
 });
 

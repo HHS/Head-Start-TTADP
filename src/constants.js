@@ -301,6 +301,18 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenAddedAsCollaboratorTrainingReport',
   },
+  // TR-28a: the Event Creator needs to submit the event details of an imported Training Report
+  [NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED]: {
+    textFn: () => 'A Training Report is available in the TTA Hub.',
+    actionable: true,
+    linkFn: ({ displayId }) => `/training-report/${displayId}/event-summary`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the event details may be submitted, or the event suspended or deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenEventImportedTrainingReport',
+  },
   [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED]: {
     textFn: ({ sessionName }) => `Session: ${sessionName} submitted for approval.`,
     actionable: true,

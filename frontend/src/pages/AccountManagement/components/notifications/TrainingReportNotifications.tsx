@@ -31,6 +31,7 @@ export default function TrainingReportNotifications({
           'WhenSessionSubmittedCollaboratorTrainingReport',
           'WhenSessionReviewRequestedTrainingReport',
           'WhenSessionChangesRequestedTrainingReport',
+          'WhenEventImportedTrainingReport',
           'WhenSessionDetails20DaysCreatorCollaborator',
           'WhenSessionDetails20DaysPoc',
           'WhenNoSessionsCreatorCollaborator',
@@ -60,6 +61,10 @@ export default function TrainingReportNotifications({
           id: 'WhenSessionChangesRequestedTrainingReport',
           label:
             'A manager requests changes to an event session that I created or collaborated on.',
+        },
+        {
+          id: 'WhenEventImportedTrainingReport',
+          label: "A new Training Report is imported into the TTA Hub where I'm the event creator.",
         },
         {
           id: 'WhenEventDetails20DaysCreatorCollaborator',

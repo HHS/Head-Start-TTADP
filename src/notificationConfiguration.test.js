@@ -397,6 +397,37 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED, () => {
+    const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED];
+
+    it('textFn returns the static TR available text', () => {
+      expect(config.textFn()).toBe('A Training Report is available in the TTA Hub.');
+    });
+
+    it('is actionable with a "Take action" CTA to the event summary', () => {
+      expect(config.actionable).toBe(true);
+      expect(config.linkText()).toBe('Take action');
+      expect(config.linkFn({ displayId: 'R01-TR-1234' })).toBe(
+        '/training-report/R01-TR-1234/event-summary'
+      );
+    });
+
+    it('points archived alerts at the Training Report view', () => {
+      expect(config.archiveLabel()).toBe('View TR');
+      expect(config.archiveLinkFn({ displayId: 'R01-TR-1234' })).toBe(
+        '/training-report/view/R01-TR-1234'
+      );
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'R01-TR-1234' })).toBe('R01-TR-1234');
+    });
+
+    it('uses the inAppWhenEventImportedTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenEventImportedTrainingReport');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION, () => {
     const config =
       NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION];
