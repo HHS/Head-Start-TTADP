@@ -19,7 +19,10 @@ import {
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
 import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
-import { trainingReportsWherePocByDate } from '../../services/trainingReportDigests';
+import {
+  trainingReportsWhereCollaboratorByDate,
+  trainingReportsWherePocByDate,
+} from '../../services/trainingReportDigests';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
 import referenceData from '../../workers/referenceData';
@@ -843,6 +846,13 @@ export const trSessionChangesRequested = async (event, session) => {
 export const trCollaboratorAdded = async (report, newCollaboratorId) => {
   if (process.env.CI) return;
   try {
+    // Digest subscribers are covered by TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST.
+    const setting = await userSettingOverridesById(
+      newCollaboratorId,
+      EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT
+    );
+    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+
     const collaborator = await userById(newCollaboratorId, true);
     if (!collaborator) {
       throw new Error(
@@ -1086,6 +1096,13 @@ export const DIGEST_CONFIG = {
     reportFetcher: trainingReportsWherePocByDate,
     actionType: EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED_DIGEST,
     logKey: 'TrainingReportPocAddedDigest',
+    reportLink: trainingReportDigestLink,
+  },
+  [EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT,
+    reportFetcher: trainingReportsWhereCollaboratorByDate,
+    actionType: EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST,
+    logKey: 'TrainingReportCollaboratorAddedDigest',
     reportLink: trainingReportDigestLink,
   },
   // Misc-6a (TTAHUB-6062): `reports` are recipients with new monitoring reports in the
