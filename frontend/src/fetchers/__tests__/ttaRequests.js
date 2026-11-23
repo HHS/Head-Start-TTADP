@@ -1,5 +1,6 @@
 import fetchMock from 'fetch-mock';
 import {
+  approveTtaRequest,
   getTtaRequest,
   getTtaRequestApprovers,
   getTtaRequestAssignableStaff,
@@ -60,5 +61,17 @@ describe('TTA requests fetcher', () => {
     expect(fetchMock.lastCall()[0]).toBe('/api/tta-requests/42/review');
     expect(fetchMock.lastOptions().method).toBe('PUT');
     expect(JSON.parse(fetchMock.lastOptions().body)).toEqual(review);
+  });
+
+  it('approves a request', async () => {
+    fetchMock.put('/api/tta-requests/42/approve', { id: 42, status: 'approved' });
+    const approval = { status: 'approved', note: 'Looks good' };
+
+    const approved = await approveTtaRequest(42, approval);
+
+    expect(approved).toEqual({ id: 42, status: 'approved' });
+    expect(fetchMock.lastCall()[0]).toBe('/api/tta-requests/42/approve');
+    expect(fetchMock.lastOptions().method).toBe('PUT');
+    expect(JSON.parse(fetchMock.lastOptions().body)).toEqual(approval);
   });
 });

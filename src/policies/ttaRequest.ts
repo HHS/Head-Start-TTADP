@@ -11,6 +11,9 @@ const READ_SCOPES = [
   SCOPES.BACKUP_APPROVE_TTA_REQUESTS,
 ];
 
+// the primary COR, and their backups
+const APPROVE_SCOPES = [SCOPES.APPROVE_TTA_REQUESTS, SCOPES.BACKUP_APPROVE_TTA_REQUESTS];
+
 interface UserType {
   id: number;
   permissions: {
@@ -136,6 +139,35 @@ export default class TtaRequest {
     }
 
     return true;
+  }
+
+  /**
+   * Any primary or backup COR in the request's region approves it, or sends it back to its
+   * reviewer, once the reviewer has sent it on for approval. The COR the reviewer picked is who
+   * is asked, but a backup can act in their place.
+   */
+  canApprove() {
+    if (this.ttaRequest?.status !== TTA_REQUEST_STATUSES.AWAITING_APPROVAL) {
+      this.logUnauthorizedAttempt('approve TTA request', 'request is not awaiting approval');
+      return false;
+    }
+
+    if (!this.canApproveInRegion()) {
+      this.logUnauthorizedAttempt(
+        'approve TTA request',
+        'user lacks approve permissions in region'
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  canApproveInRegion() {
+    return this.user.permissions.some(
+      (permission) =>
+        permission.regionId === this.regionId && APPROVE_SCOPES.includes(permission.scopeId)
+    );
   }
 
   // the request's reviewerId is who reviews it. Its reviewer approver row is only synced to it

@@ -477,6 +477,17 @@ class EventReportPilots{
  version : integer
 }
 
+!issue='model missing for table'
+class FileDeletions #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : integer : <generated>
+!issue='column should not allow null' * attempts : integer : 0
+!issue='column should not allow null' * createdAt : timestamp with time zone : now()
+!issue='column should not allow null' * fileId : integer
+!issue='column should not allow null' * key : text
+!issue='column should not allow null' * updatedAt : timestamp with time zone : now()
+ completedAt : timestamp with time zone
+}
+
 class Files{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -1337,6 +1348,7 @@ class SessionReportPilots{
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  endDate : date
+!issue='column missing from model' <color:#d54309>needsActionAt</color>: timestamp with time zone
  startDate : date
  submittedAt : timestamp with time zone
 }
@@ -1392,6 +1404,14 @@ class TtaRequestCitations{
  findingType : text
 }
 
+class TtaRequestGoals{
+ * id : integer : <generated>
+ * goalId : integer : REFERENCES "Goals".id
+ * ttaRequestId : integer : REFERENCES "TtaRequests".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+}
+
 class TtaRequestGrants{
  * id : integer : <generated>
  * grantId : integer : REFERENCES "Grants".id
@@ -1432,6 +1452,7 @@ class TtaRequests{
  * createdAt : timestamp with time zone
  * status : enum : 'draft'::"enum_TtaRequests_status"
  * updatedAt : timestamp with time zone
+ approvedAt : timestamp with time zone
  context : text
  creatorNotes : text
  deletedAt : timestamp with time zone
@@ -2072,6 +2093,21 @@ class ZALEventReportPilots{
  * dml_timestamp : timestamp with time zone
  * dml_txid : uuid
  * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+!issue='model missing for table'
+class ZALFileDeletions #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : bigint : <generated>
+!issue='column should not allow null' * data_id : bigint
+!issue='column should not allow null' * dml_as : bigint
+!issue='column should not allow null' * dml_by : bigint
+!issue='column should not allow null' * dml_timestamp : timestamp with time zone
+!issue='column should not allow null' * dml_txid : uuid
+!issue='column should not allow null' * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
@@ -3142,6 +3178,20 @@ class ZALTtaRequestCitations{
  session_sig : text
 }
 
+class ZALTtaRequestGoals{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALTtaRequestGrants{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3385,6 +3435,7 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResour
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalStatusChanges : goal, statusChanges
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
+Goals "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGoals : ttaRequestGoals, goal
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grantNumberLink
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, grantNumberLink
 GrantReplacementTypes "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacementTypes : mapsFromReplacementType, mapsToReplacementType
@@ -3473,6 +3524,7 @@ Topics "1" --[#black,dashed,thickness=2]--{  "n" Topics : mapsToTopic, mapsFromT
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestApprovers : ttaRequest, approvers
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestAssignedStaff : ttaRequest, assignedStaffLinks
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestCitations : ttaRequest, citations
+TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGoals : ttaRequest, requestGoals
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestGrants : ttaRequest, requestGrants
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestNotes : ttaRequest, notes
 TtaRequests "1" --[#black,dashed,thickness=2]--{  "n" TtaRequestReviewers : ttaRequest, reviewers
@@ -3536,6 +3588,7 @@ GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
+Goals "n" }--[#black,dotted,thickness=2]--{ "n" TtaRequests : ttaRequests, goals
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessionReports, grants

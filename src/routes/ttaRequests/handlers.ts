@@ -7,11 +7,13 @@ import filtersToScopes from '../../scopes';
 import { setTtaRequestReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
+  approveTtaRequest as approveTtaRequestService,
   createTtaRequest as createTtaRequestService,
   getTtaRequests as getTtaRequestsService,
   lockTtaRequest,
   reviewTtaRequest as reviewTtaRequestService,
   submitTtaRequest as submitTtaRequestService,
+  type TtaRequestList,
   ttaRequestApprovingCors,
   ttaRequestAssignableStaff,
   ttaRequestById,
@@ -40,21 +42,23 @@ function respondOnceCommitted(req: Request, respond: () => void) {
   respond();
 }
 
-export async function getTtaRequests(req: Request, res: Response) {
+/** the regions' requests the user can read, as the list's table shows them */
+async function listTtaRequests(req: Request, res: Response, list: TtaRequestList) {
   try {
     const userId = await currentUserId(req, res);
     // filter the query so that only regions the user has permission to are included
     const query = await setTtaRequestReadRegions(req.query, userId);
     const { ttaRequest: scopes } = await filtersToScopes(query, { userId });
 
-    const ttaRequests = await getTtaRequestsService(scopes, userId);
+    const ttaRequests = await getTtaRequestsService(scopes, userId, null, list);
     res.json(ttaRequests);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
 
-export async function getTtaRequestsByRecipient(req: Request, res: Response) {
+/** one recipient's requests in a region, as the recipient record's table shows them */
+async function listTtaRequestsByRecipient(req: Request, res: Response, list: TtaRequestList) {
   try {
     const { regionId, recipientId } = req.params;
     const userId = await currentUserId(req, res);
@@ -68,12 +72,23 @@ export async function getTtaRequestsByRecipient(req: Request, res: Response) {
 
     const { ttaRequest: scopes } = await filtersToScopes({ 'region.in': [regionId] }, { userId });
 
-    const ttaRequests = await getTtaRequestsService(scopes, userId, Number(recipientId));
+    const ttaRequests = await getTtaRequestsService(scopes, userId, Number(recipientId), list);
     res.json(ttaRequests);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
 }
+
+export const getTtaRequests = (req: Request, res: Response) => listTtaRequests(req, res, 'active');
+
+export const getApprovedTtaRequests = (req: Request, res: Response) =>
+  listTtaRequests(req, res, 'approved');
+
+export const getTtaRequestsByRecipient = (req: Request, res: Response) =>
+  listTtaRequestsByRecipient(req, res, 'active');
+
+export const getApprovedTtaRequestsByRecipient = (req: Request, res: Response) =>
+  listTtaRequestsByRecipient(req, res, 'approved');
 
 export async function getTtaRequestReviewers(req: Request, res: Response) {
   try {
@@ -285,6 +300,44 @@ export async function reviewTtaRequest(req: Request, res: Response) {
     // the service rejects a review before it writes anything, so there is nothing for the
     // wrapper to roll back, unlike a submission
     if (respondWithServiceError(res, error)) {
+      return;
+    }
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function approveTtaRequest(req: Request, res: Response) {
+  try {
+    const { ttaRequestId } = req.params;
+    await lockTtaRequest(Number(ttaRequestId));
+    const existing = await ttaRequestById(Number(ttaRequestId));
+
+    if (!existing) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new TtaRequestPolicy(user, existing.regionId, existing);
+
+    if (!authorization.canApprove()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const ttaRequest = await approveTtaRequestService(existing, req.body, userId);
+    respondOnceCommitted(req, () => res.json(ttaRequest));
+  } catch (error) {
+    // Errors that set their own statusCode are deliberate client responses
+    if (error?.statusCode) {
+      const responseBody = error.responseBody ?? { error: error.message };
+      // goals may have been created or reopened before the error, so the wrapper must roll
+      // them back before it sends the response
+      if ((req as Request & { inTransactionWrapper?: boolean }).inTransactionWrapper) {
+        throw Object.assign(error, { responseBody });
+      }
+      res.status(error.statusCode).json(responseBody);
       return;
     }
     await handleErrors(req, res, error, logContext);

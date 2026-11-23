@@ -1,0 +1,28 @@
+get:
+  tags:
+    - tta request
+  summary: List approved TTA requests
+  description: >-
+    The requests the COR has approved, with their assigned staff, in the regions the user can read. Newest approval first.
+  parameters:
+    - in: query
+      name: region.in[]
+      schema:
+        type: array
+        items:
+          type: integer
+      description: Regions to list; limited to the regions the user can read
+  responses:
+    '200':
+      description: The approved TTA requests
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              count:
+                type: integer
+              rows:
+                type: array
+                items:
+                  $ref: '../../index.yaml#/components/schemas/ttaRequestListItem'

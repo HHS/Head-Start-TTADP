@@ -359,6 +359,7 @@ describe('goalTemplates handlers', () => {
       expect(getCuratedTemplates).toHaveBeenCalledWith([1, 2, 3], {
         includeBlockingActivityReports: false,
         includeClosedAndSuspendedGoals: false,
+        includeMonitoringWithoutGoal: false,
       });
       expect(mockResponse.json).toHaveBeenCalledWith(templates);
     });
@@ -378,6 +379,7 @@ describe('goalTemplates handlers', () => {
       expect(getCuratedTemplates).toHaveBeenCalledWith([1], {
         includeBlockingActivityReports: false,
         includeClosedAndSuspendedGoals: false,
+        includeMonitoringWithoutGoal: false,
       });
       expect(currentUserId).not.toHaveBeenCalled();
     });
@@ -399,7 +401,21 @@ describe('goalTemplates handlers', () => {
       expect(getCuratedTemplates).toHaveBeenCalledWith([1], {
         includeBlockingActivityReports: true,
         includeClosedAndSuspendedGoals: true,
+        includeMonitoringWithoutGoal: false,
         userId: 42,
+      });
+    });
+
+    it('opts into the monitoring template for grants without a monitoring goal', async () => {
+      const req = { query: { grantIds: '1', includeMonitoringWithoutGoal: 'true' } };
+      getCuratedTemplates.mockResolvedValue([]);
+
+      await getGoalTemplates(req, mockResponse);
+
+      expect(getCuratedTemplates).toHaveBeenCalledWith([1], {
+        includeBlockingActivityReports: false,
+        includeClosedAndSuspendedGoals: false,
+        includeMonitoringWithoutGoal: true,
       });
     });
 

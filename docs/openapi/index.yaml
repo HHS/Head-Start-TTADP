@@ -484,10 +484,15 @@ components:
             - submitted
             - needs_action
             - awaiting_approval
+            - approved
         createdAt:
           type: string
           format: date-time
         submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvedAt:
           type: string
           format: date-time
           nullable: true
@@ -525,6 +530,16 @@ components:
             standard:
               type: string
               nullable: true
+        assignedStaff:
+          type: array
+          description: The staff assigned to the request; only on the approved lists
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
         grants:
           type: array
           items:
@@ -576,6 +591,7 @@ components:
             - submitted
             - needs_action
             - awaiting_approval
+            - approved
         userId:
           type: integer
         lastUpdatedById:
@@ -604,6 +620,10 @@ components:
           type: integer
           nullable: true
         submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvedAt:
           type: string
           format: date-time
           nullable: true
@@ -647,6 +667,20 @@ components:
             standard:
               type: string
               nullable: true
+        goals:
+          type: array
+          description: The goals created or reused for the request when its COR approved it, one per grant
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              status:
+                type: string
+              grantId:
+                type: integer
         grants:
           type: array
           items:
@@ -723,6 +757,7 @@ components:
                   - submitted
                   - needs_action
                   - sent_for_approval
+                  - approved
               note:
                 type: string
                 nullable: true
