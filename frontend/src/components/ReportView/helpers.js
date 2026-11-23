@@ -25,13 +25,15 @@ function renderEditor(heading, data) {
   /**
    * otherwise, we render the contents via react-draft
    */
-  const defaultEditorState = getEditorState(data || '');
+  // Controlled (editorState, not defaultEditorState): the editor stays mounted when the report
+  // is refreshed or replaced, and defaultEditorState would keep showing the old text.
+  const editorState = getEditorState(data || '');
 
   return (
     <Editor
       readOnly
       toolbarHidden
-      defaultEditorState={defaultEditorState}
+      editorState={editorState}
       wrapperId={wrapperId}
       ariaLabel={typeof heading === 'string' ? heading : 'Content'}
     />

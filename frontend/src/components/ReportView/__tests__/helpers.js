@@ -85,6 +85,18 @@ describe('helpers', () => {
     });
   });
 
+  describe('renderData rich text', () => {
+    it('shows updated text when re-rendered with new content', () => {
+      const { rerender } = render(<div>{renderData('Context', ['<p>first report text</p>'])}</div>);
+      expect(screen.getByText('first report text')).toBeInTheDocument();
+
+      rerender(<div>{renderData('Context', ['<p>second report text</p>'])}</div>);
+
+      expect(screen.getByText('second report text')).toBeInTheDocument();
+      expect(screen.queryByText('first report text')).not.toBeInTheDocument();
+    });
+  });
+
   describe('mapAttachments', () => {
     const mockAttachments = [
       {
