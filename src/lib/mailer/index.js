@@ -22,6 +22,7 @@ import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitor
 import {
   trainingReportsWhereCollaboratorByDate,
   trainingReportsWherePocByDate,
+  trainingReportsWhereSessionNeedsActionByDate,
   trainingReportsWhereSessionSubmittedByDate,
 } from '../../services/trainingReportDigests';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
@@ -782,8 +783,67 @@ export const trSessionSubmittedToCollaborators = async (event, session) => {
 };
 
 /**
- * Notifies the event creator (owner) that the approver requested changes to a TR session,
- * provided they have opted in to receiving this email immediately.
+ * Whether the user opted in to receiving "session changes requested" emails immediately.
+ * Digest subscribers are covered by TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST (TR-22).
+ * @param {number} userId
+ */
+const wantsSessionChangesRequestedNow = async (userId) => {
+  const setting = await userSettingOverridesById(
+    userId,
+    EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT
+  );
+  return setting?.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+};
+
+/**
+ * The approver's name, shown in the "session changes requested" email.
+ * @param {SessionReportShape} session
+ */
+const sessionApproverName = async (session) => {
+  if (!session.approverId) return undefined;
+  const approver = await userById(session.approverId);
+  return approver?.fullName || approver?.name;
+};
+
+/**
+ * Queues one "session changes requested" email (tr_session_changes_requested).
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ * @param {{ email: string }} recipient
+ * @param {string | undefined} approverName
+ */
+const queueSessionChangesRequested = (event, session, recipient, approverName) => {
+  const { eventId } = event;
+  const emailTo = filterAndDeduplicateEmails([recipient.email]);
+
+  if (emailTo.length === 0) {
+    logger.info(
+      `Did not send tr session changes requested notification for ${eventId} preferences are not set or marked as "no-send"`
+    );
+    return null;
+  }
+
+  const data = {
+    displayId: eventId,
+    sessionName: session.data.sessionName,
+    approverName,
+    comments: session.data.managerNotes,
+    reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${session.id}`,
+    emailTo,
+    debugMessage: `MAILER: Notifying ${recipient.email} that changes were requested on session ${session.id} for TR ${event.id}`,
+    templatePath: 'tr_session_changes_requested',
+    report: {
+      displayId: eventId,
+    },
+    ...referenceData(),
+  };
+
+  return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION, data);
+};
+
+/**
+ * Notifies the event creator (owner) that the approver requested changes to a TR session
+ * (TR-4b), provided they have opted in to receiving this email immediately.
  *
  * @param {EventShape} event
  * @param {SessionReportShape} session
@@ -791,17 +851,13 @@ export const trSessionSubmittedToCollaborators = async (event, session) => {
 export const trSessionChangesRequested = async (event, session) => {
   if (process.env.CI) return;
   try {
-    const { ownerId, eventId } = event;
+    const { ownerId } = event;
 
-    const setting = await userSettingOverridesById(
-      ownerId,
-      EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT
-    );
-    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+    if (!(await wantsSessionChangesRequestedNow(ownerId))) return;
 
-    const [owner, approver] = await Promise.all([
+    const [owner, approverName] = await Promise.all([
       userById(ownerId, true),
-      session.approverId ? userById(session.approverId) : null,
+      sessionApproverName(session),
     ]);
     if (!owner) {
       throw new Error(
@@ -809,31 +865,78 @@ export const trSessionChangesRequested = async (event, session) => {
       );
     }
 
-    const emailTo = filterAndDeduplicateEmails([owner.email]);
+    await queueSessionChangesRequested(event, session, owner, approverName);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
 
-    if (emailTo.length === 0) {
-      logger.info(
-        `Did not send tr session changes requested notification for ${eventId} preferences are not set or marked as "no-send"`
-      );
-      return;
-    }
+/**
+ * Emails each of the given users who opted in to receiving "session changes requested" emails
+ * immediately. Users who no longer exist are skipped.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ * @param {number[]} userIds
+ */
+const trSessionChangesRequestedToUsers = async (event, session, userIds) => {
+  const optedIn = (
+    await Promise.all(
+      userIds.map(async (userId) =>
+        (await wantsSessionChangesRequestedNow(userId)) ? userId : null
+      )
+    )
+  ).filter(Boolean);
 
-    const data = {
-      displayId: eventId,
-      sessionName: session.data.sessionName,
-      approverName: approver?.fullName || approver?.name,
-      comments: session.data.managerNotes,
-      reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId}/session/${session.id}`,
-      emailTo,
-      debugMessage: `MAILER: Notifying ${owner.email} that changes were requested on session ${session.id} for TR ${event.id}`,
-      templatePath: 'tr_session_changes_requested',
-      report: {
-        displayId: eventId,
-      },
-      ...referenceData(),
-    };
+  if (!optedIn.length) return;
 
-    await notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION, data);
+  const approverName = await sessionApproverName(session);
+
+  await Promise.all(
+    optedIn.map(async (userId) => {
+      const user = await userById(userId, true);
+      if (!user) return null;
+      return queueSessionChangesRequested(event, session, user, approverName);
+    })
+  );
+};
+
+/**
+ * Notifies each Event Collaborator (except the owner, who gets TR-4b) that the approver
+ * requested changes to a TR session (TR-4d), provided they have opted in to receiving this
+ * email immediately.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ */
+export const trSessionChangesRequestedToCollaborators = async (event, session) => {
+  if (process.env.CI) return;
+  try {
+    const collaboratorIds = [...new Set(event.collaboratorIds ?? [])].filter(
+      (collaboratorId) => collaboratorId !== event.ownerId
+    );
+    await trSessionChangesRequestedToUsers(event, session, collaboratorIds);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * Notifies each Regional point of contact that the approver requested changes to a TR session
+ * (TR-4f), provided they have opted in to receiving this email immediately. POCs who are also
+ * the owner or a collaborator are skipped, since they get TR-4b or TR-4d.
+ *
+ * @param {EventShape} event
+ * @param {SessionReportShape} session
+ */
+export const trSessionChangesRequestedToPocs = async (event, session) => {
+  if (process.env.CI) return;
+  try {
+    const collaboratorIds = new Set(event.collaboratorIds ?? []);
+    const pocIds = [...new Set(event.pocIds ?? [])].filter(
+      (pocId) => pocId !== event.ownerId && !collaboratorIds.has(pocId)
+    );
+    await trSessionChangesRequestedToUsers(event, session, pocIds);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -1112,6 +1215,15 @@ export const DIGEST_CONFIG = {
     reportFetcher: trainingReportsWhereSessionSubmittedByDate,
     actionType: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
     logKey: 'TrainingReportSessionSubmittedDigest',
+    reportLink: sessionDigestLink,
+  },
+  // TR-22: sessions with changes requested on TRs the user created, collaborates on or is a
+  // Regional point of contact for, each linking to the session form
+  [EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT,
+    reportFetcher: trainingReportsWhereSessionNeedsActionByDate,
+    actionType: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST,
+    logKey: 'TrainingReportSessionNeedsActionDigest',
     reportLink: sessionDigestLink,
   },
   // Misc-6a (TTAHUB-6062): `reports` are recipients with new monitoring reports in the

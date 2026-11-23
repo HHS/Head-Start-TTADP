@@ -11,6 +11,7 @@ import {
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
   createSessionNeedsActionNotificationForCollaborators,
+  createSessionNeedsActionNotificationForPocs,
   createSessionSubmittedNotification,
 } from './trainingReport';
 
@@ -436,12 +437,13 @@ describe('archiveSessionSubmittedNotifications', () => {
 });
 
 describe('archiveSessionNeedsActionNotifications', () => {
-  it('archives the TR-4a and TR-4c types for the session', async () => {
+  it('archives the TR-4a, TR-4c and TR-4e types for the session', async () => {
     await archiveSessionNeedsActionNotifications(55);
 
     expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(55, [
       NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
       NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR,
+      NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC,
     ]);
   });
 
@@ -467,6 +469,7 @@ describe('archiveSessionNeedsActionNotifications', () => {
           type: [
             NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
             NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR,
+            NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC,
           ],
         },
       }
@@ -560,4 +563,68 @@ describe('createSessionNeedsActionNotificationForCollaborators', () => {
       expect(mockCreateNotification).not.toHaveBeenCalled();
     }
   );
+});
+
+describe('createSessionNeedsActionNotificationForPocs', () => {
+  let findAllSpy: jest.SpyInstance;
+  let flagSpy: jest.SpyInstance;
+
+  // 1 owns the event, 2 is a collaborator, and 2 and 3 are POCs
+  const event = { eventId: 'R01-TR-1234', ownerId: 1, collaboratorIds: [2], pocIds: [1, 2, 3, 3] };
+  const session = { id: 55, approverId: 9, data: { sessionName: 'Opening session' } };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    findAllSpy = jest
+      .spyOn(db.User, 'findAll')
+      .mockImplementation(({ where }) =>
+        Promise.resolve((where.id as number[]).map((id) => ({ id, flags: [], permissions: [] })))
+      );
+    jest
+      .spyOn(db.User, 'findOne')
+      .mockResolvedValue({ name: 'approver', fullName: 'Approver Person' } as never);
+    flagSpy = jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('notifies POCs who are not the owner or a collaborator, once each', async () => {
+    await createSessionNeedsActionNotificationForPocs(event, session);
+
+    expect(findAllSpy).toHaveBeenCalledWith(expect.objectContaining({ where: { id: [3] } }));
+    expect(flagSpy).toHaveBeenCalledWith('actionable_notifications');
+    expect(mockCreateNotification).toHaveBeenCalledTimes(1);
+    expect(mockCreateNotification).toHaveBeenCalledWith(
+      3,
+      55,
+      NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC,
+      {
+        metadata: {
+          approver: 'Approver Person',
+          sessionName: 'Opening session',
+          displayId: 'R01-TR-1234',
+          id: 55,
+        },
+        skipExisting: 'archived',
+      }
+    );
+  });
+
+  it('does not query users when there are no other POCs', async () => {
+    await createSessionNeedsActionNotificationForPocs({ ...event, pocIds: [1, 2] }, session);
+    await createSessionNeedsActionNotificationForPocs({ ...event, pocIds: null }, session);
+
+    expect(findAllSpy).not.toHaveBeenCalled();
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not notify POCs without the feature flag', async () => {
+    flagSpy.mockReturnValue(false);
+
+    await createSessionNeedsActionNotificationForPocs(event, session);
+
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
 });

@@ -61,6 +61,8 @@ import {
   trOwnerAdded,
   trPocAdded,
   trSessionChangesRequested,
+  trSessionChangesRequestedToCollaborators,
+  trSessionChangesRequestedToPocs,
   trSessionCreated,
   trSessionSubmittedForApproval,
   trSessionSubmittedToCollaborators,
@@ -1934,6 +1936,53 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Training report session changes requested digest', () => {
+    const session = { id: 96, eventId: 'R01-TR-25-1799', displayId: 'Session B' };
+
+    it('renders the populated digest with links to the sessions', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [session],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: session changes requested`);
+      expect(message.text).toContain('Below are your report notifications for today.');
+      expect(message.text).toContain('Select the session name to view it in the Hub.');
+      expect(message.text).toContain(`* ${session.displayId}`);
+      expect(message.text).toContain(
+        `${process.env.TTA_SMART_HUB_URI}/training-report/R01-TR-25-1799/session/96`
+      );
+      expect(message.text).toContain("That's it!");
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${WEEKLY} digest: no new session changes requested`);
+      expect(message.text).toContain('No changes were requested to any sessions this week.');
+    });
+  });
 
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
@@ -1999,13 +2048,13 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 10 digest configuration entries keyed by actionType', () => {
-        const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(10);
-        entries.forEach((config) => {
+      it('exports digest configuration entries keyed by actionType', () => {
+        const entries = Object.entries(DIGEST_CONFIG);
+        expect(entries.length).toBeGreaterThanOrEqual(11);
+        entries.forEach(([key, config]) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
-          expect(config).toHaveProperty('actionType');
+          expect(config.actionType).toBe(key);
         });
       });
 
@@ -2028,6 +2077,16 @@ describe('mailer tests', () => {
         expectedDigestActions.forEach((action) => {
           expect(registeredActions).toContain(action);
         });
+      });
+    });
+
+    describe('TR-22 digest config', () => {
+      it('uses the session changes requested setting and links to the session', () => {
+        const config = DIGEST_CONFIG[EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST];
+        expect(config.settingKey).toBe(EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT);
+        expect(config.reportLink({ id: 96, eventId: 'R01-TR-25-1799' })).toBe(
+          '/training-report/R01-TR-25-1799/session/96'
+        );
       });
     });
 
@@ -2864,6 +2923,135 @@ describe('mailer tests', () => {
         await trSessionChangesRequested(mockEvent, mockNeedsActionSession);
         expect(userSettingOverridesById).not.toHaveBeenCalled();
         expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('trSessionChangesRequestedToCollaborators and trSessionChangesRequestedToPocs', () => {
+      // owner 1, collaborators 2 and 3, POCs 3 (also a collaborator), 4 and 5
+      const event = {
+        id: 1,
+        ownerId: 1,
+        collaboratorIds: [1, 2, 3],
+        pocIds: [3, 4, 5],
+        eventId: 'tr-1234',
+        data: {},
+      };
+      const session = {
+        id: 7,
+        approverId: 8,
+        data: { sessionName: 'Session one', managerNotes: '<p>Fix the dates</p>' },
+      };
+      const immediately = {
+        key: EMAIL_ACTIONS.SESSION_CHANGES_REQUESTED_TRAINING_REPORT,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      };
+      const mockUsers = () =>
+        userById.mockImplementation((id) =>
+          Promise.resolve(
+            id === 8
+              ? { name: 'approver', fullName: 'Approver Person' }
+              : { email: `user${id}@test.gov` }
+          )
+        );
+      const emailedTo = () => notificationQueueMock.add.mock.calls.map(([, data]) => data.emailTo);
+
+      it('emails each opted-in collaborator except the owner (TR-4d)', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        mockUsers();
+
+        await trSessionChangesRequestedToCollaborators(event, session);
+
+        expect(userSettingOverridesById).not.toHaveBeenCalledWith(1, expect.anything());
+        expect(emailedTo()).toEqual([['user2@test.gov'], ['user3@test.gov']]);
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+          expect.objectContaining({
+            displayId: 'tr-1234',
+            sessionName: 'Session one',
+            approverName: 'Approver Person',
+            comments: '<p>Fix the dates</p>',
+            templatePath: 'tr_session_changes_requested',
+            reportPath: `${process.env.TTA_SMART_HUB_URI}/training-report/tr-1234/session/7`,
+          })
+        );
+      });
+
+      it('emails each opted-in POC who is not the owner or a collaborator (TR-4f)', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        mockUsers();
+
+        await trSessionChangesRequestedToPocs(event, session);
+
+        expect(emailedTo()).toEqual([['user4@test.gov'], ['user5@test.gov']]);
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION,
+          expect.objectContaining({ approverName: 'Approver Person', sessionName: 'Session one' })
+        );
+      });
+
+      it('skips users who have not opted in to immediate emails', async () => {
+        userSettingOverridesById.mockImplementation((id) =>
+          Promise.resolve(
+            id === 4
+              ? immediately
+              : { ...immediately, value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }
+          )
+        );
+        mockUsers();
+
+        await trSessionChangesRequestedToCollaborators(event, session);
+        await trSessionChangesRequestedToPocs(event, session);
+
+        expect(emailedTo()).toEqual([['user4@test.gov']]);
+      });
+
+      it('does not look up the approver when nobody opted in', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+
+        await trSessionChangesRequestedToPocs(event, session);
+
+        expect(userById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('skips users who no longer exist and no-send addresses', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        userById.mockImplementation((id) =>
+          Promise.resolve(
+            { 2: null, 3: { email: 'no-send_user3@test.gov' }, 8: { name: 'approver' } }[id]
+          )
+        );
+
+        await trSessionChangesRequestedToCollaborators(event, session);
+
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('handles events without collaborators or POCs', async () => {
+        await trSessionChangesRequestedToCollaborators(
+          { ...event, collaboratorIds: null },
+          session
+        );
+        await trSessionChangesRequestedToPocs({ ...event, pocIds: undefined }, session);
+
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
+      });
+
+      it('logs errors instead of throwing', async () => {
+        userSettingOverridesById.mockRejectedValue(new Error('db down'));
+
+        await trSessionChangesRequestedToCollaborators(event, session);
+        await trSessionChangesRequestedToPocs(event, session);
+
+        expect(auditLogger.error).toHaveBeenCalledTimes(2);
+      });
+
+      it('returns early on CI', async () => {
+        process.env.CI = 'true';
+        await trSessionChangesRequestedToCollaborators(event, session);
+        await trSessionChangesRequestedToPocs(event, session);
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
       });
     });
 

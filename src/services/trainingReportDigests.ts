@@ -161,3 +161,53 @@ export async function trainingReportsWhereSessionSubmittedByDate(
       displayId: session.data?.sessionName || `Session ${session.id}`,
     }));
 }
+
+/**
+ * Sessions the approver requested changes on within the interval, on Training Reports where the
+ * user is the Event Creator, an Event Collaborator or a Regional point of contact (TR-22).
+ * Sessions since resubmitted, approved or reset no longer need action and are skipped, since
+ * `needsActionAt` survives those.
+ * @param userId The creator's, collaborator's or POC's user id.
+ * @param date A trusted interval expression from `frequencyToInterval`.
+ */
+export async function trainingReportsWhereSessionNeedsActionByDate(
+  userId: number | string,
+  date: string
+): Promise<SessionDigestRow[]> {
+  const id = toUserId(userId);
+  if (id === null) {
+    return [];
+  }
+
+  const sessions = await SessionReportPilot.findAll({
+    attributes: ['id', 'eventId', 'data'],
+    include: [
+      {
+        model: EventReportPilot,
+        as: 'event',
+        attributes: ['eventId'],
+        required: true,
+        where: {
+          [Op.or]: [
+            { ownerId: id },
+            { collaboratorIds: { [Op.contains]: [id] } },
+            { pocIds: { [Op.contains]: [id] } },
+          ],
+        },
+      },
+    ],
+    where: {
+      needsActionAt: { [Op.gt]: sequelize.literal(date) },
+      data: { status: REPORT_STATUSES.NEEDS_ACTION },
+    },
+    order: [['id', 'ASC']],
+  });
+
+  return sessions
+    .map((session) => session.get({ plain: true }))
+    .map((session) => ({
+      id: session.id,
+      eventId: session.event.eventId,
+      displayId: session.data?.sessionName || `Session ${session.id}`,
+    }));
+}

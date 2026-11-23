@@ -19,5 +19,7 @@ case type
         = `TTA Hub ${subjectFreq} digest: no new Event Collaborator notifications`
     when 'trainingReportSessionSubmittedDigest'
         = `TTA Hub ${subjectFreq} digest: no new sessions submitted for review`
+    when 'trainingReportSessionNeedsActionDigest'
+        = `TTA Hub ${subjectFreq} digest: no new session changes requested`
     default
         = `TTA Hub digest: ${type}`

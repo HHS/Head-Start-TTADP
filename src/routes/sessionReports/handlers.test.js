@@ -1,4 +1,9 @@
-import { trSessionChangesRequested, trSessionSubmittedForApproval } from '../../lib/mailer';
+import {
+  trSessionChangesRequested,
+  trSessionChangesRequestedToCollaborators,
+  trSessionChangesRequestedToPocs,
+  trSessionSubmittedForApproval,
+} from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
@@ -30,6 +35,8 @@ import { checkUpdateSessionBody } from './middleware';
 
 jest.mock('../../lib/mailer', () => ({
   trSessionChangesRequested: jest.fn(),
+  trSessionChangesRequestedToCollaborators: jest.fn(),
+  trSessionChangesRequestedToPocs: jest.fn(),
   trSessionSubmittedForApproval: jest.fn(),
 }));
 jest.mock('../../services/event');
@@ -554,6 +561,12 @@ describe('session report handlers', () => {
 
       expect(trSessionChangesRequested).toHaveBeenCalledTimes(1);
       expect(trSessionChangesRequested).toHaveBeenCalledWith(mockEvent, needsActionSession);
+      // TR-4d and TR-4f
+      expect(trSessionChangesRequestedToCollaborators).toHaveBeenCalledWith(
+        mockEvent,
+        needsActionSession
+      );
+      expect(trSessionChangesRequestedToPocs).toHaveBeenCalledWith(mockEvent, needsActionSession);
     });
 
     it('does not email the owner when the session was already in needs action', async () => {
@@ -571,6 +584,8 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(req.transactionCommittedCallbacks).toBeUndefined();
       expect(trSessionChangesRequested).not.toHaveBeenCalled();
+      expect(trSessionChangesRequestedToCollaborators).not.toHaveBeenCalled();
+      expect(trSessionChangesRequestedToPocs).not.toHaveBeenCalled();
     });
 
     it('allows update for event role only', async () => {

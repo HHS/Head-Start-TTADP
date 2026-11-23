@@ -18,6 +18,7 @@ import {
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
   createSessionNeedsActionNotificationForCollaborators,
+  createSessionNeedsActionNotificationForPocs,
   createSessionSubmittedNotification,
 } from './notifications/trainingReport';
 import {
@@ -48,6 +49,7 @@ jest.mock('./notifications/trainingReport', () => ({
   createNotificationForSessionSubmittedCollaborators: jest.fn(),
   createSessionNeedsActionNotification: jest.fn(),
   createSessionNeedsActionNotificationForCollaborators: jest.fn(),
+  createSessionNeedsActionNotificationForPocs: jest.fn(),
   createSessionSubmittedNotification: jest.fn(),
 }));
 
@@ -364,6 +366,12 @@ describe('session reports service', () => {
         expect.objectContaining({ eventId: needsActionEventId }),
         expect.objectContaining({ id: created.id, approverId: approver.id })
       );
+      // TR-4e
+      expect(createSessionNeedsActionNotificationForPocs).toHaveBeenCalledTimes(1);
+      expect(createSessionNeedsActionNotificationForPocs).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: needsActionEventId }),
+        expect.objectContaining({ id: created.id, approverId: approver.id })
+      );
       expect(archiveSessionNeedsActionNotifications).not.toHaveBeenCalled();
 
       await destroySession(created.id);
@@ -381,6 +389,32 @@ describe('session reports service', () => {
       await destroySession(created.id);
     });
 
+    it('stamps needsActionAt for the TR-22 digest on each request for changes only', async () => {
+      const created = await createSubmittedSession();
+      const before = new Date();
+
+      await requestChanges(created.id);
+      const first = await SessionReportPilot.findByPk(created.id);
+      expect(first.needsActionAt).toBeInstanceOf(Date);
+      expect(first.needsActionAt.getTime()).toBeGreaterThanOrEqual(before.getTime() - 1000);
+
+      // a save while still in needs action keeps the timestamp
+      await updateSession(created.id, {
+        eventId: needsActionEventId,
+        data: { sessionName: 'Renamed' },
+      });
+      const unchanged = await SessionReportPilot.findByPk(created.id);
+      expect(unchanged.needsActionAt.getTime()).toBe(first.needsActionAt.getTime());
+
+      // resubmitting and requesting changes again moves it forward
+      await resubmit(created.id);
+      await requestChanges(created.id);
+      const second = await SessionReportPilot.findByPk(created.id);
+      expect(second.needsActionAt.getTime()).toBeGreaterThanOrEqual(first.needsActionAt.getTime());
+
+      await destroySession(created.id);
+    });
+
     it('does not notify again while the session stays in needs action', async () => {
       const created = await createSubmittedSession();
       await requestChanges(created.id);
@@ -393,6 +427,7 @@ describe('session reports service', () => {
 
       expect(createSessionNeedsActionNotification).not.toHaveBeenCalled();
       expect(createSessionNeedsActionNotificationForCollaborators).not.toHaveBeenCalled();
+      expect(createSessionNeedsActionNotificationForPocs).not.toHaveBeenCalled();
       expect(archiveSessionNeedsActionNotifications).not.toHaveBeenCalled();
 
       await destroySession(created.id);
@@ -408,6 +443,7 @@ describe('session reports service', () => {
       await requestChanges(created.id);
       expect(createSessionNeedsActionNotification).toHaveBeenCalledTimes(2);
       expect(createSessionNeedsActionNotificationForCollaborators).toHaveBeenCalledTimes(2);
+      expect(createSessionNeedsActionNotificationForPocs).toHaveBeenCalledTimes(2);
 
       await destroySession(created.id);
     });

@@ -4,6 +4,9 @@ if type === 'monitoringDetailsAddedDigest'
 else if type === 'trainingReportSessionSubmittedDigest'
     p Below are your report notifications for #{freq}.
     p Select the session name to view it in the Hub.
+else if type === 'trainingReportSessionNeedsActionDigest'
+    p Below are your report notifications for #{freq}.
+    p Select the session name to view it in the Hub.
 else
     p Below are your report notifications for #{freq}.
     p Select the report number to view it in the Hub.
@@ -27,6 +30,9 @@ case type
     when 'trainingReportCollaboratorAddedDigest'
         p You were added as an Event Collaborator on these Training Reports:
     when 'trainingReportSessionSubmittedDigest'
+        p The following sessions were submitted for review:
+    when 'trainingReportSessionNeedsActionDigest'
+        //- copy from the TTAHUB-6002 spec; flagged for product as a likely copy of TR-21's line
         p The following sessions were submitted for review:
     when 'monitoringDetailsAddedDigest'
         p New monitoring reports were added in your region for the following recipients:
