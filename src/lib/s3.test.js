@@ -193,32 +193,6 @@ describe('S3 helpers', () => {
     });
   });
 
-  describe('deleteFileFromS3Job', () => {
-    it('returns status 200 when deletion succeeds', async () => {
-      const { deleteFileFromS3Job } = loadModule();
-      const client = { send: jest.fn().mockResolvedValue({ statusCode: 204 }) };
-      const job = { data: { fileId: 1, fileKey: 'key.txt', bucket: 'bucket-one' } };
-      const res = await deleteFileFromS3Job(job, client);
-      expect(res).toEqual({
-        status: 200,
-        data: { fileId: 1, fileKey: 'key.txt', res: { statusCode: 204 } },
-      });
-      expect(client.send).toHaveBeenCalled();
-    });
-
-    it('logs and returns error metadata when deletion fails', async () => {
-      const error = new Error('boom');
-      const { deleteFileFromS3Job, mockAuditLogger } = loadModule();
-      const client = { send: jest.fn().mockRejectedValue(error) };
-      const job = { data: { fileId: 2, fileKey: 'missing.txt', bucket: 'bucket-one' } };
-      const res = await deleteFileFromS3Job(job, client);
-      expect(mockAuditLogger.error).toHaveBeenCalledWith(
-        "S3 Queue Error: Unable to DELETE file '2' for key 'missing.txt': boom"
-      );
-      expect(res).toEqual({ data: job.data, status: 500, res: undefined });
-    });
-  });
-
   describe('verifyVersioning', () => {
     it('enables versioning when it is not already enabled', async () => {
       const { verifyVersioning, recordedCommands } = loadModule();

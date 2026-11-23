@@ -160,6 +160,7 @@ const makeDeps = ({
     createFileMetaData: jest.fn().mockResolvedValue({ id: 5001 }),
     updateStatus: jest.fn().mockResolvedValue(undefined),
     addToScanQueue: jest.fn().mockResolvedValue(undefined),
+    addDeleteFileToQueue: jest.fn().mockResolvedValue(undefined),
     uploadFile: jest.fn().mockResolvedValue({}),
     downloadFile: jest.fn().mockImplementation(downloadFile),
     deleteFileFromS3: jest.fn().mockResolvedValue(undefined),

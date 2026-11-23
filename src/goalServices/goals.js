@@ -26,6 +26,7 @@ import {
   sequelize,
   Topic,
 } from '../models';
+import { fileIdsForActivityReportObjectives, removeOrphanedFiles } from '../services/files';
 import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 import { recipientGrantFilter } from '../services/sessionReports';
 import { saveStandardGoalsForReport } from '../services/standardGoals';
@@ -924,13 +925,14 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     .map((objective) => objective.id);
 
   if (Array.isArray(objectiveIds) && objectiveIds.length > 0) {
+    const aroWhere = { objectiveId: objectiveIds, activityReportId: reportId };
+    const fileIds = await fileIdsForActivityReportObjectives(aroWhere);
+    // The ActivityReportObjective beforeDestroy hook removes the objectives' file links.
     await ActivityReportObjective.destroy({
-      where: {
-        objectiveId: objectiveIds,
-        activityReportId: reportId,
-      },
+      where: aroWhere,
       individualHooks: true,
     });
+    await removeOrphanedFiles(fileIds);
   }
 
   if (Array.isArray(objectivesToDelete) && objectivesToDelete.length > 0) {

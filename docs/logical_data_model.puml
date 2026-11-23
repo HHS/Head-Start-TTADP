@@ -477,14 +477,13 @@ class EventReportPilots{
  version : integer
 }
 
-!issue='model missing for table'
-class FileDeletions #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : integer : <generated>
-!issue='column should not allow null' * attempts : integer : 0
-!issue='column should not allow null' * createdAt : timestamp with time zone : now()
-!issue='column should not allow null' * fileId : integer
-!issue='column should not allow null' * key : text
-!issue='column should not allow null' * updatedAt : timestamp with time zone : now()
+class FileDeletions{
+ * id : integer : <generated>
+ * attempts : integer : 0
+ * createdAt : timestamp with time zone : now()
+ * fileId : integer
+ * key : text
+ * updatedAt : timestamp with time zone : now()
  completedAt : timestamp with time zone
 }
 
@@ -2099,15 +2098,14 @@ class ZALEventReportPilots{
  session_sig : text
 }
 
-!issue='model missing for table'
-class ZALFileDeletions #pink;line:red;line.bold;text:red {
-!issue='column should not allow null' * id : bigint : <generated>
-!issue='column should not allow null' * data_id : bigint
-!issue='column should not allow null' * dml_as : bigint
-!issue='column should not allow null' * dml_by : bigint
-!issue='column should not allow null' * dml_timestamp : timestamp with time zone
-!issue='column should not allow null' * dml_txid : uuid
-!issue='column should not allow null' * dml_type : enum
+class ZALFileDeletions{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
