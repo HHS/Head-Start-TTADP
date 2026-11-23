@@ -89,6 +89,10 @@ The queue still enforces migration and seeder ordering against `main`. Once a mi
 
 Other failures that appear only when a PR is combined with `main` or with other queued PRs may now land on `main`. The full suite still runs there and blocks the staging deploy until they are fixed.
 
+Because the queue commit becomes the head of `main`, its `ci/circleci: tests_done` status stays green on that commit even if the full run on `main` fails before reaching its own `tests_done`. Check the full workflow's other jobs (or `autodeploy_staging`) rather than `tests_done` to judge a `main` commit. This doesn't affect production: the `production` branch requires `ci/circleci: autodeploy_staging`, which only the full `main` run posts, after its real `tests_done`.
+
+The `main` branch requires two checks: `ci/circleci: tests_done` and `data_file_guard`. Both report on queue branches (`data_file_guard` through its `merge_group` trigger). If another check is ever made required on `main`, it must also run on `gh-readonly-queue/main/*` branches, or every queue entry will wait for a status that never arrives.
+
 ---
 
 ### Daily Scheduled Workflows

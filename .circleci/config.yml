@@ -188,7 +188,10 @@ workflows:
           merge_queue: true
           requires:
             - secret_printing_check
-      # Named tests_done so it reports the status check the merge queue requires.
+      # Named tests_done so it reports the status check the merge queue requires. The queue commit becomes
+      # main's head, so if the full run on main fails before its own tests_done, this green status stays on
+      # that commit. It can't promote a broken build: the production branch requires autodeploy_staging, which
+      # only the full main run posts, after its real tests_done.
       - checkpoint:
           name: tests_done
           requires:
