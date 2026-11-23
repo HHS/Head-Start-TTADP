@@ -203,6 +203,9 @@ describe('authMiddleware', () => {
       ['http://localhost:3000//evil.example/path', ''],
       ['http://localhost:3000/%5C%5Cevil.example', '/%5C%5Cevil.example'],
       ['not a url', ''],
+      ['http://localhost:3000/logout?reason=timeout', ''],
+      ['http://localhost:3000/oauth2-client/login/oauth2/code/?code=old&state=old', ''],
+      ['http://localhost:3000/oauth2-client/login/oauth2/code', ''],
     ])('getSafeReferrerPath(%p) returns %p', (referrer, expected) => {
       expect(getSafeReferrerPath(referrer)).toBe(expected);
     });

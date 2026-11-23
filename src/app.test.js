@@ -137,13 +137,6 @@ describe('TTA Hub server', () => {
       expect(resp.status).toBe(302);
       expect(resp.headers.location).toBe('http://localhost:3000/');
     });
-
-    test('sends the user home instead of back to the logout page', async () => {
-      const resp = await loginWithReferrerPath('/logout?reason=timeout');
-
-      expect(resp.status).toBe(302);
-      expect(resp.headers.location).toBe('http://localhost:3000/');
-    });
   });
 
   describe('login callback', () => {

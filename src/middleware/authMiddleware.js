@@ -3,6 +3,7 @@
 import { URL } from 'node:url';
 import {} from 'dotenv/config';
 import * as openidClient from 'openid-client';
+import { OAUTH2_CALLBACK_PATH } from '../constants';
 import handleErrors from '../lib/apiErrorHandler';
 import { auditLogger, hashForLogging } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
@@ -89,7 +90,12 @@ async function getOidcClient() {
  * Returns the path (with query string) of the page the user started login from, so the
  * OAuth callback can send them back there. Only same-site relative paths are returned;
  * anything that could be read as another host (e.g. `//evil.example`) is dropped.
+ * Auth pages are dropped too: returning to logout would log the user out again, and the
+ * callback (the referrer when retrying from the login recovery page) fails without login state.
  */
+const normalizePathname = (pathname) => pathname.replace(/\/+$/, '').toLowerCase();
+const NON_RETURNABLE_PATHS = ['/logout', OAUTH2_CALLBACK_PATH].map(normalizePathname);
+
 export function getSafeReferrerPath(referrer) {
   if (!referrer) {
     return '';
@@ -99,6 +105,9 @@ export function getSafeReferrerPath(referrer) {
     const { pathname, search } = new URL(referrer);
     const path = `${pathname}${search}`;
     if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) {
+      return '';
+    }
+    if (NON_RETURNABLE_PATHS.includes(normalizePathname(pathname))) {
       return '';
     }
     return path;

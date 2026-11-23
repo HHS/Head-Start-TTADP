@@ -585,7 +585,11 @@ const VALIDATION_ALERT_SEVERITY = {
   CRITICAL: 'critical',
 };
 
+// Path HSES redirects back to after login; must match the registered redirect URI.
+const OAUTH2_CALLBACK_PATH = '/oauth2-client/login/oauth2/code/';
+
 module.exports = {
+  OAUTH2_CALLBACK_PATH,
   AR_GRANT_END_DATE_GRACE_DAYS,
   FEI_PROD_GOAL_TEMPLATE_ID,
   CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID,

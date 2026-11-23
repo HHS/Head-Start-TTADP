@@ -9,6 +9,7 @@ import path from 'path';
 import qs from 'qs';
 import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
+import { OAUTH2_CALLBACK_PATH } from './constants';
 import { runCronJobs } from './lib/cron';
 import { auditLogger, logger, requestLogger } from './logger';
 import { getAccessToken, getMissingLoginState, getUserInfo } from './middleware/authMiddleware';
@@ -32,7 +33,6 @@ app.set('trust proxy', 1);
 // arrays. `parameterLimit` already bounds the overall payload size.
 app.set('query parser', (str) => qs.parse(str, { arrayLimit: 1000 }));
 
-const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
 // Shown when the login callback can't be completed because the login state is gone or HSES
@@ -140,7 +140,7 @@ app.get('/.well-known/jwks.json', async (_req, res) => {
   res.json({ keys: [await getPublicJwk()] });
 });
 
-app.get(oauth2CallbackPath, async (req, res) => {
+app.get(OAUTH2_CALLBACK_PATH, async (req, res) => {
   try {
     // Log a stable reason and presence flags only; never the url, code, state, nonce or cookies.
     const missingLoginState = req.query?.error ? 'idp_error' : getMissingLoginState(req);
@@ -188,8 +188,8 @@ app.get(oauth2CallbackPath, async (req, res) => {
         req.session.claims = claims;
         req.session.id_token = idToken;
 
-        const isLogoutPage = referrerPath?.split('?')[0] === '/logout';
-        const redirectPath = referrerPath && !isLogoutPage ? referrerPath : '/';
+        // getSafeReferrerPath already dropped unsafe and auth-page referrers.
+        const redirectPath = referrerPath || '/';
 
         logger.debug(`referrer path: ${referrerPath}`);
         auditLogger.info(`User ${dbUser.id} logged in`);
