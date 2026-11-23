@@ -15,9 +15,9 @@ JSON: {
       { "columnName": "end_date", "type": "date", "nullable": true, "description": "Activity end date." },
       { "columnName": "create_date", "type": "date", "nullable": true, "description": "Report created date (US Eastern)." },
       { "columnName": "approved_date", "type": "date", "nullable": true, "description": "Report approved date." },
-      { "columnName": "creator", "type": "string", "nullable": true, "description": "Report author name." },
-      { "columnName": "collaborators", "type": "string", "nullable": true, "description": "Collaborator names, newline-separated." },
-      { "columnName": "approvers", "type": "string", "nullable": true, "description": "Approver names, newline-separated." },
+      { "columnName": "creator", "type": "string", "nullable": true, "description": "Report author name, with role abbreviation as of the AR, falling back to their current general role when none was recorded on the AR." },
+      { "columnName": "collaborators", "type": "string", "nullable": true, "description": "Collaborator names with role abbreviations, newline-separated." },
+      { "columnName": "approvers", "type": "string", "nullable": true, "description": "Approver names with role abbreviations, newline-separated." },
       { "columnName": "requester", "type": "string", "nullable": true, "description": "Who requested the activity." },
       { "columnName": "program_specialists", "type": "string", "nullable": true, "description": "Program specialist names across the report's grants." },
       { "columnName": "recipient_type", "type": "string", "nullable": true, "description": "activityRecipientType (recipient vs other-entity)." },
@@ -111,7 +111,19 @@ SET LOCAL TIME ZONE 'America/New_York';
 
 -- @stream-final-select
 -- Marks the setup/final-SELECT split for the streaming executor; inert for manual runs.
-WITH ars AS MATERIALIZED (
+WITH roles AS MATERIALIZED (
+-- every Roles row, with flags so each use filters late: deleted for current-role lookups,
+-- name_pick for the creatorRole join (fullName isn't unique, so pick one per name to keep
+-- ars from fanning out; active rows first, retired roles still resolve as recorded)
+SELECT
+  id,
+  name,
+  "fullName" full_name,
+  "deletedAt" IS NOT NULL deleted,
+  ROW_NUMBER() OVER (PARTITION BY "fullName" ORDER BY "deletedAt" NULLS FIRST, id) = 1 name_pick
+FROM "Roles"
+),
+ars AS MATERIALIZED (
 SELECT
   ar.id arid,
   COALESCE(
@@ -123,7 +135,12 @@ SELECT
   ) report_id,
   ar."regionId" region,
   ar."calculatedStatus" ar_status,
-  u.name creator,
+  -- creator's role as of this AR, retired roles included; their current general role is
+  -- used below (once user_roles is available) only when no role was recorded on the AR
+  u.name creator_name,
+  creator_role.name creator_role_abbr,
+  ar."creatorRole" IS NOT NULL creator_role_recorded,
+  ar."userId" creator_uid,
   ar.requester,
   ar."activityRecipientType" recipient_type,
   ARRAY_TO_STRING(ar."ttaType", E'\n') tta_type,
@@ -152,6 +169,11 @@ SELECT
 FROM "ActivityReports" ar
 LEFT JOIN "Users" u
   ON ar."userId" = u.id
+-- enum's 'Customer Service Contract' won't match Roles' 'Customer Service Contact'; no ARs use it,
+-- and reconciling the enum is the real fix, so no fallback here
+LEFT JOIN roles creator_role
+  ON creator_role.full_name = ar."creatorRole"::text
+  AND creator_role.name_pick
 WHERE ar."calculatedStatus" = 'approved'
   -- Narrowing point: AR id list resolved upstream from the Landing filters.
   AND (NULLIF(current_setting('ssdi.activityReportIds', true), '') IS NULL
@@ -200,22 +222,74 @@ LEFT JOIN grants ON are."grantId" = grid
 LEFT JOIN "OtherEntities" oe ON are."otherEntityId" = oe.id
 GROUP BY 1
 ),
+scoped_collaborators AS MATERIALIZED (
+  SELECT arc.id arcid, arc."userId" uid FROM ars JOIN "ActivityReportCollaborators" arc ON arid = arc."activityReportId"
+),
+user_roles AS MATERIALIZED (
+-- a user's general roles, used for approvers, as the collaborator fallback below, and as
+-- the creator fallback when an AR has no creatorRole recorded; scoped to just the users who
+-- appear as a collaborator, approver, or creator on these reports
+SELECT ur."userId" uid, STRING_AGG(r.name, ',' ORDER BY r.name) roles
+FROM "UserRoles" ur
+JOIN (
+  SELECT uid FROM scoped_collaborators
+  UNION
+  SELECT ara."userId" uid FROM ars JOIN "ActivityReportApprovers" ara ON arid = ara."activityReportId"
+  UNION
+  SELECT creator_uid uid FROM ars WHERE creator_uid IS NOT NULL
+) su ON ur."userId" = su.uid
+JOIN roles r ON ur."roleId" = r.id
+  AND NOT r.deleted
+GROUP BY 1
+),
+creators AS MATERIALIZED (
+-- one row per ar; a real column (not just a final-select alias) so the dynamic ORDER BY
+-- below can reference it the same way it references collaborators/approvers/etc.
+SELECT
+  arid cr_arid,
+  creator_name || CASE
+    WHEN COALESCE(creator_role_abbr, cur.roles) IS NOT NULL THEN ':' || COALESCE(creator_role_abbr, cur.roles)
+    ELSE ''
+  END creator
+FROM ars
+LEFT JOIN user_roles cur ON cur.uid = creator_uid AND NOT creator_role_recorded
+),
+collaborator_roles AS MATERIALIZED (
+-- roles picked for this collaborator on this report, where recorded. A pre-aggregated join
+-- (not a per-row LATERAL/correlated subquery) because CollaboratorRoles has no index on
+-- activityReportCollaboratorId - a correlated lookup would re-scan the whole table once per
+-- exported collaborator instead of once total.
+SELECT sc.arcid, STRING_AGG(r.name, ',' ORDER BY r.name) roles
+FROM scoped_collaborators sc
+JOIN "CollaboratorRoles" cr ON cr."activityReportCollaboratorId" = sc.arcid
+JOIN roles r ON cr."roleId" = r.id
+GROUP BY 1
+),
 collaborators AS MATERIALIZED (
 SELECT
   arc."activityReportId" c_arid,
-  STRING_AGG(u.name, E'\n' ORDER BY u.name) collaborators
+  STRING_AGG(
+    u.name || CASE WHEN COALESCE(cor.roles, ur.roles) IS NOT NULL THEN ':' || COALESCE(cor.roles, ur.roles) ELSE '' END,
+    E'\n' ORDER BY u.name
+  ) collaborators
 FROM ars
 JOIN "ActivityReportCollaborators" arc ON arid = arc."activityReportId"
 JOIN "Users" u ON arc."userId" = u.id
+LEFT JOIN collaborator_roles cor ON cor.arcid = arc.id
+LEFT JOIN user_roles ur ON ur.uid = arc."userId"
 GROUP BY 1
 ),
 approvers AS MATERIALIZED (
 SELECT
   ara."activityReportId" a_arid,
-  STRING_AGG(u.name, E'\n' ORDER BY u.name) approvers
+  STRING_AGG(
+    u.name || CASE WHEN ur.roles IS NOT NULL THEN ':' || ur.roles ELSE '' END,
+    E'\n' ORDER BY u.name
+  ) approvers
 FROM ars
 JOIN "ActivityReportApprovers" ara ON arid = ara."activityReportId"
 JOIN "Users" u ON ara."userId" = u.id
+LEFT JOIN user_roles ur ON ur.uid = ara."userId"
 GROUP BY 1
 ),
 ar_attachments AS MATERIALIZED (
@@ -285,21 +359,36 @@ GROUP BY 1
 ),
 -- Pre-aggregate each objective child relation per ActivityReportObjective id, so
 -- objective_detail joins single-row-per-ARO results instead of fanning out across tables.
+scoped_aro AS MATERIALIZED (
+  SELECT aro.id aroid FROM ars JOIN "ActivityReportObjectives" aro ON arid = aro."activityReportId"
+),
 obj_topics AS MATERIALIZED (
   SELECT arot."activityReportObjectiveId" aroid, STRING_AGG(DISTINCT t.name, '; ' ORDER BY t.name) v
-  FROM "ActivityReportObjectiveTopics" arot JOIN "Topics" t ON arot."topicId" = t.id GROUP BY 1
+  FROM "ActivityReportObjectiveTopics" arot
+  JOIN scoped_aro sa ON arot."activityReportObjectiveId" = sa.aroid
+  JOIN "Topics" t ON arot."topicId" = t.id
+  GROUP BY 1
 ),
 obj_courses AS MATERIALIZED (
   SELECT aroc."activityReportObjectiveId" aroid, STRING_AGG(DISTINCT c.name, ', ') v
-  FROM "ActivityReportObjectiveCourses" aroc JOIN "Courses" c ON aroc."courseId" = c.id GROUP BY 1
+  FROM "ActivityReportObjectiveCourses" aroc
+  JOIN scoped_aro sa ON aroc."activityReportObjectiveId" = sa.aroid
+  JOIN "Courses" c ON aroc."courseId" = c.id
+  GROUP BY 1
 ),
 obj_resources AS MATERIALIZED (
   SELECT aror."activityReportObjectiveId" aroid, STRING_AGG(DISTINCT res.url, E'\n') v
-  FROM "ActivityReportObjectiveResources" aror JOIN "Resources" res ON aror."resourceId" = res.id GROUP BY 1
+  FROM "ActivityReportObjectiveResources" aror
+  JOIN scoped_aro sa ON aror."activityReportObjectiveId" = sa.aroid
+  JOIN "Resources" res ON aror."resourceId" = res.id
+  GROUP BY 1
 ),
 obj_files AS MATERIALIZED (
   SELECT arof."activityReportObjectiveId" aroid, STRING_AGG(DISTINCT f."originalFileName", E'\n') v
-  FROM "ActivityReportObjectiveFiles" arof JOIN "Files" f ON arof."fileId" = f.id GROUP BY 1
+  FROM "ActivityReportObjectiveFiles" arof
+  JOIN scoped_aro sa ON arof."activityReportObjectiveId" = sa.aroid
+  JOIN "Files" f ON arof."fileId" = f.id
+  GROUP BY 1
 ),
 objective_detail AS MATERIALIZED (
 -- one row per ar per objective; goalId comes from Objectives (ARO does not carry it).
@@ -426,6 +515,7 @@ SELECT
   approved_at_et,
   approved_at_local
 FROM ars
+LEFT JOIN creators ON arid = cr_arid
 LEFT JOIN recipients ON arid = r_arid
 LEFT JOIN collaborators ON arid = c_arid
 LEFT JOIN approvers ON arid = a_arid
