@@ -21,12 +21,14 @@ type HoursRow = { startDate: string; duration: number };
 type MonitoringReview = { startDate: string; endDate: string };
 
 function dateRange(filters: Filter[], hours: HoursRow[]) {
+  // Use valid event dates to fill in any bounds not explicitly provided by filters.
   const dates = hours
     .map((row) => moment(row.startDate, 'YYYY-MM-DD', true))
     .filter((date) => date.isValid());
 
   let lowerBound = null;
   let upperBound = null;
+  // Combine filters by keeping the latest lower bound and earliest upper bound.
   filters
     .filter((filter) => filter.topic === 'startDate')
     .forEach((filter) => {
@@ -34,6 +36,7 @@ function dateRange(filters: Filter[], hours: HoursRow[]) {
       queries.forEach((query) => {
         if (typeof query !== 'string') return;
 
+        // These one-sided conditions are separate from the start/end date-range query format.
         if (filter.condition === 'is on or after') {
           const date = moment(query, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
           if (date.isValid()) {
@@ -61,6 +64,7 @@ function dateRange(filters: Filter[], hours: HoursRow[]) {
       });
     });
 
+  // With no event dates, both explicit bounds are needed to determine which weeks to display.
   if (!dates.length && (!lowerBound || !upperBound)) return null;
 
   return {
