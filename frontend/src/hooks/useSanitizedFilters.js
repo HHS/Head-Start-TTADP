@@ -25,5 +25,5 @@ export default function useSanitizedFilters(key, defaultFilters, validTopics) {
     setFilters(sanitizedFilters);
   }, [sanitizedFilters, setFilters]);
 
-  return [filters, setFilters];
+  return [sanitizedFilters, setFilters];
 }

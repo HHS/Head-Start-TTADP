@@ -9,6 +9,7 @@ import { Router } from 'react-router';
 import selectEvent from 'react-select-event';
 import UserContext from '../../../../UserContext';
 import { formatDateRange } from '../../../../utils';
+import { TTA_HOURS_PROVIDED_OVER_TIME_FEATURE_FLAG } from '../constants';
 import TTAHistory from '../TTAHistory';
 
 const SESSION_KEY = 'ttahistory-filters-v2-401';
@@ -45,9 +46,9 @@ describe('Recipient Record - TTA History', () => {
     ],
   };
 
-  const renderTTAHistory = ({ name = 'Jim Recipient' } = {}) => {
+  const renderTTAHistory = ({ name = 'Jim Recipient', flags = [] } = {}) => {
     render(
-      <UserContext.Provider value={{ user }}>
+      <UserContext.Provider value={{ user: { ...user, flags } }}>
         <Router history={memoryHistory}>
           <TTAHistory recipientName={name} recipientId="401" regionId="1" />
         </Router>
@@ -70,16 +71,18 @@ describe('Recipient Record - TTA History', () => {
 
     fetchMock.get(
       `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
-      200
+      []
     );
     fetchMock.get(
       `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
-      200
+      { topics: [] }
     );
     fetchMock.get(
       `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
       []
     );
+    fetchMock.get((url) => url.startsWith('/api/widgets/ttaHoursProvidedOverTime?'), []);
+    fetchMock.get((url) => url.startsWith('/api/widgets/ttaMonitoringReviewPeriods?'), []);
 
     fetchMock.get(
       '/api/feeds/item?tag=ttahub-tta-history-filters',
@@ -106,6 +109,39 @@ describe('Recipient Record - TTA History', () => {
     act(() => renderTTAHistory());
     const trSessionsLabel = await screen.findByText('Training report sessions');
     expect(trSessionsLabel).toBeTruthy();
+  });
+
+  it('places TTA hours below both activity report widgets', async () => {
+    renderTTAHistory({ flags: [TTA_HOURS_PROVIDED_OVER_TIME_FEATURE_FLAG] });
+    const topics = await screen.findByRole('heading', { name: /topics in activity reports/i });
+    const target = await screen.findByRole('heading', {
+      name: /target populations in activity reports/i,
+    });
+    const hours = await screen.findByRole('heading', { name: 'TTA hours provided over time' });
+    expect(topics.compareDocumentPosition(hours) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(target.compareDocumentPosition(hours) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await waitFor(() => {
+      expect(
+        fetchMock.called((url) => url.startsWith('/api/widgets/ttaHoursProvidedOverTime?'))
+      ).toBe(true);
+      expect(
+        fetchMock.called((url) => url.startsWith('/api/widgets/ttaMonitoringReviewPeriods?'))
+      ).toBe(true);
+    });
+  });
+
+  it('hides TTA hours and does not fetch its data without the feature flag', async () => {
+    renderTTAHistory();
+    await screen.findByRole('heading', { name: /topics in activity reports/i });
+    expect(
+      screen.queryByRole('heading', { name: 'TTA hours provided over time' })
+    ).not.toBeInTheDocument();
+    expect(
+      fetchMock.called((url) => url.startsWith('/api/widgets/ttaHoursProvidedOverTime?'))
+    ).toBe(false);
+    expect(
+      fetchMock.called((url) => url.startsWith('/api/widgets/ttaMonitoringReviewPeriods?'))
+    ).toBe(false);
   });
 
   it('renders the activity reports table', async () => {
