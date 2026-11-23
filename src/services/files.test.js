@@ -505,6 +505,18 @@ describe('files service', () => {
       expect(stale.completedAt).toBeNull();
       addDeleteFileToQueue.mockReset();
     });
+
+    it('requeues the least recently attempted rows first when over the limit', async () => {
+      // Created after rows.stale, so it has a higher id but a much older updatedAt.
+      rows.leastRecent = await makeDeletion(5, {}, hoursAgo(24 * 365 * 20));
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+
+      await requeuePendingFileDeletions({ limit: 1 });
+      alertSpy.mockRestore();
+
+      expect(callsFor(rows.leastRecent)).toHaveLength(1);
+      expect(callsFor(rows.stale)).toEqual([]);
+    });
   });
 
   describe('enqueueS3Delete', () => {

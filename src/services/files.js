@@ -506,7 +506,12 @@ const requeuePendingFileDeletions = async ({
       updatedAt: { [Op.lt]: cutoff },
       attempts: { [Op.lt]: maxAttempts },
     },
-    order: [['id', 'ASC']],
+    // Least recently attempted first: ordering by id alone would let the same rows fill every
+    // pass when their S3 deletes keep failing, starving rows past the limit.
+    order: [
+      ['updatedAt', 'ASC'],
+      ['id', 'ASC'],
+    ],
     limit,
   });
 
