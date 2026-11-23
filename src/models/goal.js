@@ -50,6 +50,13 @@ export default (sequelize, DataTypes) => {
         otherKey: 'resourceId',
         as: 'resources',
       });
+      Goal.hasMany(models.TtaRequestGoal, { foreignKey: 'goalId', as: 'ttaRequestGoals' });
+      Goal.belongsToMany(models.TtaRequest, {
+        through: models.TtaRequestGoal,
+        foreignKey: 'goalId',
+        otherKey: 'ttaRequestId',
+        as: 'ttaRequests',
+      });
       Goal.belongsTo(models.Goal, {
         foreignKey: 'mapsToParentGoalId',
         as: 'parentGoal',

@@ -15,6 +15,7 @@ import {
   Recipient,
   sequelize,
 } from '../models';
+import { getUniqueId } from '../testUtils';
 import createMonitoringGoals from './createMonitoringGoals';
 
 jest.mock('../logger');
@@ -33,7 +34,7 @@ describe('createMonitoringGoals', () => {
 
   const createGrant = (overrides = {}) =>
     Grant.create({
-      id: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      id: getUniqueId(),
       number: uuidv4(),
       recipientId: recipient.id,
       regionId: 1,
@@ -46,14 +47,14 @@ describe('createMonitoringGoals', () => {
   // Creates a Citation that is active by default, linked to a DeliveredReview.
   const createCitation = async (overrides = {}, reviewType = 'FA-1') => {
     const dr = await DeliveredReview.create({
-      mrid: faker.number.int({ min: 99999, max: 99999 + 99999 }),
+      mrid: getUniqueId(),
       review_uuid: uuidv4(),
       review_type: reviewType,
       review_status: 'Complete',
       report_delivery_date: new Date('2025-06-01'),
     });
     const citation = await Citation.create({
-      mfid: faker.number.int({ min: 9999, max: 9999 + 99999 }),
+      mfid: getUniqueId(),
       finding_uuid: uuidv4(),
       active: true,
       last_review_delivered: true,
@@ -92,7 +93,7 @@ describe('createMonitoringGoals', () => {
     snapshot = await captureSnapshot();
 
     recipient = await Recipient.create({
-      id: faker.number.int({ min: 64000, max: 64000 + 99999 }),
+      id: getUniqueId(),
       name: faker.string.alphanumeric(6),
     });
 
@@ -318,8 +319,9 @@ describe('createMonitoringGoals', () => {
     const goals = await Goal.findAll({
       where: { grantId: grant.id, goalTemplateId: goalTemplate.id },
     });
-    const newGoal = goals.find((g) => g.status === 'Not Started');
-    expect(newGoal).not.toBeNull();
+    expect(goals).toHaveLength(2);
+    expect(goals.filter((g) => g.status === 'Not Started')).toHaveLength(1);
+    expect(goals.find((g) => g.id === oldGoal.id).status).toBe('Closed');
   });
 
   it('creates a new goal when an existing monitoring goal is soft-deleted', async () => {

@@ -172,9 +172,11 @@ Optional `DIGEST_CONFIG` fields:
 | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW` | `COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCollaboratorReportSubmittedForReview` |
 | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW` | `CREATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST` | `emailWhenCreatorReportSubmittedForReview` |
 | `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
+| `ADDED_AS_COLLABORATOR_TRAINING_REPORT` | `TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST` | `emailWhenAddedAsCollaboratorTrainingReport` |
+| `SESSION_REVIEW_REQUESTED_TRAINING_REPORT` | `TRAINING_REPORT_SESSION_SUBMITTED_DIGEST` | `emailWhenSessionReviewRequestedTrainingReport` |
 | `MONITORING_DETAILS_ADDED` | `MONITORING_DETAILS_ADDED_DIGEST` | `emailWhenMonitoringDetailsAdded` (lists recipients with monitoring reports the Hub detected in the user's home region, from `MonitoringReportDeliveries`; TTAC/ECM/GSM users only; `skipEmpty`) |
 
-Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts` and read the `ZALEventReportPilots` audit log. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
+Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the session digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `sendEmailDigests`.
 
@@ -188,7 +190,7 @@ Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry 
 
 #### Running digests manually
 
-`POST /api/admin/digests/:frequency` (`daily`, `weekly` or `monthly`) runs `sendEmailDigests` on demand. It is admin-only and returns 403 unless `isNonProductionEnvironment()` (`src/envParser.js`) recognizes `TTA_SMART_HUB_URI` as a local, dev or staging host. Manual monthly runs skip the last-day-of-month check, and manual daily runs also send TR task-due alerts when `SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true'`. The run is not atomic: if it fails partway, digests already queued still go out.
+`POST /api/admin/email-testing/digests/:frequency` (`daily`, `weekly` or `monthly`) runs `sendEmailDigests` on demand. It is admin-only and returns 403 unless `isNonProductionEnvironment()` (`src/envParser.js`) recognizes `TTA_SMART_HUB_URI` as a local, dev or staging host. Manual monthly runs skip the last-day-of-month check, and manual daily runs also send TR task-due alerts when `SEND_TRAININGREPORTTASKDUENOTIFICATION === 'true'`. The run is not atomic: if it fails partway, digests already queued still go out.
 
 ### Training report notifications
 

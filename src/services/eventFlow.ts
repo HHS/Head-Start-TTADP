@@ -16,9 +16,21 @@ export const FACILITATION_NATIONAL_CENTER = 'national_center';
 export const NATIONAL_CENTER_ROLE_NAME = 'NC';
 
 /**
+ * The users added to an event's user list (POCs or collaborators) on a save. The event owner
+ * and users who were already on the list are skipped.
+ */
+export const getAddedUserIds = (
+  ownerId: number,
+  previousIds: number[] | null | undefined,
+  currentIds: number[] | null | undefined
+): number[] => {
+  const previous = new Set(previousIds ?? []);
+  return [...new Set(currentIds ?? [])].filter((id) => !previous.has(id) && id !== ownerId);
+};
+
+/**
  * The users newly added as Regional points of contact on a save, who are notified (TR-1a/b).
- * Only Regional PD events with National Centers notify POCs; the event owner and POCs who
- * were already on the report are skipped.
+ * Only Regional PD events with National Centers notify POCs.
  */
 export const getNewPocIds = (
   event: { ownerId: number; data?: { eventOrganizer?: string } | null },
@@ -29,19 +41,9 @@ export const getNewPocIds = (
     return [];
   }
 
-  const previous = new Set(previousPocIds ?? []);
-  return [...new Set(currentPocIds ?? [])].filter(
-    (pocId) => !previous.has(pocId) && pocId !== event.ownerId
-  );
+  return getAddedUserIds(event.ownerId, previousPocIds, currentPocIds);
 };
 
-/**
- * True when the supplied user has the National Center role.
- *
- * Returns false when user is null/undefined, when roles is missing or not an
- * array, and when a role entry is null/undefined (defensive against
- * unexpected shapes coming from the database or test fixtures).
- */
 export const isNationalCenterUser = (
   user: { roles?: Array<{ name?: string } | null | undefined> | null } | null | undefined
 ): boolean =>

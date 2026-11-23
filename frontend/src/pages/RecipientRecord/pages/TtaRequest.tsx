@@ -1,9 +1,9 @@
+import { DECIMAL_BASE } from '@ttahub/common';
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import ActiveTtaRequestsTable from '../../../components/TtaRequestsTable/ActiveTtaRequestsTable';
 import ApprovedTtaRequestsTable from '../../../components/TtaRequestsTable/ApprovedTtaRequestsTable';
-import { DECIMAL_BASE } from '@ttahub/common';
 import useFilters from '../../../hooks/useFilters';
 import { canCreateTtaRequest } from '../../../permissions';
 import UserContext from '../../../UserContext';
@@ -55,7 +55,7 @@ export default function TtaRequest({ recipientId, regionId }: TtaRequestProps): 
           canCreate={canCreateTtaRequest(user, parseInt(regionId, DECIMAL_BASE))}
         />
         <div className="margin-top-3">
-          <ApprovedTtaRequestsTable />
+          <ApprovedTtaRequestsTable recipientId={recipientId} regionId={regionId} />
         </div>
       </div>
     </>

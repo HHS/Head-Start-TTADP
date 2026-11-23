@@ -8,21 +8,29 @@ import {
   ActivityReportObjectiveFile,
   CommunicationLogFile,
   File,
+  ImportFile,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
 } from '../models';
 import addToScanQueue from './scanQueue';
 
 const { UPLOADING, QUEUED, QUEUEING_FAILED } = FILE_STATUSES;
+// Deletes only the File row. Hooks are skipped so the File afterDestroy hook doesn't queue
+// an S3 delete before the transaction commits; callers must queue the S3 delete themselves
+// once the transaction has committed (see removeFileIfOrphaned in routes/files/handlers).
 const deleteFile = async (id) =>
   File.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
+// The unlink helpers below skip model hooks. Those hooks delete the File themselves and queue
+// its S3 delete before the transaction commits; the file delete routes instead remove the
+// File (and queue the S3 delete after commit) through removeFileIfOrphaned in
+// routes/files/handlers. Only those routes should call these helpers.
 const deleteActivityReportFile = async (id) =>
   ActivityReportFile.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 // TODO GH - need to pass hookMetadata
 const deleteActivityReportObjectiveFile = async (id) =>
@@ -33,19 +41,19 @@ const deleteActivityReportObjectiveFile = async (id) =>
 const deleteCommunicationLogFile = async (id) =>
   CommunicationLogFile.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 const deleteSessionFile = async (id) =>
   SessionReportPilotFile.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 
 // eslint-disable-next-line max-len
 const deleteSessionSupportingAttachment = async (id) =>
   SessionReportPilotSupportingAttachment.destroy({
     where: { id },
-    individualHooks: true,
+    individualHooks: false,
   });
 
 const getFileById = async (id) =>
@@ -87,7 +95,41 @@ const getFileById = async (id) =>
         required: false,
         attributes: ['id', 'sessionReportPilotId'],
       },
+      {
+        model: ImportFile,
+        as: 'importFile',
+        required: false,
+        attributes: ['id', 'importId'],
+      },
     ],
+  });
+
+// Every association through which a record can point at a File. A File is only safe to
+// delete when none of these hold a reference. Keep in sync with the includes in getFileById.
+const FILE_REFERENCE_ASSOCIATIONS = [
+  'reportFiles',
+  'reportObjectiveFiles',
+  'sessionFiles',
+  'communicationLogFiles',
+  'supportingAttachments',
+  'importFile',
+];
+
+/**
+ * Whether anything still references the file. Expects a File loaded by getFileById.
+ * An association that wasn't loaded counts as a reference, so a partial load can never
+ * make a file look orphaned.
+ */
+const fileHasReferences = (file) =>
+  FILE_REFERENCE_ASSOCIATIONS.some((association) => {
+    const value = file[association];
+    if (value === undefined) {
+      return true;
+    }
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    return value !== null;
   });
 const getActivityReportFilesById = async (reportId) =>
   ActivityReportFile.findAll({
@@ -313,6 +355,7 @@ export {
   deleteSessionFile,
   deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
+  fileHasReferences,
   getActivityReportFilesById,
   getActivityReportObjectiveFilesById,
   getFileById,

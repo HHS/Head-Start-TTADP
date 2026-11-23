@@ -23,6 +23,11 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
         required: false,
       },
       {
+        model: sequelize.models.SessionReportPilotSupportingAttachment,
+        as: 'supportingAttachments',
+        required: false,
+      },
+      {
         model: sequelize.models.ImportFile,
         as: 'importFile',
         required: false,
@@ -35,6 +40,7 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
     file.reportObjectiveFiles.length === 0 &&
     file.sessionFiles.length === 0 &&
     file.communicationLogFiles.length === 0 &&
+    file.supportingAttachments.length === 0 &&
     file.importFile === null
   ) {
     await sequelize.models.File.destroy({

@@ -39,6 +39,15 @@ export interface TtaRequestReviewPayload {
   approverId?: number;
 }
 
+/**
+ * what the approving COR sends back: needs action, which returns the request to its reviewer,
+ * or approved, which approves it and creates its goals
+ */
+export interface TtaRequestApprovePayload {
+  status: 'needs_action' | 'approved';
+  note?: string | null;
+}
+
 /** a COR who can approve requests in a region; the primary COR has no backup flag */
 export interface TtaRequestApprovingCor {
   id: number;
@@ -60,7 +69,7 @@ export interface TtaRequestUser {
 export interface TtaRequestNoteData {
   id: number;
   step: 'creator' | 'reviewer' | 'approver';
-  action: 'submitted' | 'needs_action' | 'sent_for_approval';
+  action: 'submitted' | 'needs_action' | 'sent_for_approval' | 'approved';
   note: string | null;
   createdAt: string;
   user: TtaRequestUser | null;
@@ -108,4 +117,6 @@ export interface TtaRequestResponse {
   approvers?: TtaRequestApproverData[];
   /** the staff the reviewer assigned */
   assignedStaff?: TtaRequestUser[];
+  /** the goals created from the request once its COR approved it, one per grant */
+  goals?: { id: number; name: string; status: string; grantId: number }[];
 }
