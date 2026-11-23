@@ -159,12 +159,15 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     ? new URL(customEndpoint)
     : { protocol: 'https:', host: `${s3Bucket}.s3.${s3Config.region}.amazonaws.com` };
 
+  // aws4 ignores an `expires` option and defaults to 24 hours for S3. It only honors
+  // X-Amz-Expires when it is already present in the query string of the path being signed.
+  const objectPath = customEndpoint ? `/${bucket}/${key}` : `/${key}`;
+
   const opts = {
     service: 's3',
     host,
-    path: customEndpoint ? `/${bucket}/${key}` : `/${key}`,
+    path: `${objectPath}?X-Amz-Expires=${expires}`,
     region: s3Config.region,
-    expires,
     signQuery: true,
   };
 

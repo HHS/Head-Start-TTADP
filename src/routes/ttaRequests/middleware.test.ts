@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { auditLogger } from '../../logger';
 import {
+  checkApproveTtaRequestBody,
   checkCreateTtaRequestBody,
   checkReviewTtaRequestBody,
   checkSubmitTtaRequestBody,
@@ -225,6 +226,35 @@ describe('TTA request body middleware', () => {
       { ...sentForApproval, approverId: '9' },
     ])('rejects %j', (body) => {
       const { status, next } = run(checkReviewTtaRequestBody, body);
+      expect(status).toHaveBeenCalledWith(400);
+      expect(next).not.toHaveBeenCalled();
+      expect(auditLogger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('checkApproveTtaRequestBody', () => {
+    it.each(['needs_action', 'approved'])('accepts %s with a note', (status) => {
+      const { req, next } = run(checkApproveTtaRequestBody, { status, note: 'Looks good' });
+      expect(next).toHaveBeenCalled();
+      expect(req.body).toEqual({ status, note: 'Looks good' });
+    });
+
+    it.each(['', null, undefined])('accepts a note of %j', (note) => {
+      const { next } = run(checkApproveTtaRequestBody, { status: 'approved', note });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("drops the reviewer's fields, which the COR doesn't change", () => {
+      const { req } = run(checkApproveTtaRequestBody, {
+        status: 'approved',
+        approverId: 9,
+        assignedStaffIds: [1],
+      });
+      expect(req.body).toEqual({ status: 'approved' });
+    });
+
+    it.each([{}, { status: 'rejected' }, { status: 'approved', note: 5 }])('rejects %j', (body) => {
+      const { status, next } = run(checkApproveTtaRequestBody, body);
       expect(status).toHaveBeenCalledWith(400);
       expect(next).not.toHaveBeenCalled();
       expect(auditLogger.error).toHaveBeenCalled();

@@ -292,6 +292,26 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenAddedAsPocTrainingReport',
   },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_COLLABORATOR_ADDED]: {
+    textFn: ({ author }) => `${author} added you as a Collaborator on their Training Report.`,
+    actionable: false,
+    linkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    linkText: () => 'View TR',
+    archiveLabel: () => 'View TR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenAddedAsCollaboratorTrainingReport',
+  },
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED]: {
+    textFn: ({ sessionName }) => `Session: ${sessionName} submitted for approval.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionReviewRequestedTrainingReport',
+  },
   [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR]: {
     textFn: ({ sessionName }) => `Session: ${sessionName} submitted for approval.`,
     actionable: false,
@@ -563,7 +583,15 @@ const MAINTENANCE_CATEGORY = {
   IMPORT: 'IMPORT',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'admin', 'monitoring', 'merge'];
+const GOAL_CREATED_VIA = [
+  'imported',
+  'activityReport',
+  'rtr',
+  'admin',
+  'monitoring',
+  'merge',
+  'ttaRequest',
+];
 
 const FEI_PROD_GOAL_TEMPLATE_ID = 19017;
 const CLASS_MONITORING_PROD_GOAL_TEMPLATE_ID = 18172;

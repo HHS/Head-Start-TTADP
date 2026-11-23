@@ -1,5 +1,7 @@
 import {
   FACILITATION_NATIONAL_CENTER,
+  getAddedUserIds,
+  getNewPocIds,
   isNationalCenterFacilitator,
   isNationalCenterUser,
   isSessionSubmitted,
@@ -55,6 +57,26 @@ const buildSession = (
 });
 
 describe('eventFlow', () => {
+  describe('getAddedUserIds', () => {
+    it('returns users added on the save, without the owner or duplicates', () => {
+      expect(getAddedUserIds(1, [2], [1, 2, 3, 3, 4])).toEqual([3, 4]);
+    });
+
+    it('handles missing lists', () => {
+      expect(getAddedUserIds(1, null, [2])).toEqual([2]);
+      expect(getAddedUserIds(1, [2], undefined)).toEqual([]);
+    });
+  });
+
+  describe('getNewPocIds', () => {
+    it('returns new POCs only on Regional PD events with National Centers', () => {
+      const event = { ownerId: 1, data: { eventOrganizer: REGIONAL_PD_WITH_NATIONAL_CENTERS } };
+      expect(getNewPocIds(event, [2], [1, 2, 3])).toEqual([3]);
+      expect(getNewPocIds({ ownerId: 1, data: { eventOrganizer: 'other' } }, [], [3])).toEqual([]);
+      expect(getNewPocIds({ ownerId: 1, data: null }, [], [3])).toEqual([]);
+    });
+  });
+
   describe('constants', () => {
     it('exposes the expected string values', () => {
       expect(REGIONAL_PD_WITH_NATIONAL_CENTERS).toBe('Regional PD Event (with National Centers)');

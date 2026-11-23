@@ -291,8 +291,8 @@ export async function destroyGoal(goal) {
 }
 
 /**
- *
- * @param {string} name? template name
+ * @param {{ name?: string | null, creationMethod?: string }} [options] the template name
+ *   (random when null) and how it was created (Automatic when left out)
  * @returns GoalTemplate sequelize.model object
  */
 export async function createGoalTemplate(

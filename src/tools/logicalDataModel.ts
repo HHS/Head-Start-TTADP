@@ -180,7 +180,14 @@ export function processClassDefinition(schema, key) {
           (Array.isArray(modelField.defaultValue) &&
             modelField.defaultValue.length === 0 &&
             normalizedDefault === '{}') ||
-          field.default === modelField.defaultValue?.val
+          field.default === modelField.defaultValue?.val ||
+          // A literal that is only a single-quoted constant (`'{}'`) lets the column supply the
+          // type, so compare it with the DB default's cast stripped. Any other literal (a cast
+          // constant, or an expression like `now()`) is still compared as-is above, so a cast that
+          // changes its meaning (`now()::date`) isn't normalized away.
+          (typeof modelField.defaultValue?.val === 'string' &&
+            /^'(?:[^']|'')*'$/s.test(modelField.defaultValue.val) &&
+            normalizedDefault === normalizeColumnDefault(modelField.defaultValue.val))
         ) &&
         field.default !== '<generated>' &&
         !(

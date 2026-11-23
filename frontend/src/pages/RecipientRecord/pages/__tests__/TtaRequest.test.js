@@ -31,6 +31,7 @@ describe('Recipient Record - TTA Requests', () => {
       onRemoveFilter,
       filterConfig: [],
     });
+    fetchMock.get(`${RECIPIENT_REQUESTS_URL}/approved`, { count: 0, rows: [] });
     fetchMock.get(RECIPIENT_REQUESTS_URL, {
       count: 1,
       rows: [

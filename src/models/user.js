@@ -163,7 +163,11 @@ export default (sequelize, DataTypes) => {
         // A string array rather than an enum array: Sequelize caches enum OIDs at startup, so
         // enum arrays come back as raw strings after a DB restore until the app restarts.
         type: DataTypes.ARRAY(DataTypes.STRING),
-        defaultValue: [],
+        // An untyped '{}' literal rather than [], which Sequelize can inline as
+        // ARRAY[]::VARCHAR(255)[] (e.g. findOrCreate's insert). That typed expression can't be
+        // assigned to the legacy enum-array column, so it would break sign-ins between deploy and
+        // migration; '{}' is valid for either column type.
+        defaultValue: sequelize.literal("'{}'"),
         validate: {
           flagsValid(value) {
             if (value === null || value === undefined) {

@@ -19,7 +19,11 @@ import {
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
 import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
-import { trainingReportsWherePocByDate } from '../../services/trainingReportDigests';
+import {
+  trainingReportsWhereCollaboratorByDate,
+  trainingReportsWherePocByDate,
+  trainingReportsWhereSessionSubmittedByDate,
+} from '../../services/trainingReportDigests';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import { userById } from '../../services/users';
 import referenceData from '../../workers/referenceData';
@@ -843,6 +847,13 @@ export const trSessionChangesRequested = async (event, session) => {
 export const trCollaboratorAdded = async (report, newCollaboratorId) => {
   if (process.env.CI) return;
   try {
+    // Digest subscribers are covered by TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST.
+    const setting = await userSettingOverridesById(
+      newCollaboratorId,
+      EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT
+    );
+    if (!setting || setting.value !== USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) return;
+
     const collaborator = await userById(newCollaboratorId, true);
     if (!collaborator) {
       throw new Error(
@@ -1040,6 +1051,7 @@ export const changesRequestedNotification = (
 // Digest reports link to the AR by id unless the DIGEST_CONFIG entry gives a reportLink
 const activityReportDigestLink = (report) => `/activity-reports/${report.id}`;
 const trainingReportDigestLink = (report) => `/training-report/view/${report.displayId}`;
+const sessionDigestLink = (session) => `/training-report/${session.eventId}/session/${session.id}`;
 const monitoringDigestLink = (report) =>
   `/recipient-tta-records/${report.id}/region/${report.regionId}/monitoring`;
 
@@ -1087,6 +1099,20 @@ export const DIGEST_CONFIG = {
     actionType: EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED_DIGEST,
     logKey: 'TrainingReportPocAddedDigest',
     reportLink: trainingReportDigestLink,
+  },
+  [EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT,
+    reportFetcher: trainingReportsWhereCollaboratorByDate,
+    actionType: EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST,
+    logKey: 'TrainingReportCollaboratorAddedDigest',
+    reportLink: trainingReportDigestLink,
+  },
+  [EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.SESSION_REVIEW_REQUESTED_TRAINING_REPORT,
+    reportFetcher: trainingReportsWhereSessionSubmittedByDate,
+    actionType: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+    logKey: 'TrainingReportSessionSubmittedDigest',
+    reportLink: sessionDigestLink,
   },
   // Misc-6a (TTAHUB-6062): `reports` are recipients with new monitoring reports in the
   // user's home region, each linking to the recipient's monitoring tab. Not sent when empty.

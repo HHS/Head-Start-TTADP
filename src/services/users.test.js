@@ -417,9 +417,9 @@ describe('Users DB service', () => {
       expect(await flagsFor(50)).toEqual([QA_FLAG]);
     });
     it('rejects a flag that is not in FEATURE_FLAGS', async () => {
-      await expect(setFlag('not_a_flag\'; DROP TABLE "Users"; --', true, { transaction })).rejects.toThrow(
-        'Invalid feature flag'
-      );
+      await expect(
+        setFlag('not_a_flag\'; DROP TABLE "Users"; --', true, { transaction })
+      ).rejects.toThrow('Invalid feature flag');
     });
   });
 
@@ -447,6 +447,45 @@ describe('Users DB service', () => {
       const user = await User.findByPk(userId);
       expect(Array.isArray(user.flags)).toBe(true);
       expect(user.flags).toEqual(['quality_assurance_dashboard', 'tta_timeline']);
+    });
+
+    it('lets findOrCreate insert the flags default into a legacy enum-array column', async () => {
+      // Between deploy and migration Users.flags is still an enum array, and findOrCreate inlines
+      // the default into its insert, so the default must not be a typed VARCHAR array. Reproduce
+      // the legacy column on a temp table (dropped with the rolled-back transaction) so the test
+      // neither depends on existing users' flags nor locks the shared Users table.
+      const flagsAttribute = User.getAttributes().flags;
+      const LegacyFlagsUser = db.sequelize.define(
+        'LegacyFlagsUser',
+        {
+          id: { type: db.Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+          name: { type: db.Sequelize.STRING, unique: true },
+          flags: { type: flagsAttribute.type, defaultValue: flagsAttribute.defaultValue },
+        },
+        { tableName: 'legacy_flags_users', timestamps: false }
+      );
+      const transaction = await db.sequelize.transaction();
+      try {
+        await db.sequelize.query(
+          `
+          CREATE TYPE "enum_legacy_flags_users_flags" AS ENUM ('quality_assurance_dashboard');
+          CREATE TEMP TABLE "legacy_flags_users" (
+            "id" SERIAL PRIMARY KEY,
+            "name" VARCHAR(255) UNIQUE,
+            "flags" "enum_legacy_flags_users_flags"[] DEFAULT ARRAY[]::"enum_legacy_flags_users_flags"[]
+          ) ON COMMIT DROP;
+        `,
+          { transaction }
+        );
+        const [, created] = await LegacyFlagsUser.findOrCreate({
+          where: { name: 'legacy flags user' },
+          transaction,
+        });
+        expect(created).toBe(true);
+      } finally {
+        await transaction.rollback();
+        db.sequelize.modelManager.removeModel(LegacyFlagsUser);
+      }
     });
 
     it('rejects flags that are not in FEATURE_FLAGS', async () => {

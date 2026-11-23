@@ -110,6 +110,14 @@ export const reviewTtaRequestBodySchema = Joi.object({
   }),
 });
 
+/**
+ * The approving COR approves the request or sends it back to its reviewer, with an optional note
+ */
+export const approveTtaRequestBodySchema = Joi.object({
+  status: Joi.string().valid(APPROVER_STATUSES.NEEDS_ACTION, APPROVER_STATUSES.APPROVED).required(),
+  note: looseString,
+});
+
 export function checkCreateTtaRequestBody(req: Request, res: Response, next: NextFunction) {
   const { error, value } = createTtaRequestBodySchema.validate(req.body, validationOptions);
 
@@ -151,6 +159,19 @@ export function checkSubmitTtaRequestBody(req: Request, res: Response, next: Nex
 
 export function checkReviewTtaRequestBody(req: Request, res: Response, next: NextFunction) {
   const { error, value } = reviewTtaRequestBodySchema.validate(req.body, validationOptions);
+
+  if (error) {
+    const msg = `${errorMessage}: ${error.message}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  req.body = value;
+  return next();
+}
+
+export function checkApproveTtaRequestBody(req: Request, res: Response, next: NextFunction) {
+  const { error, value } = approveTtaRequestBodySchema.validate(req.body, validationOptions);
 
   if (error) {
     const msg = `${errorMessage}: ${error.message}`;

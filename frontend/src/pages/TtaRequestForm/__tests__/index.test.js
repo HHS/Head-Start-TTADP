@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
-import { SCOPE_IDS } from '@ttahub/common';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -12,6 +12,9 @@ import UserContext from '../../../UserContext';
 import { shouldUpdateFormData } from '../../../utils/formRichTextEditorHelper';
 import { AUTOSAVE_INTERVAL, NO_REGION_ERROR, SAVE_ERROR, SUBMIT_ERROR } from '../constants';
 import TtaRequestForm from '../index';
+
+// a field's own error, as opposed to the form's error summary that lists it again
+const INLINE_ERROR = { selector: '.usa-error-message' };
 
 // eslint-disable-next-line react/prop-types
 // the real guard looks for the cursor in a react-draft-wysiwyg editor, which the mocked
@@ -253,6 +256,10 @@ describe('TtaRequestForm', () => {
       expect(fetchMock.called('begin:/api/tta-requests/region/14/reviewers')).toBe(true);
     });
     expect(fetchMock.called('begin:/api/goal-templates')).toBe(true);
+    // monitoring is offered even to grants without a monitoring goal
+    expect(fetchMock.lastUrl('begin:/api/goal-templates')).toContain(
+      'includeMonitoringWithoutGoal=true'
+    );
   });
 
   it('surfaces every required field when an empty form is submitted', async () => {
@@ -260,11 +267,23 @@ describe('TtaRequestForm', () => {
 
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Select a recipient')).toBeVisible();
-    expect(await screen.findByText('Select one')).toBeVisible();
-    expect(await screen.findByText('Select who originated this request')).toBeVisible();
-    expect(await screen.findByText('Select a goal')).toBeVisible();
-    expect(await screen.findByText('Select a reviewing TTAC or manager')).toBeVisible();
+    expect(await screen.findByText('Select a recipient', INLINE_ERROR)).toBeVisible();
+    expect(await screen.findByText('Select one', INLINE_ERROR)).toBeVisible();
+    expect(
+      await screen.findByText('Select who originated this request', INLINE_ERROR)
+    ).toBeVisible();
+    expect(await screen.findByText('Select a goal', INLINE_ERROR)).toBeVisible();
+    expect(
+      await screen.findByText('Select a reviewing TTAC or manager', INLINE_ERROR)
+    ).toBeVisible();
+
+    // and lists them above the submit button, where the user is looking
+    const summary = screen.getByTestId('form-error-summary');
+    expect(summary).toHaveTextContent(
+      'This form has errors. Please fix the following fields before submitting:'
+    );
+    expect(summary).toHaveTextContent('Select a goal');
+    expect(summary).toHaveTextContent('Select a reviewing TTAC or manager');
   });
 
   it('asks for a grant when the recipient has several and none are checked', async () => {
@@ -272,7 +291,7 @@ describe('TtaRequestForm', () => {
 
     userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(await screen.findByText('Select a recipient grant')).toBeVisible();
+    expect(await screen.findByText('Select a recipient grant', INLINE_ERROR)).toBeVisible();
 
     userEvent.click(
       screen.getByRole('checkbox', {
@@ -281,7 +300,7 @@ describe('TtaRequestForm', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText('Select a recipient grant')).toBeNull();
+      expect(screen.queryByText('Select a recipient grant', INLINE_ERROR)).toBeNull();
     });
   });
 
@@ -365,7 +384,7 @@ describe('TtaRequestForm', () => {
     expect(await screen.findByText(/^Draft saved on \d{2}\/\d{2}\/\d{4} at /)).toBeVisible();
     // saving by hand isn't an autosave
     expect(screen.queryByText(/autosaved on:/i)).toBeNull();
-    expect(screen.queryByText('Select a goal')).toBeNull();
+    expect(screen.queryByText('Select a goal', INLINE_ERROR)).toBeNull();
   });
 
   it('creates the draft on its first save, then saves changes to it', async () => {
@@ -514,9 +533,9 @@ describe('TtaRequestForm', () => {
       expect(entries[1]).toHaveTextContent('Please add the agenda details we discussed.');
 
       expect(screen.getByLabelText(/add creator notes/i)).toHaveValue('');
-      expect(screen.getByText('Needs action').closest('li')).toHaveTextContent(
-        'Needs action from Ross Geller (TTAC)'
-      );
+      // the banner says who asked for changes, so there is no review status list as well
+      expect(screen.queryByText('Review status')).toBeNull();
+      expect(screen.queryByText(/needs action from/i)).toBeNull();
       expect(screen.getByRole('button', { name: 'Update request' })).toBeVisible();
       expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull();
     });

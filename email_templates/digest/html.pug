@@ -1,6 +1,9 @@
 p Hello #{user.name},
 if type === 'monitoringDetailsAddedDigest'
     p Below are your monitoring notifications for #{freq}.
+else if type === 'trainingReportSessionSubmittedDigest'
+    p Below are your report notifications for #{freq}.
+    p Select the session name to view it in the Hub.
 else
     p Below are your report notifications for #{freq}.
     p Select the report number to view it in the Hub.
@@ -21,6 +24,10 @@ case type
         p The following Activity Reports, on which you are a creator, have been submitted for approval:
     when 'trainingReportPocAddedDigest'
         p You were added as a regional point of contact on these Training Reports:
+    when 'trainingReportCollaboratorAddedDigest'
+        p You were added as an Event Collaborator on these Training Reports:
+    when 'trainingReportSessionSubmittedDigest'
+        p The following sessions were submitted for review:
     when 'monitoringDetailsAddedDigest'
         p New monitoring reports were added in your region for the following recipients:
     default
