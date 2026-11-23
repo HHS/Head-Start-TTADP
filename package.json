@@ -117,8 +117,7 @@
     "check-coverage": "node ./tools/check-coverage.js --fail-on-uncovered=true",
     "docs:serve": "npx @redocly/cli preview-docs -p 5003 docs/openapi/index.yaml",
     "util:makecolors": "node ./src/makecolors.js",
-    "publish:common": "yarn --cwd ./packages/common npm publish",
-    "update:common": "bin/update-common-version"
+    "common:update": "bin/update-common-version"
   },
   "repository": {
     "type": "git",
@@ -131,7 +130,7 @@
     "@babel/runtime": "^7.29.14",
     "@braintree/sanitize-url": "^7.1.1",
     "@faker-js/faker": "^10.6.0",
-    "@ttahub/common": "2.4.28",
+    "@ttahub/common": "2.4.29",
     "adm-zip": "^0.6.1",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
