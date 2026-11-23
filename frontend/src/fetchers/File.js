@@ -45,12 +45,6 @@ export const deleteObjectiveFile = async (fileId, objectiveIds) => {
   return res;
 };
 
-export const deleteFile = async (fileId) => {
-  const url = join(fileUrl, fileId.toString());
-  const res = await destroy(url);
-  return res;
-};
-
 export const deleteReportFile = async (fileId, reportId) => {
   const url = join(fileUrl, 'r', reportId.toString(), fileId.toString());
   const res = await destroy(url);

@@ -3,11 +3,15 @@ import { frequencyToInterval } from '../lib/mailer';
 import db from '../models';
 import { createUser } from '../testUtils';
 import { REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS } from './eventFlow';
-import { trainingReportsWherePocByDate } from './trainingReportDigests';
+import {
+  trainingReportsWhereCollaboratorByDate,
+  trainingReportsWherePocByDate,
+  trainingReportsWhereSessionSubmittedByDate,
+} from './trainingReportDigests';
 
 jest.mock('bull');
 
-const { EventReportPilot, User, sequelize } = db;
+const { EventReportPilot, SessionReportPilot, User, sequelize } = db;
 
 const DAILY = frequencyToInterval('today');
 
@@ -19,12 +23,13 @@ describe('training report digests', () => {
   const createEvent = async (
     pocIds: number[],
     eventOrganizer = REGIONAL_PD_WITH_NATIONAL_CENTERS,
-    ownerId = owner.id
+    ownerId = owner.id,
+    collaboratorIds: number[] = []
   ) => {
     const event = await EventReportPilot.create({
       ownerId,
       pocIds,
-      collaboratorIds: [],
+      collaboratorIds,
       regionId: 1,
       eventId: `R01-TR-${faker.string.numeric(8)}`,
       data: { eventOrganizer },
@@ -47,6 +52,7 @@ describe('training report digests', () => {
   });
 
   afterAll(async () => {
+    await SessionReportPilot.destroy({ where: { eventId: eventIds } });
     await EventReportPilot.destroy({ where: { id: eventIds } });
     await User.destroy({ where: { id: [owner.id, poc.id] } });
     await sequelize.close();
@@ -94,6 +100,102 @@ describe('training report digests', () => {
 
     it('returns nothing for a non-integer user id', async () => {
       expect(await trainingReportsWherePocByDate('1 OR 1=1', DAILY)).toEqual([]);
+    });
+  });
+  describe('trainingReportsWhereCollaboratorByDate', () => {
+    const TTA_HOSTED = REGIONAL_TTA_NO_NATIONAL_CENTERS;
+
+    it('returns reports the user was added to as a collaborator within the interval', async () => {
+      const before = await createEvent([], TTA_HOSTED, owner.id, [poc.id]);
+      const added = await createEvent([], TTA_HOSTED);
+      const since = await windowStartingNow();
+      const created = await createEvent([], TTA_HOSTED, owner.id, [poc.id]);
+      await added.update({ collaboratorIds: [poc.id] });
+      await before.update({ pocIds: [owner.id] });
+
+      const reports = await trainingReportsWhereCollaboratorByDate(poc.id, since);
+      const ids = reports.map((r) => r.id);
+
+      expect(ids).toEqual(expect.arrayContaining([created.id, added.id]));
+      expect(ids).not.toContain(before.id);
+      expect(reports.find((r) => r.id === added.id)).toEqual({
+        id: added.id,
+        displayId: added.eventId,
+      });
+    });
+
+    it('skips reports the user was removed from and reports they own', async () => {
+      const removed = await createEvent([], TTA_HOSTED, owner.id, [poc.id]);
+      await removed.update({ collaboratorIds: [] });
+      const ownedByUser = await createEvent([], TTA_HOSTED, poc.id, [poc.id]);
+
+      const ids = (await trainingReportsWhereCollaboratorByDate(poc.id, DAILY)).map((r) => r.id);
+
+      expect(ids).not.toContain(removed.id);
+      expect(ids).not.toContain(ownedByUser.id);
+    });
+
+    it('returns nothing for a non-integer user id', async () => {
+      expect(await trainingReportsWhereCollaboratorByDate('x', DAILY)).toEqual([]);
+    });
+  });
+  describe('trainingReportsWhereSessionSubmittedByDate', () => {
+    // a Regional PD session counts as submitted once the collaborator and POC sides are complete
+    const COMPLETE = { collabComplete: true, pocComplete: true };
+    const createSession = (
+      eventId: number,
+      submittedAt: Date | null,
+      data = {},
+      approverId = poc.id
+    ) =>
+      SessionReportPilot.create({
+        eventId,
+        approverId,
+        submittedAt,
+        data: { ...COMPLETE, ...data },
+      });
+
+    it('returns each session submitted to the user within the interval', async () => {
+      const [submitted, approved, old, otherApprover] = await Promise.all([
+        createEvent([]),
+        createEvent([]),
+        createEvent([]),
+        createEvent([]),
+      ]);
+      const now = new Date();
+      const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const [inProgress, unnamed] = await Promise.all([
+        createSession(submitted.id, now, { status: 'In progress', sessionName: 'Session A' }),
+        createSession(submitted.id, now, {}),
+        createSession(approved.id, now, { status: 'Complete' }),
+        createSession(approved.id, now, { status: 'needs_action' }),
+        createSession(old.id, lastWeek),
+        createSession(otherApprover.id, now, {}, owner.id),
+      ]);
+
+      const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
+
+      expect(reports).toEqual([
+        { id: inProgress.id, eventId: submitted.eventId, displayId: 'Session A' },
+        { id: unnamed.id, eventId: submitted.eventId, displayId: `Session ${unnamed.id}` },
+      ]);
+    });
+
+    it('skips sessions no longer submitted though they keep a recent submittedAt', async () => {
+      // e.g. a facilitation reset cleared completion and only one side resubmitted
+      const partial = await createEvent([]);
+      const session = await createSession(partial.id, new Date(), {
+        status: 'In progress',
+        collabComplete: false,
+      });
+
+      const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
+
+      expect(reports.map((report) => report.id)).not.toContain(session.id);
+    });
+
+    it('returns nothing for a non-integer user id', async () => {
+      expect(await trainingReportsWhereSessionSubmittedByDate('x', DAILY)).toEqual([]);
     });
   });
 });

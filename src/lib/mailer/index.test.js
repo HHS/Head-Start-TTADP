@@ -1835,6 +1835,106 @@ describe('mailer tests', () => {
     });
   });
 
+  describe('Training report collaborator added digest', () => {
+    const trReport = { id: 98, displayId: 'R01-TR-25-1797' };
+
+    it('renders the populated digest with links to the training reports', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [trReport],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${WEEKLY} digest: added as an Event Collaborator`);
+      expect(message.text).toContain(
+        'You were added as an Event Collaborator on these Training Reports:'
+      );
+      expect(message.text).toContain(`* ${trReport.displayId}`);
+      expect(message.text).toContain(
+        `${process.env.TTA_SMART_HUB_URI}/training-report/view/R01-TR-25-1797`
+      );
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.WEEKLY,
+            subjectFreq: WEEKLY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `TTA Hub ${WEEKLY} digest: no new Event Collaborator notifications`
+      );
+      expect(message.text).toContain(
+        "You haven't been added as an Event Collaborator on any Training Reports this week."
+      );
+    });
+  });
+
+  describe('Training report session submitted digest', () => {
+    const session = { id: 97, eventId: 'R01-TR-25-1798', displayId: 'Session A' };
+
+    it('renders the populated digest with links to the sessions', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [session],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: session submitted for review`);
+      expect(message.text).toContain('The following sessions were submitted for review:');
+      expect(message.text).toContain('Select the session name to view it in the Hub.');
+      expect(message.text).toContain(`* ${session.displayId}`);
+      expect(message.text).toContain(
+        `${process.env.TTA_SMART_HUB_URI}/training-report/R01-TR-25-1798/session/97`
+      );
+    });
+
+    it('renders the empty digest', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyDigest(
+        {
+          data: {
+            reports: [],
+            user: mockNewCollaborator,
+            type: EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED_DIGEST,
+            freq: EMAIL_DIGEST_FREQ.DAILY,
+            subjectFreq: DAILY,
+          },
+        },
+        jsonTransport
+      );
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: no new sessions submitted for review`);
+      expect(message.text).toContain('No sessions were submitted for your review today.');
+    });
+  });
+
+
   describe('internal helper coverage', () => {
     describe('sendIfEnabled', () => {
       it('returns null without calling the email sender when notifications are disabled', async () => {
@@ -1899,9 +1999,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 7 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 10 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(7);
+        expect(entries).toHaveLength(10);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
@@ -2907,7 +3007,13 @@ describe('mailer tests', () => {
       expect(auditLogger.error).toHaveBeenCalledTimes(1);
     });
 
+    const collaboratorImmediately = {
+      key: EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT,
+      value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+    };
+
     it('trCollaboratorAdded success', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementationOnce(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded(
         {
@@ -2926,7 +3032,31 @@ describe('mailer tests', () => {
         })
       );
     });
+    it('trCollaboratorAdded skips collaborators who have not opted in to immediate emails', async () => {
+      await Promise.all(
+        [
+          USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+          USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+          USER_SETTINGS.EMAIL.VALUES.MONTHLY_DIGEST,
+          USER_SETTINGS.EMAIL.VALUES.NEVER,
+        ].map(async (value) => {
+          userSettingOverridesById.mockResolvedValueOnce({ ...collaboratorImmediately, value });
+          await trCollaboratorAdded({ id: 1, eventId: 'tr-1234', data: {} }, 1);
+        })
+      );
+      userSettingOverridesById.mockResolvedValueOnce(undefined);
+      await trCollaboratorAdded({ id: 1, eventId: 'tr-1234', data: {} }, 1);
+
+      expect(userSettingOverridesById).toHaveBeenCalledWith(
+        1,
+        EMAIL_ACTIONS.ADDED_AS_COLLABORATOR_TRAINING_REPORT
+      );
+      expect(userById).not.toHaveBeenCalled();
+      expect(notificationQueueMock.add).not.toHaveBeenCalled();
+    });
+
     it('trCollaboratorAdded error', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded();
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
@@ -2934,6 +3064,7 @@ describe('mailer tests', () => {
     });
 
     it('throws an error if the collaborator is not found', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementationOnce(() => Promise.resolve(null));
       await trCollaboratorAdded(
         {
@@ -2948,6 +3079,7 @@ describe('mailer tests', () => {
     });
 
     it('logs info if emailTo is an empty array', async () => {
+      userSettingOverridesById.mockResolvedValue(collaboratorImmediately);
       userById.mockImplementationOnce(() => Promise.resolve({ email: null }));
       await trCollaboratorAdded(
         {

@@ -22,6 +22,8 @@ import EventReport from '../policies/event';
 import { getNewPocIds } from './eventFlow';
 import {
   archiveSessionNeedsActionNotifications,
+  archiveSessionSubmittedNotifications,
+  createNotificationForNewCollaborators,
   createNotificationForNewPocs,
 } from './notifications/trainingReport';
 import type {
@@ -142,6 +144,22 @@ async function notifyNewPocs(
   await runAfterCommit(() => trPocAdded(event, newPocIds));
 }
 
+/**
+ * Notifies the users newly added as Event Collaborators in-app (TR-2a). A notification failure
+ * must never fail the save.
+ */
+async function notifyNewCollaborators(
+  event: { id: number; eventId: string; ownerId: number },
+  previousCollaboratorIds: number[] | null | undefined,
+  currentCollaboratorIds: number[] | null | undefined
+): Promise<void> {
+  await runInSavepoint(
+    () =>
+      createNotificationForNewCollaborators(event, previousCollaboratorIds, currentCollaboratorIds),
+    `Error creating collaborator added notifications for event ${event.id}:`
+  );
+}
+
 export async function createEvent(
   request: CreateEventRequest,
   runAfterCommit: RunAfterCommit = runNow
@@ -168,6 +186,7 @@ export async function createEvent(
     data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
 
+  await notifyNewCollaborators(created, [], collaboratorIds);
   await notifyNewPocs(created, [], pocIds, runAfterCommit);
 
   return created;
@@ -186,9 +205,10 @@ export async function destroyEvent(id: number): Promise<void> {
       attributes: ['id'],
     });
     await Promise.all(
-      sessions.map((session) =>
-        archiveSessionNeedsActionNotifications(session.id, { removeLink: true })
-      )
+      sessions.flatMap((session) => [
+        archiveSessionNeedsActionNotifications(session.id, { removeLink: true }),
+        archiveSessionSubmittedNotifications(session.id, { removeLink: true }),
+      ])
     );
   }, `Error archiving session notifications for event ${id}:`);
   try {
@@ -549,6 +569,7 @@ export async function updateEvent(
 
   const persistedData = { ...storedData, ...incomingData };
   const previousPocIds = event.pocIds ?? [];
+  const previousCollaboratorIds = event.collaboratorIds ?? [];
 
   await evt.update(
     {
@@ -567,6 +588,11 @@ export async function updateEvent(
     previousPocIds,
     pocIds,
     runAfterCommit
+  );
+  await notifyNewCollaborators(
+    { id: evt.id, eventId: evt.eventId, ownerId },
+    previousCollaboratorIds,
+    collaboratorIds
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;

@@ -3,18 +3,11 @@ import {
   checkCommunicationLogIdParam,
   checkFileIdParam,
   checkIdParam,
-  checkObjectiveIdParam,
-  checkObjectiveTemplateIdParam,
   checkReportIdParam,
   checkSessionAttachmentIdParam,
 } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
-import {
-  deleteActivityReportObjectiveFile,
-  deleteHandler,
-  deleteOnlyFile,
-  uploadHandler,
-} from './handlers';
+import { deleteActivityReportObjectiveFile, deleteHandler, uploadHandler } from './handlers';
 
 const router = express.Router();
 const context = 'files';
@@ -29,7 +22,12 @@ router.delete(
   checkFileIdParam,
   transactionWrapper(deleteHandler, `${context} /s/:eventSessionId/:fileId`)
 );
-router.delete('/:fileId?', checkFileIdParam, transactionWrapper(deleteOnlyFile));
+// No parent named: deleteHandler refuses it with a 400.
+router.delete(
+  '/:fileId?',
+  checkFileIdParam,
+  transactionWrapper(deleteHandler, `${context} /:fileId?`)
+);
 router.delete(
   '/r/:reportId?/:fileId?',
   checkReportIdParam,
@@ -47,18 +45,6 @@ router.delete(
   checkSessionAttachmentIdParam,
   checkFileIdParam,
   transactionWrapper(deleteHandler, `${context} /ssa/:sessionAttachmentId/:fileId?`)
-);
-router.delete(
-  '/o/:objectiveId?/:fileId?',
-  checkObjectiveIdParam,
-  checkFileIdParam,
-  transactionWrapper(deleteHandler, `${context} /o/:objectiveId?/:fileId?`)
-);
-router.delete(
-  '/ot/:objectiveTemplateId?/:fileId?',
-  checkObjectiveTemplateIdParam,
-  checkFileIdParam,
-  transactionWrapper(deleteHandler, `${context} /ot/:objectiveTemplateId?/:fileId?`)
 );
 router.delete(
   '/report/:reportId?/file/:fileId?',

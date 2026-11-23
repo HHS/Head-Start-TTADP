@@ -2,7 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import runInSavepoint from '../../lib/runInSavepoint';
 import db from '../../models';
 import Users from '../../policies/user';
-import { getNewPocIds } from '../eventFlow';
+import { getAddedUserIds, getNewPocIds } from '../eventFlow';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
@@ -53,6 +53,69 @@ export async function createNotificationForNewPocs(
           skipExisting: 'archived',
         }),
       `Error creating POC added notification for user ${user.id} on event ${event.id}:`
+    );
+  }
+}
+
+/**
+ * Creates the "added as a Collaborator" in-app notification (TR-2a) for each newly added Event
+ * Collaborator on a Training Report, naming the Event Creator (owner). The owner and
+ * collaborators who were already on the report are skipped, as are users without the
+ * `actionable_notifications` feature flag. The user's in-app setting is applied by
+ * `createNotification`.
+ * @param event The saved Training Report (EventReportPilot).
+ * @param previousCollaboratorIds The collaborator user ids before the save.
+ * @param currentCollaboratorIds The collaborator user ids after the save.
+ * @returns {Promise<void>} Resolves once notifications are created.
+ */
+export async function createNotificationForNewCollaborators(
+  event: { id: number; eventId: string; ownerId: number },
+  previousCollaboratorIds: number[] | null | undefined,
+  currentCollaboratorIds: number[] | null | undefined
+): Promise<void> {
+  const newCollaboratorIds = getAddedUserIds(
+    event.ownerId,
+    previousCollaboratorIds,
+    currentCollaboratorIds
+  );
+
+  if (!newCollaboratorIds.length) {
+    return;
+  }
+
+  const [users, owner] = await Promise.all([
+    db.User.findAll({
+      where: { id: newCollaboratorIds },
+      attributes: ['id', 'flags'],
+      include: [{ model: db.Permission, as: 'permissions' }],
+    }),
+    db.User.findOne({ where: { id: event.ownerId }, attributes: ['name'] }),
+  ]);
+
+  const recipients = users.filter((user) =>
+    new Users(user).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG)
+  );
+
+  // one savepoint per recipient so a failure only skips that recipient; run sequentially
+  // because concurrent savepoints on the same transaction connection would interleave
+  for (const user of recipients) {
+    await runInSavepoint(
+      () =>
+        createNotification(
+          user.id,
+          event.id,
+          NOTIFICATION_TYPES.TRAINING_REPORT_COLLABORATOR_ADDED,
+          {
+            metadata: {
+              author: owner?.name,
+              displayId: event.eventId,
+              id: event.id,
+            },
+            // a removed and re-added collaborator gets a new notification once they archived the old one
+            skipExisting: 'archived',
+          }
+        ),
+      `Error creating collaborator added notification for user ${user.id} on event ${event.id}:`
     );
   }
 }
@@ -215,9 +278,33 @@ const NEEDS_ACTION_TYPES = [
 ];
 
 /**
- * Archives the "approver requested changes to a session" in-app notifications (TR-4a for the
- * Event Creator, TR-4c for Event Collaborators) for a session. Called when the session is resubmitted or deleted. Archiving points the link at
+ * Archives a session's in-app notifications of the given types. Archiving points the link at
  * the Training Report; pass `removeLink` when the Training Report itself is being deleted.
+ */
+async function archiveSessionNotifications(
+  sessionId: number,
+  types: (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES][],
+  removeLink: boolean
+): Promise<void> {
+  await archiveNotificationsByEntityAndType(sessionId, types);
+
+  if (removeLink) {
+    await db.Notification.update(
+      { link: null },
+      {
+        where: {
+          entityId: sessionId,
+          type: types,
+        },
+      }
+    );
+  }
+}
+
+/**
+ * Archives the "approver requested changes to a session" in-app notifications (TR-4a for the
+ * Event Creator, TR-4c for Event Collaborators) for a session. Called when the session is
+ * resubmitted or deleted.
  * @param sessionId The session whose needs action notifications to archive.
  * @param options.removeLink Clear the link instead of pointing it at the Training Report.
  * @returns {Promise<void>} Resolves once archiving is complete.
@@ -226,17 +313,65 @@ export async function archiveSessionNeedsActionNotifications(
   sessionId: number,
   { removeLink = false }: { removeLink?: boolean } = {}
 ): Promise<void> {
-  await archiveNotificationsByEntityAndType(sessionId, NEEDS_ACTION_TYPES);
+  await archiveSessionNotifications(sessionId, NEEDS_ACTION_TYPES, removeLink);
+}
 
-  if (removeLink) {
-    await db.Notification.update(
-      { link: null },
-      {
-        where: {
-          entityId: sessionId,
-          type: NEEDS_ACTION_TYPES,
-        },
-      }
-    );
+/**
+ * Creates the "session submitted for approval" in-app notification (TR-3a) for the Session
+ * Approver. Skipped when there is no approver or they lack the `actionable_notifications`
+ * feature flag. The user's in-app setting is applied by `createNotification`. Callers are
+ * responsible for only invoking this on a first submission; resubmissions are covered by TR-5a.
+ * @param event The Training Report (EventReportPilot) the session belongs to.
+ * @param session The submitted session.
+ * @returns {Promise<void>} Resolves once the notification is created.
+ */
+export async function createSessionSubmittedNotification(
+  event: { eventId: string },
+  session: { id: number; approverId: number | null | undefined; data: { sessionName?: string } }
+): Promise<void> {
+  if (!session.approverId) {
+    return;
   }
+
+  const approver = await db.User.findOne({
+    where: { id: session.approverId },
+    attributes: ['id', 'flags'],
+    include: [{ model: db.Permission, as: 'permissions' }],
+  });
+
+  if (!approver || !new Users(approver).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG)) {
+    return;
+  }
+
+  await createNotification(
+    approver.id,
+    session.id,
+    NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED,
+    {
+      metadata: {
+        sessionName: session.data?.sessionName,
+        displayId: event.eventId,
+        id: session.id,
+      },
+      skipExisting: 'archived',
+    }
+  );
+}
+
+/**
+ * Archives the "session submitted for approval" in-app notification (TR-3a) for a session.
+ * Called when the approver approves the session or requests changes, and when it is deleted.
+ * @param sessionId The session whose submitted notifications to archive.
+ * @param options.removeLink Clear the link instead of pointing it at the Training Report.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+export async function archiveSessionSubmittedNotifications(
+  sessionId: number,
+  { removeLink = false }: { removeLink?: boolean } = {}
+): Promise<void> {
+  await archiveSessionNotifications(
+    sessionId,
+    [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED],
+    removeLink
+  );
 }

@@ -305,7 +305,7 @@ describe('S3 helpers', () => {
       expect(mockAuditLogger.info).toHaveBeenCalled();
       // AWS S3 uses virtual-hosted style, so the bucket is not part of the path
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
-        expect.objectContaining({ path: '/file.txt' }),
+        expect.objectContaining({ path: '/file.txt?X-Amz-Expires=120' }),
         expect.any(Object)
       );
     });
@@ -330,7 +330,7 @@ describe('S3 helpers', () => {
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
           host: 'localhost:9000',
-          path: '/bucket-one/file.txt',
+          path: '/bucket-one/file.txt?X-Amz-Expires=120',
         }),
         expect.any(Object)
       );
@@ -374,7 +374,10 @@ describe('S3 helpers', () => {
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: 'http://localhost:9000/bucket-one/file.txt', error: null });
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
-        expect.objectContaining({ host: 'localhost:9000', path: '/bucket-one/file.txt' }),
+        expect.objectContaining({
+          host: 'localhost:9000',
+          path: '/bucket-one/file.txt?X-Amz-Expires=120',
+        }),
         expect.any(Object)
       );
     });
@@ -397,10 +400,50 @@ describe('S3 helpers', () => {
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
           host: 'localhost:9000',
-          path: '/bucket-one/file.txt',
+          path: '/bucket-one/file.txt?X-Amz-Expires=120',
         }),
         expect.any(Object)
       );
+    });
+
+    it('signs the link with the requested expiry instead of the aws4 default', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: '',
+        S3_PUBLIC_ENDPOINT: '',
+      };
+      const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
+      // use the real signer so the test fails if aws4 ignores how the expiry is passed
+      mockGetSignedUrl.mockImplementation(jest.requireActual('aws4').sign);
+      const client = { send: jest.fn() };
+
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
+
+      expect(res.error).toBeNull();
+      const params = new URL(res.url).searchParams;
+      expect(params.get('X-Amz-Expires')).toBe('120');
+      expect(params.get('X-Amz-Signature')).toBeTruthy();
+    });
+
+    it('defaults to a six minute expiry', async () => {
+      const env = {
+        S3_BUCKET: 'env-bucket',
+        AWS_ACCESS_KEY_ID: 'ENV_AK',
+        AWS_SECRET_ACCESS_KEY: 'ENV_SK',
+        AWS_REGION: 'us-gov-west-1',
+        S3_ENDPOINT: 'http://localhost:9000',
+      };
+      const { getSignedDownloadUrl, mockGetSignedUrl } = loadModule(env);
+      mockGetSignedUrl.mockImplementation(jest.requireActual('aws4').sign);
+      const client = { send: jest.fn() };
+
+      const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
+
+      expect(res.error).toBeNull();
+      expect(new URL(res.url).searchParams.get('X-Amz-Expires')).toBe('360');
     });
 
     it('logs and returns the error when presigning fails', async () => {
