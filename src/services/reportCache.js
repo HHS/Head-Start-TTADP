@@ -20,6 +20,7 @@ import {
   sequelize,
   Topic,
 } from '../models';
+import { fileIdsForActivityReportObjectives, removeOrphanedFiles } from './files';
 import { processActivityReportObjectiveForResourcesById } from './resource';
 
 const trimToNull = (value) => {
@@ -64,7 +65,7 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
     );
   }
 
-  return Promise.all([
+  const results = await Promise.all([
     ...newFilesIds.map(async (fileId) =>
       ActivityReportObjectiveFile.create({
         activityReportObjectiveId,
@@ -82,6 +83,11 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
         })
       : Promise.resolve(),
   ]);
+
+  // Delete files that were only linked here; the S3 objects go after commit.
+  await removeOrphanedFiles(removedFileIds);
+
+  return results;
 };
 
 const cacheResources = async (_objectiveId, activityReportObjectiveId, resources = []) => {
@@ -664,32 +670,45 @@ async function destroyActivityReportObjectiveMetadata(
   activityReportObjectiveIdsToRemove,
   objectiveIds
 ) {
-  return Array.isArray(activityReportObjectiveIdsToRemove) &&
-    activityReportObjectiveIdsToRemove.length > 0
-    ? Promise.all([
-        ActivityReportObjectiveFile.destroy({
-          where: {
-            activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-          },
-          hookMetadata: { objectiveIds },
-          individualHooks: true,
-        }),
-        ActivityReportObjectiveResource.destroy({
-          where: {
-            activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-          },
-          hookMetadata: { objectiveIds },
-          individualHooks: true,
-        }),
-        ActivityReportObjectiveTopic.destroy({
-          where: {
-            activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-          },
-          hookMetadata: { objectiveIds },
-          individualHooks: true,
-        }),
-      ])
-    : Promise.resolve();
+  if (
+    !Array.isArray(activityReportObjectiveIdsToRemove) ||
+    activityReportObjectiveIdsToRemove.length === 0
+  ) {
+    return undefined;
+  }
+
+  const fileIds = await fileIdsForActivityReportObjectives({
+    id: activityReportObjectiveIdsToRemove,
+  });
+
+  const results = await Promise.all([
+    ActivityReportObjectiveFile.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
+    }),
+    ActivityReportObjectiveResource.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
+    }),
+    ActivityReportObjectiveTopic.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
+    }),
+  ]);
+
+  // Delete files that were only linked to the removed objectives.
+  await removeOrphanedFiles(fileIds);
+
+  return results;
 }
 
 export {

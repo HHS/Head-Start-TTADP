@@ -5,6 +5,7 @@ import normalizeSortDir from '../lib/normalizeSortDir';
 import parseSelectionIds from '../lib/parseSelectionIds';
 import { communicationLogToCsvRecord } from '../lib/transform';
 import db from '../models';
+import { removeOrphanedFiles } from './files';
 
 const {
   sequelize,
@@ -462,13 +463,23 @@ const logsByRecipientAndScopes = async (
 
 const deleteLog = async (id: number) =>
   sequelize.transaction(async (transaction) => {
+    const fileIds = (
+      await CommunicationLogFile.findAll({
+        attributes: ['fileId'],
+        where: { communicationLogId: id },
+        raw: true,
+        transaction,
+      })
+    ).map(({ fileId }) => fileId);
+
     await CommunicationLogFile.destroy({
       where: {
         communicationLogId: id,
       },
-      individualHooks: true,
       transaction,
     });
+
+    await removeOrphanedFiles(fileIds, { transaction });
 
     await CommunicationLogRecipient.destroy({
       where: {

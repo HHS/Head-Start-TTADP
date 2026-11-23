@@ -10,6 +10,7 @@ import db, {
   User,
 } from '../models';
 import { createRecipient, createUser } from '../testUtils';
+import { addDeleteFileToQueue } from './s3Queue';
 import {
   COMMUNICATION_LOG_SORT_KEYS,
   createLog,
@@ -23,6 +24,9 @@ import {
 } from './communicationLog';
 
 jest.mock('csv-stringify/lib/sync');
+jest.mock('./s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
+}));
 
 const { sequelize } = db;
 
@@ -167,22 +171,41 @@ describe('communicationLog services', () => {
   });
 
   it('deletes logs', async () => {
-    const file = await File.create({
-      originalFileName: 'test.txt',
-      key: 'test-key',
-      status: 'APPROVED',
-      fileSize: 1,
-    });
-    await CommunicationLogFile.create({
-      communicationLogId: log.id,
-      fileId: file.id,
-    });
+    addDeleteFileToQueue.mockClear();
+    const otherLog = await CommunicationLog.create({ userId: user.id, data: { note: 'other' } });
+    const [file, sharedFile] = await Promise.all([
+      File.create({
+        originalFileName: 'test.txt',
+        key: 'test-key',
+        status: 'APPROVED',
+        fileSize: 1,
+      }),
+      File.create({
+        originalFileName: 'shared.txt',
+        key: 'shared-key',
+        status: 'APPROVED',
+        fileSize: 1,
+      }),
+    ]);
+    await CommunicationLogFile.bulkCreate([
+      { communicationLogId: log.id, fileId: file.id },
+      { communicationLogId: log.id, fileId: sharedFile.id },
+      { communicationLogId: otherLog.id, fileId: sharedFile.id },
+    ]);
     const result = await deleteLog(log.id);
     expect(result).toEqual(1);
     const remainingFiles = await CommunicationLogFile.count({
       where: { communicationLogId: log.id },
     });
     expect(remainingFiles).toEqual(0);
+    // The file only this log used is deleted and its S3 object queued; the shared one stays.
+    expect(await File.findByPk(file.id)).toBeNull();
+    expect(await File.findByPk(sharedFile.id)).not.toBeNull();
+    expect(addDeleteFileToQueue).toHaveBeenCalledTimes(1);
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, 'test-key', expect.any(Number));
+    await CommunicationLogFile.destroy({ where: { communicationLogId: otherLog.id } });
+    await File.destroy({ where: { id: sharedFile.id } });
+    await CommunicationLog.destroy({ where: { id: otherLog.id } });
     const remainingRecipients = await CommunicationLogRecipient.count({
       where: { communicationLogId: log.id },
     });

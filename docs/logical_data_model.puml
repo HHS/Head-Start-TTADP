@@ -477,6 +477,16 @@ class EventReportPilots{
  version : integer
 }
 
+class FileDeletions{
+ * id : integer : <generated>
+ * attempts : integer : 0
+ * createdAt : timestamp with time zone : now()
+ * fileId : integer
+ * key : text
+ * updatedAt : timestamp with time zone : now()
+ completedAt : timestamp with time zone
+}
+
 class Files{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -2073,6 +2083,20 @@ class ZALEventReportPilotNationalCenterUsers{
 }
 
 class ZALEventReportPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFileDeletions{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
