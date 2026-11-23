@@ -1,5 +1,4 @@
 const { Model } = require('sequelize');
-const { getSignedDownloadUrl } = require('../lib/s3');
 const { afterDestroy } = require('./hooks/file');
 
 export default (sequelize, DataTypes) => {
@@ -87,8 +86,11 @@ export default (sequelize, DataTypes) => {
       },
       url: {
         type: DataTypes.VIRTUAL,
+        // A link to the download endpoint (src/routes/files/handlers.js), which checks access
+        // and redirects to a freshly signed S3 URL. A signed URL itself expires within
+        // minutes, so it would go stale in any page left open or data saved to the browser.
         get() {
-          return getSignedDownloadUrl(this.key);
+          return { url: `/api/files/${this.id}/download`, error: null };
         },
       },
     },

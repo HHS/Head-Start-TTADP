@@ -7,11 +7,6 @@ import {
 } from '../Constants';
 import { getReport } from '../fetchers/activityReports';
 
-// The backend signs attachment URLs for 6 minutes (getSignedDownloadUrl in src/lib/s3.js).
-// Refresh well inside that window, checking often enough to catch it.
-export const SIGNED_URL_REFRESH_AFTER_MS = 4 * 60 * 1000;
-export const SIGNED_URL_REFRESH_CHECK_MS = 60 * 1000;
-
 export default function useReadOnlyReportFetch(match, user) {
   const history = useHistory();
 
@@ -65,53 +60,20 @@ export default function useReadOnlyReportFetch(match, user) {
   useEffect(() => {
     if (!parseInt(match.params.activityReportId, 10)) {
       history.push('/something-went-wrong/404');
-      return undefined;
+      return;
     }
 
-    let cancelled = false;
-    let lastFetchedAt = 0;
-    // Only one request at a time, so a timer tick or visibility change during a pending
-    // request can't start another whose older response overwrites newer data.
-    let inFlight = false;
-
-    async function fetchReport(isRefresh) {
-      if (inFlight) return;
-      inFlight = true;
+    async function fetchReport() {
       try {
         const data = await getReport(match.params.activityReportId);
-        if (cancelled) return;
-        lastFetchedAt = Date.now();
         // review and submit table
         setReport(data);
       } catch (err) {
-        // A failed background refresh keeps the report the user is already reading.
-        if (cancelled || isRefresh) return;
         history.push(`/something-went-wrong/${err.status}`);
-      } finally {
-        inFlight = false;
       }
     }
 
-    // Attachment links in the report are signed URLs that expire, so reload the report
-    // (which signs fresh URLs) before they do. Only refresh while the page is visible.
-    const refreshIfStale = () => {
-      const isVisible = document.visibilityState === 'visible';
-      if (isVisible && Date.now() - lastFetchedAt >= SIGNED_URL_REFRESH_AFTER_MS) {
-        fetchReport(true);
-      }
-    };
-
-    fetchReport(false);
-    const interval = setInterval(refreshIfStale, SIGNED_URL_REFRESH_CHECK_MS);
-    // Timers are throttled or paused in background tabs and during sleep, so also
-    // check as soon as the user comes back to the page.
-    document.addEventListener('visibilitychange', refreshIfStale);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', refreshIfStale);
-    };
+    fetchReport();
   }, [match.params.activityReportId, user, history]);
 
   return report;

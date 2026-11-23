@@ -179,7 +179,7 @@ export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
               {
                 model: File,
                 as: 'files',
-                attributes: ['originalFileName', 'key', 'url'],
+                attributes: ['id', 'originalFileName', 'key', 'url'],
                 through: {
                   attributes: [],
                 },

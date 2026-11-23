@@ -163,7 +163,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
             {
               model: File,
               as: 'files',
-              attributes: ['originalFileName', 'key', 'url'],
+              attributes: ['id', 'originalFileName', 'key', 'url'],
               through: {
                 attributes: [],
               },
