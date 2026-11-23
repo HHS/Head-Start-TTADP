@@ -1,0 +1,26 @@
+get:
+  tags:
+    - files
+  operationId: downloadFile
+  description: >-
+    Redirects to a freshly signed, short lived S3 link for the file. Attachment links in API
+    responses point here rather than at a signed URL, so they stay valid for as long as the
+    user can read a record the file is attached to.
+  parameters:
+    - in: path
+      name: fileId
+      required: true
+      schema:
+        type: number
+      description: Numeric ID of the file to download
+  responses:
+    307:
+      description: Redirect to the signed download URL. The response is not cacheable.
+    400:
+      description: fileId is malformed
+    403:
+      description: User cannot read any record the file is attached to
+    404:
+      description: File not found
+    500:
+      description: A download link could not be generated

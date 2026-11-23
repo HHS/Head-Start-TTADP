@@ -25,13 +25,15 @@ function renderEditor(heading, data) {
   /**
    * otherwise, we render the contents via react-draft
    */
-  const defaultEditorState = getEditorState(data || '');
+  // Controlled (editorState, not defaultEditorState): the editor stays mounted when the report
+  // is refreshed or replaced, and defaultEditorState would keep showing the old text.
+  const editorState = getEditorState(data || '');
 
   return (
     <Editor
       readOnly
       toolbarHidden
-      defaultEditorState={defaultEditorState}
+      editorState={editorState}
       wrapperId={wrapperId}
       ariaLabel={typeof heading === 'string' ? heading : 'Content'}
     />
@@ -43,8 +45,8 @@ export function renderData(heading, data) {
     const cleanData = data.filter((d) => d);
     return (
       <ul>
-        {cleanData.map((line) => (
-          <li key={uuidv4()} className="margin-bottom-1">
+        {cleanData.map((line, index) => (
+          <li key={`${heading}-${index}`} className="margin-bottom-1">
             {renderEditor(heading, line)}
           </li>
         ))}
@@ -63,8 +65,9 @@ export function mapAttachments(attachments) {
   if (Array.isArray(attachments) && attachments.length > 0) {
     return (
       <ul>
-        {attachments.map((attachment) => (
-          <li key={attachment.url.url}>
+        {attachments.map((attachment, index) => (
+          // not the signed URL: it changes on every refresh and would remount the link
+          <li key={attachment.id || `${attachment.originalFileName}-${index}`}>
             <a
               href={attachment.url.url}
               target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
@@ -174,10 +177,10 @@ export function formatObjectiveLinks(resources, isOtherEntity = false) {
   if (Array.isArray(resources) && resources.length > 0) {
     return (
       <ul>
-        {resources.map((resource) => {
+        {resources.map((resource, index) => {
           const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
-            <li key={uuidv4()}>
+            <li key={`${resourceValue}-${index}`}>
               <a href={resourceValue} rel="noreferrer">
                 {resourceValue}
               </a>

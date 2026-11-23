@@ -48,6 +48,8 @@
   $ref: './activity-reports/reset.yaml'
 '/files':
   $ref: './files.yaml'
+'/files/{fileId}/download':
+  $ref: './fileDownload.yaml'
 '/recipient/{recipientId}':
   $ref: './recipient/recipient-id.yaml'
 '/recipient/{recipientId}/region/{regionId}/timeline':

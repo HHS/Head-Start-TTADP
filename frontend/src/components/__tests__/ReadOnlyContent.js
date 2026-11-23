@@ -16,6 +16,25 @@ describe('ReadOnlyContent', () => {
   const getSection = () =>
     screen.getByText('Test heading').closest('.ttahub-read-only-content-section');
 
+  it('keeps a focused link across re-renders with refreshed data', () => {
+    const sections = (href) => [
+      {
+        heading: 'Test heading',
+        data: { 'Row title': <a href={href}>Attachment</a> },
+      },
+    ];
+    const { rerender } = render(<ReadOnlyContent title="Test title" sections={sections('/a')} />);
+    const link = screen.getByRole('link', { name: 'Attachment' });
+    link.focus();
+
+    rerender(<ReadOnlyContent title="Test title" sections={sections('/b')} />);
+
+    const refreshed = screen.getByRole('link', { name: 'Attachment' });
+    expect(refreshed).toBe(link);
+    expect(refreshed).toHaveAttribute('href', '/b');
+    expect(refreshed).toHaveFocus();
+  });
+
   it('uses the default spacing', () => {
     renderContent();
 

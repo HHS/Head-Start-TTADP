@@ -85,6 +85,18 @@ describe('helpers', () => {
     });
   });
 
+  describe('renderData rich text', () => {
+    it('shows updated text when re-rendered with new content', () => {
+      const { rerender } = render(<div>{renderData('Context', ['<p>first report text</p>'])}</div>);
+      expect(screen.getByText('first report text')).toBeInTheDocument();
+
+      rerender(<div>{renderData('Context', ['<p>second report text</p>'])}</div>);
+
+      expect(screen.getByText('second report text')).toBeInTheDocument();
+      expect(screen.queryByText('first report text')).not.toBeInTheDocument();
+    });
+  });
+
   describe('mapAttachments', () => {
     const mockAttachments = [
       {
@@ -109,6 +121,25 @@ describe('helpers', () => {
         'href',
         'http://example.com/file2.txt'
       );
+    });
+
+    it('keeps the focused link when the signed URLs are refreshed', () => {
+      const withId = (url) => [
+        { id: 1, url: { url }, originalFileName: 'document1.pdf' },
+        { id: 2, url: { url: `${url}-2` }, originalFileName: 'document2.pdf' },
+      ];
+      const { rerender } = render(<div>{mapAttachments(withId('http://example.com/a'))}</div>);
+
+      const link = screen.getByRole('link', { name: 'document1.pdf' });
+      link.focus();
+      expect(link).toHaveFocus();
+
+      rerender(<div>{mapAttachments(withId('http://example.com/b'))}</div>);
+
+      const refreshed = screen.getByRole('link', { name: 'document1.pdf' });
+      expect(refreshed).toBe(link);
+      expect(refreshed).toHaveAttribute('href', 'http://example.com/b');
+      expect(refreshed).toHaveFocus();
     });
 
     it('opens txt files in new tab', () => {

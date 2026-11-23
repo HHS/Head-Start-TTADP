@@ -489,4 +489,28 @@ describe('Activity report print and share view', () => {
       expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
     });
   });
+
+  it('keeps the unlock dialog mounted when the report refreshes', async () => {
+    const match = { path: '', url: '', params: { activityReportId: 5000 } };
+    const ui = (currentUser) => (
+      <Router history={history}>
+        <ApprovedActivityReport user={currentUser} match={match} />
+      </Router>
+    );
+    const { rerender } = render(ui(user));
+
+    await waitFor(() => expect(screen.getByText(report.author.fullName)).toBeInTheDocument());
+    const modal = document.getElementById('UnlockReportModal');
+    expect(modal).toBeInTheDocument();
+    expect(fetchMock.calls('/api/activity-reports/5000')).toHaveLength(1);
+
+    // a new user object re-runs the fetch effect, which replaces the report like a refresh does
+    rerender(ui({ ...user }));
+    await waitFor(() => expect(fetchMock.calls('/api/activity-reports/5000')).toHaveLength(2));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(document.getElementById('UnlockReportModal')).toBe(modal);
+  });
 });

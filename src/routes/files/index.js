@@ -7,7 +7,12 @@ import {
   checkSessionAttachmentIdParam,
 } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
-import { deleteActivityReportObjectiveFile, deleteHandler, uploadHandler } from './handlers';
+import {
+  deleteActivityReportObjectiveFile,
+  deleteHandler,
+  downloadHandler,
+  uploadHandler,
+} from './handlers';
 
 const router = express.Router();
 const context = 'files';
@@ -16,6 +21,11 @@ const context = 'files';
  * API for file uploads
  */
 router.post('/', transactionWrapper(uploadHandler));
+router.get(
+  '/:fileId/download',
+  checkFileIdParam,
+  transactionWrapper(downloadHandler, `${context} /:fileId/download`)
+);
 router.delete(
   '/s/:eventSessionId/:fileId',
   (req, res, next) => checkIdParam(req, res, next, 'eventSessionId'),

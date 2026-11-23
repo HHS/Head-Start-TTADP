@@ -16,6 +16,7 @@ import { activityReportAndRecipientsById } from '../../services/activityReports'
 import { logById } from '../../services/communicationLog';
 import { currentUserId } from '../../services/currentUser';
 import { findEventBySmartsheetId } from '../../services/event';
+import userCanDownloadFile from '../../services/fileAccess';
 import {
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
@@ -526,9 +527,9 @@ const uploadHandler = async (req, res) => {
         auditLogger.info(
           `${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`
         );
-        const url = getSignedDownloadUrl(uploadedFile.Key);
         await updateStatus(metadata.id, UPLOADED);
-        fileResponse.push({ ...metadata, url });
+        // metadata.url is the file's download link, which stays valid (see downloadHandler)
+        fileResponse.push(metadata);
       } catch (err) {
         if (metadata) {
           await updateStatus(metadata.id, UPLOAD_FAILED);
@@ -591,4 +592,41 @@ async function deleteActivityReportObjectiveFile(req, res) {
   }
 }
 
-export { deleteActivityReportObjectiveFile, deleteHandler, uploadHandler };
+/**
+ * Sends the user to a freshly signed S3 link for the file, after checking they can read a
+ * record it is attached to. Pages link here instead of to a signed URL because signed URLs
+ * expire after minutes, while this link stays valid for as long as the user has access.
+ */
+const downloadHandler = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+
+    const file = await getFileById(fileId);
+    if (!file) {
+      res.status(httpCodes.NOT_FOUND).send({ error: 'File not found' });
+      return;
+    }
+
+    if (!(await userCanDownloadFile(user, file))) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const { url, error } = getSignedDownloadUrl(file.key);
+    if (error || !url) {
+      auditLogger.error(`${logContext.namespace}:downloadHandler no link for file ${fileId}`);
+      res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
+      return;
+    }
+
+    // The signed link is short lived and specific to this request, so it must not be cached.
+    res.set('Cache-Control', 'no-store');
+    res.redirect(httpCodes.TEMPORARY_REDIRECT, url);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+};
+
+export { deleteActivityReportObjectiveFile, deleteHandler, downloadHandler, uploadHandler };

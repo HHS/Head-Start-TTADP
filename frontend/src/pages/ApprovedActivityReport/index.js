@@ -2,7 +2,7 @@ import { Alert, ModalToggleButton } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment-timezone';
 import PropTypes from 'prop-types';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Redirect } from 'react-router-dom';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -32,7 +32,9 @@ export default function ApprovedActivityReport({ match, user }) {
 
   const { id: reportId, displayId, version } = report;
 
-  const ReportComponent = () => {
+  // Called as a function, not rendered as <ReportComponent />: a component defined inside this
+  // one gets a new identity every render and would remount the whole report on each refresh.
+  const renderReport = () => {
     // Map of report versions to their respective components
     const reportsMap = {
       1: <ApprovedReportV1 data={report} />,
@@ -50,29 +52,34 @@ export default function ApprovedActivityReport({ match, user }) {
   };
 
   /* istanbul ignore next: hard to test modals */
-  const onUnlock = async () => {
+  const onUnlock = useCallback(async () => {
     await unlockReport(reportId);
     modalRef.current.toggleModal(false);
     updatedJustUnlocked(true);
-  };
+  }, [reportId]);
 
-  const UnlockModal = () => (
-    <Modal
-      modalRef={modalRef}
-      onOk={/* istanbul ignore next: hard to test modals */ () => onUnlock()}
-      modalId="UnlockReportModal"
-      title="Unlock Activity Report"
-      okButtonText="Unlock"
-      okButtonAriaLabel="Unlock approved report will redirect to activity report page."
-    >
-      <>
-        Are you sure you want to unlock this activity report?
-        <br />
-        <br />
-        The report status will be set to <b>NEEDS ACTION</b> and <br />
-        must be re-submitted for approval.
-      </>
-    </Modal>
+  // Rendered as a component by ApprovedReportSpecialButtons, so it needs a stable identity:
+  // a new one on each refresh of the report would remount the dialog and close it.
+  const UnlockModal = useCallback(
+    () => (
+      <Modal
+        modalRef={modalRef}
+        onOk={/* istanbul ignore next: hard to test modals */ () => onUnlock()}
+        modalId="UnlockReportModal"
+        title="Unlock Activity Report"
+        okButtonText="Unlock"
+        okButtonAriaLabel="Unlock approved report will redirect to activity report page."
+      >
+        <>
+          Are you sure you want to unlock this activity report?
+          <br />
+          <br />
+          The report status will be set to <b>NEEDS ACTION</b> and <br />
+          must be re-submitted for approval.
+        </>
+      </Modal>
+    ),
+    [onUnlock]
   );
 
   const onReset = async () => {
@@ -148,7 +155,7 @@ export default function ApprovedActivityReport({ match, user }) {
           {resetMessage.text}
         </Alert>
       )}
-      <ReportComponent />
+      {renderReport()}
     </>
   );
 }

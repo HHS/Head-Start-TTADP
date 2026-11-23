@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { renderData } from './helpers';
 import './ViewTable.scss';
 
@@ -13,7 +12,7 @@ export default function ViewTable({ caption, headings, data, className, allowBre
         <caption className="padding-y-1 padding-left-2">{caption}</caption>
         <tbody>
           {headings.map((heading, index) => (
-            <tr key={uuidv4()}>
+            <tr key={`${heading}-${index}`}>
               <th scope="row">{heading}</th>
               <td>{data[index] ? renderData(heading, data[index]) : ''}</td>
             </tr>
