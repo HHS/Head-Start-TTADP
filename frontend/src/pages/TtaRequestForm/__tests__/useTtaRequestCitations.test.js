@@ -33,7 +33,7 @@ const CITATIONS = [
 ];
 
 function TestComponent({ regionId, grantIds, isMonitoringGoal }) {
-  const { citationOptions, citationNames } = useTtaRequestCitations(
+  const { citationOptions, citationNames, loading } = useTtaRequestCitations(
     regionId,
     grantIds,
     isMonitoringGoal
@@ -42,6 +42,7 @@ function TestComponent({ regionId, grantIds, isMonitoringGoal }) {
   return (
     <>
       <div data-testid="names">{citationNames.join(', ')}</div>
+      <div data-testid="loading">{String(loading)}</div>
       <ul>
         {citationOptions.map((group) => (
           <li key={group.label}>
@@ -133,7 +134,26 @@ describe('useTtaRequestCitations', () => {
     expect(screen.queryByText('Deficiency')).toBeNull();
   });
 
-  it('comes back empty when the citations cannot be read', async () => {
+  it('is loading until the citations for the current inputs have been read', async () => {
+    fetchMock.get('begin:/api/citations/region/14', []);
+
+    const { rerender } = renderHook({ isMonitoringGoal: false });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    });
+
+    // the render that switches to the monitoring goal still holds the previous result
+    rerender(<TestComponent regionId={14} grantIds={[1]} isMonitoringGoal />);
+    expect(screen.getByTestId('loading')).toHaveTextContent('true');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    });
+    expect(fetchMock.called('begin:/api/citations/region/14')).toBe(true);
+  });
+
+  it('comes back empty, and still loading, when the citations cannot be read', async () => {
     fetchMock.get('begin:/api/citations/region/14', 403);
 
     renderHook();
@@ -143,5 +163,7 @@ describe('useTtaRequestCitations', () => {
     });
     expect(screen.getByTestId('names')).toHaveTextContent('');
     expect(screen.queryByText('Deficiency')).toBeNull();
+    // an error says nothing about whether citations exist, so no warning is shown for it
+    expect(screen.getByTestId('loading')).toHaveTextContent('true');
   });
 });

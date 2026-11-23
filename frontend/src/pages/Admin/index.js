@@ -2,9 +2,11 @@ import React from 'react';
 import { Route, Switch } from 'react-router';
 import { NavLink } from 'react-router-dom';
 import BuildInfo from '../../components/BuildInfo';
+import { isNonProductionEnvironment } from '../../utils/environment';
 import CourseEdit from './CourseEdit';
 import Courses from './Courses';
 import Diag from './diag';
+import EmailTesting from './EmailTesting';
 import FeedPreview from './FeedPreview';
 import Flags from './Flags';
 import Goals from './Goals';
@@ -16,6 +18,9 @@ import TrainingReports from './TrainingReports';
 import User from './users';
 
 function Admin() {
+  // email testing is refused by the API in production, so don't offer it there
+  const showEmailTesting = isNonProductionEnvironment();
+
   return (
     <>
       <h1>Admin</h1>
@@ -27,6 +32,15 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
           Diag
         </NavLink>
+        {showEmailTesting && (
+          <NavLink
+            activeClassName="usa-button--active"
+            className="usa-button"
+            to="/admin/email-testing"
+          >
+            Email testing
+          </NavLink>
+        )}
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/goals">
           Goals
         </NavLink>
@@ -78,6 +92,7 @@ function Admin() {
         <Route path="/admin/users/:userId?" render={({ match }) => <User match={match} />} />
         <Route path="/admin/ss/" render={({ match }) => <SS match={match} />} />
         <Route path="/admin/diag/" render={({ match }) => <Diag match={match} />} />
+        {showEmailTesting && <Route path="/admin/email-testing/" render={() => <EmailTesting />} />}
         <Route path="/admin/flags/" render={({ match }) => <Flags match={match} />} />
         <Route path="/admin/site-alerts/" render={({ match }) => <SiteAlerts match={match} />} />
         <Route path="/admin/redis/" render={({ match }) => <Redis match={match} />} />

@@ -128,6 +128,30 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('emails new POCs on a Regional PD event with National Centers', async () => {
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+      const created = await createEvent({
+        ownerId: 98_989,
+        regionId: 98_989,
+        pocIds: [11_111, 98_989],
+        collaboratorIds: [],
+        data: {
+          eventId: `R01-TR-${faker.string.uuid()}`,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+          owner: { id: 98_989, name: 'Owner Name' },
+        },
+      });
+
+      // the owner is never notified as a POC
+      expect(trPocAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [11_111]
+      );
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
     it('does not throw when the notification helper rejects', async () => {
       createNotificationForNewPocs.mockRejectedValueOnce(new Error('boom'));
       const errorSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
@@ -268,6 +292,130 @@ describe('event service', () => {
       expect(previous).toEqual([98_989]);
       expect(current).toEqual([98_989, 11_111]);
 
+      await destroyEvent(created.id);
+    });
+
+    it('emails only the newly added POCs', async () => {
+      const created = await createAnEvent(98_989);
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989, 11_111, 11_112],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: {
+          status: 'active',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+          owner: { id: 98_989, name: 'test' },
+        },
+      });
+
+      expect(trPocAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id, eventId: created.eventId }),
+        [11_111, 11_112]
+      );
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('defers the POC email until after commit so its queries cannot abort the save', async () => {
+      const created = await createAnEvent(98_989);
+      // Like the real mailer: a failed query whose error is swallowed. Inside the request
+      // transaction this would abort it, so the email must wait for the commit.
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockImplementation(async () => {
+        try {
+          await db.sequelize.query('SELECT * FROM "TableThatDoesNotExist"');
+        } catch {
+          // swallowed, as the mailer does
+        }
+      });
+      const deferred = [];
+
+      const updated = await db.sequelize.transaction(async () => {
+        const result = await updateEvent(
+          created.id,
+          {
+            ownerId: 98_989,
+            pocIds: [98_989, 11_111],
+            regionId: 98_989,
+            collaboratorIds: [98_989],
+            data: {
+              status: 'active',
+              eventOrganizer: 'Regional PD Event (with National Centers)',
+              owner: { id: 98_989, name: 'test' },
+            },
+          },
+          (work) => {
+            deferred.push(work);
+          }
+        );
+        expect(trPocAddedSpy).not.toHaveBeenCalled();
+        return result;
+      });
+      await Promise.all(deferred.map((work) => work()));
+
+      expect(updated.pocIds).toEqual([98_989, 11_111]);
+      expect(trPocAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        [11_111]
+      );
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('emails a POC once when overlapping saves both add them', async () => {
+      const created = await createAnEvent(98_989);
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+      const request = {
+        ownerId: 98_989,
+        pocIds: [98_989, 11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: {
+          status: 'active',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+          owner: { id: 98_989, name: 'test' },
+        },
+      };
+      const deferred = [];
+      const save = () =>
+        db.sequelize.transaction(() =>
+          updateEvent(created.id, structuredClone(request), (work) => {
+            deferred.push(work);
+          })
+        );
+
+      await Promise.all([save(), save()]);
+      await Promise.all(deferred.map((work) => work()));
+
+      const emailed = trPocAddedSpy.mock.calls.flatMap(([, newPocIds]) => newPocIds);
+      expect(emailed).toEqual([11_111]);
+
+      trPocAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('does not email POCs on events without National Centers', async () => {
+      const created = await createAnEvent(98_989);
+      const trPocAddedSpy = jest.spyOn(mailer, 'trPocAdded').mockResolvedValue();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [11_111],
+        regionId: 98_989,
+        collaboratorIds: [98_989],
+        data: {
+          status: 'active',
+          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
+        },
+      });
+
+      expect(trPocAddedSpy).toHaveBeenCalledWith(expect.anything(), []);
+
+      trPocAddedSpy.mockRestore();
       await destroyEvent(created.id);
     });
 

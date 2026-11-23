@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
+import SCOPES from '../middleware/scopeConstants';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -733,6 +734,19 @@ describe('processData', () => {
       const user = await User.findOne({ where: { hsesUserId: '51113' } });
       const userPermissions = await Permission.findAll({ where: { userId: user.id } });
       expect(userPermissions.length).toBe(16);
+    });
+
+    it('gives the all-permissions test user every scope except admin and TTA approver scopes', async () => {
+      await bootstrapUsers();
+
+      const user = await User.findOne({ where: { hsesUserId: '53137' } });
+      const userPermissions = await Permission.findAll({ where: { userId: user.id } });
+      const scopeIds = new Set(userPermissions.map((p) => p.scopeId));
+
+      expect(scopeIds.has(SCOPES.ADMIN)).toBe(false);
+      expect(scopeIds.has(SCOPES.APPROVE_TTA_REQUESTS)).toBe(false);
+      expect(scopeIds.has(SCOPES.BACKUP_APPROVE_TTA_REQUESTS)).toBe(false);
+      expect(scopeIds.has(SCOPES.REVIEW_TTA_REQUESTS)).toBe(true);
     });
 
     it('repoints grant specialists to the updated bootstrapped user', async () => {

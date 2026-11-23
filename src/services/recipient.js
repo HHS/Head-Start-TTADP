@@ -80,13 +80,14 @@ export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
 }
 
 /**
- * Recipients with active grants in the regions the user can write in, so anything
- * picked from the list can be saved against its grant's region
+ * Recipients with active grants in the regions the user holds one of the scopes in, so
+ * anything picked from the list can be saved against its grant's region
  *
  * @param {number} userId
+ * @param {number[]} scopeIds
  * @returns {Promise<Model>} recipient results
  */
-async function recipientsByUserIdForScope(userId, scopeId) {
+async function recipientsByUserIdForScopes(userId, scopeIds) {
   const user = await User.findOne({
     attributes: ['id'],
     where: {
@@ -105,7 +106,7 @@ async function recipientsByUserIdForScope(userId, scopeId) {
   }
 
   const regions = user.permissions
-    .filter((p) => p.scopeId === scopeId)
+    .filter((p) => scopeIds.includes(p.scopeId))
     .map((p) => p.regionId);
 
   if (!regions.length) {
@@ -128,11 +129,19 @@ async function recipientsByUserIdForScope(userId, scopeId) {
 }
 
 export async function recipientsByUserId(userId) {
-  return recipientsByUserIdForScope(userId, SCOPES.READ_WRITE_REPORTS);
+  return recipientsByUserIdForScopes(userId, [SCOPES.READ_WRITE_REPORTS]);
 }
 
+/**
+ * Recipients the user can pick on a TTA request: in the regions they create requests in, and
+ * those they review them in, since the reviewer can choose among a submitted request's
+ * recipient's grants
+ */
 export async function recipientsByTtaRequestUserId(userId) {
-  return recipientsByUserIdForScope(userId, SCOPES.READ_WRITE_TTA_REQUESTS);
+  return recipientsByUserIdForScopes(userId, [
+    SCOPES.READ_WRITE_TTA_REQUESTS,
+    SCOPES.REVIEW_TTA_REQUESTS,
+  ]);
 }
 
 export async function allRecipients() {
