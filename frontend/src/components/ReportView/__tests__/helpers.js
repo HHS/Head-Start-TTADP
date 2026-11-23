@@ -111,6 +111,25 @@ describe('helpers', () => {
       );
     });
 
+    it('keeps the focused link when the signed URLs are refreshed', () => {
+      const withId = (url) => [
+        { id: 1, url: { url }, originalFileName: 'document1.pdf' },
+        { id: 2, url: { url: `${url}-2` }, originalFileName: 'document2.pdf' },
+      ];
+      const { rerender } = render(<div>{mapAttachments(withId('http://example.com/a'))}</div>);
+
+      const link = screen.getByRole('link', { name: 'document1.pdf' });
+      link.focus();
+      expect(link).toHaveFocus();
+
+      rerender(<div>{mapAttachments(withId('http://example.com/b'))}</div>);
+
+      const refreshed = screen.getByRole('link', { name: 'document1.pdf' });
+      expect(refreshed).toBe(link);
+      expect(refreshed).toHaveAttribute('href', 'http://example.com/b');
+      expect(refreshed).toHaveFocus();
+    });
+
     it('opens txt files in new tab', () => {
       render(<div>{mapAttachments(mockAttachments)}</div>);
 

@@ -32,7 +32,9 @@ export default function ApprovedActivityReport({ match, user }) {
 
   const { id: reportId, displayId, version } = report;
 
-  const ReportComponent = () => {
+  // Called as a function, not rendered as <ReportComponent />: a component defined inside this
+  // one gets a new identity every render and would remount the whole report on each refresh.
+  const renderReport = () => {
     // Map of report versions to their respective components
     const reportsMap = {
       1: <ApprovedReportV1 data={report} />,
@@ -148,7 +150,7 @@ export default function ApprovedActivityReport({ match, user }) {
           {resetMessage.text}
         </Alert>
       )}
-      <ReportComponent />
+      {renderReport()}
     </>
   );
 }

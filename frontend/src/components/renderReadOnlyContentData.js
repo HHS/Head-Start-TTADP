@@ -1,7 +1,6 @@
 import DOMPurify from 'dompurify';
 import parse from 'html-react-parser';
 import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { RICH_TEXT_ALLOWED_ATTR, RICH_TEXT_ALLOWED_TAGS } from '../utils';
 
 /**
@@ -55,8 +54,8 @@ export default function renderReadOnlyContentData(heading, data) {
     const cleanData = data.filter((d) => d);
     return (
       <ul>
-        {cleanData.map((line) => (
-          <li key={uuidv4()} className="margin-bottom-1">
+        {cleanData.map((line, index) => (
+          <li key={`${heading}-${index}`} className="margin-bottom-1">
             {renderEditor(heading, line)}
           </li>
         ))}

@@ -122,6 +122,33 @@ describe('useReadOnlyReportFetch', () => {
     expect(result.current.files[0].url.url).toBe('signed-1');
   });
 
+  it('does not start a second refresh while one is pending', async () => {
+    await renderAndLoad();
+    let resolveRefresh;
+    getReport.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRefresh = resolve;
+        })
+    );
+
+    await advance(SIGNED_URL_REFRESH_AFTER_MS);
+    expect(getReport).toHaveBeenCalledTimes(2);
+
+    // still pending: a visibility change and further ticks must not start another request
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await Promise.resolve();
+    });
+    await advance(SIGNED_URL_REFRESH_CHECK_MS * 2);
+    expect(getReport).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      resolveRefresh({ id: 1, files: [] });
+      await Promise.resolve();
+    });
+  });
+
   it('stops refreshing after unmount', async () => {
     const { unmount } = await renderAndLoad();
     unmount();

@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import React, { createElement } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import STATUSES from './GoalCards/components/StatusDropdownStatuses';
 import renderData from './renderReadOnlyContentData';
 import './ReadOnlyContent.css';
@@ -69,14 +68,14 @@ export default function ReadOnlyContent({
         {displayStatus && <Status statusKey={displayStatus} />}
         {titleAction}
       </div>
-      {sections.map((section) => {
+      {sections.map((section, sectionIndex) => {
         const subheadings = Object.keys(section.data);
         const headingTag = `h${section.headingLevel || 3}`;
         const headingFontClass = HEADING_CLASSES[section.headingLevel] || HEADING_CLASSES.default;
         return (
           <div
             className={`ttahub-read-only-content-section padding-bottom-${sectionSpacing} margin-0`}
-            key={uuidv4()}
+            key={`${section.heading || 'section'}-${sectionIndex}`}
           >
             {section.heading
               ? createElement(
@@ -90,7 +89,7 @@ export default function ReadOnlyContent({
             {subheadings.map((subheading) => (
               <div
                 className="ttahub-read-only-content-section--heading--section-row"
-                key={uuidv4()}
+                key={subheading}
               >
                 {subheading !== "Recipient's goal" ? (
                   /* Normal data section */

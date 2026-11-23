@@ -70,8 +70,13 @@ export default function useReadOnlyReportFetch(match, user) {
 
     let cancelled = false;
     let lastFetchedAt = 0;
+    // Only one request at a time, so a timer tick or visibility change during a pending
+    // request can't start another whose older response overwrites newer data.
+    let inFlight = false;
 
     async function fetchReport(isRefresh) {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const data = await getReport(match.params.activityReportId);
         if (cancelled) return;
@@ -82,6 +87,8 @@ export default function useReadOnlyReportFetch(match, user) {
         // A failed background refresh keeps the report the user is already reading.
         if (cancelled || isRefresh) return;
         history.push(`/something-went-wrong/${err.status}`);
+      } finally {
+        inFlight = false;
       }
     }
 
