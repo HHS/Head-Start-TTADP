@@ -191,10 +191,13 @@ app.get(OAUTH2_CALLBACK_PATH, async (req, res) => {
         // getSafeReferrerPath already dropped unsafe and auth-page referrers.
         const redirectPath = referrerPath || '/';
 
-        logger.debug(`referrer path: ${referrerPath}`);
+        const redirectUrl = new URL(redirectPath, process.env.TTA_SMART_HUB_URI);
+
+        // Pathname only: query strings can carry codes that must not reach the logs.
+        logger.debug(`referrer path: ${redirectUrl.pathname}`);
         auditLogger.info(`User ${dbUser.id} logged in`);
 
-        res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
+        res.redirect(redirectUrl.href);
         return resolve();
       });
     });

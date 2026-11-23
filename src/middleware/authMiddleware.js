@@ -88,7 +88,7 @@ async function getOidcClient() {
 
 /**
  * Returns the path (with query string) of the page the user started login from, so the
- * OAuth callback can send them back there. Only same-site relative paths are returned;
+ * OAuth callback can send them back there. Only paths from a TTA_SMART_HUB_URI referrer are returned;
  * anything that could be read as another host (e.g. `//evil.example`) is dropped.
  * Auth pages are dropped too: returning to logout would log the user out again, and the
  * callback (the referrer when retrying from the login recovery page) fails without login state.
@@ -102,7 +102,11 @@ export function getSafeReferrerPath(referrer) {
   }
 
   try {
-    const { pathname, search } = new URL(referrer);
+    const { origin, pathname, search } = new URL(referrer);
+    // Only return to pages on the hub itself; another site must not pick the post-login page.
+    if (origin !== new URL(process.env.TTA_SMART_HUB_URI).origin) {
+      return '';
+    }
     const path = `${pathname}${search}`;
     if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) {
       return '';

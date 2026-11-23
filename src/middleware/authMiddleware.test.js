@@ -206,6 +206,8 @@ describe('authMiddleware', () => {
       ['http://localhost:3000/logout?reason=timeout', ''],
       ['http://localhost:3000/oauth2-client/login/oauth2/code/?code=old&state=old', ''],
       ['http://localhost:3000/oauth2-client/login/oauth2/code', ''],
+      ['https://evil.example/cli/authorize?code=ATTACKER', ''],
+      ['http://localhost:8080/activity-reports', ''],
     ])('getSafeReferrerPath(%p) returns %p', (referrer, expected) => {
       expect(getSafeReferrerPath(referrer)).toBe(expected);
     });
