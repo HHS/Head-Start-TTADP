@@ -3,7 +3,10 @@ import { frequencyToInterval } from '../lib/mailer';
 import db from '../models';
 import { createUser } from '../testUtils';
 import { REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS } from './eventFlow';
-import { trainingReportsWherePocByDate } from './trainingReportDigests';
+import {
+  trainingReportsWhereCollaboratorByDate,
+  trainingReportsWherePocByDate,
+} from './trainingReportDigests';
 
 jest.mock('bull');
 
@@ -19,12 +22,13 @@ describe('training report digests', () => {
   const createEvent = async (
     pocIds: number[],
     eventOrganizer = REGIONAL_PD_WITH_NATIONAL_CENTERS,
-    ownerId = owner.id
+    ownerId = owner.id,
+    collaboratorIds: number[] = []
   ) => {
     const event = await EventReportPilot.create({
       ownerId,
       pocIds,
-      collaboratorIds: [],
+      collaboratorIds,
       regionId: 1,
       eventId: `R01-TR-${faker.string.numeric(8)}`,
       data: { eventOrganizer },
@@ -94,6 +98,43 @@ describe('training report digests', () => {
 
     it('returns nothing for a non-integer user id', async () => {
       expect(await trainingReportsWherePocByDate('1 OR 1=1', DAILY)).toEqual([]);
+    });
+  });
+  describe('trainingReportsWhereCollaboratorByDate', () => {
+    const TTA_HOSTED = REGIONAL_TTA_NO_NATIONAL_CENTERS;
+
+    it('returns reports the user was added to as a collaborator within the interval', async () => {
+      const before = await createEvent([], TTA_HOSTED, owner.id, [poc.id]);
+      const added = await createEvent([], TTA_HOSTED);
+      const since = await windowStartingNow();
+      const created = await createEvent([], TTA_HOSTED, owner.id, [poc.id]);
+      await added.update({ collaboratorIds: [poc.id] });
+      await before.update({ pocIds: [owner.id] });
+
+      const reports = await trainingReportsWhereCollaboratorByDate(poc.id, since);
+      const ids = reports.map((r) => r.id);
+
+      expect(ids).toEqual(expect.arrayContaining([created.id, added.id]));
+      expect(ids).not.toContain(before.id);
+      expect(reports.find((r) => r.id === added.id)).toEqual({
+        id: added.id,
+        displayId: added.eventId,
+      });
+    });
+
+    it('skips reports the user was removed from and reports they own', async () => {
+      const removed = await createEvent([], TTA_HOSTED, owner.id, [poc.id]);
+      await removed.update({ collaboratorIds: [] });
+      const ownedByUser = await createEvent([], TTA_HOSTED, poc.id, [poc.id]);
+
+      const ids = (await trainingReportsWhereCollaboratorByDate(poc.id, DAILY)).map((r) => r.id);
+
+      expect(ids).not.toContain(removed.id);
+      expect(ids).not.toContain(ownedByUser.id);
+    });
+
+    it('returns nothing for a non-integer user id', async () => {
+      expect(await trainingReportsWhereCollaboratorByDate('x', DAILY)).toEqual([]);
     });
   });
 });
