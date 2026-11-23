@@ -41,7 +41,9 @@ export default function GoalAndContext({ regionId }: GoalAndContextProps): React
   const selectedGrants: TtaRequestGrant[] = watch(TTA_REQUEST_FIELDS.GRANTS);
   const selectedGoal: GoalTemplateOption | null = watch(TTA_REQUEST_FIELDS.GOAL);
 
-  const goalTemplates = useGoalTemplates(selectedGrants);
+  // a request can be for monitoring before its grants have a monitoring goal; approving it
+  // then creates no goal, and the request still shows on the TTA timeline
+  const goalTemplates = useGoalTemplates(selectedGrants, { includeMonitoringWithoutGoal: true });
   const isMonitoringGoal = selectedGoal?.standard === MONITORING_STANDARD;
 
   const grantIds = useMemo(() => selectedGrants.map((grant) => grant.id), [selectedGrants]);

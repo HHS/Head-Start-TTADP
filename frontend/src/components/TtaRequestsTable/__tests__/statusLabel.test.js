@@ -54,6 +54,14 @@ describe('ttaRequestStatusLabel', () => {
       PENDING_CHANGES,
       COR_PENDING,
     ],
+    [
+      'approved by the COR',
+      request('approved', 'approved'),
+      'Approved',
+      'Approved',
+      'Approved',
+      'Approved',
+    ],
   ])('reads a request %s as the matrix has it', (_, req, creator, reviewer, cor, other) => {
     expect(ttaRequestStatusLabel(req, CREATOR).label).toBe(creator);
     expect(ttaRequestStatusLabel(req, REVIEWER).label).toBe(reviewer);

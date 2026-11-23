@@ -11,6 +11,8 @@ export interface TtaRequestSubmittedMessage {
   /** when it was submitted, already formatted, e.g. "06/23/2026 at 11:00 am EDT" */
   time: string;
   status: string;
+  /** the COR sent the request back to its reviewer, which leaves it submitted again */
+  sentBackToReviewer?: boolean;
 }
 
 interface LocationState {
@@ -23,9 +25,9 @@ interface TtaRequestSubmittedAlertProps {
 }
 
 /**
- * Says a TTA request was submitted, sent back to its creator for changes, or sent on to the
- * approving COR, on the page the
- * form or review returned the user to. They put the message in the location's state; it is
+ * Says a TTA request was submitted, sent back to its creator or reviewer for changes, sent on
+ * to the approving COR, or approved, on the page the form, review or approval returned the
+ * user to. They put the message in the location's state; it is
  * taken from there once, so it doesn't show again on a refresh or on coming back to the page.
  */
 export default function TtaRequestSubmittedAlert({
@@ -63,9 +65,19 @@ export default function TtaRequestSubmittedAlert({
           You sent request {link} to the COR for approval on {message.time}.
         </>
       )}
-      {message.status === TTA_REQUEST_STATUSES.SUBMITTED && (
+      {message.status === TTA_REQUEST_STATUSES.SUBMITTED && message.sentBackToReviewer && (
+        <>
+          You sent request {link} back to its reviewer for changes on {message.time}.
+        </>
+      )}
+      {message.status === TTA_REQUEST_STATUSES.SUBMITTED && !message.sentBackToReviewer && (
         <>
           You submitted request {link} on {message.time}.
+        </>
+      )}
+      {message.status === TTA_REQUEST_STATUSES.APPROVED && (
+        <>
+          You approved request {link} on {message.time}.
         </>
       )}
     </Alert>
