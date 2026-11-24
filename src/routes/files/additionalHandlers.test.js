@@ -26,8 +26,8 @@ jest.mock('../../services/event', () => ({
 
 jest.mock('../../services/files', () => ({
   ...jest.requireActual('../../services/files'),
+  removeOrphanedFiles: jest.fn(),
   getFileById: jest.fn(),
-  deleteFile: jest.fn(),
   createActivityReportFileMetaData: jest.fn(),
   createActivityReportObjectiveFileMetaData: jest.fn(),
   deleteObjectiveFile: jest.fn(),
