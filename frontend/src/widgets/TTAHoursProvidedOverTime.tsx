@@ -90,6 +90,31 @@ function colorLevel(value: number) {
   return 5;
 }
 
+function weekCell(
+  week: number,
+  month: moment.Moment,
+  range: ReturnType<typeof dateRange>,
+  data: { hours: HoursRow[]; reviews: MonitoringReview[] }
+) {
+  const first = month.clone().date((week - 1) * 7 + 1);
+  const last = week === 5 ? month.clone().endOf('month') : first.clone().add(6, 'days');
+  const firstDate = moment.max(first, range?.start || first).format('YYYY-MM-DD');
+  const lastDate = moment.min(last, range?.end || last).format('YYYY-MM-DD');
+  const matching = data.hours.filter(
+    (row: HoursRow) => row.startDate >= firstDate && row.startDate <= lastDate
+  );
+  const hours = matching.reduce((sum: number, row: HoursRow) => sum + Number(row.duration), 0);
+  return {
+    month,
+    hours,
+    hasHours: matching.length > 0,
+    monitoring: data.reviews.some(
+      (review: MonitoringReview) =>
+        firstDate <= lastDate && review.startDate <= lastDate && review.endDate >= firstDate
+    ),
+  };
+}
+
 export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[] }) {
   const [showTable, setShowTable] = useState(false);
   const drawerRef = useRef(null);
@@ -183,48 +208,36 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                     </tr>
                   </thead>
                   <tbody>
-                    {[1, 2, 3, 4, 5].map((week) => (
-                      <tr key={week}>
-                        <th scope="row" className="width-10 text-normal text-right padding-right-05 text-no-wrap">
-                          Week {week}
-                        </th>
-                        {months.map((month) => {
-                          const first = month.clone().date((week - 1) * 7 + 1);
-                          const last =
-                            week === 5
-                              ? month.clone().endOf('month')
-                              : first.clone().add(6, 'days');
-                          const firstDate = moment
-                            .max(first, range?.start || first)
-                            .format('YYYY-MM-DD');
-                          const lastDate = moment.min(last, range?.end || last).format('YYYY-MM-DD');
-                          const matching = data.hours.filter(
-                            (row: HoursRow) => row.startDate >= firstDate && row.startDate <= lastDate
-                          );
-                          const hours = matching.reduce(
-                            (sum: number, row: HoursRow) => sum + Number(row.duration),
-                            0
-                          );
-                          const monitoring = data.reviews.some(
-                            (review: MonitoringReview) =>
-                              firstDate <= lastDate &&
-                              review.startDate <= lastDate &&
-                              review.endDate >= firstDate
-                          );
-                          const color = COLOR_SCALE[colorLevel(hours)];
-                          return (
-                            <td
-                              key={month.format('YYYY-MM')}
-                              className={`height-6 text-center text-bold ${monitoring ? 'tta-hours-monitoring' : 'border border-base-light'}`}
-                              style={{ background: color.bg, color: color.textColor }}
-                              aria-label={`${month.format('MMMM YYYY')}, week ${week}: ${hours.toFixed(1)} hours${monitoring ? ', monitoring review' : ''}`}
-                            >
-                              {matching.length > 0 ? hours.toFixed(1) : ''}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
+                    {[1, 2, 3, 4, 5].map((week) => {
+                      const cells = months.map((month) => weekCell(week, month, range, data));
+                      // A week with no hours and no overlapping monitoring review has nothing to show.
+                      if (!cells.some((cell) => cell.hasHours || cell.monitoring)) {
+                        return null;
+                      }
+                      return (
+                        <tr key={week}>
+                          <th
+                            scope="row"
+                            className="width-10 text-normal text-right padding-right-05 text-no-wrap"
+                          >
+                            Week {week}
+                          </th>
+                          {cells.map((cell) => {
+                            const color = COLOR_SCALE[colorLevel(cell.hours)];
+                            return (
+                              <td
+                                key={cell.month.format('YYYY-MM')}
+                                className={`height-6 text-center text-bold ${cell.monitoring ? 'tta-hours-monitoring' : 'border border-base-light'}`}
+                                style={{ background: color.bg, color: color.textColor }}
+                                aria-label={`${cell.month.format('MMMM YYYY')}, week ${week}: ${cell.hours.toFixed(1)} hours${cell.monitoring ? ', monitoring review' : ''}`}
+                              >
+                                {cell.hasHours ? cell.hours.toFixed(1) : ''}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                   <tfoot aria-hidden="true" className="text-center">
                     <tr>

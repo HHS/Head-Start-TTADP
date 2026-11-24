@@ -55,6 +55,10 @@ describe('TTA hours provided over time', () => {
     expect(screen.getByLabelText('January 2026, week 2: 0.0 hours, monitoring review')).toHaveClass(
       'tta-hours-monitoring'
     );
+    expect(screen.queryByLabelText('January 2026, week 3: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('January 2026, week 4: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('January 2026, week 5: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('February 2026, week 2: 4.0 hours')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Current year' })).not.toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'December 2025' })).not.toBeInTheDocument();
@@ -73,7 +77,8 @@ describe('TTA hours provided over time', () => {
   it('uses the selected page date range without filtering sessions by event start date', async () => {
     render(<TTAHoursProvidedOverTime filters={filters} />);
     await screen.findByLabelText('January 2026, week 1: 3.5 hours, monitoring review');
-    expect(screen.getByLabelText('February 2026, week 3: 0.0 hours')).toBeInTheDocument();
+    expect(screen.getByLabelText('February 2026, week 2: 4.0 hours')).toBeInTheDocument();
+    expect(screen.queryByLabelText('February 2026, week 3: 0.0 hours')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('December 2025, week 5: 7.0 hours')).not.toBeInTheDocument();
     expect(fetchWidget).toHaveBeenCalledWith(
       'ttaHoursProvidedOverTime',
@@ -111,9 +116,7 @@ describe('TTA hours provided over time', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'December 2025' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'February 2026' })).not.toBeInTheDocument();
-    expect(screen.getByLabelText('January 2026, week 2: 0.0 hours')).not.toHaveClass(
-      'tta-hours-monitoring'
-    );
+    expect(screen.queryByLabelText('January 2026, week 2: 0.0 hours')).not.toBeInTheDocument();
     expect(fetchWidget).toHaveBeenCalledWith(
       'ttaHoursProvidedOverTime',
       'region.in[]=1&recipientId.ctn[]=401'
@@ -165,9 +168,29 @@ describe('TTA hours provided over time', () => {
     expect(screen.getByLabelText('January 2026, week 2: 0.0 hours, monitoring review')).toHaveClass(
       'tta-hours-monitoring'
     );
-    expect(screen.getByLabelText('February 2026, week 3: 0.0 hours')).toBeInTheDocument();
+    expect(screen.queryByLabelText('February 2026, week 3: 0.0 hours')).not.toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'March 2026' })).not.toBeInTheDocument();
+  });
+
+  it('does not display weeks without hours or monitoring', async () => {
+    fetchWidget.mockImplementation((widget) =>
+      Promise.resolve(
+        widget === 'ttaHoursProvidedOverTime' ? [{ startDate: '2026-01-30', duration: 5 }] : []
+      )
+    );
+
+    render(<TTAHoursProvidedOverTime filters={filters} />);
+
+    expect(await screen.findByLabelText('January 2026, week 5: 5.0 hours')).toBeInTheDocument();
+    expect(screen.queryByLabelText('January 2026, week 1: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('January 2026, week 2: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('January 2026, week 3: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('January 2026, week 4: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('February 2026, week 1: 0.0 hours')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('February 2026, week 4: 0.0 hours')).not.toBeInTheDocument();
+    // The week 5 row displays because of the January hours; its empty February cell still renders within it.
+    expect(screen.getByLabelText('February 2026, week 5: 0.0 hours')).toBeInTheDocument();
   });
 
   it.each([
