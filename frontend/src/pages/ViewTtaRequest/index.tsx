@@ -133,8 +133,9 @@ export default function ViewTtaRequest({
           )}
         </div>
         <h2 className="font-serif-xl margin-top-0 margin-bottom-1">TTA Request summary</h2>
-        <TtaRequestDetails ttaRequest={ttaRequest} headingLevel={3} />
-        <TtaRequestAssignmentSummary ttaRequest={ttaRequest} />
+        {/* 24px below the request's context, whichever section comes next */}
+        <TtaRequestDetails ttaRequest={ttaRequest} headingLevel={3} compactEnd />
+        <TtaRequestAssignmentSummary ttaRequest={ttaRequest} flushTop />
         {notesSummary}
       </Container>
     </div>

@@ -25,6 +25,12 @@
     .ttahub-read-only-content-section--heading--section-row-data:last-child {
     margin-block-end: 0;
   }
+
+  /* Ends 24px below the last content-section, for a page that adds no space after it */
+  &.ttahub-read-only-content-section-container__compact-end
+    .ttahub-read-only-content-section:last-child {
+    padding-block-end: 1.5rem;
+  }
 }
 
 .ttahub-read-only-content-section--heading--section-row {
