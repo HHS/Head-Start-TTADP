@@ -1260,8 +1260,13 @@ describe('goal handlers', () => {
       });
 
       createOrUpdateGoalsForActivityReport.mockResolvedValueOnce(1);
+      req.inTransactionWrapper = true;
       await createGoalsForReport(req, mockResponse);
 
+      // the response waits until the transaction commits
+      expect(mockResponse.json).not.toHaveBeenCalled();
+      expect(req.transactionCommittedCallbacks).toHaveLength(1);
+      await req.transactionCommittedCallbacks[0]();
       expect(mockResponse.json).toHaveBeenCalledWith(1);
     });
 
