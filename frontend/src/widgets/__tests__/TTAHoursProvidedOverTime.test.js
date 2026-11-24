@@ -52,6 +52,7 @@ describe('TTA hours provided over time', () => {
     expect(
       await screen.findByLabelText('January 2026, week 1: 3.5 hours, monitoring review')
     ).toHaveClass('tta-hours-monitoring');
+    // Week 2 displays because of the February hours; the monitoring-only January cell keeps its outline.
     expect(screen.getByLabelText('January 2026, week 2: 0.0 hours, monitoring review')).toHaveClass(
       'tta-hours-monitoring'
     );
@@ -151,29 +152,32 @@ describe('TTA hours provided over time', () => {
         ...filters.slice(1),
       ],
     ],
-  ])('shows monitoring with no hours for %s', async (_description, selectedFilters) => {
+  ])('does not display monitoring-only weeks for %s', async (_description, selectedFilters) => {
     fetchWidget.mockImplementation((widget) =>
       Promise.resolve(
         widget === 'ttaHoursProvidedOverTime'
-          ? []
+          ? [{ startDate: '2026-01-15', duration: 5 }]
           : [{ startDate: '2026-01-06', endDate: '2026-01-10' }]
       )
     );
 
     render(<TTAHoursProvidedOverTime filters={selectedFilters} />);
 
+    // The week 3 hours are the only displayed January weeks; the monitoring-only weeks 1 and 2 stay hidden.
+    expect(await screen.findByLabelText('January 2026, week 3: 5.0 hours')).toBeInTheDocument();
     expect(
-      await screen.findByLabelText('January 2026, week 1: 0.0 hours, monitoring review')
-    ).toHaveClass('tta-hours-monitoring');
-    expect(screen.getByLabelText('January 2026, week 2: 0.0 hours, monitoring review')).toHaveClass(
-      'tta-hours-monitoring'
-    );
-    expect(screen.queryByLabelText('February 2026, week 3: 0.0 hours')).not.toBeInTheDocument();
+      screen.queryByLabelText('January 2026, week 1: 0.0 hours, monitoring review')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('January 2026, week 2: 0.0 hours, monitoring review')
+    ).not.toBeInTheDocument();
+    // Week 3 displays because of the January hours; the empty February cell still renders within it.
+    expect(screen.getByLabelText('February 2026, week 3: 0.0 hours')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'March 2026' })).not.toBeInTheDocument();
   });
 
-  it('does not display weeks without hours or monitoring', async () => {
+  it('does not display weeks without hours', async () => {
     fetchWidget.mockImplementation((widget) =>
       Promise.resolve(
         widget === 'ttaHoursProvidedOverTime' ? [{ startDate: '2026-01-30', duration: 5 }] : []

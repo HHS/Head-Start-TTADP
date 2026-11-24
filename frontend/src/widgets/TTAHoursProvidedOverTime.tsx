@@ -210,8 +210,8 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                   <tbody>
                     {[1, 2, 3, 4, 5].map((week) => {
                       const cells = months.map((month) => weekCell(week, month, range, data));
-                      // A week with no hours and no overlapping monitoring review has nothing to show.
-                      if (!cells.some((cell) => cell.hasHours || cell.monitoring)) {
+                      // A week with no hours is not displayed, even if a monitoring review overlaps it.
+                      if (!cells.some((cell) => cell.hasHours)) {
                         return null;
                       }
                       return (
