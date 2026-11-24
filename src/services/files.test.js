@@ -1,16 +1,25 @@
 import { faker } from '@faker-js/faker';
 import { FILE_STATUSES } from '../constants';
-import db, { File } from '../models';
+import { auditLogger } from '../logger';
+import db, { CommunicationLog, CommunicationLogFile, File, FileDeletion, User } from '../models';
+import { createUser } from '../testUtils';
 import {
   createFileMetaData,
+  enqueueS3Delete,
   fileHasReferences,
   markFilesQueuedForScan,
   queueFilesForScan,
+  removeOrphanedFiles,
+  requeuePendingFileDeletions,
   updateStatusByKey,
 } from './files';
+import { addDeleteFileToQueue } from './s3Queue';
 import addToScanQueue from './scanQueue';
 
 jest.mock('./scanQueue', () => jest.fn());
+jest.mock('./s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
+}));
 
 describe('files service', () => {
   afterAll(async () => {
@@ -206,6 +215,330 @@ describe('files service', () => {
     it('treats an association that was not loaded as a reference', () => {
       const { communicationLogFiles: _omitted, ...partial } = unreferenced;
       expect(fileHasReferences(partial)).toBe(true);
+    });
+  });
+
+  describe('removeOrphanedFiles', () => {
+    let user;
+    let log;
+    const createdFileIds = [];
+
+    const makeFile = async (linked = false) => {
+      const file = await File.create({
+        originalFileName: 'orphan-test.txt',
+        key: `orphan-test-${faker.string.uuid()}.txt`,
+        status: FILE_STATUSES.APPROVED,
+        fileSize: 10,
+      });
+      createdFileIds.push(file.id);
+      if (linked) {
+        await CommunicationLogFile.create({ communicationLogId: log.id, fileId: file.id });
+      }
+      return file;
+    };
+
+    beforeAll(async () => {
+      user = await createUser();
+      log = await CommunicationLog.create({ userId: user.id, data: { note: 'orphan test' } });
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    afterAll(async () => {
+      await CommunicationLogFile.destroy({ where: { fileId: createdFileIds } });
+      await FileDeletion.destroy({ where: { fileId: createdFileIds } });
+      await File.destroy({ where: { id: createdFileIds } });
+      await CommunicationLog.destroy({ where: { id: log.id } });
+      await User.destroy({ where: { id: user.id } });
+    });
+
+    it('deletes an unreferenced file and queues its S3 delete only after commit', async () => {
+      const file = await makeFile();
+
+      await db.sequelize.transaction(async () => {
+        expect(await removeOrphanedFiles([file.id, file.id, null])).toEqual([file.id]);
+        expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+      });
+
+      expect(await File.findByPk(file.id)).toBeNull();
+      expect(addDeleteFileToQueue).toHaveBeenCalledTimes(1);
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
+    });
+
+    it('keeps a file that is still referenced', async () => {
+      const file = await makeFile(true);
+
+      await db.sequelize.transaction(async () => {
+        expect(await removeOrphanedFiles([file.id])).toEqual([]);
+      });
+
+      expect(await File.findByPk(file.id)).not.toBeNull();
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    });
+
+    it('keeps the file and queues nothing when the transaction rolls back', async () => {
+      const file = await makeFile();
+
+      await expect(
+        db.sequelize.transaction(async () => {
+          await removeOrphanedFiles([file.id]);
+          throw new Error('roll back');
+        })
+      ).rejects.toThrow('roll back');
+
+      expect(await File.findByPk(file.id)).not.toBeNull();
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    });
+
+    it('keeps a file when a concurrent link commits during cleanup', async () => {
+      const file = await makeFile();
+      const linking = await db.sequelize.transaction();
+      let cleanup;
+      try {
+        await CommunicationLogFile.create(
+          { communicationLogId: log.id, fileId: file.id },
+          { transaction: linking }
+        );
+        // PostgreSQL cannot grant cleanup's row lock until the link transaction completes.
+        let started;
+        const locking = new Promise((resolve) => {
+          started = resolve;
+        });
+        const findAll = File.findAll.bind(File);
+        const spy = jest.spyOn(File, 'findAll').mockImplementation((options) => {
+          if (options.lock) started();
+          return findAll(options);
+        });
+        try {
+          cleanup = removeOrphanedFiles([file.id]);
+          await Promise.race([locking, cleanup]);
+        } finally {
+          spy.mockRestore();
+        }
+        await linking.commit();
+      } finally {
+        if (!linking.finished) await linking.rollback();
+      }
+      expect(await cleanup).toEqual([]);
+      expect(await File.findByPk(file.id)).not.toBeNull();
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    });
+
+    it('waits for the outermost transaction when called inside a savepoint', async () => {
+      const file = await makeFile();
+
+      await db.sequelize.transaction(async (outer) => {
+        await db.sequelize.transaction({ transaction: outer }, async (savepoint) => {
+          await removeOrphanedFiles([file.id], { transaction: savepoint });
+        });
+        expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+      });
+
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
+    });
+
+    it('does not queue a delete when a savepoint rolls back but its parent commits', async () => {
+      const file = await makeFile();
+      await db.sequelize.transaction(async (outer) => {
+        await expect(
+          db.sequelize.transaction({ transaction: outer }, async (savepoint) => {
+            await removeOrphanedFiles([file.id], { transaction: savepoint });
+            throw new Error('roll back savepoint');
+          })
+        ).rejects.toThrow('roll back savepoint');
+      });
+      expect(await File.findByPk(file.id)).not.toBeNull();
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+    });
+
+    it('queues the S3 delete right away when there is no transaction', async () => {
+      const file = await makeFile();
+
+      await removeOrphanedFiles([file.id]);
+
+      expect(await File.findByPk(file.id)).toBeNull();
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
+    });
+
+    it('hands the S3 delete to a caller-supplied afterCommit', async () => {
+      const file = await makeFile();
+      const callbacks = [];
+
+      await removeOrphanedFiles([file.id], { afterCommit: (cb) => callbacks.push(cb) });
+
+      expect(addDeleteFileToQueue).not.toHaveBeenCalled();
+      expect(callbacks).toHaveLength(1);
+      await callbacks[0]();
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
+    });
+
+    it('records a pending outbox row in the same transaction and queues with its id', async () => {
+      const file = await makeFile();
+
+      await db.sequelize.transaction(async () => {
+        await removeOrphanedFiles([file.id]);
+      });
+
+      const deletion = await FileDeletion.findOne({ where: { fileId: file.id } });
+      expect(deletion).toMatchObject({ key: file.key, attempts: 0, completedAt: null });
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, deletion.id);
+    });
+
+    it('leaves no outbox row when the transaction rolls back', async () => {
+      const file = await makeFile();
+
+      await expect(
+        db.sequelize.transaction(async () => {
+          await removeOrphanedFiles([file.id]);
+          throw new Error('roll back');
+        })
+      ).rejects.toThrow('roll back');
+
+      expect(await FileDeletion.count({ where: { fileId: file.id } })).toBe(0);
+    });
+
+    it('keeps the outbox row pending when enqueueing fails after commit', async () => {
+      const file = await makeFile();
+      addDeleteFileToQueue.mockRejectedValueOnce(new Error('redis unavailable'));
+
+      await expect(removeOrphanedFiles([file.id])).resolves.toEqual([file.id]);
+
+      expect(await File.findByPk(file.id)).toBeNull();
+      const deletion = await FileDeletion.findOne({ where: { fileId: file.id } });
+      expect(deletion.completedAt).toBeNull();
+    });
+
+    it('enqueues one batch per transaction and stops at the first failed enqueue', async () => {
+      const [first, second] = [await makeFile(), await makeFile()];
+      addDeleteFileToQueue.mockRejectedValueOnce(new Error('redis unavailable'));
+
+      await db.sequelize.transaction(async () => {
+        await removeOrphanedFiles([first.id]);
+        await removeOrphanedFiles([second.id]);
+      });
+
+      // The second file isn't tried, so an outage costs one timeout, not one per file.
+      expect(addDeleteFileToQueue).toHaveBeenCalledTimes(1);
+      const deletions = await FileDeletion.findAll({
+        where: { fileId: [first.id, second.id] },
+      });
+      expect(deletions).toHaveLength(2);
+      expect(deletions.every((d) => d.completedAt === null)).toBe(true);
+    });
+  });
+
+  describe('requeuePendingFileDeletions', () => {
+    const fileIdBase = 2_000_000_000 - faker.number.int({ min: 0, max: 100_000 });
+    const hoursAgo = (hours) => new Date(Date.now() - hours * 60 * 60 * 1000);
+    let rows;
+
+    const makeDeletion = async (offset, values, updatedAt) => {
+      const deletion = await FileDeletion.create({
+        fileId: fileIdBase + offset,
+        key: `requeue-${faker.string.uuid()}.txt`,
+        ...values,
+      });
+      // Sequelize sets updatedAt itself, so backdate it directly.
+      await db.sequelize.query(
+        'UPDATE "FileDeletions" SET "updatedAt" = :updatedAt WHERE id = :id',
+        {
+          replacements: { updatedAt, id: deletion.id },
+        }
+      );
+      return deletion;
+    };
+
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      rows = {
+        stale: await makeDeletion(0, {}, hoursAgo(2)),
+        recent: await makeDeletion(1, {}, new Date()),
+        completed: await makeDeletion(2, { completedAt: new Date() }, hoursAgo(2)),
+        exhausted: await makeDeletion(3, { attempts: 10 }, hoursAgo(2)),
+      };
+    });
+
+    afterEach(async () => {
+      await FileDeletion.destroy({ where: { id: Object.values(rows).map((r) => r.id) } });
+    });
+
+    const callsFor = (deletion) =>
+      addDeleteFileToQueue.mock.calls.filter(([, , id]) => id === deletion.id);
+
+    it('requeues only stale pending rows and counts an attempt', async () => {
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+      const { exhausted } = await requeuePendingFileDeletions();
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.stringContaining('need manual cleanup'),
+        's3_orphaned_file'
+      );
+      alertSpy.mockRestore();
+
+      expect(callsFor(rows.stale)).toEqual([[rows.stale.fileId, rows.stale.key, rows.stale.id]]);
+      expect(callsFor(rows.recent)).toEqual([]);
+      expect(callsFor(rows.completed)).toEqual([]);
+      expect(callsFor(rows.exhausted)).toEqual([]);
+      expect((await rows.stale.reload()).attempts).toBe(1);
+      expect(exhausted).toBeGreaterThanOrEqual(1);
+    });
+
+    it('does not report a row as exhausted while its final job may still be running', async () => {
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+      const { exhausted: before } = await requeuePendingFileDeletions();
+      rows.justExhausted = await makeDeletion(4, { attempts: 10 }, new Date());
+
+      const { exhausted: after } = await requeuePendingFileDeletions();
+      alertSpy.mockRestore();
+
+      expect(after).toBe(before);
+    });
+
+    it('keeps a row pending without using an attempt when enqueueing fails', async () => {
+      addDeleteFileToQueue.mockRejectedValue(new Error('redis unavailable'));
+
+      await requeuePendingFileDeletions();
+
+      const stale = await rows.stale.reload();
+      expect(stale.attempts).toBe(0);
+      expect(stale.completedAt).toBeNull();
+      addDeleteFileToQueue.mockReset();
+    });
+
+    it('requeues the least recently attempted rows first when over the limit', async () => {
+      // Created after rows.stale, so it has a higher id but a much older updatedAt.
+      rows.leastRecent = await makeDeletion(5, {}, hoursAgo(24 * 365 * 20));
+      const alertSpy = jest.spyOn(auditLogger, 'alertError').mockImplementation(() => {});
+
+      await requeuePendingFileDeletions({ limit: 1 });
+      alertSpy.mockRestore();
+
+      expect(callsFor(rows.leastRecent)).toHaveLength(1);
+      expect(callsFor(rows.stale)).toEqual([]);
+    });
+  });
+
+  describe('enqueueS3Delete', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+      addDeleteFileToQueue.mockReset();
+    });
+
+    it('resolves with the queued job', async () => {
+      addDeleteFileToQueue.mockResolvedValueOnce({ id: 'job-1' });
+      await expect(enqueueS3Delete(1, 'key.txt', 2)).resolves.toEqual({ id: 'job-1' });
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(1, 'key.txt', 2);
+    });
+
+    it('rejects instead of hanging when Redis never accepts the job', async () => {
+      jest.useFakeTimers();
+      addDeleteFileToQueue.mockReturnValueOnce(new Promise(() => {}));
+
+      const result = enqueueS3Delete(1, 'key.txt', 2);
+      jest.advanceTimersByTime(5000);
+
+      await expect(result).rejects.toThrow('timed out');
     });
   });
 });

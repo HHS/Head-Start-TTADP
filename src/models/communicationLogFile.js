@@ -1,5 +1,4 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/communicationLogFile');
 
 export default (sequelize, DataTypes) => {
   class CommunicationLogFile extends Model {
@@ -31,9 +30,6 @@ export default (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: 'CommunicationLogFile',
-      hooks: {
-        afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-      },
     }
   );
   return CommunicationLogFile;

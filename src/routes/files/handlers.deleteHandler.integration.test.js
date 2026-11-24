@@ -112,7 +112,7 @@ describe('deleteHandler with the database', () => {
     expect(await linkIds()).toEqual([]);
     expect(await File.findByPk(file.id)).toBeNull();
     expect(addDeleteFileToQueue).toHaveBeenCalledTimes(1);
-    expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key, expect.any(Number));
   });
 
   it('leaves the file and its S3 object alone when the transaction rolls back', async () => {

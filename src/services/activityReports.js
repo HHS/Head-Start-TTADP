@@ -51,6 +51,7 @@ import activityReportObjectivesSchema from '../models/schemas/activityReportObje
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
+import { fileIdsForActivityReportObjectives, removeOrphanedFiles } from './files';
 import { getObjectivesByReportId } from './objectives';
 import { removeUnusedGoalsObjectivesFromReport, saveStandardGoalsForReport } from './standardGoals';
 import { usersWithPermissions } from './users';
@@ -1228,12 +1229,20 @@ export async function cleanupOrphanedObjectivesAndAROs(reportId, transaction = u
     ),
   ];
 
+  const fileIds = await fileIdsForActivityReportObjectives(
+    { activityReportId: reportId },
+    transaction
+  );
+
   // Hard-delete the AROs that linked this (now deleted) report to its objectives.
+  // Their beforeDestroy hook removes the objectives' file links.
   await ActivityReportObjective.destroy({
     where: { activityReportId: reportId },
     individualHooks: true,
     transaction,
   });
+
+  await removeOrphanedFiles(fileIds, { transaction });
 
   if (!linkedObjectiveIds.length) {
     return;

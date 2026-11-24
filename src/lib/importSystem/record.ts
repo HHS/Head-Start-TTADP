@@ -2,6 +2,7 @@ import { fn, literal, Op, Sequelize } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import { FILE_STATUSES, IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../constants';
 import db from '../../models';
+import { removeOrphanedFiles } from '../../services/files';
 import type { FileListing, FileInfo as FTPFileInfo } from '../stream/sftp';
 import type { SchemaNode } from '../stream/xml';
 import type { FileInfo as ZipFileInfo } from '../stream/zip';
@@ -282,7 +283,24 @@ const recordAvailableFiles = async (importId: number, availableFiles: FileListin
       !availableFiles.some((availableFile) => fileMatches(currentImportFile, availableFile))
   );
 
-  return Promise.all([
+  const removedFileWhere = {
+    importId,
+    id: removedFiles.map(({ id }) => id),
+    status: [IMPORT_STATUSES.IDENTIFIED],
+  };
+  // Files linked to the import files about to be removed, so they can be cleaned up after.
+  const removedFileIds =
+    removedFiles.length > 0
+      ? (
+          await ImportFile.findAll({
+            attributes: ['fileId'],
+            where: { ...removedFileWhere, fileId: { [Op.ne]: null } },
+            raw: true,
+          })
+        ).map(({ fileId }) => fileId)
+      : [];
+
+  const results = await Promise.all([
     // Create new files in the database if there are any
     ...(newFiles.length > 0
       ? newFiles.map((newFile) =>
@@ -324,16 +342,16 @@ const recordAvailableFiles = async (importId: number, availableFiles: FileListin
     // Delete removed files from the database if there are any
     removedFiles.length > 0
       ? ImportFile.destroy({
-          where: {
-            importId,
-            id: removedFiles.map(({ id }) => id),
-            status: [IMPORT_STATUSES.IDENTIFIED],
-          },
+          where: removedFileWhere,
           individualHooks: true,
           lock: true, // Lock the row for update to prevent race conditions
         })
       : Promise.resolve(),
   ]);
+
+  await removeOrphanedFiles(removedFileIds);
+
+  return results;
 };
 
 /**

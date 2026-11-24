@@ -16,6 +16,7 @@ import {
   setImportFileStatus,
   updateAvailableDataFileMetadata,
 } from '../record'; // Adjust the import path as necessary
+import { removeOrphanedFiles } from '../../../services/files';
 
 // Mocking Sequelize and ImportFile model
 jest.mock('../../../models', () => ({
@@ -51,6 +52,10 @@ jest.mock('../../../models', () => ({
 
 jest.mock('uuid', () => ({
   v4: jest.fn(() => 'uuid-mock'),
+}));
+
+jest.mock('../../../services/files', () => ({
+  removeOrphanedFiles: jest.fn(),
 }));
 
 describe('record', () => {
@@ -561,14 +566,17 @@ describe('record', () => {
       );
     });
 
-    it('should delete removed files from the database', async () => {
-      ImportFile.findAll.mockResolvedValueOnce([
-        {
-          id: 2,
-          importId,
-          fileInfo: { path: '/path/to', name: 'file3.txt' },
-        },
-      ]);
+    it('should delete removed files from the database and clean up their files', async () => {
+      ImportFile.findAll
+        .mockResolvedValueOnce([
+          {
+            id: 2,
+            importId,
+            fileInfo: { path: '/path/to', name: 'file3.txt' },
+          },
+        ])
+        // the files linked to the import files being removed
+        .mockResolvedValueOnce([{ fileId: 7 }]);
       await recordAvailableFiles(importId, availableFiles);
 
       expect(ImportFile.destroy).toHaveBeenCalledWith({
@@ -580,6 +588,7 @@ describe('record', () => {
         individualHooks: true,
         lock: true,
       });
+      expect(removeOrphanedFiles).toHaveBeenCalledWith([7]);
     });
 
     it('should handle when there are no new, or removed files', async () => {

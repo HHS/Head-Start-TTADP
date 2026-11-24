@@ -10,6 +10,7 @@ import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import { createEvent, destroyEvent, updateEvent } from '../services/event';
 import { createFileMetaData, updateStatus } from '../services/files';
+import { addDeleteFileToQueue } from '../services/s3Queue';
 import addToScanQueue from '../services/scanQueue';
 import { createSession } from '../services/sessionReports';
 import { userById } from '../services/users';
@@ -293,6 +294,7 @@ type QueueExerciseDeps = {
   createFileMetaData: typeof createFileMetaData;
   updateStatus: typeof updateStatus;
   addToScanQueue: typeof addToScanQueue;
+  addDeleteFileToQueue: typeof addDeleteFileToQueue;
   uploadFile: typeof uploadFile;
   downloadFile: typeof downloadFile;
   deleteFileFromS3: typeof deleteFileFromS3;
@@ -315,6 +317,7 @@ const defaultDeps: QueueExerciseDeps = {
   createFileMetaData,
   updateStatus,
   addToScanQueue,
+  addDeleteFileToQueue,
   uploadFile,
   downloadFile,
   deleteFileFromS3,
@@ -1240,7 +1243,8 @@ export async function runQueueExerciseLive(
         summary.flows.scan.error = 'Timed out waiting for scan terminal status';
       }
 
-      await deps.File.destroy({ where: { id: file.id }, individualHooks: true });
+      await deps.File.destroy({ where: { id: file.id } });
+      await deps.addDeleteFileToQueue(file.id, key);
       const s3DeleteCheck = await waitForCondition(
         async () => {
           try {
@@ -1521,7 +1525,8 @@ export async function runQueueExerciseLive(
         try {
           const file = await deps.File.findByPk(createdFileId);
           if (file) {
-            await deps.File.destroy({ where: { id: createdFileId }, individualHooks: true });
+            await deps.File.destroy({ where: { id: createdFileId } });
+            await deps.addDeleteFileToQueue(createdFileId, createdFileKey);
           }
         } catch (error) {
           summary.cleanup.passed = false;
