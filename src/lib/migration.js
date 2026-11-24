@@ -211,6 +211,9 @@ const dropAndRecreateEnum = async (
 };
 
 /**
+ * Legacy: only for migrations that ran while Users.flags was an enum array (before
+ * 20261120150000-change-users-flags-to-varchar-array). Use removeUsersFlags for new migrations.
+ *
  * Updates all users' flags by removing specified values and adding values from a
  * given set of feature flags.
  * If no set is provided, the default FEATURE_FLAGS constant is used.
@@ -285,6 +288,31 @@ const updateUsersFlagsEnum = async (
 };
 
 /**
+ * Removes feature flags from every user. Use this in a migration when a flag is retired from
+ * FEATURE_FLAGS, so the User model's validation doesn't reject users still holding the old value.
+ * Adding a flag needs no migration; just add it to FEATURE_FLAGS.
+ *
+ * @param {sequelize.queryInterface} queryInterface
+ * @param {sequelize.transaction} transaction
+ * @param {string[]} flagsToRemove
+ * @returns Promise<any>
+ */
+const removeUsersFlags = async (queryInterface, transaction, flagsToRemove = []) => {
+  if (!flagsToRemove.length) {
+    return null;
+  }
+
+  return queryInterface.sequelize.query(
+    `
+    UPDATE "Users"
+      SET "flags" = ARRAY(SELECT f FROM unnest("flags") AS f WHERE f <> ALL(ARRAY[:flags]::VARCHAR(255)[]))
+      WHERE "flags" && ARRAY[:flags]::VARCHAR(255)[];
+  `,
+    { transaction, replacements: { flags: flagsToRemove } }
+  );
+};
+
+/**
  * Updates the sequence of a given table to the next value greater than the current maximum value
  * in the specified column. This function is designed to be used with a PostgreSQL database.
  *
@@ -351,6 +379,7 @@ module.exports = {
   dropAndRecreateEnum,
   addValuesToEnumIfTheyDontExist,
   updateUsersFlagsEnum,
+  removeUsersFlags,
   replaceValueInArray,
   replaceValueInJSONBArray,
   updateSequence,

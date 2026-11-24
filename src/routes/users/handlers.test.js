@@ -314,7 +314,7 @@ describe('User handlers', () => {
     const request = {
       ...mockRequest,
       body: {
-        flag: 'anv_statistics',
+        flag: 'quality_assurance_dashboard',
         on: false,
       },
     };
@@ -334,6 +334,17 @@ describe('User handlers', () => {
       });
       await setFeatureFlag(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('rejects an unknown flag with a 400', async () => {
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
+      setFlag.mockClear();
+      const json = jest.fn();
+      const response = { ...mockResponse, status: jest.fn(() => ({ json })) };
+      await setFeatureFlag({ ...request, body: { flag: 'not_a_flag', on: true } }, response);
+      expect(response.status).toHaveBeenCalledWith(400);
+      expect(json).toHaveBeenCalledWith({ message: 'Invalid feature flag: not_a_flag' });
+      expect(setFlag).not.toHaveBeenCalled();
     });
 
     it('calls the error handler on error', async () => {

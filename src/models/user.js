@@ -160,8 +160,30 @@ export default (sequelize, DataTypes) => {
         },
       },
       flags: {
-        type: DataTypes.ARRAY(DataTypes.ENUM(FEATURE_FLAGS)),
-        defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
+        // A string array rather than an enum array: Sequelize caches enum OIDs at startup, so
+        // enum arrays come back as raw strings after a DB restore until the app restarts.
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        // An untyped '{}' literal rather than [], which Sequelize can inline as
+        // ARRAY[]::VARCHAR(255)[] (e.g. findOrCreate's insert). That typed expression can't be
+        // assigned to the legacy enum-array column, so it would break sign-ins between deploy and
+        // migration; '{}' is valid for either column type.
+        defaultValue: sequelize.literal("'{}'"),
+        validate: {
+          flagsValid(value) {
+            if (value === null || value === undefined) {
+              return;
+            }
+            if (!Array.isArray(value)) {
+              throw new Error('Flags must be an array');
+            }
+            const allowed = new Set(FEATURE_FLAGS);
+            value.forEach((flag) => {
+              if (!allowed.has(flag)) {
+                throw new Error(`Invalid feature flag: ${flag}`);
+              }
+            });
+          },
+        },
       },
       fullName: {
         type: DataTypes.VIRTUAL,

@@ -110,7 +110,10 @@ export function processEnum(name, table, schemaEnum, modelEnum) {
  */
 export function normalizeColumnDefault(dbDefault) {
   if (typeof dbDefault !== 'string') return dbDefault;
-  const withoutCast = dbDefault.replace(/::(?:"[^"]+"|[a-z_][a-z0-9_ ]*(?:\([0-9, ]*\))?)$/i, '');
+  const withoutCast = dbDefault.replace(
+    /::(?:"[^"]+"|[a-z_][a-z0-9_ ]*(?:\([0-9, ]*\))?)(?:\[\])*$/i,
+    ''
+  );
   const match = withoutCast.match(/^'((?:[^']|'')*)'$/s);
   return match ? match[1].replace(/''/g, "'") : withoutCast;
 }
@@ -172,7 +175,19 @@ export function processClassDefinition(schema, key) {
         !(
           normalizedDefault === modelField.defaultValue ||
           normalizedDefault === modelField.defaultValue?.toString() ||
-          field.default === modelField.defaultValue?.val
+          // Only an empty array maps unambiguously to PostgreSQL's '{}'; joining elements would
+          // make ['a,b'] look like the two-element '{a,b}'.
+          (Array.isArray(modelField.defaultValue) &&
+            modelField.defaultValue.length === 0 &&
+            normalizedDefault === '{}') ||
+          field.default === modelField.defaultValue?.val ||
+          // A literal that is only a single-quoted constant (`'{}'`) lets the column supply the
+          // type, so compare it with the DB default's cast stripped. Any other literal (a cast
+          // constant, or an expression like `now()`) is still compared as-is above, so a cast that
+          // changes its meaning (`now()::date`) isn't normalized away.
+          (typeof modelField.defaultValue?.val === 'string' &&
+            /^'(?:[^']|'')*'$/s.test(modelField.defaultValue.val) &&
+            normalizedDefault === normalizeColumnDefault(modelField.defaultValue.val))
         ) &&
         field.default !== '<generated>' &&
         !(

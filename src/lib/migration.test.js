@@ -5,6 +5,7 @@ const {
   replaceValueInArray,
   replaceValueInJSONBArray,
   updateUsersFlagsEnum,
+  removeUsersFlags,
   dropAndRecreateEnum,
   updateSequence,
   addValuesToEnumIfTheyDontExist,
@@ -240,6 +241,30 @@ describe('migration', () => {
         transaction,
       });
       expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(3); // Only the EXISTS check
+    });
+  });
+
+  describe('removeUsersFlags', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('removes the given flags from users using bound replacements', async () => {
+      await removeUsersFlags(queryInterface, transaction, ['old_flag', 'other_flag']);
+      expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(1);
+      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE "Users"'),
+        {
+          transaction,
+          replacements: { flags: ['old_flag', 'other_flag'] },
+        }
+      );
+    });
+
+    it('does nothing when no flags are given', async () => {
+      const result = await removeUsersFlags(queryInterface, transaction, []);
+      expect(result).toBeNull();
+      expect(queryInterface.sequelize.query).not.toHaveBeenCalled();
     });
   });
 

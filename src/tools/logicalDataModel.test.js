@@ -217,6 +217,150 @@ describe('logicalDataModel', () => {
       const issue = processClassDefinition(schema, 'ImportDataFiles');
       expect(issue).not.toContain("!issue='column default does not match model'");
     });
+
+    it('does not flag an array default that matches a JS array model default', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            flags: {
+              type: { toString: () => 'VARCHAR(255)[]' },
+              defaultValue: [],
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'flags',
+            type: 'varchar(255)[]',
+            allowNull: true,
+            default: "'{}'::character varying[]",
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Users');
+      expect(issue).not.toContain("!issue='column default does not match model'");
+    });
+
+    it('flags a non-empty JS array model default even when it looks like the DB default', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            flags: {
+              type: { toString: () => 'VARCHAR(255)[]' },
+              defaultValue: ['a,b'],
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'flags',
+            type: 'varchar(255)[]',
+            allowNull: true,
+            default: "'{a,b}'::character varying[]",
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Users');
+      expect(issue).toContain("!issue='column default does not match model'");
+    });
+
+    it('does not flag an uncast literal model default that matches a cast DB default', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            flags: {
+              type: { toString: () => 'VARCHAR(255)[]' },
+              defaultValue: { val: "'{}'" },
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'flags',
+            type: 'varchar(255)[]',
+            allowNull: true,
+            default: "'{}'::character varying[]",
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Users');
+      expect(issue).not.toContain("!issue='column default does not match model'");
+    });
+
+    it('flags an uncast literal model default that does not match the DB default', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            flags: {
+              type: { toString: () => 'VARCHAR(255)[]' },
+              defaultValue: { val: "'{}'" },
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'flags',
+            type: 'varchar(255)[]',
+            allowNull: true,
+            default: "'{a}'::character varying[]",
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Users');
+      expect(issue).toContain("!issue='column default does not match model'");
+    });
+
+    it('flags an expression literal model default when the DB default casts it', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            startDate: {
+              type: { toString: () => 'TIMESTAMP WITH TIME ZONE' },
+              defaultValue: { val: 'now()' },
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'startDate',
+            type: 'timestamp with time zone',
+            allowNull: true,
+            default: 'now()::date',
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Events');
+      expect(issue).toContain("!issue='column default does not match model'");
+    });
+
+    it('flags an array default that does not match a JS array model default', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            flags: {
+              type: { toString: () => 'VARCHAR(255)[]' },
+              defaultValue: [],
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'flags',
+            type: 'varchar(255)[]',
+            allowNull: true,
+            default: "'{a}'::character varying[]",
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Users');
+      expect(issue).toContain("!issue='column default does not match model'");
+    });
   });
 
   describe('normalizeColumnDefault', () => {
@@ -226,6 +370,10 @@ describe('logicalDataModel', () => {
 
     it('strips a ::character varying cast', () => {
       expect(normalizeColumnDefault("'draft'::character varying")).toBe('draft');
+    });
+
+    it('strips an array cast', () => {
+      expect(normalizeColumnDefault("'{}'::character varying[]")).toBe('{}');
     });
 
     it('strips a length-qualified cast', () => {
