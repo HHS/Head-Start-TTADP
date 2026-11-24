@@ -7,7 +7,10 @@ import {
   createTrainingReport,
   createUser,
 } from '../testUtils';
-import trSessionsForRecipient from './trSessionsForRecipient';
+import trSessionsForRecipient, {
+  getRecipientGrantIds,
+  sessionRecipientGrantFilter,
+} from './trSessionsForRecipient';
 
 const { EventReportPilot, Grant, Recipient, SessionReportPilot, User } = db;
 
@@ -221,6 +224,29 @@ describe('TR sessions for recipient widget', () => {
     expect(data.sumDuration).toBe(0);
     expect(data.numParticipants).toBe(0);
     expect(data.numInPerson).toBe(0);
+  });
+
+  it('deduplicates and validates grant IDs before building the session filter', async () => {
+    const findAll = jest
+      .spyOn(Grant, 'findAll')
+      .mockResolvedValue([
+        { id: 12 },
+        { id: '13' },
+        { id: '13' },
+        { id: 0 },
+        { id: -1 },
+        { id: 'not-an-id' },
+        { id: '12, 14' },
+      ] as never);
+
+    try {
+      const grantIds = await getRecipientGrantIds({ grant: { where: {} } } as any);
+
+      expect(grantIds).toEqual([12, 13]);
+      expect(sessionRecipientGrantFilter(grantIds).val).toContain('IN (12, 13)');
+    } finally {
+      findAll.mockRestore();
+    }
   });
 
   it('sums hybrid session participants from in-person + virtual counts', async () => {

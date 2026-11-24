@@ -49,7 +49,9 @@ export async function getRecipientGrantIds(scopes: IScopes): Promise<number[]> {
     raw: true,
   })) as { id: number }[];
 
-  return [...new Set(grants.map((g) => g.id))];
+  return [...new Set(grants.map((g) => Number(g.id)))].filter(
+    (id) => Number.isInteger(id) && id > 0
+  );
 }
 
 /**
