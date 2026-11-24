@@ -183,6 +183,16 @@ const instantProcessors = [
 
 This registers the handler so Bull dispatches jobs of this type to your new function.
 
+**Also add a case to `logEmailNotification`** (`src/lib/mailer/logNotifications.js`). The queue's `completed`/`failed` handlers write a `MailerLog` row for every instant job by switching on `job.name`. Without a case, every send logs `Unable to create a log notification record: Error: Unknown job name: <action>` and no audit row is written:
+
+```js
+case EMAIL_ACTIONS.MY_NEW_EVENT:
+  emailTo = [data.recipient.email];
+  template = path.resolve(emailTemplatePath, 'my_new_event', 'subject.pug');
+  templateLocals = { ...report, isResubmission: data.isResubmission }; // whatever subject.pug reads
+  break;
+```
+
 ---
 
 ### 6. Write the trigger helper (`src/lib/mailer/index.js`)
@@ -286,6 +296,8 @@ describe('myNewEventNotification', () => {
 });
 ```
 
+**Mailer log test** (`src/lib/mailer/logNotifications.test.js`): call `logEmailNotification` with a job of your new action name. Mock `createMailerLog` and assert the `emailTo` and rendered `subject`.
+
 **Integration test** (if testing the fan-out at the call site):
 
 ```js
@@ -330,6 +342,7 @@ Columns: Constant name | Setting key | Recipient | Trigger | Template folder
 - [ ] Email template folder created with `html.pug` and `subject.pug` (minimum)
 - [ ] Handler function `notifyMyNewEvent` written with `SEND_NOTIFICATIONS` guard and `sendIfEnabled` wrapper
 - [ ] Handler registered in `instantProcessors` array inside `processNotificationQueue`
+- [ ] `case` added to `logEmailNotification` in `src/lib/mailer/logNotifications.js` (with a test)
 - [ ] Trigger helper `myNewEventNotification` exported from `src/lib/mailer/index.js`
 - [ ] Trigger called from correct call site with preference-check fan-out (for multi-recipient)
 - [ ] Tests written for handler and trigger

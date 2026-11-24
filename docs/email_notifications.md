@@ -380,7 +380,21 @@ const instantProcessors = [
 ];
 ```
 
-**5. Write the trigger helper** (call from wherever the event occurs):
+**5. Add a case to `logEmailNotification`** (`src/lib/mailer/logNotifications.js`):
+
+`onCompletedNotification` and `onFailedNotification` write a `MailerLog` row for every instant job by switching on `job.name`. An action without a case falls through to `default` and logs `Unable to create a log notification record: Error: Unknown job name: ...`. The email still sends, but no `MailerLog` row is written.
+
+```js
+case EMAIL_ACTIONS.MY_NEW_EVENT:
+  emailTo = [data.someUser.email];
+  template = path.resolve(emailTemplatePath, 'my_new_event', 'subject.pug');
+  templateLocals = { ...report, someLocal: data.someLocal }; // whatever subject.pug reads
+  break;
+```
+
+Add a matching test in `src/lib/mailer/logNotifications.test.js` that checks the recipient and the rendered subject.
+
+**6. Write the trigger helper** (call from wherever the event occurs):
 
 ```js
 export const myNewEventNotification = (report, someUser) => {
@@ -388,7 +402,7 @@ export const myNewEventNotification = (report, someUser) => {
 };
 ```
 
-**6. Invoke the trigger** from your service or route handler.
+**7. Invoke the trigger** from your service or route handler.
 
 When the notification targets a set of users (e.g. collaborators), filter by preference _before_ calling the helper to avoid notifying users who opted out:
 
@@ -561,6 +575,7 @@ The `trainingReportTaskDueNotifications` function (called by the daily cron job 
 - **Successful delivery** — `onCompletedNotification` logs at `info` level and calls `logEmailNotification` / `logDigestEmailNotification`.
 - **Delivery failure** — `onFailedNotification` logs at `error` level via `auditLogger` and the same log helpers.
 - **Suppressed sends** — when `sendIfEnabled` returns `null` (notifications disabled or empty recipient list), `onCompletedNotification` logs a "Did not send … preferences are not set or marked as no-send" message.
+- **`MailerLog` records** — `logEmailNotification` only handles actions that have a `case` in its `switch`. An instant action without one logs `Unknown job name` and writes no record (see step 5 of [New instant notification](#new-instant-notification)).
 - **All logs** use the shared `logger` and `auditLogger` from `src/logger.js`.
 
 --- 
