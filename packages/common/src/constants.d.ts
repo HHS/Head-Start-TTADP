@@ -35,6 +35,7 @@ export const NOTIFICATION_TYPES: {
   readonly TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR: 'trainingReportSessionSubmittedCollaborator';
   readonly TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction';
   readonly TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR: 'trainingReportSessionNeedsActionCollaborator';
+  readonly TRAINING_REPORT_SESSION_NEEDS_ACTION_POC: 'trainingReportSessionNeedsActionPoc';
   readonly TRAINING_REPORT_SESSION_RESUBMITTED: 'trainingReportSessionResubmitted';
   readonly TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted';
   readonly TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications';
@@ -97,6 +98,7 @@ export const EMAIL_NOTIFICATION_SETTING_KEYS: readonly [
   'emailWhenSessionSubmittedCollaboratorTrainingReport',
   'emailWhenSessionReviewRequestedTrainingReport',
   'emailWhenSessionChangesRequestedTrainingReport',
+  'emailWhenEventImportedTrainingReport',
   'emailWhenSessionDetails20DaysCreatorCollaborator',
   'emailWhenSessionDetails20DaysPoc',
   'emailWhenNoSessionsCreatorCollaborator',
@@ -131,6 +133,7 @@ export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
   'inAppWhenSessionSubmittedCollaboratorTrainingReport',
   'inAppWhenSessionReviewRequestedTrainingReport',
   'inAppWhenSessionChangesRequestedTrainingReport',
+  'inAppWhenEventImportedTrainingReport',
   'inAppWhenSessionDetails20DaysCreatorCollaborator',
   'inAppWhenSessionDetails20DaysPoc',
   'inAppWhenNoSessionsCreatorCollaborator',

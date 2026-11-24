@@ -26,4 +26,16 @@ describe('shared package compatibility across parallel releases', () => {
       'inAppWhenSessionSubmittedCollaboratorTrainingReport'
     );
   });
+
+  it('preserves the TR event imported preferences and the POC session needs action type', () => {
+    expect(common.NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC).toBe(
+      'trainingReportSessionNeedsActionPoc'
+    );
+    expect(common.EMAIL_NOTIFICATION_SETTING_KEYS).toContain(
+      'emailWhenEventImportedTrainingReport'
+    );
+    expect(common.IN_APP_NOTIFICATION_SETTING_KEYS).toContain(
+      'inAppWhenEventImportedTrainingReport'
+    );
+  });
 });

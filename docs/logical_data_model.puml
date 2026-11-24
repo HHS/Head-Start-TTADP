@@ -1347,7 +1347,7 @@ class SessionReportPilots{
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
  endDate : date
-!issue='column missing from model' <color:#d54309>needsActionAt</color>: timestamp with time zone
+ needsActionAt : timestamp with time zone
  startDate : date
  submittedAt : timestamp with time zone
 }

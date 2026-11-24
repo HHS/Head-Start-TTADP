@@ -22,6 +22,13 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 2.4.29
+
+Adds the Training Report notification keys for TR-28 (a Training Report imported where the user is
+the Event Creator): `emailWhenEventImportedTrainingReport` in `EMAIL_NOTIFICATION_SETTING_KEYS` and
+`inAppWhenEventImportedTrainingReport` in `IN_APP_NOTIFICATION_SETTING_KEYS`. Adds
+`NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC` (TR-4e). Built on 2.4.28.
+
 ## 2.4.28
 
 Splits a TTA request's reviewers from its approvers in `src/ttaRequests.d.ts`: the response
