@@ -32,12 +32,39 @@ const purifyConfig = {
   ALLOWED_ATTR: [],
 };
 
+// Opt-in configuration for rich text whose editor has a link button (site alerts).
+// DOMPurify's default URI check still strips unsafe hrefs (e.g. javascript:).
+const purifyConfigWithLinks = {
+  ALLOWED_TAGS: [...purifyConfig.ALLOWED_TAGS, 'a'],
+  ALLOWED_ATTR: ['href', 'target'],
+};
+
+const ALLOWED_LINK_TARGETS = ['_blank', '_self'];
+
+// Separate instance so the link hook never runs for the default configuration
+const LinkDOMPurify = createDOMPurify(window);
+LinkDOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName !== 'A' || !node.hasAttribute('target')) {
+    return;
+  }
+
+  if (!ALLOWED_LINK_TARGETS.includes(node.getAttribute('target'))) {
+    node.removeAttribute('target');
+  } else if (node.getAttribute('target') === '_blank') {
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
+const purify = (value) => DOMPurify.sanitize(value, purifyConfig);
+const purifyWithLinks = (value) => LinkDOMPurify.sanitize(value, purifyConfigWithLinks);
+
 /**
  * Sanitize a string value by decoding and purifying
  * @param {string} value - The value to sanitize
+ * @param {function} purifyFn - The purifier to apply
  * @returns {string} The sanitized value
  */
-const sanitizeString = (value) => {
+const sanitizeString = (value, purifyFn = purify) => {
   // Return empty strings as-is to avoid unnecessary processing
   if (value === '') {
     return '';
@@ -45,10 +72,10 @@ const sanitizeString = (value) => {
 
   try {
     const decoded = decodeURIComponent(value);
-    return DOMPurify.sanitize(decoded, purifyConfig);
+    return purifyFn(decoded);
   } catch (e) {
     // If decoding fails, sanitize the original value
-    return DOMPurify.sanitize(value, purifyConfig);
+    return purifyFn(value);
   }
 };
 
@@ -57,10 +84,11 @@ const sanitizeString = (value) => {
  * @param {any} obj - The object to sanitize
  * @param {number} depth - Current recursion depth (internal use)
  * @param {number} maxDepth - Maximum allowed recursion depth (default: 100)
+ * @param {function} purifyFn - The purifier to apply to strings
  * @returns {any} The sanitized object
  * @throws {Error} If maximum recursion depth is exceeded
  */
-const sanitizeObject = (obj, depth = 0, maxDepth = 100) => {
+const sanitizeObject = (obj, depth = 0, maxDepth = 100, purifyFn = purify) => {
   if (depth > maxDepth) {
     throw new Error(`Sanitization depth limit exceeded: maximum depth is ${maxDepth}`);
   }
@@ -70,17 +98,17 @@ const sanitizeObject = (obj, depth = 0, maxDepth = 100) => {
   }
 
   if (typeof obj === 'string') {
-    return sanitizeString(obj);
+    return sanitizeString(obj, purifyFn);
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => sanitizeObject(item, depth + 1, maxDepth));
+    return obj.map((item) => sanitizeObject(item, depth + 1, maxDepth, purifyFn));
   }
 
   if (typeof obj === 'object') {
     const sanitized = {};
     Object.keys(obj).forEach((key) => {
-      sanitized[key] = sanitizeObject(obj[key], depth + 1, maxDepth);
+      sanitized[key] = sanitizeObject(obj[key], depth + 1, maxDepth, purifyFn);
     });
     return sanitized;
   }
@@ -94,11 +122,15 @@ const sanitizeObject = (obj, depth = 0, maxDepth = 100) => {
  * Validates payload size and recursively sanitizes all string values in the request body
  * @param {number} maxBodySize - Maximum allowed request body size in bytes (default: 1MB)
  * @param {number} maxDepth - Maximum allowed recursion depth (default: 100)
+ * @param {object} options
+ * @param {boolean} options.allowLinks - Keep <a href> (with a safe target) in rich text.
+ *   Only for routes whose editor offers a link button (site alerts).
  * @returns {function} Express middleware function
  */
 const sanitizeRequestBody =
-  (maxBodySize = 1000000, maxDepth = 100) =>
+  (maxBodySize = 1000000, maxDepth = 100, { allowLinks = false } = {}) =>
   (req, res, next) => {
+    const purifyFn = allowLinks ? purifyWithLinks : purify;
     try {
       // Only sanitize if there is a body and it's an object (not for file uploads, etc.)
       if (req.body && typeof req.body === 'object') {
@@ -117,7 +149,7 @@ const sanitizeRequestBody =
         }
 
         // Sanitize with depth limit
-        req.body = sanitizeObject(req.body, 0, maxDepth);
+        req.body = sanitizeObject(req.body, 0, maxDepth, purifyFn);
       }
 
       next();

@@ -259,6 +259,65 @@ describe('sanitizeRequestBody middleware', () => {
     expect(next).toHaveBeenCalled();
   });
 
+  it('should strip links by default', () => {
+    req.body = {
+      message: '<p>Join us. <a href="https://example.com/signup" target="_blank">Sign up</a></p>',
+    };
+
+    middleware(req, res, next);
+
+    expect(req.body.message).toEqual('<p>Join us. Sign up</p>');
+    expect(next).toHaveBeenCalled();
+  });
+
+  describe('with allowLinks', () => {
+    beforeEach(() => {
+      middleware = sanitizeRequestBody(undefined, undefined, { allowLinks: true });
+    });
+
+    it('should retain links', () => {
+      req.body = {
+        message:
+          '<p>Join us. <a href="https://example.com/signup" target="_self">Sign up</a> or <a href="mailto:a@example.com">email us</a>.</p>',
+      };
+
+      middleware(req, res, next);
+
+      expect(req.body.message).toContain(
+        '<a href="https://example.com/signup" target="_self">Sign up</a>'
+      );
+      expect(req.body.message).toContain('<a href="mailto:a@example.com">email us</a>');
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should add rel to links that open in a new window', () => {
+      req.body = { message: '<a href="https://example.com" target="_blank">Example</a>' };
+
+      middleware(req, res, next);
+
+      expect(req.body.message).toEqual(
+        '<a href="https://example.com" target="_blank" rel="noopener noreferrer">Example</a>'
+      );
+    });
+
+    it('should strip unsafe link hrefs, targets and attributes', () => {
+      req.body = {
+        // eslint-disable-next-line no-script-url
+        script: '<a href="javascript:alert(1)">bad</a>',
+        frame: '<a href="https://example.com" target="evil-frame">frame</a>',
+        handler: '<a href="https://example.com" onclick="alert(1)" style="color:red">handler</a>',
+        nested: { items: ['<script>alert(1)</script><a href="https://example.com">ok</a>'] },
+      };
+
+      middleware(req, res, next);
+
+      expect(req.body.script).toEqual('<a>bad</a>');
+      expect(req.body.frame).toEqual('<a href="https://example.com">frame</a>');
+      expect(req.body.handler).toEqual('<a href="https://example.com">handler</a>');
+      expect(req.body.nested.items[0]).toEqual('<a href="https://example.com">ok</a>');
+    });
+  });
+
   it('should handle errors and log them with winston logger', () => {
     // Create an object that throws when trying to iterate over keys
     req.body = new Proxy(

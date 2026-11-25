@@ -13,7 +13,6 @@ import SiteAlert from '../../../components/SiteAlert';
 import { createSiteAlert, saveSiteAlert } from '../../../fetchers/Admin';
 import { getEditorState } from '../../../utils';
 import editorLinkCallback from '../../../utils/editorLinkCallback';
-import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
 
@@ -117,6 +116,7 @@ export default function AlertReview({ alert, onDelete }) {
             position: isEditable ? 'sticky' : 'relative',
             top: isEditable ? `${offset}px` : 'auto',
             zIndex: 2,
+            background: 'transparent'
           }}
           variant={variant}
         >
@@ -306,10 +306,8 @@ export default function AlertReview({ alert, onDelete }) {
       ) : null}
       {notification && notification.message && notification.state ? (
         <div className="margin-top-3">
-          <Alert type={notification.state} slim>
-            <div className="usa-alert__body">
-              <p className="usa-alert__text">{notification.message}</p>
-            </div>
+          <Alert type={notification.state} headingLevel="h4">
+            {notification.message}
           </Alert>
         </div>
       ) : null}

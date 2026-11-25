@@ -72,29 +72,6 @@ returns the snippet to show. See the
 Tip: to convert an old `.figma.tsx` parser file, run `yarn figma connect migrate`
 and then simplify the generated template.
 
-## The Alert pilot & its known gaps
-
-`Alert.figma.ts` maps the design library **Alert** set (`node-id 1786:15733`)
-to the trussworks `Alert`. Only the `State` variant is mapped (→ `type`). Two
-Figma variants have **no 1:1 code equivalent** and are intentionally left
-unmapped — resolve as `[NEEDS DECISION]` with design before mapping:
-- `Type=List` — trussworks `Alert` has no list variant; a list is just markup
-  passed as `children`.
-- `Type=Dismissable` — trussworks `Alert` has no native dismiss control.
-
-## Homepage mapping
-
-`HomePageLink.figma.ts` maps the Actionable Notifications file's Widget
-(`720:57116`) to the reusable homepage card. It reads the title, description,
-and action label from text descendants. Navigation targets, icon definitions,
-and same-tab external-link behavior are application-owned inputs; the example
-accepts those typed values rather than assigning every widget the same URL.
-
-On 2026-09-21, Figma suggested an additional Widget (`1275:67878`), Icons
-(`1:11`), and Button (`38:3571`), but its context API could not resolve those
-source IDs. Their mappings remain a follow-up requiring valid source component
-links. Local parsing validates template packaging, not execution against live
-Figma instances. No mappings are published by `yarn figma:parse`.
 
 ## Publishing
 

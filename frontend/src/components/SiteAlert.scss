@@ -1,29 +1,83 @@
-@use '../colors.scss' as *;
+@use "../colors.scss" as *;
 
-@media (min-width: 64rem) {     
-    .usa-site-alert--ttahub__standard .usa-alert__body,
-    .usa-site-alert--ttahub__slim .usa-alert__body {
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        grid-gap: 0.5rem;    
-        justify-content: left;
-    }
 
-    .has-alerts .usa-site-alert--ttahub .usa-alert {
-        margin-left: 17.5rem;
-    }
+/* Unfortunately, these are overrides of internals on the Trussworks
+ * component and cannot be accomplished via utility classes */
 
-    .has-alerts .usa-site-alert--ttahub .usa-alert::before {
-        left: 0;
-    }
+.usa-site-alert.usa-site-alert--ttahub .usa-alert {
+  border-left: 0;
+  padding: 0;
+}
 
-    .has-alerts .usa-site-alert--ttahub__slim .usa-alert::before {
-        top: -0.5rem;
-    }
+.usa-site-alert.usa-site-alert--ttahub .usa-alert .usa-alert__body {
+  align-items: flex-start;
+  display: flex;
+  font-size: 1rem;
+  gap: 1rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: none;
+  padding: 1rem;
+}
 
-    .has-alerts .usa-site-alert--ttahub .usa-alert__body {
-        padding-left: 3rem;
-    }
+.usa-site-alert.usa-site-alert--ttahub__slim .usa-alert .usa-alert__body {
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+// Keep the USWDS icon in the layout flow so it can never overlap the text
+.usa-site-alert.usa-site-alert--ttahub .usa-alert .usa-alert__body::before {
+  -webkit-mask-size: 1.25rem 1.25rem;
+  background-size: 1.25rem 1.25rem;
+  flex: 0 0 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  mask-size: 1.25rem 1.25rem;
+  position: static;
+  width: 1.25rem;
+}
+
+// in the page header, line up with the main content column:
+// tablet/desktop offset-nav margin + AppWrapper padding
+@media (min-width: 40em) {
+  .smart-hub-header .usa-site-alert.usa-site-alert--ttahub .usa-alert .usa-alert__body {
+    padding-left: 12.5rem;
+  }
+}
+
+@media (min-width: 64em) {
+  .smart-hub-header .usa-site-alert.usa-site-alert--ttahub .usa-alert .usa-alert__body {
+    padding-left: 17.5rem;
+  }
+}
+
+// rich text message continues the heading's line
+.usa-site-alert--ttahub .rdw-editor-wrapper,
+.usa-site-alert--ttahub .rdw-editor-main,
+.usa-site-alert--ttahub .DraftEditor-root,
+.usa-site-alert--ttahub .DraftEditor-editorContainer,
+.usa-site-alert--ttahub .public-DraftEditor-content,
+.usa-site-alert--ttahub .public-DraftEditor-content > div {
+  display: inline;
+}
+
+.usa-site-alert--ttahub .public-DraftStyleDefault-block {
+  margin: 0;
+}
+
+// only the first paragraph continues the heading's line
+.usa-site-alert--ttahub .public-DraftEditor-content > div > :first-child,
+.usa-site-alert--ttahub
+  .public-DraftEditor-content
+  > div
+  > :first-child
+  .public-DraftStyleDefault-block {
+  display: inline;
+}
+
+.usa-site-alert.usa-site-alert--info .usa-alert a {
+  color: $text-link;
+  text-decoration: underline;
 }
 
 .usa-site-alert--ttahub.usa-site-alert--emergency,
@@ -31,18 +85,28 @@
   background-color: $error-dark;
 }
 
-.usa-site-alert--ttahub__slim .usa-alert {
-  padding-bottom: 0.5rem;
-  padding-top: 0.5rem;
+.usa-site-alert.usa-site-alert--emergency .usa-alert a {
+  color: white;
+  text-decoration: underline;
 }
 
-.usa-site-alert--ttahub__standard .usa-alert__heading,
-.usa-site-alert--ttahub__slim .usa-alert__heading {
-   font-size: 1.06rem;
-   line-height: 1.5;
-   margin: 0;
+
+.usa-site-alert.usa-site-alert--ttahub__large .usa-alert .usa-alert__body::before {
+  margin-top: 0.1875rem;
 }
 
-.usa-site-alert--ttahub .public-DraftStyleDefault-block {
-    margin: 0;
+.usa-site-alert--ttahub__large .usa-alert__text .rdw-editor-wrapper,
+.usa-site-alert--ttahub__large .usa-alert__text .rdw-editor-main,
+.usa-site-alert--ttahub__large .usa-alert__text .DraftEditor-root,
+.usa-site-alert--ttahub__large .usa-alert__text .DraftEditor-editorContainer,
+.usa-site-alert--ttahub__large .usa-alert__text .public-DraftEditor-content,
+.usa-site-alert--ttahub__large .usa-alert__text .public-DraftEditor-content > div,
+.usa-site-alert--ttahub__large .usa-alert__text .public-DraftEditor-content > div > :first-child,
+.usa-site-alert--ttahub__large
+  .usa-alert__text
+  .public-DraftEditor-content
+  > div
+  > :first-child
+  .public-DraftStyleDefault-block {
+  display: block;
 }

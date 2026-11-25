@@ -47,11 +47,19 @@ authMiddleware.unless = unless;
 const sanitizeMiddleware = sanitizeRequestBody();
 sanitizeMiddleware.unless = unless;
 
+// The site alert editor is the only rich text editor with a link button, so only
+// admin site alert requests keep links. Everything else uses the strict default.
+const SITE_ALERT_ADMIN_PATH = /^\/api\/admin\/alerts(\/|$)/;
+const sanitizeSiteAlertMiddleware = sanitizeRequestBody(undefined, undefined, {
+  allowLinks: true,
+});
+
 const router = express.Router();
 
 router.use(httpContext.middleware);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
-router.use(sanitizeMiddleware.unless({ path: ['/api/files'] }));
+router.use(sanitizeMiddleware.unless({ path: ['/api/files', SITE_ALERT_ADMIN_PATH] }));
+router.use('/admin/alerts', sanitizeSiteAlertMiddleware);
 
 router.use((req, _res, next) => {
   try {
