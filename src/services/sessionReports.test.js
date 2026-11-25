@@ -42,7 +42,9 @@ jest.mock('./files', () => ({
   removeOrphanedFiles: jest.fn(),
 }));
 jest.mock('../lib/mailer', () => ({
+  trCollaboratorAdded: jest.fn(),
   trEventComplete: jest.fn(),
+  trOwnerAdded: jest.fn(),
   trPocAdded: jest.fn(),
   trSessionSubmittedToCollaborators: jest.fn(),
 }));
