@@ -25,7 +25,11 @@ type Interval = { start: string | null; end: string | null };
 const ISO_DATE = 'YYYY-MM-DD';
 
 function parseFilterDate(value: string) {
-  const date = moment(value, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+  const date = moment(
+    value.trim(),
+    ['YYYY/MM/DD', ISO_DATE, 'YYYY/M/D', 'YYYY-M-D', 'MM/DD/YYYY', 'M/D/YYYY'],
+    true
+  );
   return date.isValid() ? date.format(ISO_DATE) : null;
 }
 
@@ -39,11 +43,15 @@ function filterInterval(condition: string, query: string): Interval | null {
     const end = parseFilterDate(query);
     return end ? { start: null, end } : null;
   }
-  const [startDate, endDate, ...extra] = query.split('-');
-  if (extra.length) return null;
-  const start = parseFilterDate(startDate);
-  const end = endDate ? parseFilterDate(endDate) : null;
-  return start && end && start <= end ? { start, end } : null;
+  const candidates: Interval[] = [];
+  for (let index = 1; index < query.length; index += 1) {
+    if (query[index] === '-') {
+      const start = parseFilterDate(query.slice(0, index));
+      const end = parseFilterDate(query.slice(index + 1));
+      if (start && end && start <= end) candidates.push({ start, end });
+    }
+  }
+  return candidates.length === 1 ? candidates[0] : null;
 }
 
 function intersect(a: Interval, b: Interval): Interval | null {
