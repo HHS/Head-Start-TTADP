@@ -386,6 +386,23 @@ describe('ViewTtaRequest', () => {
       ).not.toBeChecked();
     });
 
+    it('edits a request whose recipient has a single grant', async () => {
+      mockReviewerFetches(REQUEST);
+      fetchMock.get('/api/recipient/user/tta-requests', [
+        { id: 3, name: 'Sample Recipient Agency', grants: [GRANT] },
+      ]);
+      fetchMock.get('begin:/api/goal-templates', [OTHER_GOAL]);
+      fetchMock.get('begin:/api/feeds/item', '');
+      renderView({}, REVIEWER);
+
+      userEvent.click(await screen.findByRole('button', { name: 'Edit request' }));
+
+      // the only grant is chosen for them, and choosing it settles rather than looping
+      expect(await screen.findByLabelText(/who originated this request/i)).toBeVisible();
+      expect(screen.getByTestId('read-only-value')).toHaveTextContent(GRANT.name);
+      expect(await screen.findByText(OTHER_GOAL.name)).toBeVisible();
+    });
+
     it('clears the goal when the grants change', async () => {
       await startEditing();
       expect(await screen.findByText(OTHER_GOAL.name)).toBeVisible();
