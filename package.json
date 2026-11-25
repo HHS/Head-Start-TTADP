@@ -117,6 +117,7 @@
     "check-coverage": "node ./tools/check-coverage.js --fail-on-uncovered=true",
     "docs:serve": "npx @redocly/cli preview-docs -p 5003 docs/openapi/index.yaml",
     "util:makecolors": "node ./src/makecolors.js",
+    "publish:common": "yarn --cwd ./packages/common npm publish",
     "common:update": "bin/update-common-version"
   },
   "repository": {

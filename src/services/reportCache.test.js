@@ -32,6 +32,11 @@ import {
   cacheGoalMetadata,
   cacheTopics,
 } from './reportCache';
+import { addDeleteFileToQueue } from './s3Queue';
+
+jest.mock('./s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
+}));
 
 describe('cacheCourses', () => {
   let courseOne;
@@ -175,6 +180,47 @@ describe('cacheFiles', () => {
       expect.objectContaining({ lock: Transaction.LOCK.KEY_SHARE })
     );
     findAllSpy.mockRestore();
+  });
+
+  it('deletes a removed file nothing else uses and keeps one another objective uses', async () => {
+    addDeleteFileToQueue.mockClear();
+    const otherAro = await ActivityReportObjective.create({
+      objectiveId: (
+        await Objective.create({
+          goalId: goal.id,
+          title: faker.string.sample(200),
+          status: 'Not Started',
+        })
+      ).id,
+      activityReportId: activityReport.id,
+    });
+    const [onlyHere, shared] = await Promise.all(
+      ['only-here', 'shared'].map((name) =>
+        File.create({
+          originalFileName: `${name}.pdf`,
+          key: `${name}-${faker.string.uuid()}.pdf`,
+          status: 'APPROVED',
+          fileSize: 1234,
+        })
+      )
+    );
+    await cacheFiles(objective.id, aro.id, [{ id: onlyHere.id }, { id: shared.id }]);
+    await ActivityReportObjectiveFile.create({
+      activityReportObjectiveId: otherAro.id,
+      fileId: shared.id,
+    });
+
+    await cacheFiles(objective.id, aro.id, []);
+
+    expect(await File.findByPk(onlyHere.id)).toBeNull();
+    expect(await File.findByPk(shared.id)).not.toBeNull();
+    // Files linked by earlier tests are also unlinked here, so check by file.
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(
+      onlyHere.id,
+      onlyHere.key,
+      expect.any(Number)
+    );
+    expect(addDeleteFileToQueue).not.toHaveBeenCalledWith(shared.id, expect.anything());
   });
 });
 

@@ -11,6 +11,7 @@ import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { findEventByDbId, findEventBySmartsheetId } from './event';
 import { isSessionSubmitted } from './eventFlow';
+import { removeOrphanedFiles } from './files';
 import {
   archiveSessionNeedsActionNotifications,
   archiveSessionSubmittedNotifications,
@@ -176,17 +177,16 @@ export const validateFields = (request, requiredFields: string[]) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
-  // Delete files.
-  await SessionReportPilotFile.destroy(
-    { where: { sessionReportPilotId: id } },
-    { individualHooks: true }
-  );
+  const where = { sessionReportPilotId: id };
+  const [sessionFiles, supportingAttachments] = await Promise.all([
+    SessionReportPilotFile.findAll({ attributes: ['fileId'], where, raw: true }),
+    SessionReportPilotSupportingAttachment.findAll({ attributes: ['fileId'], where, raw: true }),
+  ]);
 
-  // Delete supporting attachments.
-  await SessionReportPilotSupportingAttachment.destroy(
-    { where: { sessionReportPilotId: id } },
-    { individualHooks: true }
-  );
+  // Delete file links and supporting attachments, then any files nothing else uses.
+  await SessionReportPilotFile.destroy({ where });
+  await SessionReportPilotSupportingAttachment.destroy({ where });
+  await removeOrphanedFiles([...sessionFiles, ...supportingAttachments].map((f) => f.fileId));
 
   await runInSavepoint(
     () => archiveSessionNeedsActionNotifications(id),
@@ -199,8 +199,9 @@ export async function destroySession(id: number): Promise<void> {
     `Error archiving session submitted notifications for session ${id}:`
   );
 
-  // Delete session.
-  await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
+  // Delete session. individualHooks runs beforeDestroy, which refuses to delete a session
+  // on a completed Training Report; the route's transaction then rolls back the deletes above.
+  await SessionReportPilot.destroy({ where: { id }, individualHooks: true });
 }
 
 // eslint-disable-next-line max-len
