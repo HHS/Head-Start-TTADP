@@ -191,7 +191,11 @@ export async function trainingReportsWhereSessionNeedsActionByDate(
           [Op.or]: [
             { ownerId: id },
             { collaboratorIds: { [Op.contains]: [id] } },
-            { pocIds: { [Op.contains]: [id] } },
+            // only Regional PD events with National Centers have POCs (TR-4e/f)
+            {
+              pocIds: { [Op.contains]: [id] },
+              data: { eventOrganizer: REGIONAL_PD_WITH_NATIONAL_CENTERS },
+            },
           ],
         },
       },

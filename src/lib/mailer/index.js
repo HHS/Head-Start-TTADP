@@ -18,6 +18,7 @@ import {
   activityReportsSubmittedWhereCreatorByDate,
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
+import { getSessionNeedsActionPocIds } from '../../services/eventFlow';
 import { monitoringReportsDeliveredInRegionByDate } from '../../services/monitoringDeliveries';
 import {
   trainingReportsWhereCollaboratorByDate,
@@ -923,8 +924,9 @@ export const trSessionChangesRequestedToCollaborators = async (event, session) =
 
 /**
  * Notifies each Regional point of contact that the approver requested changes to a TR session
- * (TR-4f), provided they have opted in to receiving this email immediately. POCs who are also
- * the owner or a collaborator are skipped, since they get TR-4b or TR-4d.
+ * (TR-4f), provided they have opted in to receiving this email immediately. Only Regional PD
+ * events with National Centers have POCs, and POCs who are also the owner or a collaborator are
+ * skipped, since they get TR-4b or TR-4d (see `getSessionNeedsActionPocIds`).
  *
  * @param {EventShape} event
  * @param {SessionReportShape} session
@@ -932,11 +934,7 @@ export const trSessionChangesRequestedToCollaborators = async (event, session) =
 export const trSessionChangesRequestedToPocs = async (event, session) => {
   if (process.env.CI) return;
   try {
-    const collaboratorIds = new Set(event.collaboratorIds ?? []);
-    const pocIds = [...new Set(event.pocIds ?? [])].filter(
-      (pocId) => pocId !== event.ownerId && !collaboratorIds.has(pocId)
-    );
-    await trSessionChangesRequestedToUsers(event, session, pocIds);
+    await trSessionChangesRequestedToUsers(event, session, getSessionNeedsActionPocIds(event));
   } catch (err) {
     auditLogger.error(err);
   }

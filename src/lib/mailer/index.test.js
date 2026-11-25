@@ -2934,7 +2934,7 @@ describe('mailer tests', () => {
         collaboratorIds: [1, 2, 3],
         pocIds: [3, 4, 5],
         eventId: 'tr-1234',
-        data: {},
+        data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
       };
       const session = {
         id: 7,
@@ -2987,6 +2987,19 @@ describe('mailer tests', () => {
           EMAIL_ACTIONS.TRAINING_REPORT_SESSION_NEEDS_ACTION,
           expect.objectContaining({ approverName: 'Approver Person', sessionName: 'Session one' })
         );
+      });
+
+      it('does not email stale POCs on events without National Centers', async () => {
+        userSettingOverridesById.mockResolvedValue(immediately);
+        mockUsers();
+
+        await trSessionChangesRequestedToPocs(
+          { ...event, data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' } },
+          session
+        );
+
+        expect(userSettingOverridesById).not.toHaveBeenCalled();
+        expect(notificationQueueMock.add).not.toHaveBeenCalled();
       });
 
       it('skips users who have not opted in to immediate emails', async () => {

@@ -177,10 +177,13 @@ describe('training report digests', () => {
 
       const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
 
-      expect(reports).toEqual([
-        { id: inProgress.id, eventId: submitted.eventId, displayId: 'Session A' },
-        { id: unnamed.id, eventId: submitted.eventId, displayId: `Session ${unnamed.id}` },
-      ]);
+      // sessions are created in parallel, so ids (the result order) are not assigned in order
+      expect(reports).toEqual(
+        [
+          { id: inProgress.id, eventId: submitted.eventId, displayId: 'Session A' },
+          { id: unnamed.id, eventId: submitted.eventId, displayId: `Session ${unnamed.id}` },
+        ].sort((a, b) => a.id - b.id)
+      );
     });
 
     it('skips sessions no longer submitted though they keep a recent submittedAt', async () => {
@@ -243,6 +246,18 @@ describe('training report digests', () => {
         },
         { id: pocSession.id, eventId: asPoc.eventId, displayId: `Session ${pocSession.id}` },
       ]);
+    });
+
+    it('skips sessions on events without National Centers where the user is only a POC', async () => {
+      const since = await windowStartingNow();
+      const stalePoc = await createEvent([poc.id], REGIONAL_TTA_NO_NATIONAL_CENTERS);
+      const session = await createNeedsActionSession(stalePoc.id, new Date());
+
+      const ids = (await trainingReportsWhereSessionNeedsActionByDate(poc.id, since)).map(
+        (r) => r.id
+      );
+
+      expect(ids).not.toContain(session.id);
     });
 
     it('skips sessions outside the interval and sessions no longer needing action', async () => {

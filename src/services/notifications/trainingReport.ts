@@ -2,7 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import runInSavepoint from '../../lib/runInSavepoint';
 import db from '../../models';
 import Users from '../../policies/user';
-import { getAddedUserIds, getNewPocIds } from '../eventFlow';
+import { getAddedUserIds, getNewPocIds, getSessionNeedsActionPocIds } from '../eventFlow';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
@@ -274,7 +274,8 @@ export async function createSessionNeedsActionNotificationForCollaborators(
 
 /**
  * Creates the "approver requested changes to a session" in-app notification (TR-4e) for each
- * Regional point of contact on a Training Report, since they select the approver. The event
+ * Regional point of contact on a Training Report, since they select the approver. Only Regional
+ * PD events with National Centers have POCs (see `getSessionNeedsActionPocIds`). The event
  * owner and collaborators are skipped (they get TR-4a and TR-4c), as are users without the
  * `actionable_notifications` feature flag. The user's in-app setting is applied by
  * `createNotification`. They are archived on resubmission along with TR-4a, so an archived
@@ -289,13 +290,11 @@ export async function createSessionNeedsActionNotificationForPocs(
     ownerId: number;
     pocIds: number[] | null | undefined;
     collaboratorIds: number[] | null | undefined;
+    data?: { eventOrganizer?: string } | null;
   },
   session: { id: number; approverId: number | null | undefined; data: { sessionName?: string } }
 ): Promise<void> {
-  const collaboratorIds = new Set(event.collaboratorIds ?? []);
-  const pocIds = [...new Set(event.pocIds ?? [])].filter(
-    (pocId) => pocId !== event.ownerId && !collaboratorIds.has(pocId)
-  );
+  const pocIds = getSessionNeedsActionPocIds(event);
 
   if (!pocIds.length) {
     return;

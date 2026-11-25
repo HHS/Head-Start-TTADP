@@ -570,7 +570,13 @@ describe('createSessionNeedsActionNotificationForPocs', () => {
   let flagSpy: jest.SpyInstance;
 
   // 1 owns the event, 2 is a collaborator, and 2 and 3 are POCs
-  const event = { eventId: 'R01-TR-1234', ownerId: 1, collaboratorIds: [2], pocIds: [1, 2, 3, 3] };
+  const event = {
+    eventId: 'R01-TR-1234',
+    ownerId: 1,
+    collaboratorIds: [2],
+    pocIds: [1, 2, 3, 3],
+    data: { eventOrganizer: REGIONAL_PD },
+  };
   const session = { id: 55, approverId: 9, data: { sessionName: 'Opening session' } };
 
   beforeEach(() => {
@@ -615,6 +621,16 @@ describe('createSessionNeedsActionNotificationForPocs', () => {
   it('does not query users when there are no other POCs', async () => {
     await createSessionNeedsActionNotificationForPocs({ ...event, pocIds: [1, 2] }, session);
     await createSessionNeedsActionNotificationForPocs({ ...event, pocIds: null }, session);
+
+    expect(findAllSpy).not.toHaveBeenCalled();
+    expect(mockCreateNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not notify stale POCs on events without National Centers', async () => {
+    await createSessionNeedsActionNotificationForPocs(
+      { ...event, data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' } },
+      session
+    );
 
     expect(findAllSpy).not.toHaveBeenCalled();
     expect(mockCreateNotification).not.toHaveBeenCalled();
