@@ -69,9 +69,10 @@ describe('TTA hours provided over time', () => {
       'border-top-1px',
       'border-base-light'
     );
-    expect(
-      screen.getByRole('region', { name: 'TTA hours by month and week' })
-    ).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('region', { name: 'TTA hours by month and week' })).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
     expect(fetchWidget).toHaveBeenCalledWith(
       'ttaHoursProvidedOverTime',
       'region.in[]=1&recipientId.ctn[]=401'
@@ -178,6 +179,65 @@ describe('TTA hours provided over time', () => {
     expect(screen.getByLabelText('February 2026, week 3: 0.0 hours')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'February 2026' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'March 2026' })).not.toBeInTheDocument();
+  });
+
+  describe('with multiple ranges in one condition', () => {
+    const ranges = ['2026/01/01-2026/01/31', '2026/03/01-2026/03/31'];
+
+    beforeEach(() => {
+      fetchWidget.mockImplementation((widget) =>
+        Promise.resolve(
+          widget === 'ttaHoursProvidedOverTime'
+            ? [
+                { startDate: '2026-01-02', duration: 3 },
+                { startDate: '2026-01-05', duration: 2 },
+                { startDate: '2026-02-03', duration: 4 },
+                { startDate: '2026-03-03', duration: 1 },
+              ]
+            : [
+                { startDate: '2026-02-02', endDate: '2026-02-04' },
+                { startDate: '2026-03-02', endDate: '2026-03-04' },
+              ]
+        )
+      );
+    });
+
+    it('combines the ranges with OR and excludes the gap between them', async () => {
+      render(
+        <TTAHoursProvidedOverTime
+          filters={[{ topic: 'startDate', condition: 'is', query: ranges }, ...filters.slice(1)]}
+        />
+      );
+
+      expect(await screen.findByLabelText('January 2026, week 1: 5.0 hours')).toBeInTheDocument();
+      expect(screen.getByLabelText('March 2026, week 1: 1.0 hours, monitoring review')).toHaveClass(
+        'tta-hours-monitoring'
+      );
+      // February falls between the selected ranges, so its hours and monitoring are excluded.
+      expect(screen.getByLabelText('February 2026, week 1: 0.0 hours')).not.toHaveClass(
+        'tta-hours-monitoring'
+      );
+      expect(screen.getByRole('columnheader', { name: 'January 2026' })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: 'March 2026' })).toBeInTheDocument();
+    });
+
+    it('intersects the ranges with distinct conditions', async () => {
+      render(
+        <TTAHoursProvidedOverTime
+          filters={[
+            { topic: 'startDate', condition: 'is', query: ranges },
+            { topic: 'startDate', condition: 'is on or after', query: '01/04/2026' },
+            ...filters.slice(1),
+          ]}
+        />
+      );
+
+      expect(await screen.findByLabelText('January 2026, week 1: 2.0 hours')).toBeInTheDocument();
+      expect(
+        screen.getByLabelText('March 2026, week 1: 1.0 hours, monitoring review')
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText('February 2026, week 1: 0.0 hours')).toBeInTheDocument();
+    });
   });
 
   it('does not display weeks without hours', async () => {

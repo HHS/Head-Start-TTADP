@@ -1,6 +1,8 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import { Op } from 'sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 import db from '../models';
+import { toIsoFormat, toIsoRange } from '../scopes/trainingReports/dateUtils';
+import { isEndDateScope } from '../scopes/trainingReports/endDate';
 import { baseTRScopes } from './helpers';
 import { getRecipientGrantIds, sessionRecipientGrantFilter } from './trSessionsForRecipient';
 import type { IScopes } from './types';
@@ -160,14 +162,44 @@ async function addActivityReports(
   });
 }
 
+/**
+ * The "Date ended" Training Report scopes compare the parent event's data.endDate. This widget
+ * reports sessions, so apply the same predicates (first value per condition, as in
+ * src/scopes/trainingReports/dateUtils.js) to each session's own endDate instead.
+ */
+function sessionEndDateFilters(query: Record<string, unknown>): WhereOptions[] {
+  const first = (key: string) => {
+    const value = [query[key]].flat()[0];
+    return typeof value === 'string' ? value : null;
+  };
+  const filters: WhereOptions[] = [];
+
+  const before = first('endDate.bef') && toIsoFormat(first('endDate.bef'));
+  if (before) filters.push({ endDate: { [Op.lte]: before } });
+
+  const after = first('endDate.aft') && toIsoFormat(first('endDate.aft'));
+  if (after) filters.push({ endDate: { [Op.gte]: after } });
+
+  ['endDate.win', 'endDate.in'].forEach((key) => {
+    const range = toIsoRange(first(key));
+    if (range) filters.push({ endDate: { [Op.between]: range } });
+  });
+
+  return filters;
+}
+
 async function addTrainingReportSessions(
   scopes: IScopes,
+  query: Record<string, unknown>,
   grantIds: number[],
   rows: Map<string, IRowAccumulator>
 ) {
   if (grantIds.length === 0) return;
 
-  const baseScopes = baseTRScopes(scopes);
+  const baseScopes = baseTRScopes({
+    ...scopes,
+    trainingReport: (scopes.trainingReport || []).filter((scope) => !isEndDateScope(scope)),
+  });
   const events = (await EventReportPilot.findAll({
     attributes: ['id', 'eventId'],
     where: baseScopes.where,
@@ -178,7 +210,7 @@ async function addTrainingReportSessions(
         where: {
           ...baseScopes.include.where,
           startDate: { [Op.ne]: null },
-          [Op.and]: [sessionRecipientGrantFilter(grantIds)],
+          [Op.and]: [sessionRecipientGrantFilter(grantIds), ...sessionEndDateFilters(query)],
         },
         include: [
           {
@@ -222,14 +254,14 @@ async function addTrainingReportSessions(
  */
 export default async function ttaHoursProvidedOverTime(
   scopes: IScopes,
-  _query: Record<string, unknown>
+  query: Record<string, unknown> = {}
 ): Promise<ITTAHoursOverTimeRow[]> {
   const grantIds = await getRecipientGrantIds(scopes);
   const rows = new Map<string, IRowAccumulator>();
 
   await Promise.all([
     addActivityReports(scopes, grantIds, rows),
-    addTrainingReportSessions(scopes, grantIds, rows),
+    addTrainingReportSessions(scopes, query, grantIds, rows),
   ]);
 
   return [...rows.values()]

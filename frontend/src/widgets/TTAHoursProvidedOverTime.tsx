@@ -19,58 +19,104 @@ const TITLE = 'TTA hours provided over time';
 type Filter = { topic: string; condition: string; query: string | number | string[] };
 type HoursRow = { startDate: string; duration: number };
 type MonitoringReview = { startDate: string; endDate: string };
+// Inclusive YYYY-MM-DD bounds; null means unbounded on that side.
+type Interval = { start: string | null; end: string | null };
 
-function dateRange(filters: Filter[], hours: HoursRow[]) {
-  // Use valid event dates to fill in any bounds not explicitly provided by filters.
-  const dates = hours
-    .map((row) => moment(row.startDate, 'YYYY-MM-DD', true))
-    .filter((date) => date.isValid());
+const ISO_DATE = 'YYYY-MM-DD';
 
-  let lowerBound = null;
-  let upperBound = null;
-  // Combine filters by keeping the latest lower bound and earliest upper bound.
+function parseFilterDate(value: string) {
+  const date = moment(value, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
+  return date.isValid() ? date.format(ISO_DATE) : null;
+}
+
+function filterInterval(condition: string, query: string): Interval | null {
+  // These one-sided conditions are separate from the start/end date-range query format.
+  if (condition === 'is on or after') {
+    const start = parseFilterDate(query);
+    return start ? { start, end: null } : null;
+  }
+  if (condition === 'is on or before') {
+    const end = parseFilterDate(query);
+    return end ? { start: null, end } : null;
+  }
+  const [startDate, endDate, ...extra] = query.split('-');
+  if (extra.length) return null;
+  const start = parseFilterDate(startDate);
+  const end = endDate ? parseFilterDate(endDate) : null;
+  return start && end && start <= end ? { start, end } : null;
+}
+
+function intersect(a: Interval, b: Interval): Interval | null {
+  const start = a.start && b.start ? (a.start > b.start ? a.start : b.start) : a.start || b.start;
+  const end = a.end && b.end ? (a.end < b.end ? a.end : b.end) : a.end || b.end;
+  return start && end && start > end ? null : { start, end };
+}
+
+function selectedIntervals(filters: Filter[]): Interval[] {
+  // Values sharing a condition are ORed by the start-date scopes; distinct conditions are ANDed.
+  const byCondition = new Map<string, Interval[]>();
   filters
     .filter((filter) => filter.topic === 'startDate')
     .forEach((filter) => {
       const queries = Array.isArray(filter.query) ? filter.query : [filter.query];
-      queries.forEach((query) => {
-        if (typeof query !== 'string') return;
-
-        // These one-sided conditions are separate from the start/end date-range query format.
-        if (filter.condition === 'is on or after') {
-          const date = moment(query, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
-          if (date.isValid()) {
-            lowerBound = lowerBound ? moment.max(lowerBound, date) : date;
-          }
-          return;
-        }
-
-        if (filter.condition === 'is on or before') {
-          const date = moment(query, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
-          if (date.isValid()) {
-            upperBound = upperBound ? moment.min(upperBound, date) : date;
-          }
-          return;
-        }
-
-        const [startDate, endDate, ...extra] = query.split('-');
-        if (extra.length) return;
-        const start = moment(startDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
-        const end = moment(endDate, ['YYYY/MM/DD', 'MM/DD/YYYY'], true);
-        if (start.isValid() && end.isValid()) {
-          lowerBound = lowerBound ? moment.max(lowerBound, start) : start;
-          upperBound = upperBound ? moment.min(upperBound, end) : end;
-        }
-      });
+      const intervals = queries
+        .map((query) =>
+          typeof query === 'string' ? filterInterval(filter.condition, query) : null
+        )
+        .filter((interval): interval is Interval => interval !== null);
+      if (!intervals.length) return;
+      byCondition.set(filter.condition, [
+        ...(byCondition.get(filter.condition) || []),
+        ...intervals,
+      ]);
     });
 
-  // With no event dates, both explicit bounds are needed to determine which weeks to display.
-  if (!dates.length && (!lowerBound || !upperBound)) return null;
+  return [...byCondition.values()].reduce<Interval[]>(
+    (selected, group) =>
+      selected
+        .flatMap((a) => group.map((b) => intersect(a, b)))
+        .filter((interval): interval is Interval => interval !== null),
+    [{ start: null, end: null }]
+  );
+}
 
-  return {
-    start: lowerBound || moment.min(dates),
-    end: upperBound || moment.max(dates),
+function inIntervals(date: string, intervals: Interval[]) {
+  return intervals.some(
+    (interval) =>
+      (!interval.start || date >= interval.start) && (!interval.end || date <= interval.end)
+  );
+}
+
+function dateRange(intervals: Interval[], hours: HoursRow[]) {
+  // Use selected event dates to fill in any bounds not explicitly provided by filters.
+  const dates = hours
+    .map((row) => row.startDate)
+    .filter((date) => moment(date, ISO_DATE, true).isValid() && inIntervals(date, intervals))
+    .sort();
+
+  const bound = (values: (string | null)[], fallback: string | undefined, pick: 'min' | 'max') => {
+    const hasUnbounded = values.includes(null);
+    // With no selected event dates, an unbounded side cannot determine which weeks to display.
+    if (hasUnbounded && !fallback) return null;
+    const candidates = values.filter((value): value is string => value !== null);
+    if (hasUnbounded && fallback) candidates.push(fallback);
+    if (!candidates.length) return null;
+    candidates.sort();
+    return pick === 'min' ? candidates[0] : candidates[candidates.length - 1];
   };
+
+  const start = bound(
+    intervals.map((interval) => interval.start),
+    dates[0],
+    'min'
+  );
+  const end = bound(
+    intervals.map((interval) => interval.end),
+    dates[dates.length - 1],
+    'max'
+  );
+  if (!start || !end) return null;
+  return { start: moment(start, ISO_DATE), end: moment(end, ISO_DATE) };
 }
 
 function monthsInRange(range: ReturnType<typeof dateRange>) {
@@ -93,24 +139,26 @@ function colorLevel(value: number) {
 function weekCell(
   week: number,
   month: moment.Moment,
-  range: ReturnType<typeof dateRange>,
+  intervals: Interval[],
   data: { hours: HoursRow[]; reviews: MonitoringReview[] }
 ) {
   const first = month.clone().date((week - 1) * 7 + 1);
   const last = week === 5 ? month.clone().endOf('month') : first.clone().add(6, 'days');
-  const firstDate = moment.max(first, range?.start || first).format('YYYY-MM-DD');
-  const lastDate = moment.min(last, range?.end || last).format('YYYY-MM-DD');
-  const matching = data.hours.filter(
-    (row: HoursRow) => row.startDate >= firstDate && row.startDate <= lastDate
+  const cell = { start: first.format(ISO_DATE), end: last.format(ISO_DATE) };
+  // Clip the cell to the selected intervals so gaps between them stay excluded.
+  const ranges = intervals
+    .map((interval) => intersect(interval, cell))
+    .filter((range): range is { start: string; end: string } => range !== null);
+  const matching = data.hours.filter((row: HoursRow) =>
+    ranges.some((range) => row.startDate >= range.start && row.startDate <= range.end)
   );
   const hours = matching.reduce((sum: number, row: HoursRow) => sum + Number(row.duration), 0);
   return {
     month,
     hours,
     hasHours: matching.length > 0,
-    monitoring: data.reviews.some(
-      (review: MonitoringReview) =>
-        firstDate <= lastDate && review.startDate <= lastDate && review.endDate >= firstDate
+    monitoring: data.reviews.some((review: MonitoringReview) =>
+      ranges.some((range) => review.startDate <= range.end && review.endDate >= range.start)
     ),
   };
 }
@@ -134,7 +182,8 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
     [query],
     'Unable to load TTA hours provided over time'
   );
-  const range = dateRange(filters, data.hours);
+  const intervals = selectedIntervals(filters);
+  const range = dateRange(intervals, data.hours);
   const months = monthsInRange(range);
 
   const menuItems = showTable
@@ -215,7 +264,7 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                   </thead>
                   <tbody>
                     {[1, 2, 3, 4, 5].map((week) => {
-                      const cells = months.map((month) => weekCell(week, month, range, data));
+                      const cells = months.map((month) => weekCell(week, month, intervals, data));
                       // A week with no hours is not displayed, even if a monitoring review overlaps it.
                       if (!cells.some((cell) => cell.hasHours)) {
                         return null;

@@ -38,6 +38,7 @@ describe('ttaHoursProvidedOverTime', () => {
   const sessions = [];
   const sessionGoalTemplates = [];
   let event;
+  const extraEventIds = [];
 
   let arInPerson;
   let arMultiRecipient;
@@ -205,7 +206,7 @@ describe('ttaHoursProvidedOverTime', () => {
       where: { id: sessionGoalTemplates.map((s) => s.id) },
     });
     await SessionReportPilot.destroy({ where: { id: sessions.map((s) => s.id) }, force: true });
-    await EventReportPilot.destroy({ where: { id: event.id }, force: true });
+    await EventReportPilot.destroy({ where: { id: [event.id, ...extraEventIds] }, force: true });
     await ActivityReportGoal.destroy({
       where: { id: activityReportGoals.map((a) => a.id) },
       force: true,
@@ -266,6 +267,61 @@ describe('ttaHoursProvidedOverTime', () => {
         ],
       },
     ]);
+  });
+
+  it('applies "Date ended" to session end dates and preserves AR end-date filtering', async () => {
+    const febEventId = `R01-TR-${uniqueId()}`;
+    const febEvent = await EventReportPilot.create({
+      ownerId: user.id,
+      regionId: 1,
+      pocIds: [user.id],
+      collaboratorIds: [user.id],
+      eventId: febEventId,
+      data: {
+        eventId: febEventId,
+        startDate: '01/05/2026',
+        endDate: '02/15/2026',
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      },
+    });
+    extraEventIds.push(febEvent.id);
+    const makeDatedSession = async (date) => {
+      const session = await SessionReportPilot.create({
+        eventId: febEvent.id,
+        startDate: date,
+        endDate: date,
+        data: {
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+          recipients: [{ value: grant.id, label: 'Test Recipient' }],
+          sessionName: faker.lorem.words(3),
+          duration: 1,
+        },
+      });
+      sessions.push(session);
+      return session;
+    };
+    const [janSession, febSession] = await Promise.all([
+      makeDatedSession('2026-01-10'),
+      makeDatedSession('2026-02-05'),
+    ]);
+    const febEndingReport = await makeReport(
+      { startDate: '2026-01-20', endDate: '2026-02-10', duration: 9 },
+      [grant.id]
+    );
+
+    const endDateQuery = { 'endDate.bef': ['2026/01/31'] };
+    const scopes = await filtersToScopes(
+      { 'recipientId.ctn': [String(recipient.id)], 'region.in': ['1'], ...endDateQuery },
+      { userId: user.id }
+    );
+    const result = await ttaHoursProvidedOverTime(scopes, endDateQuery);
+    const sessionIds = result.flatMap((row) => row.trainingReportSessions.map((s) => s.id));
+    const reportIds = result.flatMap((row) => row.activityReports.map((r) => r.id));
+
+    expect(sessionIds).toContain(janSession.id);
+    expect(sessionIds).not.toContain(febSession.id);
+    expect(reportIds).toEqual(expect.arrayContaining([arInPerson.id, arMultiRecipient.id]));
+    expect(reportIds).not.toContain(febEndingReport.id);
   });
 
   it('returns an empty array when the recipient has no TTA', async () => {

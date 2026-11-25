@@ -20,7 +20,7 @@ export function toIsoFormat(dateStr) {
   return parsed.format('YYYY-MM-DD');
 }
 
-function toIsoRange(rangeValue) {
+export function toIsoRange(rangeValue) {
   if (typeof rangeValue !== 'string') {
     return null;
   }
