@@ -10,6 +10,7 @@ import FormItem from '../../components/FormItem';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import { HTTPError } from '../../fetchers';
 import { approveTtaRequest } from '../../fetchers/ttaRequests';
+import ApproverStatusList from '../ActivityReport/Pages/components/ApproverStatusList';
 import { SELECT_PLACEHOLDER } from '../TtaRequestForm/constants';
 import type { TtaRequestResponse } from '../TtaRequestForm/types';
 import TtaRequestAssignmentSummary from './TtaRequestAssignmentSummary';
@@ -137,6 +138,12 @@ export default function TtaRequestApproval({
             {error}
           </Alert>
         )}
+        <p className="text-bold margin-top-4 margin-bottom-2">Approval status</p>
+        {/* a request has one approving COR, so no gap is needed between entries */}
+        <ApproverStatusList
+          approverStatus={ttaRequest.approvers ?? []}
+          itemClassName="margin-bottom-0"
+        />
         <FormErrorSummary />
         <Button type="submit" className="margin-top-4">
           Submit

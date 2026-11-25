@@ -816,6 +816,25 @@ describe('ViewTtaRequest', () => {
       ).toBeVisible();
     });
 
+    it('shows the approval as pending from the COR it was sent to', async () => {
+      fetchMock.get(URL, {
+        ...AWAITING_REQUEST,
+        approvers: [
+          {
+            id: 1,
+            userId: 30,
+            status: null,
+            user: { id: 30, name: 'Joey Tribiano', fullName: 'Joey Tribiano, COR' },
+          },
+        ],
+      });
+      renderView({}, COR);
+
+      expect(await screen.findByText('Approval status')).toBeVisible();
+      expect(screen.getByText('Pending approval')).toBeVisible();
+      expect(screen.getByText(/from Joey Tribiano, COR/)).toBeVisible();
+    });
+
     it('shows everything on the request read only, with its notes', async () => {
       fetchMock.get(URL, AWAITING_REQUEST);
       renderView({}, COR);
