@@ -31,4 +31,28 @@ describe('useMediaCapture', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('captures the full width of horizontally overflowing content', async () => {
+    const reference = { current: document.createElement('div') };
+    const scrollContainer = document.createElement('div');
+    reference.current.appendChild(scrollContainer);
+    Object.defineProperties(scrollContainer, {
+      clientWidth: { value: 800 },
+      scrollWidth: { value: 6000 },
+    });
+    Object.defineProperties(reference.current, {
+      clientWidth: { value: 800 },
+      scrollWidth: { value: 6000 },
+    });
+
+    const { result } = renderHook(() => useMediaCapture(reference));
+    await result.current();
+
+    const [, options] = html2canvas.mock.calls[0];
+    options.onclone(document, reference.current);
+
+    expect(scrollContainer.style.overflowX).toBe('visible');
+    expect(scrollContainer.style.width).toBe('6000px');
+    expect(reference.current.style.width).toBe('6000px');
+  });
 });

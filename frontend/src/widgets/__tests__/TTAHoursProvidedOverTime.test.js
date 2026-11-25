@@ -52,10 +52,10 @@ describe('TTA hours provided over time', () => {
     expect(
       await screen.findByLabelText('January 2026, week 1: 3.5 hours, monitoring review')
     ).toHaveClass('tta-hours-monitoring');
-    // Week 2 displays because of the February hours; the monitoring-only January cell keeps its outline.
-    expect(screen.getByLabelText('January 2026, week 2: 0.0 hours, monitoring review')).toHaveClass(
-      'tta-hours-monitoring'
-    );
+    // Week 2 displays because of the February hours, but the blank January cell has no outline.
+    const blankMonitoredCell = screen.getByLabelText('January 2026, week 2: 0.0 hours');
+    expect(blankMonitoredCell).toHaveClass('border', 'border-base-light');
+    expect(blankMonitoredCell).not.toHaveClass('tta-hours-monitoring');
     expect(screen.queryByLabelText('January 2026, week 3: 0.0 hours')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('January 2026, week 4: 0.0 hours')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('January 2026, week 5: 0.0 hours')).not.toBeInTheDocument();
@@ -67,8 +67,11 @@ describe('TTA hours provided over time', () => {
     expect(screen.getByText('Monitoring:')).toHaveClass('margin-right-1');
     expect(screen.getByRole('table', { name: 'TTA hours by month and week' })).toHaveClass(
       'border-top-1px',
-      'border-base-lighter'
+      'border-base-light'
     );
+    expect(
+      screen.getByRole('region', { name: 'TTA hours by month and week' })
+    ).toHaveAttribute('tabindex', '0');
     expect(fetchWidget).toHaveBeenCalledWith(
       'ttaHoursProvidedOverTime',
       'region.in[]=1&recipientId.ctn[]=401'

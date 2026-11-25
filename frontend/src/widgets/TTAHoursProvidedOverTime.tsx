@@ -194,8 +194,14 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                   aria-label="Red outline indicates monitoring"
                 />
               </div>
-              <div className="overflow-x-auto">
-                <table className="tta-hours-grid width-full border-top-1px border-base-lighter">
+              <section
+                className="overflow-x-auto"
+                aria-label="TTA hours by month and week"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: scroll region needs keyboard focus
+                tabIndex={0}
+              >
+                <span className="usa-sr-only">Use the arrow keys to scroll the heatmap</span>
+                <table className="tta-hours-grid width-full border-top-1px border-base-light">
                   <caption className="usa-sr-only">TTA hours by month and week</caption>
                   <thead className="usa-sr-only">
                     <tr>
@@ -224,12 +230,13 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                           </th>
                           {cells.map((cell) => {
                             const color = COLOR_SCALE[colorLevel(cell.hours)];
+                            const monitored = cell.hasHours && cell.monitoring;
                             return (
                               <td
                                 key={cell.month.format('YYYY-MM')}
-                                className={`height-6 text-center text-bold ${cell.monitoring ? 'tta-hours-monitoring' : 'border border-base-light'}`}
+                                className={`height-6 text-center text-bold ${monitored ? 'tta-hours-monitoring' : 'border border-base-light'}`}
                                 style={{ background: color.bg, color: color.textColor }}
-                                aria-label={`${cell.month.format('MMMM YYYY')}, week ${week}: ${cell.hours.toFixed(1)} hours${cell.monitoring ? ', monitoring review' : ''}`}
+                                aria-label={`${cell.month.format('MMMM YYYY')}, week ${week}: ${cell.hours.toFixed(1)} hours${monitored ? ', monitoring review' : ''}`}
                               >
                                 {cell.hasHours ? cell.hours.toFixed(1) : ''}
                               </td>
@@ -250,7 +257,7 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
                     </tr>
                   </tfoot>
                 </table>
-              </div>
+              </section>
             </div>
           </div>
         )}

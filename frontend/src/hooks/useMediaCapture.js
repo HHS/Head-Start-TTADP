@@ -15,8 +15,23 @@ export default function useMediaCapture(reference, title = 'download') {
           // set the first child to be white (we can always make this configurable later)
           element.firstChild.classList.add('bg-white');
 
-          // make sure we get the entire element and nothing is cut off
-          element.classList.remove('overflow-x-scroll');
+          const expandOverflow = (node) => {
+            if (node.scrollWidth > node.clientWidth) {
+              node.style.overflowX = 'visible';
+              node.style.maxWidth = 'none';
+              node.style.width = `${node.scrollWidth}px`;
+            }
+            if (node.scrollHeight > node.clientHeight) {
+              node.style.overflowY = 'visible';
+              node.style.maxHeight = 'none';
+              node.style.height = `${node.scrollHeight}px`;
+            }
+          };
+
+          Array.from(element.querySelectorAll('*'))
+            .reverse()
+            .forEach(expandOverflow);
+          expandOverflow(element);
         },
       });
       const base64image = canvas.toDataURL('image/png');
