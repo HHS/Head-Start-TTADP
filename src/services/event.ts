@@ -200,12 +200,9 @@ export async function createEvent(
 
   // The event display id is provided via `data.eventId` but is stored solely in
   // the dedicated `eventId` column (the single source of truth); it is not
-  // persisted back into the JSONB `data`.
+  // persisted back into the JSONB `data`. `checkCreateEventBody` requires it on the API
+  // route; the column's NOT NULL constraint rejects it being missing for other callers.
   const { eventId, ...dataWithoutEventId } = data;
-
-  if (!eventId) {
-    throw new Error('Missing required field: data.eventId');
-  }
 
   const created = await EventReportPilot.create({
     ownerId,
@@ -515,11 +512,14 @@ export async function findEventHelperBlob({
 }
 
 /**
- * Updates an existing event in the database or creates a new one if it doesn't exist.
+ * Updates an existing event. Callers must look the event up (and authorize against it) first;
+ * this never creates one, so an event deleted mid-request is not silently recreated.
+ * @param id The database id of the event to update.
  * @param request An object containing all fields to be updated for the event.
- *                Required fields: id, ownerId, pocIds, collaboratorIds, regionId, data.
+ *                Required fields: ownerId, regionId, data.
+ * @param runAfterCommit Defers best-effort side effects (emails) until the transaction commits.
  * @returns A Promise that resolves to the updated event.
- * @throws {Error} If the specified event does not exist and cannot be created.
+ * @throws {Error} If the specified event does not exist, or required fields are missing.
  */
 export async function updateEvent(
   id: number,
@@ -534,7 +534,7 @@ export async function updateEvent(
   });
 
   if (!event) {
-    return createEvent(request, runAfterCommit);
+    throw new Error(`Event ${id} not found`);
   }
 
   validateFields(request, ['ownerId', 'regionId', 'data']);

@@ -331,9 +331,11 @@ describe('event service', () => {
       await destroyEvent(first.id);
     });
 
-    it('throws when the eventId is missing', async () => {
+    it('throws without creating a notification when the eventId is missing', async () => {
+      createEventImportedNotification.mockClear();
+
       await expect(
-        db.EventReportPilot.create({
+        createEvent({
           ownerId: 98_989,
           regionId: 98_989,
           pocIds: [98_989],
@@ -341,6 +343,8 @@ describe('event service', () => {
           data: { status: 'active' },
         })
       ).rejects.toThrow(/eventId cannot be null/);
+
+      expect(createEventImportedNotification).not.toHaveBeenCalled();
     });
 
     // Schema validation lives in the route middleware
@@ -363,6 +367,25 @@ describe('event service', () => {
   describe('updateEvent', () => {
     beforeEach(() => {
       createNotificationForNewPocs.mockReset();
+    });
+
+    it('throws instead of creating the event when it does not exist', async () => {
+      const created = await createAnEvent(98_989);
+      await destroyEvent(created.id);
+      createEventImportedNotification.mockClear();
+
+      await expect(
+        updateEvent(created.id, {
+          ownerId: 98_989,
+          pocIds: [98_989],
+          regionId: 98_989,
+          collaboratorIds: [98_989],
+          data: { eventId: created.eventId, status: 'active' },
+        })
+      ).rejects.toThrow(`Event ${created.id} not found`);
+
+      expect(await db.EventReportPilot.count({ where: { eventId: created.eventId } })).toBe(0);
+      expect(createEventImportedNotification).not.toHaveBeenCalled();
     });
 
     it('notifies new POCs with the previous and new POCs', async () => {
@@ -781,24 +804,6 @@ describe('event service', () => {
       await destroyEvent(created.id);
       await db.User.destroy({ where: { id: newOwner.id } });
     });
-    it('creates a new event when the id cannot be found', async () => {
-      const found = await findEventByDbId(99_999);
-      expect(found).toBeNull();
-
-      const updated = await updateEvent(99_999, {
-        ownerId: 123,
-        pocIds: [123],
-        regionId: 123,
-        collaboratorIds: [123],
-        data: { eventId: `R01-TR-${faker.string.uuid()}` },
-      });
-
-      expect(updated).toHaveProperty('id');
-      expect(updated).toHaveProperty('ownerId', 123);
-
-      await destroyEvent(updated.id);
-    });
-
     it('calls trEventComplete when status is updated to COMPLETE', async () => {
       const created = await createAnEvent(98_989);
 
