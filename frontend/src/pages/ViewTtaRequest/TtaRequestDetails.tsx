@@ -19,6 +19,8 @@ interface TtaRequestDetailsProps {
   onEdit?: (() => void) | null;
   /** the section titles' heading level, so they fit the outline of the page they are on */
   headingLevel?: 2 | 3;
+  /** end 24px below the last field, for a page whose next section adds no space above it */
+  compactEnd?: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ export default function TtaRequestDetails({
   ttaRequest,
   onEdit = null,
   headingLevel = 2,
+  compactEnd = false,
 }: TtaRequestDetailsProps): React.ReactElement {
   const { citations } = ttaRequest;
   // as on the activity report: H3s are set in sans, H2s in serif
@@ -66,6 +69,7 @@ export default function TtaRequestDetails({
       />
       <ReadOnlyContent
         title="Goal and context"
+        className={compactEnd ? 'ttahub-read-only-content-section-container__compact-end' : ''}
         titleHeadingLevel={headingLevel}
         titleClassName={titleClassName}
         spacing={{ title: 2, section: 1 }}

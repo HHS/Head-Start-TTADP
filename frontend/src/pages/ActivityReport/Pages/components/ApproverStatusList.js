@@ -42,10 +42,10 @@ const getDisplayStatus = (status) => {
   return 'Pending approval';
 };
 
-const ApproverStatusList = ({ approverStatus }) => {
+const ApproverStatusList = ({ approverStatus, itemClassName }) => {
   const displayApproverStatusList = () =>
     approverStatus.map((s) => (
-      <li className="margin-bottom-205" key={uniqueId('approver-status-list-')}>
+      <li className={itemClassName} key={uniqueId('approver-status-list-')}>
         {getStatusIcon(s.status)}
         <b>{getDisplayStatus(s.status)}</b>
         {s.status === 'approved' ? ' by ' : ' from '}
@@ -74,6 +74,11 @@ ApproverStatusList.propTypes = {
       }),
     })
   ).isRequired,
+  itemClassName: PropTypes.string,
+};
+
+ApproverStatusList.defaultProps = {
+  itemClassName: 'margin-bottom-205',
 };
 
 export default ApproverStatusList;
