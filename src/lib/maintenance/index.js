@@ -7,6 +7,7 @@ const {
 
 require('./db'); // loading populates itself into the common data structures
 require('./import'); // loading populates itself into the common data structures
+require('./fileDeletions'); // loading populates itself into the common data structures
 
 module.exports = {
   processMaintenanceQueue,

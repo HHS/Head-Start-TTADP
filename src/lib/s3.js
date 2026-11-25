@@ -75,20 +75,6 @@ const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
   return client.send(new DeleteObjectCommand(params));
 };
 
-const deleteFileFromS3Job = async (job, client = s3Client) => {
-  const { fileId, fileKey, bucket } = job.data;
-  let res;
-  try {
-    res = await deleteFileFromS3(fileKey, bucket, client);
-    return { status: 200, data: { fileId, fileKey, res } };
-  } catch (error) {
-    auditLogger.error(
-      `S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`
-    );
-    return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
-  }
-};
-
 const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
   if (!client || !bucket) {
     throw new Error(`S3 not configured (${client}, ${bucket})`);
@@ -203,7 +189,6 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
 
 export {
   deleteFileFromS3,
-  deleteFileFromS3Job,
   downloadFile,
   generateS3Config,
   getSignedDownloadUrl,
