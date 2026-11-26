@@ -268,7 +268,20 @@ describe('TTA hours provided over time', () => {
     fetchWidget.mockResolvedValue([]);
     render(<TTAHoursProvidedOverTime filters={selectedFilters} />);
 
+    expect(await screen.findByText('No results found.')).toBeInTheDocument();
     await waitFor(() => expect(fetchWidget).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('columnheader', { name: /2026/ })).not.toBeInTheDocument();
+  });
+
+  it('shows no results when hours do not match the selected date range', async () => {
+    fetchWidget.mockImplementation((widget) =>
+      Promise.resolve(
+        widget === 'ttaHoursProvidedOverTime' ? [{ startDate: '2026-03-02', duration: 5 }] : []
+      )
+    );
+    render(<TTAHoursProvidedOverTime filters={filters} />);
+
+    expect(await screen.findByText('No results found.')).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /2026/ })).not.toBeInTheDocument();
   });
 

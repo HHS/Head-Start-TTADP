@@ -2,6 +2,7 @@ import moment from 'moment';
 import React, { useRef, useState } from 'react';
 import Drawer from '../components/Drawer';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
+import NoResultsFound from '../components/NoResultsFound';
 import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import fetchWidget from '../fetchers/Widgets';
@@ -191,6 +192,9 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
     'Unable to load TTA hours provided over time'
   );
   const intervals = selectedIntervals(filters);
+  const hasHours = data.hours.some(
+    (row) => moment(row.startDate, ISO_DATE, true).isValid() && inIntervals(row.startDate, intervals)
+  );
   const range = dateRange(intervals, data.hours);
   const months = monthsInRange(range);
 
@@ -225,7 +229,9 @@ export default function TTAHoursProvidedOverTime({ filters }: { filters: Filter[
         error={error}
         menuItems={menuItems}
       >
-        {error ? null : showTable ? (
+        {error || loading ? null : !hasHours ? (
+          <NoResultsFound />
+        ) : showTable ? (
           <p className="padding-3">Table view is not yet available.</p>
         ) : (
           <div ref={chartRef} className="tta-hours-chart padding-3">
