@@ -18,6 +18,7 @@ import {
   createReport,
   createUser,
 } from '../testUtils';
+import { handleSoftDeleteReport } from './activityReports';
 import { getCitationsByGrantIds } from './citations';
 import {
   approveTtaRequest,
@@ -1388,6 +1389,74 @@ describe('ttaRequests service', () => {
       });
     });
 
+    it("unsuspends a grant's goal to Not Started when there is no record of its earlier status", async () => {
+      const suspended = await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'Suspended',
+        createdVia: 'rtr',
+      });
+      const awaiting = await awaitingApproval();
+
+      await approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id);
+
+      await suspended.reload();
+      expect(suspended.status).toBe('Not Started');
+    });
+
+    it("moves a grant's goal still in Draft to Not Started", async () => {
+      const draft = await Goal.create({
+        name: goalTemplate.templateName,
+        grantId: grantOne.id,
+        goalTemplateId: goalTemplate.id,
+        status: 'Draft',
+        createdVia: 'rtr',
+      });
+      const awaiting = await awaitingApproval();
+
+      const result = await approveTtaRequest(
+        awaiting,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+
+      const goals = await templateGoals();
+      expect(goals).toHaveLength(1);
+      expect(goals[0]).toMatchObject({ id: draft.id, status: 'Not Started' });
+      expect(result.goals.map(({ id }) => id)).toEqual([draft.id]);
+      const change = await GoalStatusChange.findOne({
+        where: { goalId: draft.id, oldStatus: 'Draft' },
+      });
+      expect(change).toMatchObject({
+        newStatus: 'Not Started',
+        userId: backupCor.id,
+        context: 'approveTtaRequest',
+      });
+    });
+
+    it('links a second request to the goal the first one created, with no status change', async () => {
+      const first = await awaitingApproval();
+      const second = await awaitingApproval();
+
+      const firstResult = await approveTtaRequest(
+        first,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+      const secondResult = await approveTtaRequest(
+        second,
+        { status: APPROVER_STATUSES.APPROVED },
+        backupCor.id
+      );
+
+      const goals = await templateGoals();
+      expect(goals).toHaveLength(1);
+      expect(goals[0].status).toBe('Not Started');
+      expect(firstResult.goals.map(({ id }) => id)).toEqual([goals[0].id]);
+      expect(secondResult.goals.map(({ id }) => id)).toEqual([goals[0].id]);
+    });
+
     it('rejects a request whose goal template the form would not offer', async () => {
       const automatic = await createGoalTemplate();
       const awaiting = await awaitingApproval();
@@ -1448,6 +1517,8 @@ describe('ttaRequests service', () => {
 
         expect(result.status).toBe(TTA_REQUEST_STATUSES.APPROVED);
         expect(result.goals.map(({ id }) => id)).toEqual([monitoringGoal.id]);
+        await monitoringGoal.reload();
+        expect(monitoringGoal.status).toBe('In Progress');
         expect(
           await Goal.count({
             where: { grantId: [grantOne.id, grantTwo.id], goalTemplateId: monitoringTemplate.id },
@@ -1575,6 +1646,21 @@ describe('ttaRequests service', () => {
           status: 'Not Started',
           createdVia: 'ttaRequest',
           onApprovedAR: false,
+        });
+      });
+
+      it('keeps the goal in Not Started when the report is deleted after approval', async () => {
+        const awaiting = await awaitingApproval();
+        await approveTtaRequest(awaiting, { status: APPROVER_STATUSES.APPROVED }, backupCor.id);
+
+        await handleSoftDeleteReport(report);
+
+        const goals = await templateGoals();
+        expect(goals).toHaveLength(1);
+        expect(goals[0]).toMatchObject({
+          id: draftGoal.id,
+          status: 'Not Started',
+          createdVia: 'ttaRequest',
         });
       });
     });

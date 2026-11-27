@@ -703,7 +703,7 @@ async function checkGoalTemplate(regionId: number, goalTemplateId: number | null
 
 /**
  * The status a suspended goal goes back to: the one it had before it was last suspended, or
- * In Progress, as approving an Activity Report would set it, when there is no record of that.
+ * Not Started when there is no record of that.
  */
 async function statusBeforeSuspension(goalId: number) {
   const suspension = await GoalStatusChange.findOne({
@@ -717,7 +717,7 @@ async function statusBeforeSuspension(goalId: number) {
 
   return [GOAL_STATUS.NOT_STARTED, GOAL_STATUS.IN_PROGRESS].includes(suspension?.oldStatus)
     ? suspension.oldStatus
-    : GOAL_STATUS.IN_PROGRESS;
+    : GOAL_STATUS.NOT_STARTED;
 }
 
 /**
@@ -730,10 +730,11 @@ async function statusBeforeSuspension(goalId: number) {
  * A goal that is only on Activity Reports that are not yet approved is hidden from the
  * recipient record and removed with them; the request takes it over, so it shows on the
  * recipient record and stays if those reports drop it. A suspended goal goes back to the status
- * it had before it was suspended.
+ * it had before it was suspended, and an older goal still in Draft moves to Not Started.
  *
  * Monitoring goals only come from the recipient's monitoring reports, so a request for the
- * monitoring goal is linked to the ones its grants have and never creates one.
+ * monitoring goal is linked to the ones its grants have and never creates one. A grant without
+ * one gets no goal; the request still shows on the recipient's timeline.
  */
 async function createGoalsForApprovedRequest(ttaRequestId: number, userId: number) {
   const ttaRequest = await TtaRequest.findByPk(ttaRequestId, {
@@ -797,6 +798,16 @@ async function createGoalsForApprovedRequest(ttaRequestId: number, userId: numbe
           userId,
           newStatus: await statusBeforeSuspension(goal.id),
           reason: 'Goal unsuspended by TTA request approval',
+          context: 'approveTtaRequest',
+        });
+      }
+
+      if (goal.status === GOAL_STATUS.DRAFT) {
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: GOAL_STATUS.NOT_STARTED,
+          reason: 'Goal started by TTA request approval',
           context: 'approveTtaRequest',
         });
       }
