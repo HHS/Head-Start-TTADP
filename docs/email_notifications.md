@@ -174,9 +174,10 @@ Optional `DIGEST_CONFIG` fields:
 | `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
 | `ADDED_AS_COLLABORATOR_TRAINING_REPORT` | `TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST` | `emailWhenAddedAsCollaboratorTrainingReport` |
 | `SESSION_REVIEW_REQUESTED_TRAINING_REPORT` | `TRAINING_REPORT_SESSION_SUBMITTED_DIGEST` | `emailWhenSessionReviewRequestedTrainingReport` |
+| `EVENT_IMPORTED_TRAINING_REPORT` | `TRAINING_REPORT_EVENT_IMPORTED_DIGEST` | `emailWhenEventImportedTrainingReport` (TR-28c: Training Reports imported where the user is the Event Creator, linking to the event summary; suspended events are skipped) |
 | `MONITORING_DETAILS_ADDED` | `MONITORING_DETAILS_ADDED_DIGEST` | `emailWhenMonitoringDetailsAdded` (lists recipients with monitoring reports the Hub detected in the user's home region, from `MonitoringReportDeliveries`; TTAC/ECM/GSM users only; `skipEmpty`) |
 
-Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the session digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
+Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the event imported digest reads `EventReportPilots.createdAt`; the session digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `sendEmailDigests`.
 
@@ -195,6 +196,8 @@ Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry 
 ### Training report notifications
 
 Queued by TR-lifecycle functions (`trCollaboratorAdded`, `trOwnerAdded`, `trPocAdded`, `trSessionCreated`, `trEventComplete`) and by the `trainingReportTaskDueNotifications` digest function. All are processed by `sendTrainingReportNotification` which uses `SEND_NOTIFICATIONS === 'true' && !CI` as its guard.
+
+`trOwnerAdded` (TR-28b, template `tr_event_imported`) and `trCollaboratorAdded` (TR-2b, template `tr_collaborator_added`) are called by the event service (`src/services/event.ts`) after the request commits, not from model hooks: `trOwnerAdded` when an event is created by `createEvent` (`POST /api/events`) or the CSV import, and `trCollaboratorAdded` for each collaborator added on create or update. Each sends only when the recipient's setting (`emailWhenEventImportedTrainingReport` or `emailWhenAddedAsCollaboratorTrainingReport`) is `immediately`. `emailWhenEventImportedTrainingReport` defaults to `never`: emails are opt-in, even the import email that used to be sent to every Event Creator.
 
 **Alert-type reminders** are driven by `TR_NOTIFICATION_CONFIG_DICT`:
 

@@ -156,8 +156,24 @@ const eventBodyBase = {
 
 const createEventBodySchema = Joi.object({
   ...eventBodyBase,
-  // createEvent throws without it; validate here so the caller gets a 400, not a 500.
-  data: eventDataSchema.fork(['eventId'], () => Joi.string().min(1).required()).required(),
+  data: eventDataSchema
+    .fork(['eventId'], () =>
+      // The eventId column is NOT NULL and unique; validate here so the caller gets a 400, not a 500.
+      Joi.string().min(1).required()
+    )
+    // A new event needs its creator's action (TR-28a); it can only be suspended or
+    // submitted later, through an update, which archives that alert
+    .fork(['status'], () =>
+      Joi.string()
+        .valid(
+          ...Object.values(TRAINING_REPORT_STATUSES).filter(
+            (status) => status !== TRAINING_REPORT_STATUSES.SUSPENDED
+          )
+        )
+        .allow('', null)
+    )
+    .fork(['eventSubmitted'], (eventSubmitted) => eventSubmitted.invalid(true))
+    .required(),
 });
 
 const updateEventBodySchema = Joi.object({

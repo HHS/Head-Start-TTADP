@@ -121,6 +121,59 @@ export async function createNotificationForNewCollaborators(
 }
 
 /**
+ * Creates the "Training Report available" in-app notification (TR-28a) for the Event Creator
+ * (owner) of a newly imported Training Report. Skipped when the owner lacks the
+ * `actionable_notifications` feature flag. The user's in-app setting is applied by
+ * `createNotification`.
+ * @param event The imported Training Report (EventReportPilot).
+ * @returns {Promise<void>} Resolves once the notification is created.
+ */
+export async function createEventImportedNotification(event: {
+  id: number;
+  eventId: string;
+  ownerId: number;
+}): Promise<void> {
+  const owner = await db.User.findOne({
+    where: { id: event.ownerId },
+    attributes: ['id', 'flags'],
+    include: [{ model: db.Permission, as: 'permissions' }],
+  });
+
+  if (!owner || !new Users(owner).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG)) {
+    return;
+  }
+
+  await createNotification(owner.id, event.id, NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED, {
+    metadata: {
+      displayId: event.eventId,
+      id: event.id,
+    },
+    skipExisting: 'archived',
+  });
+}
+
+/**
+ * Archives the "Training Report available" in-app notification (TR-28a) for an event. Called
+ * when the Event Creator submits the event details, and when the event is suspended or deleted.
+ * Archiving points the link at the Training Report; pass `removeLink` when the Training Report
+ * itself is being deleted.
+ * @param eventId The Training Report (EventReportPilot) id.
+ * @param options.removeLink Clear the link instead of pointing it at the Training Report.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+export async function archiveEventImportedNotifications(
+  eventId: number,
+  { removeLink = false }: { removeLink?: boolean } = {}
+): Promise<void> {
+  const types = [NOTIFICATION_TYPES.TRAINING_REPORT_EVENT_IMPORTED];
+  await archiveNotificationsByEntityAndType(eventId, types);
+
+  if (removeLink) {
+    await db.Notification.update({ link: null }, { where: { entityId: eventId, type: types } });
+  }
+}
+
+/**
  * Creates the "session submitted for approval" in-app notification (TR-3c) for each Event
  * Collaborator on a Training Report. The event owner is skipped, as are users without the
  * `actionable_notifications` feature flag. The user's in-app setting is applied by

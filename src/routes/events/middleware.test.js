@@ -347,6 +347,39 @@ describe('events schema validation middleware', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
+  it.each([
+    [
+      'suspended',
+      { status: TRAINING_REPORT_STATUSES.SUSPENDED },
+      '"data.status" must be one of [Not started, In progress, Complete, , null]',
+    ],
+    ['submitted', { eventSubmitted: true }, '"data.eventSubmitted" contains an invalid value'],
+  ])('rejects creating an event already %s', (_state, data, message) => {
+    const req = { body: validBody({ ...validData, ...data }) };
+    const { res, send } = buildRes();
+    const next = jest.fn();
+
+    checkCreateEventBody(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(send).toHaveBeenCalledWith(`Received malformed request body: ${message}`);
+  });
+
+  it.each([
+    ['suspended', { status: TRAINING_REPORT_STATUSES.SUSPENDED }],
+    ['submitted', { eventSubmitted: true }],
+  ])('allows updating an event to %s', (_state, data) => {
+    const req = { body: validBody({ ...validData, ...data }) };
+    const { res } = buildRes();
+    const next = jest.fn();
+
+    checkUpdateEventBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('requires data.eventId on create', () => {
     const { eventId, ...withoutEventId } = validData;
     const req = { body: validBody(withoutEventId) };

@@ -28,15 +28,19 @@ import {
   validateFields,
 } from './event';
 import {
+  archiveEventImportedNotifications,
   archiveSessionNeedsActionNotifications,
   archiveSessionSubmittedNotifications,
+  createEventImportedNotification,
   createNotificationForNewCollaborators,
   createNotificationForNewPocs,
 } from './notifications/trainingReport';
 
 jest.mock('./notifications/trainingReport', () => ({
+  archiveEventImportedNotifications: jest.fn(),
   archiveSessionNeedsActionNotifications: jest.fn(),
   archiveSessionSubmittedNotifications: jest.fn(),
+  createEventImportedNotification: jest.fn(),
   createNotificationForNewCollaborators: jest.fn(),
   createNotificationForNewPocs: jest.fn(),
 }));
@@ -141,6 +145,73 @@ describe('event service', () => {
         [],
         [98_989]
       );
+
+      await destroyEvent(created.id);
+    });
+
+    it('notifies the Event Creator in-app and by email (TR-28a/b)', async () => {
+      createEventImportedNotification.mockClear();
+      const trOwnerAddedSpy = jest.spyOn(mailer, 'trOwnerAdded').mockResolvedValue();
+      const created = await createAnEvent(98_989);
+
+      expect(createEventImportedNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id, eventId: created.eventId, ownerId: 98_989 })
+      );
+      expect(trOwnerAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id, eventId: created.eventId }),
+        98_989
+      );
+
+      trOwnerAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('defers the TR-28b and TR-2b emails until after the commit', async () => {
+      const trOwnerAddedSpy = jest.spyOn(mailer, 'trOwnerAdded').mockResolvedValue();
+      const trCollaboratorAddedSpy = jest.spyOn(mailer, 'trCollaboratorAdded').mockResolvedValue();
+      const deferred = [];
+      const created = await createEvent(
+        {
+          ownerId: 98_989,
+          regionId: 98_989,
+          pocIds: [],
+          collaboratorIds: [98_989, 11_111],
+          data: {
+            eventId: `R01-TR-${faker.string.uuid()}`,
+            owner: { id: 98_989, name: 'Owner Name' },
+          },
+        },
+        (work) => {
+          deferred.push(work);
+        }
+      );
+
+      expect(trOwnerAddedSpy).not.toHaveBeenCalled();
+      expect(trCollaboratorAddedSpy).not.toHaveBeenCalled();
+
+      await Promise.all(deferred.map((work) => work()));
+
+      expect(trOwnerAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id }),
+        98_989
+      );
+      // the owner is never emailed as a collaborator
+      expect(trCollaboratorAddedSpy).toHaveBeenCalledTimes(1);
+      expect(trCollaboratorAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: created.id, eventId: created.eventId }),
+        11_111
+      );
+
+      trOwnerAddedSpy.mockRestore();
+      trCollaboratorAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    it('does not fail the save when the in-app import notification fails', async () => {
+      createEventImportedNotification.mockRejectedValueOnce(new Error('boom'));
+      const created = await createAnEvent(98_989);
+
+      expect(created.id).toBeTruthy();
 
       await destroyEvent(created.id);
     });
@@ -260,9 +331,11 @@ describe('event service', () => {
       await destroyEvent(first.id);
     });
 
-    it('throws when the eventId is missing', async () => {
+    it('throws without creating a notification when the eventId is missing', async () => {
+      createEventImportedNotification.mockClear();
+
       await expect(
-        db.EventReportPilot.create({
+        createEvent({
           ownerId: 98_989,
           regionId: 98_989,
           pocIds: [98_989],
@@ -270,6 +343,8 @@ describe('event service', () => {
           data: { status: 'active' },
         })
       ).rejects.toThrow(/eventId cannot be null/);
+
+      expect(createEventImportedNotification).not.toHaveBeenCalled();
     });
 
     // Schema validation lives in the route middleware
@@ -292,6 +367,25 @@ describe('event service', () => {
   describe('updateEvent', () => {
     beforeEach(() => {
       createNotificationForNewPocs.mockReset();
+    });
+
+    it('throws instead of creating the event when it does not exist', async () => {
+      const created = await createAnEvent(98_989);
+      await destroyEvent(created.id);
+      createEventImportedNotification.mockClear();
+
+      await expect(
+        updateEvent(created.id, {
+          ownerId: 98_989,
+          pocIds: [98_989],
+          regionId: 98_989,
+          collaboratorIds: [98_989],
+          data: { eventId: created.eventId, status: 'active' },
+        })
+      ).rejects.toThrow(`Event ${created.id} not found`);
+
+      expect(await db.EventReportPilot.count({ where: { eventId: created.eventId } })).toBe(0);
+      expect(createEventImportedNotification).not.toHaveBeenCalled();
     });
 
     it('notifies new POCs with the previous and new POCs', async () => {
@@ -336,6 +430,77 @@ describe('event service', () => {
       );
 
       await destroyEvent(created.id);
+    });
+
+    it('emails only the newly added collaborators (TR-2b)', async () => {
+      const created = await createAnEvent(98_989);
+      const trCollaboratorAddedSpy = jest.spyOn(mailer, 'trCollaboratorAdded').mockResolvedValue();
+
+      await updateEvent(created.id, {
+        ownerId: 98_989,
+        pocIds: [98_989],
+        regionId: 98_989,
+        collaboratorIds: [98_989, 11_111, 11_112],
+        data: { status: 'active', owner: { id: 98_989, name: 'test' } },
+      });
+
+      expect(trCollaboratorAddedSpy).toHaveBeenCalledTimes(2);
+      [11_111, 11_112].forEach((id) => {
+        expect(trCollaboratorAddedSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ id: created.id, eventId: created.eventId }),
+          id
+        );
+      });
+
+      trCollaboratorAddedSpy.mockRestore();
+      await destroyEvent(created.id);
+    });
+
+    describe('archiving the event imported alert (TR-28a)', () => {
+      const save = (id, data) =>
+        updateEvent(id, {
+          ownerId: 98_989,
+          pocIds: [98_989],
+          regionId: 98_989,
+          collaboratorIds: [98_989],
+          data: { owner: { id: 98_989, name: 'test' }, ...data },
+        });
+
+      beforeEach(() => {
+        archiveEventImportedNotifications.mockClear();
+      });
+
+      it('archives when the event details are submitted', async () => {
+        const created = await createAnEvent(98_989);
+
+        await save(created.id, { status: 'active', eventSubmitted: true });
+        expect(archiveEventImportedNotifications).toHaveBeenCalledWith(created.id);
+
+        // a later save of submitted details does not archive again
+        archiveEventImportedNotifications.mockClear();
+        await save(created.id, { status: 'active', eventSubmitted: true });
+        expect(archiveEventImportedNotifications).not.toHaveBeenCalled();
+
+        await destroyEvent(created.id);
+      });
+
+      it('archives when the event is suspended', async () => {
+        const created = await createAnEvent(98_989);
+
+        await save(created.id, { status: TRS.SUSPENDED });
+        expect(archiveEventImportedNotifications).toHaveBeenCalledWith(created.id);
+
+        await destroyEvent(created.id);
+      });
+
+      it('does not archive on other saves', async () => {
+        const created = await createAnEvent(98_989);
+
+        await save(created.id, { status: TRS.IN_PROGRESS, eventSubmitted: false });
+        expect(archiveEventImportedNotifications).not.toHaveBeenCalled();
+
+        await destroyEvent(created.id);
+      });
     });
 
     it('emails only the newly added POCs', async () => {
@@ -639,24 +804,6 @@ describe('event service', () => {
       await destroyEvent(created.id);
       await db.User.destroy({ where: { id: newOwner.id } });
     });
-    it('creates a new event when the id cannot be found', async () => {
-      const found = await findEventByDbId(99_999);
-      expect(found).toBeNull();
-
-      const updated = await updateEvent(99_999, {
-        ownerId: 123,
-        pocIds: [123],
-        regionId: 123,
-        collaboratorIds: [123],
-        data: { eventId: `R01-TR-${faker.string.uuid()}` },
-      });
-
-      expect(updated).toHaveProperty('id');
-      expect(updated).toHaveProperty('ownerId', 123);
-
-      await destroyEvent(updated.id);
-    });
-
     it('calls trEventComplete when status is updated to COMPLETE', async () => {
       const created = await createAnEvent(98_989);
 
@@ -1332,6 +1479,24 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(current).toEqual([pocId]);
     });
 
+    it('notifies the Event Creator of the imported Training Report (TR-28a/b)', async () => {
+      createEventImportedNotification.mockClear();
+      const trOwnerAddedSpy = jest.spyOn(mailer, 'trOwnerAdded').mockResolvedValue();
+
+      const result = await csvImport(Buffer.from(buildImport(email, `${eventId}-owner`)));
+
+      expect(result.count).toEqual(1);
+      expect(createEventImportedNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: `${eventId}-owner`, ownerId: userId })
+      );
+      expect(trOwnerAddedSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ eventId: `${eventId}-owner` }),
+        userId
+      );
+
+      trOwnerAddedSpy.mockRestore();
+    });
+
     it('imports good data correctly', async () => {
       const result = await csvImport(buffer);
 
@@ -1620,6 +1785,17 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
   });
 
   describe('destroyEvent', () => {
+    it('archives the event imported alert and clears its link (TR-28a)', async () => {
+      const created = await createAnEvent(98_989);
+      archiveEventImportedNotifications.mockClear();
+
+      await destroyEvent(created.id);
+
+      expect(archiveEventImportedNotifications).toHaveBeenCalledWith(created.id, {
+        removeLink: true,
+      });
+    });
+
     it('logs an error when deleting session reports fails', async () => {
       const eventId = 12345;
 

@@ -13,16 +13,18 @@ import { parse } from 'csv-parse/sync';
 import moment from 'moment';
 import { cast, Op, type WhereOptions as SequelizeWhereOptions, Transaction } from 'sequelize';
 import { FILE_STATUSES } from '../constants';
-import { trEventComplete, trPocAdded } from '../lib/mailer';
+import { trCollaboratorAdded, trEventComplete, trOwnerAdded, trPocAdded } from '../lib/mailer';
 import runInSavepoint from '../lib/runInSavepoint';
 import { parseStoredDate } from '../lib/utils';
 import { auditLogger } from '../logger';
 import db from '../models';
 import EventReport from '../policies/event';
-import { getNewPocIds } from './eventFlow';
+import { getAddedUserIds, getNewPocIds } from './eventFlow';
 import {
+  archiveEventImportedNotifications,
   archiveSessionNeedsActionNotifications,
   archiveSessionSubmittedNotifications,
+  createEventImportedNotification,
   createNotificationForNewCollaborators,
   createNotificationForNewPocs,
 } from './notifications/trainingReport';
@@ -145,19 +147,47 @@ async function notifyNewPocs(
 }
 
 /**
- * Notifies the users newly added as Event Collaborators in-app (TR-2a). A notification failure
- * must never fail the save.
+ * Notifies the users newly added as Event Collaborators: in-app (TR-2a) and by email (TR-2b).
+ * A notification failure must never fail the save.
  */
 async function notifyNewCollaborators(
   event: { id: number; eventId: string; ownerId: number },
   previousCollaboratorIds: number[] | null | undefined,
-  currentCollaboratorIds: number[] | null | undefined
+  currentCollaboratorIds: number[] | null | undefined,
+  runAfterCommit: RunAfterCommit
 ): Promise<void> {
   await runInSavepoint(
     () =>
       createNotificationForNewCollaborators(event, previousCollaboratorIds, currentCollaboratorIds),
     `Error creating collaborator added notifications for event ${event.id}:`
   );
+  // TR-2b: sent after the commit for the same reason as TR-1b
+  const newCollaboratorIds = getAddedUserIds(
+    event.ownerId,
+    previousCollaboratorIds,
+    currentCollaboratorIds
+  );
+  if (newCollaboratorIds.length) {
+    await runAfterCommit(async () => {
+      await Promise.all(newCollaboratorIds.map((id) => trCollaboratorAdded(event, id)));
+    });
+  }
+}
+
+/**
+ * Notifies the Event Creator that a new Training Report was imported into the TTA Hub: in-app
+ * (TR-28a) and by email (TR-28b). A notification failure must never fail the import.
+ */
+async function notifyEventImported(
+  event: { id: number; eventId: string; ownerId: number },
+  runAfterCommit: RunAfterCommit
+): Promise<void> {
+  await runInSavepoint(
+    () => createEventImportedNotification(event),
+    `Error creating event imported notification for event ${event.id}:`
+  );
+  // TR-28b: sent after the commit for the same reason as TR-1b
+  await runAfterCommit(() => trOwnerAdded(event, event.ownerId));
 }
 
 export async function createEvent(
@@ -170,12 +200,9 @@ export async function createEvent(
 
   // The event display id is provided via `data.eventId` but is stored solely in
   // the dedicated `eventId` column (the single source of truth); it is not
-  // persisted back into the JSONB `data`.
+  // persisted back into the JSONB `data`. `checkCreateEventBody` requires it on the API
+  // route; the column's NOT NULL constraint rejects it being missing for other callers.
   const { eventId, ...dataWithoutEventId } = data;
-
-  if (!eventId) {
-    throw new Error('Missing required field: data.eventId');
-  }
 
   const created = await EventReportPilot.create({
     ownerId,
@@ -186,7 +213,8 @@ export async function createEvent(
     data: cast(JSON.stringify(dataWithoutEventId), 'jsonb'),
   });
 
-  await notifyNewCollaborators(created, [], collaboratorIds);
+  await notifyEventImported(created, runAfterCommit);
+  await notifyNewCollaborators(created, [], collaboratorIds, runAfterCommit);
   await notifyNewPocs(created, [], pocIds, runAfterCommit);
 
   return created;
@@ -204,13 +232,14 @@ export async function destroyEvent(id: number): Promise<void> {
       where: { eventId: id },
       attributes: ['id'],
     });
-    await Promise.all(
-      sessions.flatMap((session) => [
+    await Promise.all([
+      archiveEventImportedNotifications(id, { removeLink: true }),
+      ...sessions.flatMap((session) => [
         archiveSessionNeedsActionNotifications(session.id, { removeLink: true }),
         archiveSessionSubmittedNotifications(session.id, { removeLink: true }),
-      ])
-    );
-  }, `Error archiving session notifications for event ${id}:`);
+      ]),
+    ]);
+  }, `Error archiving notifications for event ${id}:`);
   try {
     auditLogger.info(`Deleting session reports for event ${id}`);
     await SessionReportPilot.destroy({ where: { eventId: id } });
@@ -483,11 +512,14 @@ export async function findEventHelperBlob({
 }
 
 /**
- * Updates an existing event in the database or creates a new one if it doesn't exist.
+ * Updates an existing event. Callers must look the event up (and authorize against it) first;
+ * this never creates one, so an event deleted mid-request is not silently recreated.
+ * @param id The database id of the event to update.
  * @param request An object containing all fields to be updated for the event.
- *                Required fields: id, ownerId, pocIds, collaboratorIds, regionId, data.
+ *                Required fields: ownerId, regionId, data.
+ * @param runAfterCommit Defers best-effort side effects (emails) until the transaction commits.
  * @returns A Promise that resolves to the updated event.
- * @throws {Error} If the specified event does not exist and cannot be created.
+ * @throws {Error} If the specified event does not exist, or required fields are missing.
  */
 export async function updateEvent(
   id: number,
@@ -502,7 +534,7 @@ export async function updateEvent(
   });
 
   if (!event) {
-    return createEvent(request, runAfterCommit);
+    throw new Error(`Event ${id} not found`);
   }
 
   validateFields(request, ['ownerId', 'regionId', 'data']);
@@ -592,8 +624,22 @@ export async function updateEvent(
   await notifyNewCollaborators(
     { id: evt.id, eventId: evt.eventId, ownerId },
     previousCollaboratorIds,
-    collaboratorIds
+    collaboratorIds,
+    runAfterCommit
   );
+
+  // TR-28a: the Event Creator no longer needs to act once the event details are submitted, or
+  // once the event is suspended
+  const wasEventSubmitted = Boolean((storedData as { eventSubmitted?: boolean }).eventSubmitted);
+  const isEventSubmitted = Boolean((persistedData as { eventSubmitted?: boolean }).eventSubmitted);
+  const wasSuspended = (storedData as { status?: string }).status === TRS.SUSPENDED;
+  const isSuspended = (persistedData as { status?: string }).status === TRS.SUSPENDED;
+  if ((isEventSubmitted && !wasEventSubmitted) || (isSuspended && !wasSuspended)) {
+    await runInSavepoint(
+      () => archiveEventImportedNotifications(evt.id),
+      `Error archiving event imported notifications for event ${evt.id}:`
+    );
+  }
 
   return findEventHelper({ id }) as Promise<EventShape>;
 }
@@ -1301,6 +1347,7 @@ export async function csvImport(buffer: Buffer) {
         version: EVENT_REPORT_PILOT_VERSION,
       });
 
+      await notifyEventImported(created, runNow);
       await notifyNewPocs(created, [], pocs, runNow);
 
       return true;

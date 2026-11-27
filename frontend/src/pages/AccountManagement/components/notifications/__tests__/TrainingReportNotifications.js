@@ -4,16 +4,16 @@ import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import TrainingReportNotifications from '../TrainingReportNotifications';
 
-function renderComponent() {
-  function Wrapper() {
-    const methods = useForm();
-    return (
-      <FormProvider {...methods}>
-        <TrainingReportNotifications />
-      </FormProvider>
-    );
-  }
+function Wrapper() {
+  const methods = useForm();
+  return (
+    <FormProvider {...methods}>
+      <TrainingReportNotifications />
+    </FormProvider>
+  );
+}
 
+function renderComponent() {
   render(<Wrapper />);
 }
 
@@ -41,6 +41,22 @@ describe('TrainingReportNotifications', () => {
       screen.getByText("I'm added as a Regional point of contact on a Training Report.")
     ).toBeInTheDocument();
     expect(screen.getByText('Someone submits an event session for my review.')).toBeInTheDocument();
+  });
+
+  it('renders the event imported row with in-app and email inputs', () => {
+    const { container } = render(<Wrapper />);
+
+    expect(
+      screen.getByText(
+        "A new Training Report is imported into the TTA Hub where I'm the event creator."
+      )
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('input[name="inAppWhenEventImportedTrainingReport"]')
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[name="emailWhenEventImportedTrainingReport"]')
+    ).toBeInTheDocument();
   });
 
   it('renders the session submitted collaborator row after the added as collaborator row', () => {
