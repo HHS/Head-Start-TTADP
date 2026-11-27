@@ -1626,7 +1626,8 @@ describe('ttaRequests service', () => {
           individualHooks: true,
         });
         await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
-        await ActivityReport.destroy({ where: { id: report.id }, force: true });
+        // unscoped, so a report the test soft-deleted is removed too
+        await ActivityReport.unscoped().destroy({ where: { id: report.id }, force: true });
       });
 
       it("takes over the report's goal, so it shows on the recipient record", async () => {
