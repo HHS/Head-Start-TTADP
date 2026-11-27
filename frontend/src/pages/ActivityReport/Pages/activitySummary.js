@@ -595,18 +595,19 @@ ActivitySummary.propTypes = {
 };
 
 const getNumberOfParticipants = (deliveryMethod) => {
-  const labelToUse =
-    deliveryMethod === 'hybrid'
-      ? 'Number of participants attending in person'
-      : 'Number of participants';
-  const numberOfParticipants = [{ label: labelToUse, name: 'numberOfParticipants' }];
   if (deliveryMethod === 'hybrid') {
-    numberOfParticipants.push({
-      label: 'Number of participants attending virtually',
-      name: 'numberOfParticipantsVirtually',
-    });
+    return [
+      {
+        label: 'Number of participants attending in person',
+        name: 'numberOfParticipantsInPerson',
+      },
+      {
+        label: 'Number of participants attending virtually',
+        name: 'numberOfParticipantsVirtually',
+      },
+    ];
   }
-  return numberOfParticipants;
+  return [{ label: 'Number of participants', name: 'numberOfParticipants' }];
 };
 
 const getSections = (formData) => {

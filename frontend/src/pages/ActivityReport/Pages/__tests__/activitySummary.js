@@ -316,7 +316,8 @@ describe('ReviewSection', () => {
         mode: 'onChange',
         defaultValues: {
           deliveryMethod: 'hybrid',
-          numberOfParticipants: 10,
+          numberOfParticipants: 99,
+          numberOfParticipantsInPerson: 10,
           numberOfParticipantsVirtually: 15,
         },
       });
@@ -340,6 +341,39 @@ describe('ReviewSection', () => {
 
     expect(inPersonValue).toBeInTheDocument();
     expect(virtualValue).toBeInTheDocument();
+    expect(screen.queryByText('99')).not.toBeInTheDocument();
+  });
+
+  it('should display the single participant field when deliveryMethod is not hybrid', () => {
+    const TestComponent = () => {
+      const hookForm = useForm({
+        mode: 'onChange',
+        defaultValues: {
+          deliveryMethod: 'in-person',
+          numberOfParticipants: 12,
+          numberOfParticipantsInPerson: 98,
+        },
+      });
+
+      return (
+        <FormProvider {...hookForm}>
+          <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
+            <activitySummary.reviewSection />
+          </NetworkContext.Provider>
+        </FormProvider>
+      );
+    };
+
+    render(<TestComponent />);
+
+    expect(screen.getByText('Number of participants')).toBeInTheDocument();
+    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Number of participants attending in person')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Number of participants attending virtually')
+    ).not.toBeInTheDocument();
   });
 });
 
