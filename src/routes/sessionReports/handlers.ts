@@ -4,7 +4,12 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import Joi from 'joi';
 import handleErrors from '../../lib/apiErrorHandler';
-import { trSessionChangesRequested, trSessionSubmittedForApproval } from '../../lib/mailer';
+import {
+  trSessionChangesRequested,
+  trSessionChangesRequestedToCollaborators,
+  trSessionChangesRequestedToPocs,
+  trSessionSubmittedForApproval,
+} from '../../lib/mailer';
 import EventReport from '../../policies/event';
 import RecipientPolicy from '../../policies/recipient';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
@@ -304,12 +309,19 @@ export const updateHandler = async (req: Request, res: Response) => {
       onTransactionCommitted(req, () => trSessionSubmittedForApproval(event, updatedSession));
     }
 
-    // Likewise, only email the owner on the transition into "needs action".
+    // Likewise, only email the owner (TR-4b), collaborators (TR-4d) and POCs (TR-4f) on the
+    // transition into "needs action".
     if (
       previousStatus !== REPORT_STATUSES.NEEDS_ACTION &&
       updatedStatus === REPORT_STATUSES.NEEDS_ACTION
     ) {
-      onTransactionCommitted(req, () => trSessionChangesRequested(event, updatedSession));
+      onTransactionCommitted(req, async () => {
+        await Promise.all([
+          trSessionChangesRequested(event, updatedSession),
+          trSessionChangesRequestedToCollaborators(event, updatedSession),
+          trSessionChangesRequestedToPocs(event, updatedSession),
+        ]);
+      });
     }
 
     return res.status(httpCodes.CREATED).send(updatedSession);

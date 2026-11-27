@@ -18,6 +18,7 @@ import {
   createNotificationForSessionSubmittedCollaborators,
   createSessionNeedsActionNotification,
   createSessionNeedsActionNotificationForCollaborators,
+  createSessionNeedsActionNotificationForPocs,
   createSessionSubmittedNotification,
 } from './notifications/trainingReport';
 import type { EventShape, SessionShape } from './types/event';
@@ -416,6 +417,7 @@ export async function updateSession(
     startDate?: Date | null;
     endDate?: Date | null;
     submittedAt?: Date;
+    needsActionAt?: Date;
     data: Cast;
   };
 
@@ -471,6 +473,11 @@ export async function updateSession(
   if (isSubmission || isReassigned) {
     // read by the TR-21 digest
     update.submittedAt = new Date();
+  }
+
+  if (isNeedsAction && !wasNeedsAction) {
+    // read by the TR-22 digest
+    update.needsActionAt = new Date();
   }
 
   update.data = cast(JSON.stringify(newData), 'jsonb');
@@ -533,7 +540,8 @@ export async function updateSession(
   }
 
   if (isNeedsAction && !wasNeedsAction) {
-    // the approver requested changes: TR-4a for the owner, TR-4c for collaborators
+    // the approver requested changes: TR-4a for the owner, TR-4c for collaborators, TR-4e for
+    // Regional points of contact
     const needsActionSession = {
       id,
       approverId: update.approverId !== undefined ? update.approverId : session.approverId,
@@ -546,6 +554,10 @@ export async function updateSession(
     await runInSavepoint(
       () => createSessionNeedsActionNotificationForCollaborators(event, needsActionSession),
       `Error creating session needs action collaborator notifications for session ${id}:`
+    );
+    await runInSavepoint(
+      () => createSessionNeedsActionNotificationForPocs(event, needsActionSession),
+      `Error creating session needs action POC notifications for session ${id}:`
     );
   } else if (isSubmission) {
     // resubmitted, so the owner no longer needs to act
@@ -877,8 +889,7 @@ async function fetchSessionReports(
   // Transform rows to plain objects with goalTemplates included
   const rows = result.map((row: Model) => {
     const plain = row.get({ plain: true });
-    const otherTrainers =
-      typeof plain.otherTrainers === 'string' ? plain.otherTrainers.trim() : '';
+    const otherTrainers = typeof plain.otherTrainers === 'string' ? plain.otherTrainers.trim() : '';
     return {
       id: plain.id,
       eventId: plain.eventId,

@@ -4,6 +4,9 @@ if type === 'monitoringDetailsAddedDigest'
 else if type === 'trainingReportSessionSubmittedDigest'
     p Below are your report notifications for #{freq}.
     p Select the session name to view it in the Hub.
+else if type === 'trainingReportSessionNeedsActionDigest'
+    p Below are your report notifications for #{freq}.
+    p Select the session name to view it in the Hub.
 else
     p Below are your report notifications for #{freq}.
     p Select the report number to view it in the Hub.
@@ -28,6 +31,8 @@ case type
         p You were added as an Event Collaborator on these Training Reports:
     when 'trainingReportSessionSubmittedDigest'
         p The following sessions were submitted for review:
+    when 'trainingReportSessionNeedsActionDigest'
+        p Changes have been requested for the following sessions:
     when 'monitoringDetailsAddedDigest'
         p New monitoring reports were added in your region for the following recipients:
     default

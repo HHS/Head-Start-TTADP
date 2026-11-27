@@ -44,6 +44,28 @@ export const getNewPocIds = (
   return getAddedUserIds(event.ownerId, previousPocIds, currentPocIds);
 };
 
+/**
+ * The Regional points of contact told that the approver requested changes to a session
+ * (TR-4e/f). Only Regional PD events with National Centers have POCs; others can keep stale
+ * `pocIds` from an earlier organizer, and those users cannot open the session form. POCs who are
+ * also the owner or a collaborator are skipped, since they get TR-4a/b or TR-4c/d.
+ */
+export const getSessionNeedsActionPocIds = (event: {
+  ownerId: number;
+  pocIds?: number[] | null;
+  collaboratorIds?: number[] | null;
+  data?: { eventOrganizer?: string } | null;
+}): number[] => {
+  if (event.data?.eventOrganizer !== REGIONAL_PD_WITH_NATIONAL_CENTERS) {
+    return [];
+  }
+
+  const collaboratorIds = new Set(event.collaboratorIds ?? []);
+  return [...new Set(event.pocIds ?? [])].filter(
+    (pocId) => pocId !== event.ownerId && !collaboratorIds.has(pocId)
+  );
+};
+
 export const isNationalCenterUser = (
   user: { roles?: Array<{ name?: string } | null | undefined> | null } | null | undefined
 ): boolean =>

@@ -6,6 +6,7 @@ import { REGIONAL_PD_WITH_NATIONAL_CENTERS, REGIONAL_TTA_NO_NATIONAL_CENTERS } f
 import {
   trainingReportsWhereCollaboratorByDate,
   trainingReportsWherePocByDate,
+  trainingReportsWhereSessionNeedsActionByDate,
   trainingReportsWhereSessionSubmittedByDate,
 } from './trainingReportDigests';
 
@@ -18,6 +19,7 @@ const DAILY = frequencyToInterval('today');
 describe('training report digests', () => {
   let owner;
   let poc;
+  let outsider;
   const eventIds: number[] = [];
 
   const createEvent = async (
@@ -48,13 +50,13 @@ describe('training report digests', () => {
   };
 
   beforeAll(async () => {
-    [owner, poc] = await Promise.all([createUser({}), createUser({})]);
+    [owner, poc, outsider] = await Promise.all([createUser({}), createUser({}), createUser({})]);
   });
 
   afterAll(async () => {
     await SessionReportPilot.destroy({ where: { eventId: eventIds } });
     await EventReportPilot.destroy({ where: { id: eventIds } });
-    await User.destroy({ where: { id: [owner.id, poc.id] } });
+    await User.destroy({ where: { id: [owner.id, poc.id, outsider.id] } });
     await sequelize.close();
   });
 
@@ -175,10 +177,13 @@ describe('training report digests', () => {
 
       const reports = await trainingReportsWhereSessionSubmittedByDate(poc.id, DAILY);
 
-      expect(reports).toEqual([
-        { id: inProgress.id, eventId: submitted.eventId, displayId: 'Session A' },
-        { id: unnamed.id, eventId: submitted.eventId, displayId: `Session ${unnamed.id}` },
-      ]);
+      // sessions are created in parallel, so ids (the result order) are not assigned in order
+      expect(reports).toEqual(
+        [
+          { id: inProgress.id, eventId: submitted.eventId, displayId: 'Session A' },
+          { id: unnamed.id, eventId: submitted.eventId, displayId: `Session ${unnamed.id}` },
+        ].sort((a, b) => a.id - b.id)
+      );
     });
 
     it('skips sessions no longer submitted though they keep a recent submittedAt', async () => {
@@ -196,6 +201,85 @@ describe('training report digests', () => {
 
     it('returns nothing for a non-integer user id', async () => {
       expect(await trainingReportsWhereSessionSubmittedByDate('x', DAILY)).toEqual([]);
+    });
+  });
+
+  describe('trainingReportsWhereSessionNeedsActionByDate', () => {
+    const NEEDS_ACTION = 'needs_action';
+    const createNeedsActionSession = (
+      eventId: number,
+      needsActionAt: Date | null,
+      data: Record<string, unknown> = { status: NEEDS_ACTION }
+    ) =>
+      SessionReportPilot.create({
+        eventId,
+        approverId: outsider.id,
+        needsActionAt,
+        data: { collabComplete: true, pocComplete: true, ...data },
+      });
+
+    it('returns sessions needing action on TRs the user owns, collaborates on or is a POC for', async () => {
+      const since = await windowStartingNow();
+      const [asOwner, asCollaborator, asPoc, notMine] = await Promise.all([
+        createEvent([], REGIONAL_TTA_NO_NATIONAL_CENTERS, poc.id),
+        createEvent([], REGIONAL_TTA_NO_NATIONAL_CENTERS, owner.id, [poc.id]),
+        createEvent([poc.id]),
+        createEvent([]),
+      ]);
+      const now = new Date();
+      const owned = await createNeedsActionSession(asOwner.id, now, {
+        status: NEEDS_ACTION,
+        sessionName: 'Owned session',
+      });
+      const collaborated = await createNeedsActionSession(asCollaborator.id, now);
+      const pocSession = await createNeedsActionSession(asPoc.id, now);
+      await createNeedsActionSession(notMine.id, now);
+
+      const reports = await trainingReportsWhereSessionNeedsActionByDate(poc.id, since);
+
+      expect(reports).toEqual([
+        { id: owned.id, eventId: asOwner.eventId, displayId: 'Owned session' },
+        {
+          id: collaborated.id,
+          eventId: asCollaborator.eventId,
+          displayId: `Session ${collaborated.id}`,
+        },
+        { id: pocSession.id, eventId: asPoc.eventId, displayId: `Session ${pocSession.id}` },
+      ]);
+    });
+
+    it('skips sessions on events without National Centers where the user is only a POC', async () => {
+      const since = await windowStartingNow();
+      const stalePoc = await createEvent([poc.id], REGIONAL_TTA_NO_NATIONAL_CENTERS);
+      const session = await createNeedsActionSession(stalePoc.id, new Date());
+
+      const ids = (await trainingReportsWhereSessionNeedsActionByDate(poc.id, since)).map(
+        (r) => r.id
+      );
+
+      expect(ids).not.toContain(session.id);
+    });
+
+    it('skips sessions outside the interval and sessions no longer needing action', async () => {
+      const event = await createEvent([poc.id]);
+      const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const old = await createNeedsActionSession(event.id, lastWeek);
+      const resubmitted = await createNeedsActionSession(event.id, new Date(), {
+        status: 'In progress',
+      });
+      const neverNeededAction = await createNeedsActionSession(event.id, null);
+
+      const ids = (await trainingReportsWhereSessionNeedsActionByDate(poc.id, DAILY)).map(
+        (r) => r.id
+      );
+
+      expect(ids).not.toContain(old.id);
+      expect(ids).not.toContain(resubmitted.id);
+      expect(ids).not.toContain(neverNeededAction.id);
+    });
+
+    it('returns nothing for a non-integer user id', async () => {
+      expect(await trainingReportsWhereSessionNeedsActionByDate('1 OR 1=1', DAILY)).toEqual([]);
     });
   });
 });

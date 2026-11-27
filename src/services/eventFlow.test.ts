@@ -2,6 +2,7 @@ import {
   FACILITATION_NATIONAL_CENTER,
   getAddedUserIds,
   getNewPocIds,
+  getSessionNeedsActionPocIds,
   isNationalCenterFacilitator,
   isNationalCenterUser,
   isSessionSubmitted,
@@ -74,6 +75,31 @@ describe('eventFlow', () => {
       expect(getNewPocIds(event, [2], [1, 2, 3])).toEqual([3]);
       expect(getNewPocIds({ ownerId: 1, data: { eventOrganizer: 'other' } }, [], [3])).toEqual([]);
       expect(getNewPocIds({ ownerId: 1, data: null }, [], [3])).toEqual([]);
+    });
+  });
+
+  describe('getSessionNeedsActionPocIds', () => {
+    const event = {
+      ownerId: 1,
+      collaboratorIds: [2],
+      pocIds: [1, 2, 3, 3],
+      data: { eventOrganizer: REGIONAL_PD_WITH_NATIONAL_CENTERS },
+    };
+
+    it('returns POCs who are not the owner or a collaborator, once each', () => {
+      expect(getSessionNeedsActionPocIds(event)).toEqual([3]);
+      expect(getSessionNeedsActionPocIds({ ...event, collaboratorIds: null })).toEqual([2, 3]);
+      expect(getSessionNeedsActionPocIds({ ...event, pocIds: null })).toEqual([]);
+    });
+
+    it('returns nothing on events without National Centers', () => {
+      expect(
+        getSessionNeedsActionPocIds({
+          ...event,
+          data: { eventOrganizer: 'Regional TTA Hosted Event (no National Centers)' },
+        })
+      ).toEqual([]);
+      expect(getSessionNeedsActionPocIds({ ...event, data: null })).toEqual([]);
     });
   });
 

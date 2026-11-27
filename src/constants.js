@@ -344,6 +344,19 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
   },
+  // TR-4e: the Regional point of contact selects the approver, so they act on the changes too
+  [NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC]: {
+    textFn: ({ approver, sessionName }) =>
+      `${approver} has requested changes to session ${sessionName}.`,
+    actionable: true,
+    linkFn: ({ displayId, id }) => `/training-report/${displayId}/session/${id}/review`,
+    linkText: () => 'Take action',
+    archiveLabel: () => 'View TR',
+    // the session it pointed at may have been deleted
+    archiveLinkFn: ({ displayId }) => `/training-report/view/${displayId}`,
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenSessionChangesRequestedTrainingReport',
+  },
   // Misc-1a: one notification per user per recipient/monitoring report. entityId is the
   // DeliveredReview id; the recipient is in the text, so a review that covers several
   // recipients produces one notification for each. (TTAHUB-6003)

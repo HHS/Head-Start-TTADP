@@ -2,7 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import runInSavepoint from '../../lib/runInSavepoint';
 import db from '../../models';
 import Users from '../../policies/user';
-import { getAddedUserIds, getNewPocIds } from '../eventFlow';
+import { getAddedUserIds, getNewPocIds, getSessionNeedsActionPocIds } from '../eventFlow';
 import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const ACTIONABLE_NOTIFICATIONS_FLAG = 'actionable_notifications';
@@ -272,9 +272,73 @@ export async function createSessionNeedsActionNotificationForCollaborators(
   );
 }
 
+/**
+ * Creates the "approver requested changes to a session" in-app notification (TR-4e) for each
+ * Regional point of contact on a Training Report, since they select the approver. Only Regional
+ * PD events with National Centers have POCs (see `getSessionNeedsActionPocIds`). The event
+ * owner and collaborators are skipped (they get TR-4a and TR-4c), as are users without the
+ * `actionable_notifications` feature flag. The user's in-app setting is applied by
+ * `createNotification`. They are archived on resubmission along with TR-4a, so an archived
+ * notification from an earlier round of changes does not block a new one.
+ * @param event The Training Report (EventReportPilot) the session belongs to.
+ * @param session The session that changes were requested on.
+ * @returns {Promise<void>} Resolves once notifications are created.
+ */
+export async function createSessionNeedsActionNotificationForPocs(
+  event: {
+    eventId: string;
+    ownerId: number;
+    pocIds: number[] | null | undefined;
+    collaboratorIds: number[] | null | undefined;
+    data?: { eventOrganizer?: string } | null;
+  },
+  session: { id: number; approverId: number | null | undefined; data: { sessionName?: string } }
+): Promise<void> {
+  const pocIds = getSessionNeedsActionPocIds(event);
+
+  if (!pocIds.length) {
+    return;
+  }
+
+  const [users, approver] = await Promise.all([
+    db.User.findAll({
+      where: { id: pocIds },
+      attributes: ['id', 'flags'],
+      include: [{ model: db.Permission, as: 'permissions' }],
+    }),
+    session.approverId
+      ? db.User.findOne({ where: { id: session.approverId }, attributes: ['name', 'fullName'] })
+      : null,
+  ]);
+
+  const recipients = users.filter((user) =>
+    new Users(user).canSeeBehindFeatureFlag(ACTIONABLE_NOTIFICATIONS_FLAG)
+  );
+
+  await Promise.all(
+    recipients.map((user) =>
+      createNotification(
+        user.id,
+        session.id,
+        NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC,
+        {
+          metadata: {
+            approver: approver?.fullName || approver?.name,
+            sessionName: session.data?.sessionName,
+            displayId: event.eventId,
+            id: session.id,
+          },
+          skipExisting: 'archived',
+        }
+      )
+    )
+  );
+}
+
 const NEEDS_ACTION_TYPES = [
   NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION,
   NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_COLLABORATOR,
+  NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC,
 ];
 
 /**
@@ -303,8 +367,8 @@ async function archiveSessionNotifications(
 
 /**
  * Archives the "approver requested changes to a session" in-app notifications (TR-4a for the
- * Event Creator, TR-4c for Event Collaborators) for a session. Called when the session is
- * resubmitted or deleted.
+ * Event Creator, TR-4c for Event Collaborators, TR-4e for Regional points of contact) for a
+ * session. Called when the session is resubmitted or deleted.
  * @param sessionId The session whose needs action notifications to archive.
  * @param options.removeLink Clear the link instead of pointing it at the Training Report.
  * @returns {Promise<void>} Resolves once archiving is complete.

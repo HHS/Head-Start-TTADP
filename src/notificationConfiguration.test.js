@@ -475,6 +475,36 @@ describe('NOTIFICATION_CONFIGURATION', () => {
     });
   });
 
+  describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_NEEDS_ACTION_POC];
+
+    it('textFn names the approver and session', () => {
+      expect(config.textFn({ approver: 'Ann Approver', sessionName: 'Opening' })).toBe(
+        'Ann Approver has requested changes to session Opening.'
+      );
+    });
+
+    it('is actionable with a "Take action" CTA to the session', () => {
+      expect(config.actionable).toBe(true);
+      expect(config.linkText()).toBe('Take action');
+      expect(config.linkFn({ displayId: 'R01-TR-1234', id: 55 })).toBe(
+        '/training-report/R01-TR-1234/session/55/review'
+      );
+    });
+
+    it('points archived alerts at the Training Report view', () => {
+      expect(config.archiveLabel()).toBe('View TR');
+      expect(config.archiveLinkFn({ displayId: 'R01-TR-1234' })).toBe(
+        '/training-report/view/R01-TR-1234'
+      );
+    });
+
+    it('uses the inAppWhenSessionChangesRequestedTrainingReport setting', () => {
+      expect(config.settingsKey).toBe('inAppWhenSessionChangesRequestedTrainingReport');
+    });
+  });
+
   describe(NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR, () => {
     const config =
       NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.TRAINING_REPORT_SESSION_SUBMITTED_COLLABORATOR];

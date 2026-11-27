@@ -174,9 +174,10 @@ Optional `DIGEST_CONFIG` fields:
 | `ADDED_AS_POC_TRAINING_REPORT` | `TRAINING_REPORT_POC_ADDED_DIGEST` | `emailWhenAddedAsPocTrainingReport` |
 | `ADDED_AS_COLLABORATOR_TRAINING_REPORT` | `TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST` | `emailWhenAddedAsCollaboratorTrainingReport` |
 | `SESSION_REVIEW_REQUESTED_TRAINING_REPORT` | `TRAINING_REPORT_SESSION_SUBMITTED_DIGEST` | `emailWhenSessionReviewRequestedTrainingReport` |
+| `SESSION_CHANGES_REQUESTED_TRAINING_REPORT` | `TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST` | `emailWhenSessionChangesRequestedTrainingReport` (TR-22: sessions still in needs action on TRs the user created, collaborates on or is a Regional point of contact for, linking to the session form) |
 | `MONITORING_DETAILS_ADDED` | `MONITORING_DETAILS_ADDED_DIGEST` | `emailWhenMonitoringDetailsAdded` (lists recipients with monitoring reports the Hub detected in the user's home region, from `MonitoringReportDeliveries`; TTAC/ECM/GSM users only; `skipEmpty`) |
 
-Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the session digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
+Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry sets `reportLink`; Training Report digests link to `/training-report/view/:displayId`, and monitoring digests link to the recipient's RTR monitoring tab. Training Report fetchers live in `src/services/trainingReportDigests.ts`. The POC and collaborator digests read the `ZALEventReportPilots` audit log; the session submitted digest reads `SessionReportPilots.submittedAt`, which `updateSession` sets on each submission and resubmission, and the session changes requested digest reads `SessionReportPilots.needsActionAt`, which `updateSession` sets each time the approver requests changes. Audit rows for updates hold only the changed columns, each JSON-encoded as a string, so array columns are decoded before they are compared.
 
 **Special digest** (`recipientApprovedDigest`) — runs the same cron window but uses raw SQL to look up program specialists; it is not part of `DIGEST_CONFIG` and must be invoked explicitly in `sendEmailDigests`.
 
@@ -195,6 +196,8 @@ Digest reports link to `/activity-reports/:id` unless the `DIGEST_CONFIG` entry 
 ### Training report notifications
 
 Queued by TR-lifecycle functions (`trCollaboratorAdded`, `trOwnerAdded`, `trPocAdded`, `trSessionCreated`, `trEventComplete`) and by the `trainingReportTaskDueNotifications` digest function. All are processed by `sendTrainingReportNotification` which uses `SEND_NOTIFICATIONS === 'true' && !CI` as its guard.
+
+When the Session Approver requests changes, `src/routes/sessionReports/handlers.ts` sends `tr_session_changes_requested` after the request commits to the Event Creator (`trSessionChangesRequested`, TR-4b), each Event Collaborator (`trSessionChangesRequestedToCollaborators`, TR-4d), and each Regional point of contact who is not also the creator or a collaborator (`trSessionChangesRequestedToPocs`, TR-4f), provided their `emailWhenSessionChangesRequestedTrainingReport` setting is `immediately`.
 
 **Alert-type reminders** are driven by `TR_NOTIFICATION_CONFIG_DICT`:
 
