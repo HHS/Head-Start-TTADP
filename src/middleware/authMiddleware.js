@@ -3,6 +3,7 @@
 import { URL } from 'node:url';
 import {} from 'dotenv/config';
 import * as openidClient from 'openid-client';
+import { OAUTH2_CALLBACK_PATH } from '../constants';
 import handleErrors from '../lib/apiErrorHandler';
 import { auditLogger, hashForLogging } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
@@ -85,9 +86,42 @@ async function getOidcClient() {
   return cachedClient;
 }
 
+/**
+ * Returns the path (with query string) of the page the user started login from, so the
+ * OAuth callback can send them back there. Only paths from a TTA_SMART_HUB_URI referrer are returned;
+ * anything that could be read as another host (e.g. `//evil.example`) is dropped.
+ * Auth pages are dropped too: returning to logout would log the user out again, and the
+ * callback (the referrer when retrying from the login recovery page) fails without login state.
+ */
+const normalizePathname = (pathname) => pathname.replace(/\/+$/, '').toLowerCase();
+const NON_RETURNABLE_PATHS = ['/logout', OAUTH2_CALLBACK_PATH].map(normalizePathname);
+
+export function getSafeReferrerPath(referrer) {
+  if (!referrer) {
+    return '';
+  }
+
+  try {
+    const { origin, pathname, search } = new URL(referrer);
+    // Only return to pages on the hub itself; another site must not pick the post-login page.
+    if (origin !== new URL(process.env.TTA_SMART_HUB_URI).origin) {
+      return '';
+    }
+    const path = `${pathname}${search}`;
+    if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) {
+      return '';
+    }
+    if (NON_RETURNABLE_PATHS.includes(normalizePathname(pathname))) {
+      return '';
+    }
+    return path;
+  } catch {
+    return '';
+  }
+}
+
 export async function login(req, res) {
-  const referrer = req.headers.referer;
-  req.session.referrerPath = referrer ? new URL(referrer).pathname : '';
+  req.session.referrerPath = getSafeReferrerPath(req.headers.referer);
 
   try {
     const client = await getOidcClient();

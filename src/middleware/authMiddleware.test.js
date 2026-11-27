@@ -66,7 +66,7 @@ jest.mock('../lib/apiErrorHandler', () => ({
 }));
 
 /* eslint-disable global-require */
-const { default: authMiddleware, login } = require('./authMiddleware');
+const { default: authMiddleware, login, getSafeReferrerPath } = require('./authMiddleware');
 
 const mockUser = {
   id: 66349,
@@ -166,6 +166,51 @@ describe('authMiddleware', () => {
 
     await login(req, res);
     expect(req.session.referrerPath).toBe('');
+  });
+
+  it('login keeps the query string in referrerPath', async () => {
+    const req = {
+      path: '/api/login',
+      session: {},
+      headers: { referer: 'http://localhost:3000/cli/authorize?code=WDJBMJHT' },
+    };
+    const res = { redirect: jest.fn(), sendStatus: jest.fn() };
+
+    await login(req, res);
+    expect(req.session.referrerPath).toBe('/cli/authorize?code=WDJBMJHT');
+    expect(res.redirect).toHaveBeenCalled();
+  });
+
+  it('login does not throw on a malformed referrer', async () => {
+    const req = { path: '/api/login', session: {}, headers: { referer: 'not a url' } };
+    const res = { redirect: jest.fn(), sendStatus: jest.fn() };
+
+    await login(req, res);
+    expect(req.session.referrerPath).toBe('');
+    expect(res.redirect).toHaveBeenCalled();
+  });
+
+  describe('getSafeReferrerPath', () => {
+    it.each([
+      [undefined, ''],
+      ['', ''],
+      ['http://localhost:3000', '/'],
+      ['http://localhost:3000/activity-reports', '/activity-reports'],
+      [
+        'http://localhost:3000/recipient-tta-records/1?region=1',
+        '/recipient-tta-records/1?region=1',
+      ],
+      ['http://localhost:3000//evil.example/path', ''],
+      ['http://localhost:3000/%5C%5Cevil.example', '/%5C%5Cevil.example'],
+      ['not a url', ''],
+      ['http://localhost:3000/logout?reason=timeout', ''],
+      ['http://localhost:3000/oauth2-client/login/oauth2/code/?code=old&state=old', ''],
+      ['http://localhost:3000/oauth2-client/login/oauth2/code', ''],
+      ['https://evil.example/cli/authorize?code=ATTACKER', ''],
+      ['http://localhost:8080/activity-reports', ''],
+    ])('getSafeReferrerPath(%p) returns %p', (referrer, expected) => {
+      expect(getSafeReferrerPath(referrer)).toBe(expected);
+    });
   });
 
   it('bypass authorization if variables are set for UAT or accessibility testing', async () => {

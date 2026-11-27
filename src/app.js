@@ -9,6 +9,7 @@ import path from 'path';
 import qs from 'qs';
 import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
+import { OAUTH2_CALLBACK_PATH } from './constants';
 import { runCronJobs } from './lib/cron';
 import { auditLogger, logger, requestLogger } from './logger';
 import { getAccessToken, getMissingLoginState, getUserInfo } from './middleware/authMiddleware';
@@ -32,7 +33,6 @@ app.set('trust proxy', 1);
 // arrays. `parameterLimit` already bounds the overall payload size.
 app.set('query parser', (str) => qs.parse(str, { arrayLimit: 1000 }));
 
-const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
 // Shown when the login callback can't be completed because the login state is gone or HSES
@@ -140,7 +140,7 @@ app.get('/.well-known/jwks.json', async (_req, res) => {
   res.json({ keys: [await getPublicJwk()] });
 });
 
-app.get(oauth2CallbackPath, async (req, res) => {
+app.get(OAUTH2_CALLBACK_PATH, async (req, res) => {
   try {
     // Log a stable reason and presence flags only; never the url, code, state, nonce or cookies.
     const missingLoginState = req.query?.error ? 'idp_error' : getMissingLoginState(req);
@@ -170,6 +170,8 @@ app.get(oauth2CallbackPath, async (req, res) => {
     const dbUser = await retrieveUserDetails(data);
     const claims = req.session?.claims || {};
     const idToken = req.session?.id_token || '';
+    // Read before regenerate(), which replaces the session and drops this value.
+    const referrerPath = req.session?.referrerPath;
 
     // console.log('REQ SESSION BEFORE REGEN:', req.session);
     await new Promise((resolve) => {
@@ -186,15 +188,16 @@ app.get(oauth2CallbackPath, async (req, res) => {
         req.session.claims = claims;
         req.session.id_token = idToken;
 
-        const redirectPath =
-          req.session.referrerPath && req.session.referrerPath !== '/logout'
-            ? req.session.referrerPath
-            : '/';
+        // getSafeReferrerPath already dropped unsafe and auth-page referrers.
+        const redirectPath = referrerPath || '/';
 
-        logger.debug(`referrer path: ${req.session.referrerPath}`);
+        const redirectUrl = new URL(redirectPath, process.env.TTA_SMART_HUB_URI);
+
+        // Pathname only: query strings can carry codes that must not reach the logs.
+        logger.debug(`referrer path: ${redirectUrl.pathname}`);
         auditLogger.info(`User ${dbUser.id} logged in`);
 
-        res.redirect(join(process.env.TTA_SMART_HUB_URI, redirectPath));
+        res.redirect(redirectUrl.href);
         return resolve();
       });
     });

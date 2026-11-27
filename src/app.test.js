@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { auditLogger } from './logger';
+import { auditLogger, logger } from './logger';
 import { getAccessToken, getMissingLoginState, getUserInfo } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 
@@ -108,6 +108,49 @@ describe('TTA Hub server', () => {
     );
 
     expect(resp.status).toBe(302);
+  });
+
+  describe('post-login redirect', () => {
+    const loginWithReferrerPath = (referrerPath) => {
+      getAccessToken.mockImplementation(async (req) => {
+        req.session.claims = { sub: 'user-123' };
+        req.session.referrerPath = referrerPath;
+        return 'fake-access-token';
+      });
+      getUserInfo.mockResolvedValue({ sub: 'user-123', email: 'user@example.com' });
+
+      return request(app)
+        .get('/oauth2-client/login/oauth2/code/')
+        .query({ code: 'abc', state: 'xyz' });
+    };
+
+    test('returns the user to the page they started login from', async () => {
+      const resp = await loginWithReferrerPath('/cli/authorize?code=WDJBMJHT');
+
+      expect(resp.status).toBe(302);
+      expect(resp.headers.location).toBe('http://localhost:3000/cli/authorize?code=WDJBMJHT');
+    });
+
+    test('keeps the query string intact', async () => {
+      const resp = await loginWithReferrerPath('/a?x=1&r=/b?y=2');
+
+      expect(resp.headers.location).toBe('http://localhost:3000/a?x=1&r=/b?y=2');
+    });
+
+    test('does not log the query string', async () => {
+      const debugSpy = jest.spyOn(logger, 'debug').mockImplementation(() => {});
+
+      await loginWithReferrerPath('/cli/authorize?code=WDJBMJHT');
+
+      expect(JSON.stringify(debugSpy.mock.calls)).not.toContain('WDJBMJHT');
+    });
+
+    test('sends the user home when there is no referrer path', async () => {
+      const resp = await loginWithReferrerPath('');
+
+      expect(resp.status).toBe(302);
+      expect(resp.headers.location).toBe('http://localhost:3000/');
+    });
   });
 
   describe('login callback', () => {
