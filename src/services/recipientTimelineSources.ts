@@ -1236,7 +1236,11 @@ const buildTtaRequestIndexQuery = (
   bindings: TimelineSourceBindings
 ): string => {
   const eventType = bindings.add('eventType', 'TTA request');
-  const status = bindings.add('status', TTA_REQUEST_STATUSES.SUBMITTED);
+  // a request stays on the timeline once it is approved
+  const statuses = bindings.add('statuses', [
+    TTA_REQUEST_STATUSES.SUBMITTED,
+    TTA_REQUEST_STATUSES.APPROVED,
+  ]);
   const predicates = context.filters
     .filter(({ topic }) => topic === 'standard')
     .map((filter, index) => {
@@ -1259,7 +1263,7 @@ const buildTtaRequestIndexQuery = (
     FROM "TtaRequests" AS "ttaRequest"
     WHERE "ttaRequest"."recipientId" = :recipientId
       AND "ttaRequest"."regionId" = :regionId
-      AND "ttaRequest"."status" = ${status}
+      AND "ttaRequest"."status" IN (${statuses})
       AND "ttaRequest"."submittedAt" IS NOT NULL
       AND "ttaRequest"."deletedAt" IS NULL
       ${predicates.map((predicate) => `AND ${predicate}`).join('\n      ')}`;

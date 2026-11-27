@@ -164,7 +164,11 @@ describe('TTA request timeline integration', () => {
           { regionId: regionIds[1] },
           { recipientId: null },
           { deletedAt: new Date() },
-          { submittedAt: '2026-05-20T23:00:00Z', goalTemplateId: templates[1].id },
+          {
+            submittedAt: '2026-05-20T23:00:00Z',
+            goalTemplateId: templates[1].id,
+            status: TTA_REQUEST_STATUSES.APPROVED,
+          },
         ].map((request) => ({
           id: getUniqueId(),
           userId: creator.id,
@@ -223,7 +227,7 @@ describe('TTA request timeline integration', () => {
     });
   });
 
-  it('indexes only submitted, dated, undeleted requests for this recipient and region', async () => {
+  it('indexes only submitted or approved, dated, undeleted requests for this recipient and region', async () => {
     const result = await getTimeline();
     expect(result.count).toBe(4);
     expect(result.events.map(({ sourceId }) => sourceId)).toEqual([
