@@ -2,9 +2,11 @@ import Queue from 'bull';
 import { FILE_STATUSES, S3_ACTIONS } from '../constants';
 import { auditLogger, logger } from '../logger';
 
-import db, { File } from '../models';
+import { deleteFileFromS3 } from '../lib/s3';
+import db, { File, FileDeletion } from '../models';
 import {
   addDeleteFileToQueue,
+  deleteFileJob,
   onCompletedS3Queue,
   onFailedS3Queue,
   processS3Queue,
@@ -12,6 +14,10 @@ import {
 } from './s3Queue';
 
 jest.mock('bull');
+jest.mock('../lib/s3', () => ({
+  ...jest.requireActual('../lib/s3'),
+  deleteFileFromS3: jest.fn(),
+}));
 
 describe('s3 queue manager tests', () => {
   let file;
@@ -54,17 +60,22 @@ describe('s3 queue manager tests', () => {
 
   it('calls s3.add', async () => {
     await addDeleteFileToQueue(file.id, file.key);
-    expect(s3Queue.add).toHaveBeenCalledWith(S3_ACTIONS.DELETE_FILE, {
-      fileId: file.id,
-      fileKey: file.key,
-      key: S3_ACTIONS.DELETE_FILE,
-      referenceData: {
-        impersonationId: '',
-        sessionSig: '',
-        transactionId: '',
-        userId: '',
+    expect(s3Queue.add).toHaveBeenCalledWith(
+      S3_ACTIONS.DELETE_FILE,
+      {
+        fileId: file.id,
+        fileKey: file.key,
+        fileDeletionId: undefined,
+        key: S3_ACTIONS.DELETE_FILE,
+        referenceData: {
+          impersonationId: '',
+          sessionSig: '',
+          transactionId: '',
+          userId: '',
+        },
       },
-    });
+      { attempts: 5, backoff: { type: 'exponential', delay: 60000 } }
+    );
   });
 
   it('onFailedS3Queue logs an error', () => {
@@ -131,6 +142,67 @@ describe('s3 queue manager tests', () => {
     expect(loggerSpy).toHaveBeenCalledWith(
       'job test-key completed with status 200 and result {"message":"Success"}'
     );
+  });
+
+  describe('deleteFileJob', () => {
+    const makeDeletion = (key) => FileDeletion.create({ fileId: 1_999_999_999, key });
+    const created = [];
+    const track = async (key) => {
+      const deletion = await makeDeletion(key);
+      created.push(deletion.id);
+      return deletion;
+    };
+
+    afterAll(async () => {
+      await FileDeletion.destroy({ where: { id: created } });
+    });
+
+    it('deletes the S3 object and marks the outbox row complete', async () => {
+      const deletion = await track('gone-key.txt');
+      deleteFileFromS3.mockResolvedValueOnce({ ok: true });
+
+      const result = await deleteFileJob({
+        data: { fileId: 1, fileKey: 'gone-key.txt', fileDeletionId: deletion.id },
+      });
+
+      expect(deleteFileFromS3).toHaveBeenCalledWith('gone-key.txt', undefined);
+      expect(result.status).toBe(200);
+      expect((await deletion.reload()).completedAt).not.toBeNull();
+    });
+
+    it('keeps an object another File still uses but completes the outbox row', async () => {
+      const deletion = await track(file.key);
+
+      const result = await deleteFileJob({
+        data: { fileId: 1, fileKey: file.key, fileDeletionId: deletion.id },
+      });
+
+      expect(deleteFileFromS3).not.toHaveBeenCalled();
+      expect(result.data.keptBecauseInUse).toBe(true);
+      expect((await deletion.reload()).completedAt).not.toBeNull();
+    });
+
+    it('throws so Bull retries when S3 fails, leaving the outbox row pending', async () => {
+      const deletion = await track('flaky-key.txt');
+      deleteFileFromS3.mockRejectedValueOnce(new Error('S3 unavailable'));
+
+      await expect(
+        deleteFileJob({
+          data: { fileId: 1, fileKey: 'flaky-key.txt', fileDeletionId: deletion.id },
+        })
+      ).rejects.toThrow('S3 unavailable');
+
+      expect((await deletion.reload()).completedAt).toBeNull();
+    });
+
+    it('still deletes jobs queued without an outbox row', async () => {
+      deleteFileFromS3.mockResolvedValueOnce({ ok: true });
+
+      await expect(
+        deleteFileJob({ data: { fileId: 1, fileKey: 'legacy-key.txt' } })
+      ).resolves.toMatchObject({ status: 200 });
+      expect(deleteFileFromS3).toHaveBeenCalledWith('legacy-key.txt', undefined);
+    });
   });
 
   it('processS3Queue sets up listeners and processes the queue', () => {

@@ -1,8 +1,9 @@
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { ErrorMessage, FormGroup, Radio } from '@trussworks/react-uswds';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Controller, useController, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import FormItem from '../../components/FormItem';
 import type { GrantCheckboxOption } from '../../components/GrantCheckboxSelect';
 import GrantCheckboxSelect from '../../components/GrantCheckboxSelect';
@@ -65,8 +66,10 @@ export default function WhoIsTheRequestFor({
     defaultValue: [],
   });
 
-  // a recipient with a single grant has nothing to choose between, so choose it for them
-  useEffect(() => {
+  // a recipient with a single grant has nothing to choose between, so choose it for them. A
+  // form that keeps unregistered values hands back a fresh copy of the recipient on every
+  // watch, so the grants are compared deeply, or each render would set them and render again
+  useDeepCompareEffect(() => {
     if (possibleGrants.length === 1) {
       setValue(TTA_REQUEST_FIELDS.GRANTS, possibleGrants);
     }

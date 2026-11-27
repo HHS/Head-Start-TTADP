@@ -67,6 +67,24 @@ export default async function logEmailNotification(job, success, result) {
           .trim();
         template = path.resolve(emailTemplatePath, 'recipient_report_approved', 'subject.pug');
         break;
+      case EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW:
+        emailTo = data.collaborator ? [data.collaborator.email] : [''];
+        template = path.resolve(
+          emailTemplatePath,
+          'collaborator_report_submitted_for_review',
+          'subject.pug'
+        );
+        templateLocals = { ...report, isResubmission: data.isResubmission };
+        break;
+      case EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW:
+        emailTo = data.creator ? [data.creator.email] : [''];
+        template = path.resolve(
+          emailTemplatePath,
+          'creator_report_submitted_for_review',
+          'subject.pug'
+        );
+        templateLocals = { ...report, isResubmission: data.isResubmission };
+        break;
       case EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED:
       case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED:
       case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_SUBMITTED:

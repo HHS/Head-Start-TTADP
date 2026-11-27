@@ -1,5 +1,10 @@
 import { Alert, Button, Dropdown, Textarea } from '@trussworks/react-uswds';
-import { APPROVER_STATUSES, TTA_REQUEST_MAX_ASSIGNED_STAFF } from '@ttahub/common';
+import {
+  APPROVER_STATUSES,
+  TTA_REQUEST_MAX_ASSIGNED_STAFF,
+  TTA_REQUEST_NOTE_ACTIONS,
+  TTA_REQUEST_STEPS,
+} from '@ttahub/common';
 import moment from 'moment-timezone';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
@@ -127,6 +132,14 @@ export default function TtaRequestReview({
 
   // the request's details as the form holds them, with the grants it was submitted for
   const details = useMemo(() => toFormValues(ttaRequest), [ttaRequest]);
+
+  // the request is back from the COR when asking for changes is the last thing done to it; the
+  // approver's own status isn't enough, as it stays needs action through the creator resubmitting
+  const lastNote = ttaRequest.notes?.[ttaRequest.notes.length - 1];
+  const corSentBack =
+    lastNote?.step === TTA_REQUEST_STEPS.APPROVER &&
+    lastNote?.action === TTA_REQUEST_NOTE_ACTIONS.NEEDS_ACTION;
+  const corName = lastNote?.user?.name ?? ttaRequest.approvers?.[0]?.user?.name ?? '';
 
   // the COR picked on an earlier review stays picked, through the COR or the creator sending
   // the request back, until the reviewer picks another
@@ -273,10 +286,17 @@ export default function TtaRequestReview({
       <form onSubmit={handleSubmit(onSubmit)}>
         <h2 className="font-serif-xl margin-top-0 margin-bottom-1">TTA Request summary</h2>
         <IndicatesRequiredField />
-        <Alert type="info" headingLevel="h4" slim className="margin-bottom-4">
-          {nameWithRole(ttaRequest.creator)} is asking for a review of this TTA request. Please view
-          all information, then assign a specialist and select a review status.
-        </Alert>
+        {corSentBack ? (
+          <Alert type="error" headingLevel="h4" slim className="margin-bottom-4">
+            {corName} (COR) is asking for changes to this TTA request. Please review any notes below
+            and resubmit for review.
+          </Alert>
+        ) : (
+          <Alert type="info" headingLevel="h4" slim className="margin-bottom-4">
+            {nameWithRole(ttaRequest.creator)} is asking for a review of this TTA request. Please
+            view all information, then assign a specialist and select a review status.
+          </Alert>
+        )}
         {isEditing && recipient ? (
           <>
             {/* a fixed recipient isn't offered for change, only their grants */}

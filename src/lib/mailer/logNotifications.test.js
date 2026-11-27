@@ -403,6 +403,33 @@ describe('Email Notifications', () => {
       expect(logger.error).toHaveBeenCalled();
       expect(mailerLog).toBeNull();
     });
+    it.each([
+      [EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW, 'collaborator'],
+      [EMAIL_ACTIONS.CREATOR_REPORT_SUBMITTED_FOR_REVIEW, 'creator'],
+    ])('logs %s to the %s', async (action, recipientKey) => {
+      createMailerLogMock.mockImplementationOnce(async (entry) => entry);
+      const job = {
+        id: '4',
+        name: action,
+        data: {
+          report: { id: 1235, displayId: 'AR-04-1235' },
+          [recipientKey]: { email: 'mockUser@test.gov' },
+          isResubmission: true,
+        },
+      };
+      const mailerLog = await logEmailNotification(job, true, result);
+      expect(mailerLog).toEqual(
+        expect.objectContaining({
+          jobId: '4',
+          action,
+          emailTo: ['mockUser@test.gov'],
+          subject: 'Revised Activity Report AR-04-1235: Submitted for approval',
+          activityReports: [1235],
+          success: true,
+        })
+      );
+    });
+
     it('returns null on unknown job name', async () => {
       mockJob.name = 'unknown';
       const mailerLog = await logEmailNotification(mockJob, success, result);

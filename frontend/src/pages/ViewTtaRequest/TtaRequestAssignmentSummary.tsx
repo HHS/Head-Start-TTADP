@@ -15,6 +15,8 @@ const formatDate = (date: string | null | undefined) =>
 
 interface TtaRequestAssignmentSummaryProps {
   ttaRequest: TtaRequestResponse;
+  /** leave out the space above the first heading, for a page that sets it itself */
+  flushTop?: boolean;
 }
 
 /**
@@ -23,12 +25,17 @@ interface TtaRequestAssignmentSummaryProps {
  */
 export default function TtaRequestAssignmentSummary({
   ttaRequest,
+  flushTop = false,
 }: TtaRequestAssignmentSummaryProps): React.ReactElement {
+  const hasAssignedStaff = !!ttaRequest.assignedStaff?.length;
+  const headingClassName = (isFirst: boolean) =>
+    `${flushTop && isFirst ? 'margin-top-0' : 'margin-top-4'} margin-bottom-3`;
+
   return (
     <>
-      {!!ttaRequest.assignedStaff?.length && (
+      {hasAssignedStaff && (
         <>
-          <h2 className="margin-top-4 margin-bottom-3">TTA assignment</h2>
+          <h2 className={headingClassName(true)}>TTA assignment</h2>
           <dl className="margin-top-0 margin-bottom-3">
             <dt className="text-bold">Assigned specialist</dt>
             {ttaRequest.assignedStaff.map((staff) => (
@@ -41,7 +48,7 @@ export default function TtaRequestAssignmentSummary({
       )}
       {SENT_TO_COR.includes(ttaRequest.status) && (
         <>
-          <h2 className="margin-top-4 margin-bottom-3">Review and submit</h2>
+          <h2 className={headingClassName(!hasAssignedStaff)}>Review and submit</h2>
           <dl className="margin-top-0 margin-bottom-3">
             <dt className="text-bold">Date submitted</dt>
             <dd className="margin-0">{formatDate(ttaRequest.submittedAt)}</dd>

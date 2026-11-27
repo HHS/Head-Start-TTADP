@@ -17,6 +17,7 @@ import { ActivityReport, sequelize } from '../../models';
 import Goal from '../../policies/goals';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
+import { onTransactionCommitted } from '../transactionWrapper';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -45,7 +46,8 @@ export async function createGoalsForReport(req, res) {
     }
 
     const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId, userId);
-    res.json(newGoals);
+    // Respond only after COMMIT so a client that reads right after the save sees the new rows.
+    onTransactionCommitted(req, () => res.json(newGoals));
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
   }

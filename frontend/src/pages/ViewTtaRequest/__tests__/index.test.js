@@ -386,6 +386,23 @@ describe('ViewTtaRequest', () => {
       ).not.toBeChecked();
     });
 
+    it('edits a request whose recipient has a single grant', async () => {
+      mockReviewerFetches(REQUEST);
+      fetchMock.get('/api/recipient/user/tta-requests', [
+        { id: 3, name: 'Sample Recipient Agency', grants: [GRANT] },
+      ]);
+      fetchMock.get('begin:/api/goal-templates', [OTHER_GOAL]);
+      fetchMock.get('begin:/api/feeds/item', '');
+      renderView({}, REVIEWER);
+
+      userEvent.click(await screen.findByRole('button', { name: 'Edit request' }));
+
+      // the only grant is chosen for them, and choosing it settles rather than looping
+      expect(await screen.findByLabelText(/who originated this request/i)).toBeVisible();
+      expect(screen.getByTestId('read-only-value')).toHaveTextContent(GRANT.name);
+      expect(await screen.findByText(OTHER_GOAL.name)).toBeVisible();
+    });
+
     it('clears the goal when the grants change', async () => {
       await startEditing();
       expect(await screen.findByText(OTHER_GOAL.name)).toBeVisible();
@@ -558,6 +575,81 @@ describe('ViewTtaRequest', () => {
     expect(JSON.parse(fetchMock.lastOptions(REVIEW_URL).body)).toMatchObject({
       status: 'approved',
       approverId: 21,
+    });
+  });
+
+  describe('once the COR has sent the request back', () => {
+    const corNeedsAction = (id, createdAt) => ({
+      id,
+      step: 'approver',
+      action: 'needs_action',
+      note: 'Assign a second specialist',
+      createdAt,
+      user: { id: 21, name: 'Chandler Bing', fullName: 'Chandler Bing, COR' },
+    });
+    const sentToCor = {
+      id: 2,
+      step: 'reviewer',
+      action: 'sent_for_approval',
+      note: null,
+      createdAt: '2026-06-24T17:00:00.000Z',
+      user: REVIEWER,
+    };
+    const approvers = [
+      { id: 1, userId: 21, status: 'needs_action', user: { id: 21, name: 'Chandler Bing' } },
+    ];
+
+    it('tells the reviewer the COR is asking for changes', async () => {
+      mockReviewerFetches({
+        ...SUBMITTED_REQUEST,
+        approvers,
+        notes: [
+          creatorSubmission(1, null),
+          sentToCor,
+          corNeedsAction(3, '2026-06-25T17:00:00.000Z'),
+        ],
+      });
+      renderView({}, REVIEWER);
+
+      const banner = await screen.findByText(
+        'Chandler Bing (COR) is asking for changes to this TTA request. Please review any notes below and resubmit for review.'
+      );
+      expect(banner).toBeVisible();
+      expect(banner.closest('.usa-alert')).toHaveClass('usa-alert--error');
+      expect(screen.queryByText(/is asking for a review of this TTA request/)).toBeNull();
+      // the reviewer can still change everything before resubmitting
+      expect(screen.getByRole('button', { name: 'Edit request' })).toBeVisible();
+      expect(screen.getByLabelText(/assign staff/i)).toBeEnabled();
+      expect(screen.getByLabelText(/choose review status/i)).toBeEnabled();
+      expect(screen.getByLabelText(/add ttac or manager notes/i)).toBeEnabled();
+      expect(screen.getByText('Assign a second specialist')).toBeVisible();
+    });
+
+    it('asks for a review as usual once the creator has resubmitted it since', async () => {
+      mockReviewerFetches({
+        ...SUBMITTED_REQUEST,
+        approvers,
+        notes: [
+          creatorSubmission(1, null),
+          sentToCor,
+          corNeedsAction(3, '2026-06-25T17:00:00.000Z'),
+          {
+            id: 4,
+            step: 'reviewer',
+            action: 'needs_action',
+            note: null,
+            createdAt: '2026-06-26T17:00:00.000Z',
+            user: REVIEWER,
+          },
+          creatorSubmission(5, null, '2026-06-27T17:00:00.000Z'),
+        ],
+      });
+      renderView({}, REVIEWER);
+
+      expect(
+        await screen.findByText(/Avery Example \(GS\) is asking for a review of this TTA request/)
+      ).toBeVisible();
+      expect(screen.queryByText(/\(COR\) is asking for changes/)).toBeNull();
     });
   });
 
@@ -814,6 +906,25 @@ describe('ViewTtaRequest', () => {
           /Monica Geller is asking for a review of this TTA request. Please view all information, then select an approval status./
         )
       ).toBeVisible();
+    });
+
+    it('shows the approval as pending from the COR it was sent to', async () => {
+      fetchMock.get(URL, {
+        ...AWAITING_REQUEST,
+        approvers: [
+          {
+            id: 1,
+            userId: 30,
+            status: null,
+            user: { id: 30, name: 'Joey Tribiano', fullName: 'Joey Tribiano, COR' },
+          },
+        ],
+      });
+      renderView({}, COR);
+
+      expect(await screen.findByText('Approval status')).toBeVisible();
+      expect(screen.getByText('Pending approval')).toBeVisible();
+      expect(screen.getByText(/from Joey Tribiano, COR/)).toBeVisible();
     });
 
     it('shows everything on the request read only, with its notes', async () => {

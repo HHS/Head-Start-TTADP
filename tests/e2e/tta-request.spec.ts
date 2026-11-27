@@ -633,4 +633,95 @@ test.describe('TTA request review', () => {
       await expect(page.getByLabel('Choose approval status')).toHaveCount(0);
     });
   });
+
+  test('the reviewer edits a request whose recipient has a single grant', async ({
+    page,
+    request,
+  }) => {
+    // no seeded recipient in the region has exactly one active grant, so this one is the test's
+    // own; the form chooses a lone grant for the reviewer, which once looped until the page broke
+    const suffix = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
+    const recipientId = Number(`18${suffix.slice(-7)}`);
+    const grantId = Number(`19${suffix.slice(-7)}`);
+    const grantNumber = `01PW${suffix.slice(-7)}`;
+    let requestId: number | null = null;
+
+    const api = async (userId: number, method: 'POST' | 'PUT', path: string, data: unknown) => {
+      const response = await request.fetch(`/api/${path}`, {
+        method,
+        headers: { 'playwright-user-id': String(userId) },
+        data,
+      });
+      expect(response.ok(), `${method} ${path}: ${await response.text()}`).toBe(true);
+      return response.json();
+    };
+
+    // React reports the loop as an error on the page, then renders nothing
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+
+    try {
+      await query(
+        request,
+        `INSERT INTO "Recipients" (id, "name", "uei", "createdAt", "updatedAt")
+         VALUES (${recipientId}, 'Playwright single grant recipient ${suffix}', '', NOW(), NOW());
+         INSERT INTO "Grants"
+           (id, number, "regionId", status, "startDate", "endDate", "recipientId", "createdAt", "updatedAt")
+         VALUES (${grantId}, '${grantNumber}', ${REGION_ID}, 'Active', NOW(), NOW() + INTERVAL '1 year',
+           ${recipientId}, NOW(), NOW());`
+      );
+      const [template] = await rowsOf(
+        await query(
+          request,
+          `SELECT id FROM "GoalTemplates"
+           WHERE "creationMethod" = 'Curated' AND standard IS NOT NULL AND standard <> 'Monitoring'
+           ORDER BY id LIMIT 1;`
+        )
+      );
+
+      const draft = await api(CREATOR.id, 'POST', 'tta-requests', { regionId: REGION_ID });
+      requestId = Number(draft.id);
+      await api(CREATOR.id, 'PUT', `tta-requests/${requestId}/submit`, {
+        recipientId,
+        grantIds: [grantId],
+        recipientAware: true,
+        originator: 'Recipient',
+        goalTemplateId: Number(template.id),
+        citations: [],
+        context: '<p>Single grant context</p>',
+        creatorNotes: '',
+        reviewerId: REVIEWER.id,
+      });
+
+      await actAs(page, REVIEWER.id);
+      await page.goto(`/tta-requests/view/${requestId}`);
+      await expect(page.getByRole('heading', { name: 'Review and submit' })).toBeVisible();
+
+      await page.getByRole('button', { name: 'Edit request' }).click();
+
+      // the details are now the form, with the only grant chosen and shown rather than offered
+      await expect(page.getByLabel('Who originated this request?')).toBeVisible();
+      await expect(page.getByTestId('read-only-value')).toContainText(grantNumber);
+      await expect(page.getByRole('checkbox', { name: new RegExp(grantNumber) })).toHaveCount(0);
+      await expect(page.locator('#recipient-aware-yes')).toBeChecked();
+
+      // and the rest of the review is still there to fill in
+      await expect(page.getByRole('heading', { name: 'TTA Request summary' })).toBeVisible();
+      await expect(page.getByLabel('Choose review status')).toBeVisible();
+      await page.getByLabel('Choose review status').selectOption('needs_action');
+      await expect(page.getByLabel('Choose review status')).toHaveValue('needs_action');
+
+      expect(pageErrors).toEqual([]);
+    } finally {
+      // its grants, notes and reviewers cascade with the request
+      if (requestId) {
+        await query(request, `DELETE FROM "TtaRequests" WHERE id = ${requestId};`);
+      }
+      await query(
+        request,
+        `DELETE FROM "Grants" WHERE id = ${grantId};
+         DELETE FROM "Recipients" WHERE id = ${recipientId};`
+      );
+    }
+  });
 });

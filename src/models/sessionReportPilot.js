@@ -110,6 +110,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      // when the approver last requested changes to the session
+      needsActionAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       submitted: {
         type: DataTypes.VIRTUAL,
         get() {
